@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explora Atacama — Vinos & Menús</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.6; }
+
+:root {
+  --wine-red: #7F77DD;
+  --wine-red-light: #2a2660;
+  --wine-red-dark: #a9a0f0;
+  --gold: #BA7517;
+  --gold-light: #3a2a05;
+  --teal: #1D9E75;
+  --teal-light: #0a2e20;
+  --coral: #D85A30;
+  --coral-light: #3a1a0a;
+  --bg: #1a1917;
+  --bg-secondary: #242220;
+  --surface: #2a2825;
+  --border: rgba(255,255,255,0.1);
+  --border-md: rgba(255,255,255,0.18);
+  --text: #f0eeea;
+  --text-secondary: #aaa;
+  --text-tertiary: #777;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1917;
+    --bg-secondary: #242220;
+    --surface: #2a2825;
+    --border: rgba(255,255,255,0.1);
+    --border-md: rgba(255,255,255,0.18);
+    --text: #f0eeea;
+    --text-secondary: #aaa;
+    --text-tertiary: #777;
+    --wine-red-light: #2a2660;
+    --wine-red-dark: #a9a0f0;
+    --gold-light: #3a2a05;
+    --teal-light: #0a2e20;
+    --coral-light: #3a1a0a;
+  }
+}
+
+.app { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+.header { padding: 1rem 0 1.5rem; border-bottom: 0.5px solid var(--border); margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+.header-text h1 { font-size: 20px; font-weight: 500; color: var(--text); }
+.header-text p { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+.lang-toggle { display: flex; gap: 4px; flex-shrink: 0; }
+.lang-btn { padding: 4px 9px; border-radius: 6px; border: 0.5px solid var(--border-md); font-size: 11px; font-weight: 500; cursor: pointer; background: transparent; color: var(--text-tertiary); letter-spacing: 0.04em; transition: all 0.15s; }
+.lang-btn:hover { background: var(--bg-secondary); color: var(--text-secondary); }
+.lang-btn.active { background: var(--surface); color: var(--text); border-color: var(--border-md); }
+
+.main-tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.tab { padding: 6px 14px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; }
+.tab:hover { background: var(--bg-secondary); }
+.tab.active { background: var(--wine-red); color: white; border-color: var(--wine-red); font-weight: 500; }
+
+.search-bar { position: relative; margin-bottom: 1.25rem; }
+.search-bar input { width: 100%; padding: 8px 12px 8px 36px; border: 0.5px solid var(--border-md); border-radius: var(--radius-md); font-size: 14px; background: var(--surface); color: var(--text); outline: none; }
+.search-bar input:focus { border-color: var(--wine-red); }
+.search-bar input::placeholder { color: var(--text-tertiary); }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-tertiary); pointer-events: none; }
+
+.day-selector { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.day-btn { padding: 5px 12px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; }
+.day-btn:hover { background: var(--bg-secondary); }
+.day-btn.active { background: var(--gold); color: white; border-color: var(--gold); font-weight: 500; }
+
+/* Day heading */
+.day-heading { font-size: 14px; font-weight: 500; color: var(--text); margin: 1.5rem 0 1rem; padding-bottom: 6px; border-bottom: 0.5px solid var(--border); }
+
+/* Service blocks */
+.service-block { margin-bottom: 2rem; }
+.service-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 0.5px solid var(--border); }
+.service-label { font-size: 15px; font-weight: 500; color: var(--text); }
+.service-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot-lunch { background: var(--gold); }
+.dot-dinner { background: rgba(139, 26, 46, 0.6); }
+.dot-shared { background: var(--border-md); }
+
+/* Course sections */
+.course-section { margin-bottom: 1.25rem; }
+.course-label { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; padding-left: 2px; }
+.dish-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+
+/* Dish cards */
+.dish-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 0.875rem 1rem; cursor: pointer; transition: border-color 0.15s; }
+.dish-card:hover { border-color: var(--border-md); }
+.dish-card.selected { border-color: var(--wine-red); border-width: 1.5px; }
+.dish-name { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.4; margin-bottom: 5px; }
+.dish-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 7px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.allergen-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.allergen-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border); }
+
+/* Detail panel */
+.detail-panel { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; }
+.detail-panel h2 { font-size: 17px; font-weight: 500; margin-bottom: 4px; color: var(--text); }
+.detail-meta { font-size: 12px; color: var(--text-tertiary); margin-bottom: 0.75rem; }
+.detail-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+.detail-section { margin-bottom: 1rem; }
+.detail-section h3 { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.allergen-detail { display: flex; flex-wrap: wrap; gap: 5px; }
+.allergen-pill { font-size: 12px; padding: 3px 10px; border-radius: 20px; background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border-md); }
+.wine-suggestions { display: flex; flex-direction: column; gap: 8px; }
+.wine-chip { background: rgba(139, 26, 46, 0.2); border: 0.5px solid rgba(139, 26, 46, 0.4); border-radius: var(--radius-md); padding: 8px 12px; cursor: pointer; transition: opacity 0.15s; }
+.wine-chip:hover { opacity: 0.8; }
+.wine-chip-name { font-size: 13px; font-weight: 500; color: #e8a0aa; }
+.wine-chip-why { font-size: 12px; color: #c97080; margin-top: 2px; }
+.close-btn { float: right; font-size: 20px; line-height: 1; cursor: pointer; color: var(--text-tertiary); background: none; border: none; padding: 0 0 0 8px; }
+.close-btn:hover { color: var(--text); }
+
+/* Wine tab */
+.wine-filter-tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.wine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.wine-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; cursor: pointer; transition: border-color 0.15s; }
+.wine-card:hover { border-color: var(--border-md); }
+.wine-card.selected { border-color: var(--wine-red); border-width: 1.5px; }
+.wine-type-badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; display: inline-block; margin-bottom: 6px; }
+.badge-espumante { background: #F4C0D1; color: #72243E; }
+.badge-blanco { background: var(--gold-light); color: #633806; }
+.badge-rosado { background: var(--coral-light); color: #993C1D; }
+.badge-tinto { background: var(--wine-red-light); color: var(--wine-red-dark); }
+.badge-dulce { background: var(--teal-light); color: #0F6E56; }
+.wine-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+.wine-valley { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.wine-aroma { font-size: 12px; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+.wine-detail { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; }
+.wine-detail h2 { font-size: 17px; font-weight: 500; margin-bottom: 2px; color: var(--text); }
+.wine-detail .valley { font-size: 13px; color: var(--text-secondary); margin-bottom: 1rem; }
+.wine-section { margin-bottom: 1rem; }
+.wine-section h3 { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+.wine-section p { font-size: 13px; color: var(--text); line-height: 1.6; }
+.guion-box { background: rgba(139, 26, 46, 0.2); border: 0.5px solid rgba(139, 26, 46, 0.35); border-radius: var(--radius-md); padding: 12px; margin-top: 6px; }
+.guion-label { font-weight: 500; color: #e8a0aa; }
+.guion-box p { font-size: 13px; color: #c97080; line-height: 1.6; }
+.paired-dishes { display: flex; flex-direction: column; gap: 6px; }
+.paired-dish { font-size: 13px; padding: 6px 10px; background: var(--bg-secondary); border-radius: var(--radius-md); color: var(--text); }
+
+/* Guiones */
+.guion-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.25rem; }
+.guion-card h2 { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 0.75rem; }
+.guion-text { background: rgba(139, 26, 46, 0.2); border: 0.5px solid rgba(139, 26, 46, 0.35); border-radius: var(--radius-md); padding: 12px; margin-bottom: 1rem; font-size: 13px; color: #c97080; line-height: 1.6; }
+.guion-section-title { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+
+.hidden { display: none !important; }
+.empty-state { font-size: 13px; color: var(--text-tertiary); padding: 2rem 0; text-align: center; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-text">
+      <h1 id="app-title">Explora Atacama — Vinos &amp; Menús</h1>
+      <p id="app-subtitle">Guía de servicio: maridajes, alérgenos y fichas de vino</p>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('es',this)">ES</button>
+      <button class="lang-btn" onclick="setLang('en',this)">EN</button>
+      <button class="lang-btn" onclick="setLang('pt',this)">PT</button>
+    </div>
+  </div>
+
+  <div class="main-tabs">
+    <button class="tab active" onclick="setTab('menus',this)">Menús por día</button>
+    <button class="tab" onclick="setTab('vinos',this)">Fichas de vino</button>
+    <button class="tab" onclick="setTab('guiones',this)">Guiones de venta</button>
+  </div>
+
+  <!-- MENÚS TAB -->
+  <div id="tab-menus">
+    <div class="search-bar">
+      <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+      <input type="text" placeholder="Buscar plato..." id="dish-search" oninput="renderDishes()">
+    </div>
+    <div class="day-selector">
+      <button class="day-btn active" onclick="setDay('all',this)">Todos los días</button>
+      <button class="day-btn" onclick="setDay('1',this)">Día 1</button>
+      <button class="day-btn" onclick="setDay('2',this)">Día 2</button>
+      <button class="day-btn" onclick="setDay('3',this)">Día 3</button>
+      <button class="day-btn" onclick="setDay('4',this)">Día 4</button>
+    </div>
+    <div id="dish-grid"></div>
+  </div>
+
+  <!-- VINOS TAB -->
+  <div id="tab-vinos" class="hidden">
+    <div class="search-bar">
+      <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+      <input type="text" placeholder="Buscar vino o cepa..." id="wine-search" oninput="renderWines()">
+    </div>
+    <div class="wine-filter-tabs">
+      <button class="tab active" onclick="setWineFilter('todos',this)">Todos</button>
+      <button class="tab" onclick="setWineFilter('espumante',this)">Espumante</button>
+      <button class="tab" onclick="setWineFilter('blanco',this)">Blancos</button>
+      <button class="tab" onclick="setWineFilter('rosado',this)">Rosado</button>
+      <button class="tab" onclick="setWineFilter('tinto',this)">Tintos</button>
+      <button class="tab" onclick="setWineFilter('dulce',this)">Dulce</button>
+    </div>
+    <div class="wine-grid" id="wine-grid"></div>
+  </div>
+
+  <!-- GUIONES TAB -->
+  <div id="tab-guiones" class="hidden">
+    <div id="guiones-content"></div>
+  </div>
+</div>
+
+<script>
+const DISHES = [
+  {id:'d1',day:'1',service:'Almuerzo',course:'Plato principal',name:'Trucha asalmonada',desc:'Cocinada en salsa de ají amarillo, ají panca, cebolla, tomates, ajo, vino blanco y fumet. Con vegetales salteados y yucas fritas en dados.',allergens:[],wines:['azur','talinay'],why:{azur:'La burbuja limpia la salsa y realza la trucha.',talinay:'Tensión cítrica y salinidad en línea con el ají amarillo.'}},
+  {id:'d2',day:'1',service:'Almuerzo',course:'Plato principal',name:'Pastel de choclo',desc:'Pastelera de choclo, pollo cortado en cubos, aceituna y huevo.',allergens:[],wines:['garage-rose','glup'],why:{'garage-rose':'Acidez y agarre tánico equilibran el dulzor del choclo.',glup:'Tinto ligero que no pesa sobre la pastelera.'}},
+  {id:'d3',day:'1',service:'Almuerzo',course:'Plato principal',name:'Zucchini relleno',desc:'Sobre mix de hojas verdes. Relleno con sofrito de setas, quinoa y puré de setas. Bechamel con betarraga, gratinado con Grana Padano.',allergens:['Lácteos','Gluten'],wines:['aquitania','semillon'],why:{aquitania:'Cremosidad y acidez integran la bechamel y el queso.',semillon:'Volumen y textura para el umami de las setas.'}},
+  {id:'d4',day:'1',service:'Almuerzo',course:'Plato principal',name:'Ceviche del día',desc:'Mezcla de pulpo, trucha, camarón y ostión. Leche de tigre con apio, cilantro, limón, jengibre, ají amarillo, cebolla y ajo. Con choclo peruano, camote y canchita.',allergens:[],wines:['azur','talinay'],why:{azur:'Espumante gastronómico: burbuja y acidez van con el limón.',talinay:'Sauvignon salino y cítrico: sigue la línea del ceviche.'}},
+  {id:'d5',day:'1',service:'Cena',course:'Entrada',name:'Hojas verdes (Larache/Sequitor)',desc:'Mix de hojas verdes, quinoas teñidas en betarraga y ají amarillo, choclo peruano quemado. Dressing ácido de mora o frambuesa.',allergens:[],wines:['talinay','garage-rose'],why:{talinay:'Acidez que se alinea con el dressing y las hojas amargas.','garage-rose':'Fruta roja fresca en línea con la mora del dressing.'}},
+  {id:'d6',day:'1',service:'Cena',course:'Entrada',name:'Chupe de centolla',desc:'Pastel horneado cremoso. Sofrito de cebolla, pimentón rojo y vino blanco con carne de centolla y pan remojado en leche. Gratinado con Grana Padano.',allergens:['Lácteos','Gluten'],wines:['semillon','aquitania'],why:{semillon:'Textura y acidez para sostener la salsa cremosa de mar.',aquitania:'Volumen del Chardonnay integra la crema del chupe.'}},
+  {id:'d7',day:'1',service:'Cena',course:'Entrada',name:'Pasta casera con ragú de pato',desc:'Pasta del día. Ragú de muslo de pato a baja temperatura con mirr pois y vino tinto. Desmenuzado con reducción de salsa y chimichurri.',allergens:['Gluten'],wines:['montsecano','perez-cruz'],why:{montsecano:'Tanino suave y acidez acompañan la grasa del pato.','perez-cruz':'Carmenere para quien quiere estructura con el ragú.'}},
+  {id:'d8',day:'1',service:'Cena',course:'Plato principal',name:'Chicharrón de cerdo',desc:'Panceta a baja temperatura, frita con maicena. Demi-glace con algarrobo. Con papas nativas, salsa uchucuta y suflados de Airampo.',allergens:[],wines:['garage-rose','glup'],why:{'garage-rose':'Acidez y agarre tánico limpian la fritura y la uchucuta.',glup:'Tinto ligero para no tapar el sabor del chicharrón.'}},
+  {id:'d9',day:'1',service:'Cena',course:'Plato principal',name:'Pulpo',desc:'Cocción al vacío a 90°C por 2 horas. Con salsa anticuchera peruana (cebolla, ají amarillo, comino, ají panca, orégano, vinagre y soya).',allergens:['trazas Gluten'],wines:['semillon','talinay'],why:{semillon:'Textura media sostiene la salsa anticuchera.',talinay:'Salinidad y tensión cítrica con el ají y el limón.'}},
+  {id:'d10',day:'1',service:'Cena',course:'Plato principal',name:'Risotto de res',desc:'Arroz arbóreo con caldo de rabo de vacuno (5 horas). Mantequilla, Grana Padano y chimichurri tradicional.',allergens:['Lácteos'],wines:['montsecano','perez-cruz'],why:{montsecano:'Tanino sedoso respeta la textura cremosa del risotto.','perez-cruz':'Carmenere para quien quiere tinto con más estructura.'}},
+  {id:'d11',day:'1',service:'Cena',course:'Plato principal',name:'Charquicán vegetariano',desc:'Cebolla, pimentón, papa y zapallo con arvejas, choclo y zanahoria. Yema de huevo confitada a 63°C.',allergens:[],wines:['glup','montsecano'],why:{glup:'Fruta fresca y acidez resaltan el zapallo sin pesar.',montsecano:'Pinot elegante para una preparación de verduras.'}},
+  {id:'d12',day:'1',service:'Almuerzo y Cena',course:'Postre',name:'Texturas de chañar',desc:'Crème brûlée con arrope de chañar, galleta de cacao, tierra y helado de chañar.',allergens:['Lácteos','Gluten'],wines:['erasmo'],why:{erasmo:'Late Harvest con miel y frutas confitadas: maridaje dulce clásico.'}},
+  {id:'d13',day:'1',service:'Almuerzo y Cena',course:'Postre',name:'Carrot cake',desc:'Bizcocho de zanahorias y cacao. Frosting de queso crema con zeste de naranja. Almendras garrapiñadas.',allergens:['Gluten','Lácteos','Frutos secos'],wines:['erasmo'],why:{erasmo:'El dulzor y las notas de naranja van con el carrot cake.'}},
+  {id:'d14',day:'1',service:'Almuerzo y Cena',course:'Postre',name:'Flan de vainilla',desc:'Flan tradicional con caramelo (huevo, leche y azúcar).',allergens:['Lácteos'],wines:['erasmo','azur'],why:{erasmo:'Dulzor floral complementa la vainilla.',azur:'Espumante seco como opción de cierre fresco.'}},
+  {id:'d15',day:'2',service:'Almuerzo',course:'Plato principal',name:'Ostiones gratinados',desc:'100g de ostiones con bechamel, vino blanco y Grana Padano al horno.',allergens:['Lácteos','Gluten'],wines:['azur','semillon'],why:{azur:'Burbuja y acidez cortan la grasa del gratín.',semillon:'Textura media para la bechamel y el dulzor del ostión.'}},
+  {id:'d16',day:'2',service:'Almuerzo',course:'Plato principal',name:'Brócoli rostizado',desc:'Salteado en mantequilla. Puré de vegetales (tomate, zapallo, zucchini, papas) y chutney de tomates.',allergens:['Lácteos'],wines:['aquitania','glup'],why:{aquitania:'Chardonnay cremoso que integra el puré de vegetales.',glup:'Tinto ligero para quien prefiere rojo con verduras asadas.'}},
+  {id:'d17',day:'2',service:'Almuerzo',course:'Plato principal',name:'Lomo saltado',desc:'Salteado de carne con soya y cerveza. Cebolla, tomate, cilantro. Arroz y papas.',allergens:['Gluten'],wines:['garage-rose','syrah'],why:{'garage-rose':'Acidez y agarre tánico con la soya y la fritura.',syrah:'Syrah especiado para las notas de la salsa.'}},
+  {id:'d18',day:'2',service:'Almuerzo',course:'Plato principal',name:'Tiradito de locos',desc:'Loco laminado cocido. Salsa verde (cebolla, cilantro, ají verde, limón) y mayonesa de limón.',allergens:[],wines:['talinay','azur'],why:{talinay:'Salinidad y tensión cítrica con la salsa verde.',azur:'Burbuja para un maridaje espumante del tiradito.'}},
+  {id:'d19',day:'2',service:'Cena',course:'Entrada',name:'Ensalada de hojas con higos',desc:'Dressing de higos con queso azul, almendras garrapiñadas e higos infusionados.',allergens:['Lácteos (penicilina)','Frutos secos'],wines:['erasmo','garage-rose'],why:{erasmo:'Dulzor floral combina con los higos y el queso azul.','garage-rose':'Acidez y fruta roja equilibran el queso azul.'}},
+  {id:'d20',day:'2',service:'Cena',course:'Entrada',name:'Sopa de zapallo',desc:'Zapallo y arrope de chañar, cocida y aligerada.',allergens:[],wines:['aquitania','semillon'],why:{aquitania:'Cremosidad y acidez integran el dulzor del zapallo.',semillon:'Textura media para sopa con notas dulces.'}},
+  {id:'d21',day:'2',service:'Cena',course:'Entrada',name:'Camarones al ajillo',desc:'Calibre 16-20 con semillas de cilantro, pimienta y merkén. Aceite de oliva, láminas de ajo fritas y tostada multisemillas.',allergens:['Gluten'],wines:['azur','talinay'],why:{azur:'Burbuja y acidez refrescan entre bocado y bocado.',talinay:'Salinidad y acidez limpian el aceite del ajillo.'}},
+  {id:'d22',day:'2',service:'Cena',course:'Entrada',name:'Pasta espirales con betarraga',desc:'Salsa de betarraga emulsionada con aceite. Chimichurri y mousse de queso de cabra.',allergens:['Gluten','Lácteos'],wines:['glup','montsecano'],why:{glup:'Acidez y fruta roja acompañan la betarraga y el queso.',montsecano:'Pinot para quien quiere tinto con la pasta.'}},
+  {id:'d23',day:'2',service:'Cena',course:'Plato principal',name:'Asado de tira',desc:'Sellado al vacío con vino tinto y mirr pois. Demi-glace y puré de zapallo rostizado.',allergens:[],wines:['perez-cruz','cabernet'],why:{'perez-cruz':'Carmenere: tanino redondo que agarra el colágeno del corte.',cabernet:'Cabernet para maridaje clásico con carne de cocción larga.'}},
+  {id:'d24',day:'2',service:'Cena',course:'Plato principal',name:'Pesca del día',desc:'Corvina, pejeperro, mulata o lenguado. Cocido con mantequilla y limón. Puré de guisantes y habas.',allergens:['Lácteos'],wines:['talinay','aquitania'],why:{talinay:'Salinidad y acidez en línea con el limón y el pescado.',aquitania:'Chardonnay cremoso para el puré de guisantes.'}},
+  {id:'d25',day:'2',service:'Cena',course:'Plato principal',name:'Musaka de vegetales',desc:'Capas de berenjena y salsa pomodoro. Rellena con ricotta, yema y Grana Padano.',allergens:['Lácteos'],wines:['montsecano','glup'],why:{montsecano:'Pinot delicado para la berenjena y el queso.',glup:'Tinto suave y fresco que no tapa las verduras.'}},
+  {id:'d26',day:'2',service:'Cena',course:'Plato principal',name:'Ají de gallina',desc:'Salsa cremosa de ají amarillo con leche, mantequilla, pan y queso. Pechuga desmenuzada, arroz, huevo y aceitunas.',allergens:['Lácteos','Gluten'],wines:['garage-rose','glup'],why:{'garage-rose':'Acidez y leve tánico con el picor cremoso del ají.',glup:'Tinto ligero que no compite con la salsa amarilla.'}},
+  {id:'d27',day:'2',service:'Almuerzo y Cena',course:'Postre',name:'Texturas de chocolate',desc:'Bizcocho, mousse, papel, helado (38%, 56%, 70%) y Namelaka de chocolate.',allergens:['Lácteos'],wines:['erasmo','perez-cruz'],why:{erasmo:'Late Harvest con frutas confitadas para cacao suave.','perez-cruz':'Carmenere con notas de cacao que acompañan el chocolate.'}},
+  {id:'d28',day:'2',service:'Almuerzo y Cena',course:'Postre',name:'Tres leches',desc:'Bizcocho remojado en tres leches con frambuesas, merengue caramelizado y tierra de manjar.',allergens:['Gluten','Lácteos'],wines:['erasmo'],why:{erasmo:'Maridaje clásico de vino dulce con postre cremoso.'}},
+  {id:'d29',day:'2',service:'Almuerzo y Cena',course:'Postre',name:'Cheesecake con maracuyá',desc:'Queso crema, huevo y gel de maracuyá (agar-agar). Base de tierra de pistacho.',allergens:['Lácteos','Frutos secos'],wines:['erasmo'],why:{erasmo:'Dulzor floral complementa la acidez del maracuyá.'}},
+  {id:'d30',day:'3',service:'Almuerzo',course:'Plato principal',name:'Pastel de papa',desc:'Pino chileno con pollo, huevo y aceituna. Puré de papas con mantequilla y leche. Dorado al horno.',allergens:['Lácteos'],wines:['garage-rose','glup'],why:{'garage-rose':'Equilibra el dulzor del pino y la cremosidad del puré.',glup:'Tinto muy ligero para no pesar sobre el pastel.'}},
+  {id:'d31',day:'3',service:'Almuerzo',course:'Plato principal',name:'Lasaña de vegetales',desc:'Tomate, zucchini, berenjena. Salsa pomodoro, bechamel y Grana Padano.',allergens:['Gluten','Lácteos'],wines:['aquitania','montsecano'],why:{aquitania:'Chardonnay cremoso integra la bechamel y los vegetales.',montsecano:'Pinot elegante para la lasaña de vegetales.'}},
+  {id:'d32',day:'3',service:'Almuerzo',course:'Plato principal',name:'Filete de vacuno',desc:'180g terminado con demi-glace. Puré de zanahoria emulsionada y zanahorias torneadas glaseadas.',allergens:['Lácteos'],wines:['cabernet','montsecano'],why:{cabernet:'Cabernet orgánico: maridaje clásico con proteína de carne.',montsecano:'Pinot para quien quiere tinto elegante más que potente.'}},
+  {id:'d33',day:'3',service:'Almuerzo',course:'Plato principal',name:'Ceviche de pesca blanca',desc:'Leche de tigre con fumet, limón, apio, jengibre, cilantro y ají amarillo. Con cebolla, cancha y camote.',allergens:[],wines:['talinay','azur'],why:{talinay:'Tensión calcárea y salinidad con el limón del ceviche.',azur:'Versión espumante del maridaje clásico con ceviches.'}},
+  {id:'d34',day:'3',service:'Cena',course:'Entrada',name:'Mix de hojas (manzana rostizada)',desc:'Manzana rostizada, cebada, mote, emulsión de betarraga. Dressings de frambuesa y manzana.',allergens:['Gluten (cebada, mote)'],wines:['talinay','garage-rose'],why:{talinay:'Acidez que equilibra el dulzor de la manzana rostizada.','garage-rose':'Fruta roja con la frambuesa y betarraga del dressing.'}},
+  {id:'d35',day:'3',service:'Cena',course:'Entrada',name:'Sopa de espinacas',desc:'Base de cebolla, papa y caldo de vegetales con clorofila de espinaca.',allergens:[],wines:['aquitania','talinay'],why:{aquitania:'Volumen y acidez del Chardonnay para la sopa verde.',talinay:'Sauvignon fresco para una sopa ligera de verduras.'}},
+  {id:'d36',day:'3',service:'Cena',course:'Entrada',name:'Chupe de mariscos',desc:'Centolla, pulpo, camarón y ostiones. Sofrito, leche y pan. Gratinado con Grana Padano.',allergens:['Lácteos','Gluten'],wines:['semillon','aquitania'],why:{semillon:'Textura y acidez para la crema de mariscos.',aquitania:'Chardonnay cremoso para el gratinado.'}},
+  {id:'d37',day:'3',service:'Cena',course:'Entrada',name:'Pasta corta con zapallo camote',desc:'Salsa de zapallo camote emulsionada. Chimichurri y Grana Padano.',allergens:['Gluten','Lácteos'],wines:['glup','aquitania'],why:{glup:'Fruta fresca y acidez para el dulzor del zapallo.',aquitania:'Cremosidad del Chardonnay con la salsa de camote.'}},
+  {id:'d38',day:'3',service:'Cena',course:'Plato principal',name:'Costillar de cerdo',desc:'Braseado al vacío con cerveza. Demi-glace con algarrobo. Puré de camote y cebollas encurtidas.',allergens:['Gluten (trazas cerveza)'],wines:['syrah','perez-cruz'],why:{syrah:'Syrah especiado para el cerdo y el dulzor del camote.','perez-cruz':'Carmenere con taninos redondos para el costillar.'}},
+  {id:'d39',day:'3',service:'Cena',course:'Plato principal',name:'Garrón de cordero',desc:'Garrón delantero al vacío a 85°C con vino tinto. Puré de papa con mantequilla sin lactosa.',allergens:[],wines:['cabernet','syrah'],why:{cabernet:'Cabernet orgánico para el cordero de cocción larga.',syrah:'Syrah con especias que complementan el guiso.'}},
+  {id:'d40',day:'3',service:'Cena',course:'Plato principal',name:'Texturas de coliflor',desc:'Puré de coliflor caramelizada con mantequilla. Coliflor al vacío con ají panca y jengibre, rostizada. Con pebre.',allergens:['Lácteos'],wines:['aquitania','glup'],why:{aquitania:'Cremosidad y acidez para la coliflor caramelizada.',glup:'Tinto suave si el comensal prefiere rojo con vegetales.'}},
+  {id:'d41',day:'3',service:'Cena',course:'Plato principal',name:'Arroz cremoso con mariscos',desc:'Base tipo risotto. Mix de mariscos salteados (camarón, calamares, ostiones, pulpo) con chalaca.',allergens:['Lácteos'],wines:['semillon','aquitania'],why:{semillon:'Textura y acidez para la salsa cremosa de mariscos.',aquitania:'Chardonnay con volumen para el arroz cremoso.'}},
+  {id:'d42',day:'3',service:'Almuerzo y Cena',course:'Postre',name:'Eclair de algarrobo',desc:'Masa choux rellena de mousse de algarrobo y ganache de café. Teja de algarrobo.',allergens:['Gluten','Lácteos'],wines:['erasmo'],why:{erasmo:'Dulzor floral con las notas terrosas del algarrobo.'}},
+  {id:'d43',day:'3',service:'Almuerzo y Cena',course:'Postre',name:'Torta selva negra',desc:'Panqueques remojados en pisco. Gel de frambuesa con crema de chocolate. Ganache de vainilla.',allergens:['Gluten','Lácteos'],wines:['erasmo'],why:{erasmo:'Frutas confitadas y acidez equilibran el chocolate y el pisco.'}},
+  {id:'d44',day:'3',service:'Almuerzo y Cena',course:'Postre',name:'Milhoja de manzana',desc:'Hojas caramelizadas con azúcar, canela y mantequilla. Helado de rica-rica y papel de airampo.',allergens:['Gluten','Lácteos'],wines:['erasmo','azur'],why:{erasmo:'Miel y frutas confitadas con la canela y la manzana.',azur:'Opción fresca para quien no quiere vino dulce.'}},
+  {id:'d45',day:'4',service:'Almuerzo',course:'Plato principal',name:'Pulmay',desc:'Caldo con pollo, cerdo, longaniza, camarón, choros y papas nativas. Pimentón, apio, cebolla, zanahoria y vino blanco. Gluten free / sin lactosa.',allergens:[],wines:['azur','talinay'],why:{azur:'Burbuja refrescante para la mezcla intensa de mariscos y carnes.',talinay:'Blanco salino y cítrico para el caldo de mariscos.'}},
+  {id:'d46',day:'4',service:'Almuerzo',course:'Plato principal',name:'Arroz chaufa',desc:'Arroz salteado con carne, huevo y pachicay. Soya, jengibre y aceite de sésamo. Hojas de cebollín.',allergens:['Gluten (soya)'],wines:['garage-rose','glup'],why:{'garage-rose':'Acidez y agarre tánico con la soya y la fritura.',glup:'Tinto ligero para no pesar sobre el chaufa.'}},
+  {id:'d47',day:'4',service:'Almuerzo',course:'Plato principal',name:'Lechuga de Sequitor al fuego',desc:'Protagonista es la lechuga. Puré de peras al vino blanco, peras brunoise rostizadas y demi-glace de vegetales.',allergens:[],wines:['talinay','garage-rose'],why:{talinay:'Acidez equilibra el dulzor de la pera y las notas ahumadas.','garage-rose':'Fruta roja fresca con la lechuga y la pera.'}},
+  {id:'d48',day:'4',service:'Almuerzo',course:'Plato principal',name:'Tiradito de ostiones',desc:'Sobre emulsión de palta y leche de tigre. Tocinos crocantes.',allergens:[],wines:['talinay','azur'],why:{talinay:'Salinidad y tensión cítrica en línea con la leche de tigre.',azur:'Burbuja gastronómica para el tiradito.'}},
+  {id:'d49',day:'4',service:'Cena',course:'Entrada',name:'Ensalada hojas con tomate',desc:'Tomates mondados, papel de tomate crocante, mousse de queso de cabra y dressing de tomate.',allergens:['Lácteos'],wines:['talinay','garage-rose'],why:{talinay:'Acidez y salinidad con la frescura del tomate.','garage-rose':'Fruta roja y acidez con el queso de cabra.'}},
+  {id:'d50',day:'4',service:'Cena',course:'Entrada',name:'Sopa de vegetales',desc:'Base de papa, cebolla y puerros.',allergens:[],wines:['aquitania','talinay'],why:{aquitania:'Volumen suave del Chardonnay para la sopa de raíces.',talinay:'Sauvignon fresco para sopa ligera de vegetales.'}},
+  {id:'d51',day:'4',service:'Cena',course:'Entrada',name:'Pasta casera con choritos',desc:'Salsa cremosa de choritos con jengibre, limón y vino blanco. Cilantro y ralladura de limón.',allergens:['Gluten','Lácteos'],wines:['semillon','aquitania'],why:{semillon:'Textura y acidez para los choritos y el jengibre.',aquitania:'Cremosidad del Chardonnay con la salsa de choritos.'}},
+  {id:'d52',day:'4',service:'Cena',course:'Entrada',name:'Causa de pollo',desc:'Deconstruida. Puré de papa con ají amarillo. Pollo desmenuzado con salsa golf, mousse de palta y chalaca.',allergens:[],wines:['talinay','garage-rose'],why:{talinay:'Acidez y frescura con el ají amarillo y el limón.','garage-rose':'Rosado versátil para la mezcla de sabores peruanos.'}},
+  {id:'d53',day:'4',service:'Cena',course:'Plato principal',name:'Plateada (brisket)',desc:'16 horas a 85°C con vino tinto. Vegetales de estación salteados (papas, ollucos, champiñones, tomate cherry).',allergens:[],wines:['cabernet','perez-cruz'],why:{cabernet:'Cabernet orgánico para la cocción larga y los jugos.','perez-cruz':'Carmenere con taninos redondos para la plateada.'}},
+  {id:'d54',day:'4',service:'Cena',course:'Plato principal',name:'Corvina con gnocchis',desc:'Corvina con gnocchis de papa, salsa de betarraga y crema cítrica de fumet.',allergens:['Gluten','Lácteos (lactosa)'],wines:['aquitania','semillon'],why:{aquitania:'Cremosidad para los gnocchis y la salsa de betarraga.',semillon:'Textura y acidez para el fumet cítrico.'}},
+  {id:'d55',day:'4',service:'Cena',course:'Plato principal',name:'Berenjena rostizada',desc:'Confitada al vacío. Puré de humus de poroto pallar con berenjena. Chimichurri y crocante de setas.',allergens:[],wines:['glup','montsecano'],why:{glup:'Tinto suave para la berenjena y el humus.',montsecano:'Pinot elegante para las setas y la berenjena.'}},
+  {id:'d56',day:'4',service:'Cena',course:'Plato principal',name:'Pato con milhojas de papa',desc:'Pato a la plancha (recomendado a punto o 3/4). Demi-glace de pato. Milhojas con mantequilla y tomillo.',allergens:['Lácteos'],wines:['montsecano','cabernet'],why:{montsecano:'Pinot clásico con pato: tanino suave y acidez viva.',cabernet:'Cabernet para quien quiere tinto intenso con el pato.'}},
+  {id:'d57',day:'4',service:'Almuerzo y Cena',course:'Postre',name:'Parfait de papa dulce',desc:'Ice cream sandwich. Crema, yema, rica-rica. Crocantes de papa dulce, gel de naranja y toffee.',allergens:['Lácteos'],wines:['erasmo','azur'],why:{erasmo:'Dulzor floral con naranja y papa dulce.',azur:'Espumante seco si prefiere cierre fresco.'}},
+  {id:'d58',day:'4',service:'Almuerzo y Cena',course:'Postre',name:'Tiramisú',desc:'Galleta de champán en café descafeinado y licor de almendras. Crema de mascarpone con cacao.',allergens:['Gluten','Lácteos','Frutos secos'],wines:['erasmo','perez-cruz'],why:{erasmo:'Late Harvest con el café y el mascarpone.','perez-cruz':'Carmenere con notas de cacao para el tiramisú.'}},
+  {id:'d59',day:'4',service:'Almuerzo y Cena',course:'Postre',name:'Panacotta de vainilla',desc:'Crema de vainilla de Madagascar gelificada con colapez. Frutos rojos.',allergens:['Lácteos'],wines:['erasmo','azur'],why:{erasmo:'Dulzor floral con la vainilla y los frutos rojos.',azur:'Burbuja seca para un cierre liviano.'}},
+  {id:'d60',day:'1',service:'Cena',course:'Entrada',name:'Sopa de coliflor',desc:'Coliflor picada fina, dorada en mantequilla sin lactosa hasta lograr sabor avellanado, vino blanco y caldo de vegetales. Textura cremosa. Sin lactosa.',allergens:[],wines:['aquitania','semillon'],why:{aquitania:'Cremosidad y acidez del Chardonnay integran el sabor avellanado de la coliflor.',semillon:'Textura y acidez para la crema de vegetales sin lactosa.'}}
+];
+
+const WINES = [
+  {id:'azur',type:'espumante',name:'Azur Extra Brut',valley:'Valle del Limarí',identity:'Espumante orgánico, método tradicional, Extra Brut (muy seco). Mezcla de uvas de clima frío del Limarí.',terroir:'Valle del Limarí, norte chico de Chile. Clima semiárido frío de costa, camanchaca, suelos calcáreos. Acidez marcada y sensación mineral muy clara.',winery:'Manejo orgánico. Segunda fermentación en botella (método tradicional). Crianza sobre lías. Sin exceso de azúcar de dosaje.',style:'Burbuja fina y persistente. Cítricos, manzana verde, flores blancas y pan tostado. Seco, acidez alta, cuerpo medio-ligero, final salino.',shortpitch:'Es un espumante orgánico del valle del Limarí, muy seco y fresco, con burbuja fina. Ideal para mariscos gratinados, camarones al ajillo o para comenzar con ceviches y tiraditos.',pitch:'Viene de la costa del norte chico, donde la niebla y el viento mantienen la uva muy fresca. Eso le da una acidez alta que limpia la grasa del gratín o del ajo, y la burbuja arrastra la salsa y deja la boca lista para el siguiente bocado.'},
+  {id:'talinay',type:'blanco',name:'Talinay Sauvignon Blanc',valley:'Tabalí, Valle del Limarí',identity:'Blanco seco, 100% Sauvignon Blanc, viñedo Talinay. Uno de los terroirs más fríos y calcáreos de Chile.',terroir:'12 km del océano Pacífico. Clima frío de costa, camanchaca matinal, brisas marinas. Roca calcárea fracturada: altísima acidez, gran tensión y marcada salinidad.',winery:'Viña Tabalí, pionera en la zona calcárea. Rendimientos bajos, vendimia manual, fermentación fría, mínima madera.',style:'Lima, pomelo, hierbas finas, flores blancas, piedra y tiza. Muy tenso, acidez alta, cuerpo medio, final largo cítrico y salino.',shortpitch:'Es un Sauvignon de costa muy fría, cítrico y salino, perfecto para ceviches, tiraditos y pescados blancos.',pitch:'Las parras están plantadas casi sobre roca, muy cerca del mar. Eso le da una tensión y una salinidad natural que se alinea con el limón y la sal del ceviche o del tiradito, y a la vez limpia el caldo del sudado de trucha sin tapar el sabor del pescado.'},
+  {id:'aquitania',type:'blanco',name:'Aquitania Chardonnay',valley:'Valle de Casablanca',identity:'Blanco seco, 100% Chardonnay, DO Valle de Casablanca.',terroir:'Entre Santiago y Valparaíso, cerca del océano. Clima mediterráneo frío, nieblas matinales, arcillas y arenas sobre granito.',winery:'Viña Aquitania, larga trayectoria. Equilibrio: frescor, fruta definida y cremosidad moderada, sin exceso de madera.',style:'Manzana, pera, cítricos, flores blancas, toque de crema o mantequilla suave. Acidez marcada, cuerpo medio, textura ligeramente cremosa.',shortpitch:'Es un Chardonnay fresco de Casablanca, con algo de cremosidad, muy cómodo para sopas, platos con queso y pescados con salsas suaves.',pitch:'Viene de un valle de clima frío, por eso mantiene muy buena acidez. Al mismo tiempo tiene volumen suficiente para ir de la mano con sopas cremosas, lasaña de vegetales o un pescado con salsa, sin que el conjunto se vuelva pesado.'},
+  {id:'semillon',type:'blanco',name:'La Palma Semillón',valley:'Carter Mollenhauer, Itata Secano Interior',identity:'Blanco seco, 100% Semillón de viñas viejas (~1900) en Guarilihue, secano del Itata.',terroir:'Sur de Chile, clima mediterráneo fresco. Lomas de secano sin riego, suelos graníticos ricos en cuarzo. Buena acidez, textura y carácter mineral.',winery:'Carter Mollenhauer: rescate de viñedos patrimoniales. Orgánico, levaduras nativas, mínima madera. Parcela emblemática de Semillón centenario.',style:'Cítricos maduros, hierbas secas, flores, piedra mojada. Acidez firme, volumen medio, a veces textura cremosa por lías y toque de pieles.',shortpitch:'Es un Semillón de viñas centenarias del Itata, con buena acidez y textura; ideal para chupes, mariscos cremosos y el sudado de trucha.',pitch:'Las parras se plantaron hace más de cien años en lomas de secano sobre granito. Eso le da al vino una acidez natural y una textura muy fina que se agarra a salsas cremosas, como el chupe o el pulpo con pastelera, pero manteniendo frescor en boca.'},
+  {id:'garage-rose',type:'rosado',name:'Garage Wine Co. Old Vine Pale Rosé',valley:'Maule Secano',identity:'Rosado seco gastronómico. Mezcla de Cariñena y Monastrell, viñas viejas de secano, zona Empedrado/Truquilemu.',terroir:'Maule interior, secano. Clima mediterráneo con veranos calurosos. Viñas en cabeza, trabajadas a caballo, suelos graníticos muy pobres.',winery:'Garage Wine Co.: pequeños viñedos patrimoniales, agricultura ancestral, mínima intervención. Rosado de mesa, no de piscina.',style:'Color pálido. Frambuesa, cereza, hierbas mediterráneas, flores. Completamente seco, acidez alta, cuerpo medio, leve agarre tánico. Muy versátil.',shortpitch:'Es un rosado de viñas viejas del Maule, seco y con buena acidez; funciona muy bien con frituras, platos con un poco de picor y preparaciones que mezclan mar y tierra.',pitch:'Es casi un tinto muy claro: tiene fruta roja, acidez alta y un pequeño agarre tánico que ayuda a limpiar platos como el pastel de choclo, el chaufa con huevo frito o el chicharrón. Es una alternativa más fresca cuando el plato es intenso pero el comensal no quiere un tinto pesado.'},
+  {id:'montsecano',type:'tinto',name:'Montsecano Pinot Noir',valley:'Valle de Casablanca',identity:'Tinto de clima frío, 100% Pinot Noir, DO Valle de Casablanca. Proyecto biodinámico.',terroir:'Valle costero, nieblas matinales, viento del océano. Granito descompuesto y arenas: alta acidez, tanino fino, gran bebilidad.',winery:'Proyecto pequeño y reconocido. Biodinámica, mínima intervención. Fermentación en huevos de cemento. Sin maquillaje de madera nueva.',style:'Frutilla, cereza, flores, hierbas, fondo salino. Jugoso, cuerpo medio, tanino sedoso, acidez viva.',shortpitch:'Es un Pinot Noir de Casablanca, muy elegante y fresco, con tanino suave; va perfecto con pato, risottos, moussaka y carnes rojas en punto jugoso.',pitch:'Al ser un tinto de clima frío, tiene buena acidez y tanino muy fino. Eso hace que se lleve muy bien con platos de textura cremosa como el risotto, y con carnes como el pato o el filete, sin sensación de pesadez.'},
+  {id:'glup',type:'tinto',name:'Glup Cinsault',valley:'Longaví, Itata Secano Interior',identity:'Tinto ligero, 100% Cinsault, secano interior del Itata.',terroir:'Lomas cercanas al mar, clima mediterráneo fresco, viñas viejas en cabeza sobre suelos graníticos. Temperaturas moderadas, noches frescas: vinos de baja graduación y gran frescor.',winery:'Línea de Longaví Wines. Variedades patrimoniales, cosecha temprana, poca extracción, crianza sencilla. Vinos gastronómicos muy bebibles.',style:'Guinda, frutilla, flores, pimienta blanca y hierbas. Muy ligero, tanino suave, acidez marcada. Se puede servir ligeramente fresco.',shortpitch:'Es un tinto muy suave y fresco del Itata, ideal para platos algo dulces o cremosos como el pastel de choclo, el pastel de papa o el charquicán.',pitch:'Las viñas están en secano sobre suelos graníticos y se cosechan relativamente temprano, por eso el vino tiene buena acidez y poco tanino. Es perfecto cuando el viajero quiere tinto, pero no algo pesado ni con mucha madera.'},
+  {id:'perez-cruz',type:'tinto',name:'Pérez Cruz L.E. Carmenere',valley:'Maipo Andes',identity:'Tinto, Carmenere de selección de parcelas, DO Maipo Andes.',terroir:'Al sur de Santiago, pie de cordillera. Clima mediterráneo, gran amplitud térmica. Suelos aluviales y coluviales, pedregosos, de origen volcánico.',winery:'Viña Pérez Cruz, único viñedo en manejo sustentable. Limited Edition: versiones precisas de cepas bordelesas. Fruta madura, taninos redondos, madera equilibrada.',style:'Fruta negra madura, especias dulces, cacao, pimentón asado, hierbas. Tanino medio-alto pero redondo, cuerpo medio-alto, final largo.',shortpitch:'Es un Carmenere de Maipo Andes, con fruta negra y taninos firmes pero redondos; ideal para asado de tira, costillar y plateada.',pitch:'El viñedo está en la parte alta del Maipo, sobre suelos pedregosos. Eso da un Carmenere con estructura y frescor. Se siente la fruta negra y las especias, y el tanino se agarra muy bien a carnes de cocción lenta, con salsas concentradas.'},
+  {id:'cabernet',type:'tinto',name:'Pura Fe Cabernet Sauvignon',valley:'Antiyal, Maipo Andes',identity:'Tinto, 100% Cabernet Sauvignon orgánico, Maipo Andes.',terroir:'Zona referente mundial para Cabernet. Suelos volcánicos, aluviales, con mucha piedra y excelente drenaje. Días calurosos y noches frías: madurez completa con acidez.',winery:'Antiyal, proyecto de Álvaro Espinoza, pionero de la biodinámica en Chile. Orgánico y biodinámico, rendimientos moderados, barrica equilibrada.',style:'Cassis, ciruela, pimentón asado, grafito, tabaco suave, hierbas. Cuerpo lleno, taninos firmes y pulidos, buena acidez, final largo.',shortpitch:'Es nuestro Cabernet orgánico de Maipo Andes, con estructura y fruta negra; perfecto para filetes, asado de tira, cordero y plateada.',pitch:'Es un Cabernet de clima andino, con taninos firmes pero muy pulidos y una acidez que evita que el vino se sienta pesado. Acompaña muy bien la textura de carnes rojas y de cocción larga, y aguanta salsas con fondo de vino tinto.'},
+  {id:'syrah',type:'tinto',name:'Clos de Luz "Azuda" Syrah',valley:'Valle de Cachapoal (Almahue)',identity:'Tinto, 100% Syrah, línea Azuda de Clos de Luz, Almahue en Cachapoal.',terroir:'Almahue, interior del valle de Cachapoal. Clima templado, veranos cálidos moderados por la Cordillera. Laderas con suelos graníticos: acidez fresca y taninos finos.',winery:'Clos de Luz, viña familiar. Variedades mediterráneas en viñedos antiguos. Azuda en cubas de concreto y tinajas de greda. Frescor más que potencia.',style:'Fruta negra, moras, especias (pimienta, hierbas), notas florales, fondo mineral. Intenso pero fresco, cuerpo medio-alto, buena acidez, taninos elegantes.',shortpitch:'Es un Syrah de Almahue, intenso pero fresco, con mucha fruta negra y especias; funciona muy bien con cordero, costillar, plateada y pato.',pitch:'Se vinifica en concreto y tinajas, lo que conserva la frescura y el carácter de fruta. Tiene suficiente estructura para carnes de cocción larga, pero al mismo tiempo mantiene una acidez que hace el conjunto más liviano.'},
+  {id:'erasmo',type:'dulce',name:'Erasmo Late Harvest Torontel',valley:'Valle del Maule',identity:'Vino dulce natural (Late Harvest), uvas Torontel sobremaduras del Maule.',terroir:'Maule interior, clima mediterráneo, veranos cálidos y otoños secos. Suelos franco-arcillosos y graníticos. La uva concentra azúcar y aromas en la planta.',winery:'Erasmo: tradición italiana con secano del Maule. Late Harvest equilibrado: buena acidez y aromas florales intensos, sin sensaciones empalagosas.',style:'Flores blancas, miel, fruta de hueso, frutas confitadas, piel de naranja. Dulzor marcado con acidez suficiente. Textura untuosa, final largo.',shortpitch:'Es nuestro vino de postre, un Late Harvest de Torontel del Maule, con notas de miel y frutas confitadas; va muy bien con tres leches, cheesecake, carrot cake o la degustación de chañar.',pitch:'La uva se deja sobremadurar en la planta para concentrar azúcar y aromas. El resultado es un vino dulce pero con acidez suficiente para no cansar. Es la mejor opción cuando el viajero quiere cerrar con un maridaje clásico de postre y vino.'}
+];
+
+const GUIONES = [
+  {title:'Aperitivos y bienvenida',text:'«Mientras revisan la carta, podemos ofrecerles algo fresco por copa. Si prefieren burbuja, tenemos un espumante orgánico del valle del Limarí, muy seco y con burbuja fina. Si prefieren vino, nuestro Sauvignon de Talinay es cítrico y salino, ideal para comenzar, sobre todo si luego van a pedir ceviche o platos de mar.»',wines:['azur','talinay']},
+  {title:'Mariscos y pescados',text:'«Para platos de mar como el ceviche, el tiradito o el sudado de trucha, lo que mejor funciona son vinos de costa y clima frío, con buena acidez y salinidad. El Sauvignon de Talinay viene de un viñedo a pocos kilómetros del mar, sobre suelos calcáreos. Si el plato es más cremoso, como el chupe de centolla o el pulpo con pastelera de choclo, sugerimos un Semillón del Itata o un Chardonnay, que tienen más textura para sostener la salsa.»',wines:['talinay','semillon','aquitania']},
+  {title:'Carnes rojas, cerdo y cordero',text:'«Para cortes como el asado de tira, el garrón de cordero o la plateada, sugerimos tintos de Maipo Andes o de Almahue. El Cabernet Pura Fe es el estilo clásico del Maipo andino. Si quieren algo más especiado, el Syrah de Almahue tiene fruta negra y especias con tanino más sedoso. Si el plato tiene picor o fritura, un rosado seco funciona mejor que un tinto muy pesado.»',wines:['cabernet','perez-cruz','syrah','garage-rose']},
+  {title:'Cocina vegetariana y verduras',text:'«Para platos como la lasaña de vegetales, el zucchini relleno o el charquicán vegetariano, buscamos vinos que acompañen la cremosidad y el umami de las verduras sin taparlos. En blancos, un Chardonnay de Casablanca. En tintos, un Cinsault del Itata o un Pinot de Casablanca son suaves y frescos, con tanino muy fino.»',wines:['aquitania','montsecano','glup']},
+  {title:'Postres y cierre de experiencia',text:'«La mayoría de los postres son dulces y cremosos. La mejor combinación suele ser un café o una infusión. Si quieren maridarlo con vino, tenemos un Late Harvest de Torontel del Maule, que va muy bien con tres leches, cheesecake o la degustación de chañar. Si prefieren un cierre más fresco y menos dulce, el espumante seco es ideal con postres de fruta o helado.»',wines:['erasmo','azur']}
+];
+
+const COURSE_ORDER = ['Entrada','Plato principal','Postre'];
+const SERVICE_ORDER = ['Almuerzo','Cena','Almuerzo y Cena'];
+
+let currentTab = 'menus';
+let currentDay = 'all';
+let wineFilter = 'todos';
+let selectedDish = null;
+let selectedWine = null;
+let currentLang = 'es';
+
+// ── UI STRINGS ──────────────────────────────────────────────────────────────
+const UI = {
+  es: {
+    appTitle:'Explora Atacama — Vinos & Menús', appSubtitle:'Guía de servicio: maridajes, alérgenos y fichas de vino',
+    tabMenus:'Menús por día', tabWines:'Fichas de vino', tabGuiones:'Guiones de venta',
+    searchDish:'Buscar plato...', searchWine:'Buscar vino o cepa...',
+    allDays:'Todos los días', day:'Día', lunch:'Almuerzo', dinner:'Cena', lunchDinner:'Almuerzo y Cena',
+    starter:'Entrada', main:'Plato principal', dessert:'Postre',
+    allergens:'Alérgenos', pairings:'Maridajes sugeridos',
+    identity:'Identidad', terroir:'Terroir', winery:'Viña y filosofía', style:'Estilo en copa',
+    salesScript:'Guion de venta', shortPitch:'Frase corta:', development:'Desarrollo:',
+    pairedDishes:'Platos del menú con este vino', mentionedWines:'Vinos mencionados',
+    noDishes:'No se encontraron platos',
+    all:'Todos', sparkling:'Espumante', whites:'Blancos', rose:'Rosado', reds:'Tintos', sweet:'Dulce',
+    lbl_espumante:'Espumante', lbl_blanco:'Blanco', lbl_rosado:'Rosado', lbl_tinto:'Tinto', lbl_dulce:'Dulce'
+  },
+  en: {
+    appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Service guide: pairings, allergens and wine sheets',
+    tabMenus:'Menus by day', tabWines:'Wine sheets', tabGuiones:'Sales scripts',
+    searchDish:'Search dish...', searchWine:'Search wine or grape...',
+    allDays:'All days', day:'Day', lunch:'Lunch', dinner:'Dinner', lunchDinner:'Lunch & Dinner',
+    starter:'Starter', main:'Main course', dessert:'Dessert',
+    allergens:'Allergens', pairings:'Suggested pairings',
+    identity:'Identity', terroir:'Terroir', winery:'Winery & philosophy', style:'Style in glass',
+    salesScript:'Sales script', shortPitch:'Short pitch:', development:'Development:',
+    pairedDishes:'Menu dishes with this wine', mentionedWines:'Mentioned wines',
+    noDishes:'No dishes found',
+    all:'All', sparkling:'Sparkling', whites:'Whites', rose:'Rosé', reds:'Reds', sweet:'Sweet',
+    lbl_espumante:'Sparkling', lbl_blanco:'White', lbl_rosado:'Rosé', lbl_tinto:'Red', lbl_dulce:'Sweet'
+  },
+  pt: {
+    appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Guia de serviço: harmonizações, alérgenos e fichas de vinho',
+    tabMenus:'Menus por dia', tabWines:'Fichas de vinho', tabGuiones:'Roteiros de venda',
+    searchDish:'Buscar prato...', searchWine:'Buscar vinho ou uva...',
+    allDays:'Todos os dias', day:'Dia', lunch:'Almoço', dinner:'Jantar', lunchDinner:'Almoço e Jantar',
+    starter:'Entrada', main:'Prato principal', dessert:'Sobremesa',
+    allergens:'Alérgenos', pairings:'Harmonizações sugeridas',
+    identity:'Identidade', terroir:'Terroir', winery:'Adega e filosofia', style:'Estilo na taça',
+    salesScript:'Roteiro de venda', shortPitch:'Frase curta:', development:'Desenvolvimento:',
+    pairedDishes:'Pratos do menu com este vinho', mentionedWines:'Vinhos mencionados',
+    noDishes:'Nenhum prato encontrado',
+    all:'Todos', sparkling:'Espumante', whites:'Brancos', rose:'Rosé', reds:'Tintos', sweet:'Doce',
+    lbl_espumante:'Espumante', lbl_blanco:'Branco', lbl_rosado:'Rosé', lbl_tinto:'Tinto', lbl_dulce:'Doce'
+  }
+};
+function t(k){ return UI[currentLang][k] || UI.es[k]; }
+
+// ── DISH TRANSLATIONS ────────────────────────────────────────────────────────
+const DISH_TRANS = {
+en:{
+d1:{name:'Salmon-style trout',desc:'Cooked in yellow ají, red ají panca, onion, tomato, garlic, white wine and fish fumet sauce. With sautéed vegetables and diced fried yuca.',why:{azur:'Bubbles clean the sauce and enhance the trout.',talinay:'Citric tension and salinity in line with the yellow ají.'}},
+d2:{name:'Corn pie',desc:'Corn crust with diced chicken pieces, olive and egg.',why:{'garage-rose':'Acidity and light tannin balance the sweetness of the corn.',glup:'Light red that doesn\'t weigh down the pie.'}},
+d3:{name:'Stuffed zucchini',desc:'On a mixed greens bed. Filled with mushroom sofrito, quinoa and mushroom purée. Béchamel with beetroot, gratin with Grana Padano.',why:{aquitania:'Creaminess and acidity integrate the béchamel and cheese.',semillon:'Volume and texture for the mushroom umami.'}},
+d4:{name:'Ceviche of the day',desc:'Mix of octopus, trout, shrimp and scallop. Tiger\'s milk with celery, cilantro, lemon, ginger, yellow ají, onion and garlic. With Peruvian corn, sweet potato and canchita.',why:{azur:'Gastronomic sparkling: bubble and acidity go with the lemon.',talinay:'Saline and citric Sauvignon: follows the ceviche line.'}},
+d5:{name:'Green salad (Larache/Sequitor)',desc:'Mixed greens, quinoa dyed with beetroot and yellow ají, charred Peruvian corn. Blackberry or raspberry acid dressing.',why:{talinay:'Acidity that aligns with the dressing and bitter leaves.','garage-rose':'Fresh red fruit in line with the blackberry in the dressing.'}},
+d6:{name:'King crab chupe',desc:'Baked creamy cake. Onion, red bell pepper and white wine sofrito with king crab meat and milk-soaked bread. Gratin with Grana Padano.',why:{semillon:'Texture and acidity to sustain the creamy seafood sauce.',aquitania:'Chardonnay volume integrates the chupe cream.'}},
+d7:{name:'Homemade pasta with duck ragù',desc:'Pasta of the day. Duck thigh ragù slow-cooked with mirepoix and red wine. Shredded with sauce reduction and chimichurri.',why:{montsecano:'Soft tannin and acidity accompany the duck fat.','perez-cruz':'Carmenere for those who want structure with the ragù.'}},
+d8:{name:'Pork crackling',desc:'Pork belly slow-cooked, fried with cornstarch. Demi-glace with algarrobo. With native potatoes, uchucuta sauce and Airampo puffs.',why:{'garage-rose':'Acidity and light tannin clean the frying and uchucuta.',glup:'Light red to not overpower the flavour.'}},
+d9:{name:'Octopus',desc:'Sous-vide at 90°C for 2 hours. With Peruvian anticuchera sauce (onion, yellow ají, cumin, ají panca, oregano, vinegar and soy).',why:{semillon:'Medium texture sustains the anticuchera sauce.',talinay:'Salinity and citric tension with the ají and lemon.'}},
+d10:{name:'Beef risotto',desc:'Arborio rice with oxtail broth (5 hours). Butter, Grana Padano and traditional chimichurri.',why:{montsecano:'Silky tannin respects the creamy risotto texture.','perez-cruz':'Carmenere for those who want more structure.'}},
+d11:{name:'Vegetarian charquicán',desc:'Onion, bell pepper, potato and butternut squash with peas, corn and carrot. Soft-cooked egg yolk at 63°C.',why:{glup:'Fresh fruit and acidity enhance the pumpkin without weighing it down.',montsecano:'Elegant Pinot for a vegetable preparation.'}},
+d12:{name:'Chañar textures',desc:'Crème brûlée with chañar syrup, cocoa cookie, soil and chañar ice cream.',why:{erasmo:'Late Harvest with honey and candied fruit: classic sweet pairing.'}},
+d13:{name:'Carrot cake',desc:'Carrot and cocoa sponge. Cream cheese frosting with orange zest. Caramelised almonds.',why:{erasmo:'The sweetness and orange notes go with carrot cake.'}},
+d14:{name:'Vanilla flan',desc:'Traditional flan with caramel (egg, milk and sugar).',why:{erasmo:'Floral sweetness complements the vanilla.',azur:'Dry sparkling as a fresh closing option.'}},
+d15:{name:'Gratinated scallops',desc:'100g scallops with béchamel, white wine and Grana Padano, oven-baked.',why:{azur:'Bubble and acidity cut through the gratin fat.',semillon:'Medium texture for the béchamel and scallop sweetness.'}},
+d16:{name:'Roasted broccoli',desc:'Sautéed in butter. Vegetable purée (tomato, butternut squash, zucchini, potatoes) and tomato chutney.',why:{aquitania:'Creamy Chardonnay integrates the vegetable purée.',glup:'Light red for those who prefer red with roasted vegetables.'}},
+d17:{name:'Lomo saltado',desc:'Stir-fried beef with soy sauce and beer. Onion, tomato, cilantro. Rice and potatoes.',why:{'garage-rose':'Acidity and tannin grip with the soy and frying.',syrah:'Spiced Syrah for the sauce notes.'}},
+d18:{name:'Tiradito of Chilean abalone',desc:'Sliced cooked locos. Green sauce (onion, cilantro, green ají, lemon) and lemon mayonnaise.',why:{talinay:'Salinity and citric tension with the green sauce.',azur:'Bubble for a sparkling pairing with tiradito.'}},
+d19:{name:'Leaf salad with figs',desc:'Fig dressing with blue cheese, caramelised almonds and infused figs.',why:{erasmo:'Floral sweetness combines with the figs and blue cheese.','garage-rose':'Acidity and red fruit balance the blue cheese.'}},
+d20:{name:'Pumpkin soup',desc:'Pumpkin and chañar syrup, cooked and lightened.',why:{aquitania:'Creaminess and acidity integrate the pumpkin sweetness.',semillon:'Medium texture for soup with sweet notes.'}},
+d21:{name:'Garlic prawns',desc:'Size 16-20 with coriander seeds, pepper and merkén. Olive oil, fried garlic slices and multigrain toast.',why:{azur:'Bubble and acidity refresh between bites.',talinay:'Salinity and acidity clean the garlic oil.'}},
+d22:{name:'Spiral pasta with beetroot',desc:'Emulsified beetroot sauce with oil. Chimichurri and goat cheese mousse.',why:{glup:'Acidity and red fruit accompany the beetroot and cheese.',montsecano:'Pinot for those who want red with pasta.'}},
+d23:{name:'Beef short ribs',desc:'Vacuum-sealed with red wine and mirepoix. Demi-glace and roasted butternut squash purée.',why:{'perez-cruz':'Carmenere: round tannin grips the cut\'s collagen.',cabernet:'Cabernet for classic pairing with long-cooked beef.'}},
+d24:{name:'Fish of the day',desc:'Corvina, pejeperro, mulata or sole. Cooked with butter and lemon. Pea and broad bean purée.',why:{talinay:'Salinity and acidity in line with lemon and fish.',aquitania:'Creamy Chardonnay for the pea purée.'}},
+d25:{name:'Vegetable moussaka',desc:'Layers of eggplant and pomodoro sauce. Filled with ricotta, egg yolk and Grana Padano.',why:{montsecano:'Delicate Pinot for the eggplant and cheese.',glup:'Soft fresh red that doesn\'t overpower the vegetables.'}},
+d26:{name:'Ají de gallina',desc:'Creamy yellow ají sauce with milk, butter, bread and cheese. Shredded chicken breast, rice, egg and olives.',why:{'garage-rose':'Acidity and slight tannin with the creamy spice of the ají.',glup:'Light red that doesn\'t compete with the yellow sauce.'}},
+d27:{name:'Chocolate textures',desc:'Sponge, mousse, paper, ice cream (38%, 56%, 70%) and chocolate Namelaka.',why:{erasmo:'Late Harvest with candied fruit for mild cocoa.','perez-cruz':'Carmenere with cocoa notes that accompany chocolate.'}},
+d28:{name:'Tres leches',desc:'Sponge soaked in three milks with raspberries, caramelised meringue and dulce de leche soil.',why:{erasmo:'Classic sweet wine pairing with creamy dessert.'}},
+d29:{name:'Cheesecake with passion fruit',desc:'Cream cheese, egg and passion fruit gel (agar-agar). Pistachio soil base.',why:{erasmo:'Floral sweetness complements the passion fruit acidity.'}},
+d30:{name:'Potato pie',desc:'Chilean-style filling with chicken, egg and olive. Buttered mashed potatoes. Oven-baked golden.',why:{'garage-rose':'Balances the sweetness of the filling and the purée creaminess.',glup:'Very light red to not weigh down the pie.'}},
+d31:{name:'Vegetable lasagne',desc:'Tomato, zucchini, eggplant. Pomodoro sauce, béchamel and Grana Padano.',why:{aquitania:'Creamy Chardonnay integrates the béchamel and vegetables.',montsecano:'Elegant Pinot for vegetable lasagne.'}},
+d32:{name:'Beef fillet',desc:'180g finished with demi-glace. Emulsified carrot purée and glazed turned carrots.',why:{cabernet:'Organic Cabernet: classic pairing with beef protein.',montsecano:'Pinot for those who want elegant rather than powerful red.'}},
+d33:{name:'White fish ceviche',desc:'Tiger\'s milk with fish fumet, lemon, celery, ginger, cilantro and yellow ají. With onion, cancha and sweet potato.',why:{talinay:'Calcareous tension and salinity with the ceviche lemon.',azur:'Sparkling version of the classic ceviche pairing.'}},
+d34:{name:'Mixed leaves (roasted apple)',desc:'Roasted apple, barley, mote, beetroot emulsion. Raspberry and apple dressings.',why:{talinay:'Acidity that balances the sweetness of roasted apple.','garage-rose':'Red fruit with the raspberry and beetroot in the dressing.'}},
+d35:{name:'Spinach soup',desc:'Onion, potato and vegetable broth base with spinach chlorophyll.',why:{aquitania:'Volume and acidity of Chardonnay for the green soup.',talinay:'Fresh Sauvignon for a light vegetable soup.'}},
+d36:{name:'Seafood chupe',desc:'King crab, octopus, shrimp and scallops. Sofrito, milk and bread. Gratin with Grana Padano.',why:{semillon:'Texture and acidity for the seafood cream.',aquitania:'Creamy Chardonnay for the gratin.'}},
+d37:{name:'Short pasta with sweet pumpkin',desc:'Emulsified sweet pumpkin sauce. Chimichurri and Grana Padano.',why:{glup:'Fresh fruit and acidity for the pumpkin sweetness.',aquitania:'Chardonnay creaminess with the sweet pumpkin sauce.'}},
+d38:{name:'Pork ribs',desc:'Braised sous-vide with beer. Demi-glace with algarrobo. Sweet potato purée and pickled onions.',why:{syrah:'Spiced Syrah for the pork and sweet potato sweetness.','perez-cruz':'Carmenere with round tannins for the ribs.'}},
+d39:{name:'Lamb shank',desc:'Front shank sous-vide at 85°C with red wine. Mashed potato with lactose-free butter.',why:{cabernet:'Organic Cabernet for long-cooked lamb.',syrah:'Syrah with spices that complement the stew.'}},
+d40:{name:'Cauliflower textures',desc:'Caramelised cauliflower purée with butter. Sous-vide cauliflower with ají panca and ginger, roasted. With pebre.',why:{aquitania:'Creaminess and acidity for caramelised cauliflower.',glup:'Light red if the guest prefers red with vegetables.'}},
+d41:{name:'Creamy seafood rice',desc:'Risotto-style base. Sautéed seafood mix (shrimp, squid, scallops, octopus) with chalaca.',why:{semillon:'Texture and acidity for the creamy seafood sauce.',aquitania:'Full Chardonnay volume for the creamy rice.'}},
+d42:{name:'Algarrobo éclair',desc:'Choux pastry filled with algarrobo mousse and coffee ganache. Algarrobo tile.',why:{erasmo:'Floral sweetness with the earthy notes of algarrobo.'}},
+d43:{name:'Black Forest cake',desc:'Crepes soaked in pisco. Raspberry gel with chocolate cream. Vanilla ganache.',why:{erasmo:'Candied fruit and acidity balance the chocolate and pisco.'}},
+d44:{name:'Apple millefeuille',desc:'Caramelised layers with sugar, cinnamon and butter. Rica-rica ice cream and airampo paper.',why:{erasmo:'Honey and candied fruit with the cinnamon and apple.',azur:'Fresh option for those who don\'t want sweet wine.'}},
+d45:{name:'Pulmay',desc:'Broth with chicken, pork, sausage, shrimp, mussels and native potatoes. Bell pepper, celery, onion, carrot and white wine. Gluten free / lactose free.',why:{azur:'Refreshing bubble for the intense mix of seafood and meat.',talinay:'Saline and citric white for the seafood broth.'}},
+d46:{name:'Chaufa rice',desc:'Stir-fried rice with meat, egg and pachicay. Soy sauce, ginger and sesame oil. Chive leaves.',why:{'garage-rose':'Acidity and tannin grip with the soy and frying.',glup:'Light red to not weigh down the chaufa.'}},
+d47:{name:'Sequitor lettuce over fire',desc:'Lettuce as protagonist. White wine pear purée, brunoise roasted pears and vegetable demi-glace.',why:{talinay:'Acidity balances the pear sweetness and smoky notes.','garage-rose':'Fresh red fruit with the lettuce and pear.'}},
+d48:{name:'Scallop tiradito',desc:'Over avocado and tiger\'s milk emulsion. Crispy bacon.',why:{talinay:'Salinity and citric tension in line with tiger\'s milk.',azur:'Gastronomic bubble for the tiradito.'}},
+d49:{name:'Leaf salad with tomato',desc:'Peeled tomatoes, crispy tomato paper, goat cheese mousse and tomato dressing.',why:{talinay:'Acidity and salinity with the freshness of tomato.','garage-rose':'Red fruit and acidity with the goat cheese.'}},
+d50:{name:'Vegetable soup',desc:'Potato, onion and leek base.',why:{aquitania:'Soft Chardonnay volume for the root vegetable soup.',talinay:'Fresh Sauvignon for a light vegetable soup.'}},
+d51:{name:'Homemade pasta with mussels',desc:'Creamy mussel sauce with ginger, lemon and white wine. Cilantro and lemon zest.',why:{semillon:'Texture and acidity for the mussels and ginger.',aquitania:'Chardonnay creaminess with the mussel sauce.'}},
+d52:{name:'Chicken causa',desc:'Deconstructed. Yellow ají potato purée. Shredded chicken with golf sauce, avocado mousse and chalaca.',why:{talinay:'Acidity and freshness with the yellow ají and lemon.','garage-rose':'Versatile rosé for the Peruvian flavour mix.'}},
+d53:{name:'Brisket',desc:'16 hours at 85°C with red wine. Seasonal sautéed vegetables (potatoes, ollucos, mushrooms, cherry tomatoes).',why:{cabernet:'Organic Cabernet for long cooking and juices.','perez-cruz':'Carmenere with round tannins for the brisket.'}},
+d54:{name:'Corvina with gnocchi',desc:'Corvina with potato gnocchi, beetroot sauce and citrus fish fumet cream.',why:{aquitania:'Creaminess for the gnocchi and beetroot sauce.',semillon:'Texture and acidity for the citrus fumet.'}},
+d55:{name:'Roasted eggplant',desc:'Confit sous-vide. Pallares bean hummus purée with eggplant. Chimichurri and mushroom crunch.',why:{glup:'Light red for the eggplant and hummus.',montsecano:'Elegant Pinot for the mushrooms and eggplant.'}},
+d56:{name:'Duck with potato millefeuille',desc:'Pan-seared duck (recommended medium or medium-rare). Duck demi-glace. Millefeuille with butter and thyme.',why:{montsecano:'Classic Pinot with duck: soft tannin and vibrant acidity.',cabernet:'Cabernet for those who want intense red with duck.'}},
+d57:{name:'Sweet potato parfait',desc:'Ice cream sandwich. Cream, egg yolk, rica-rica. Sweet potato crunch, orange gel and toffee.',why:{erasmo:'Floral sweetness with orange and sweet potato.',azur:'Dry sparkling if a fresh close is preferred.'}},
+d58:{name:'Tiramisù',desc:'Champagne biscuit in decaf coffee and almond liqueur. Mascarpone cream with cocoa.',why:{erasmo:'Late Harvest with the coffee and mascarpone.','perez-cruz':'Carmenere with cocoa notes for the tiramisù.'}},
+d59:{name:'Vanilla panna cotta',desc:'Madagascar vanilla cream set with gelatine. Red berries.',why:{erasmo:'Floral sweetness with vanilla and red berries.',azur:'Dry bubble for a light close.'}},
+d60:{name:'Cauliflower soup',desc:'Finely chopped cauliflower, browned in lactose-free butter until nutty, white wine and vegetable broth. Creamy texture. Lactose-free.',why:{aquitania:'Chardonnay creaminess and acidity integrate the nutty cauliflower flavour.',semillon:'Texture and acidity for the lactose-free vegetable cream.'}}
+},
+pt:{
+d1:{name:'Truta estilo salmão',desc:'Cozida em molho de ají amarelo, ají panca, cebola, tomates, alho, vinho branco e fumet. Com legumes salteados e yuca frita em cubos.',why:{azur:'A borbulha limpa o molho e realça a truta.',talinay:'Tensão cítrica e salinidade em linha com o ají amarelo.'}},
+d2:{name:'Pastel de milho',desc:'Massa de milho com frango em cubos, azeitona e ovo.',why:{'garage-rose':'Acidez e leve tânico equilibram o dulçor do milho.',glup:'Tinto leve que não pesa sobre o pastel.'}},
+d3:{name:'Abobrinha recheada',desc:'Sobre mix de folhas verdes. Recheada com refogado de cogumelos, quinoa e purê de cogumelos. Béchamel com beterraba, gratinada com Grana Padano.',why:{aquitania:'Cremosidade e acidez integram o béchamel e o queijo.',semillon:'Volume e textura para o umami dos cogumelos.'}},
+d4:{name:'Ceviche do dia',desc:'Mix de polvo, truta, camarão e vieira. Leite de tigre com aipo, coentro, limão, gengibre, ají amarelo, cebola e alho. Com milho peruano, batata-doce e canchita.',why:{azur:'Espumante gastronômico: borbulha e acidez vão com o limão.',talinay:'Sauvignon salino e cítrico: segue a linha do ceviche.'}},
+d5:{name:'Salada verde (Larache/Sequitor)',desc:'Mix de folhas verdes, quinoa tingida com beterraba e ají amarelo, milho peruano queimado. Molho ácido de amora ou framboesa.',why:{talinay:'Acidez que se alinha ao molho e às folhas amargas.','garage-rose':'Fruta vermelha fresca em linha com a amora do molho.'}},
+d6:{name:'Chupe de centola',desc:'Torta assada cremosa. Refogado de cebola, pimentão vermelho e vinho branco com carne de centola e pão embebido em leite. Gratinado com Grana Padano.',why:{semillon:'Textura e acidez para sustentar o molho cremoso de mar.',aquitania:'Volume do Chardonnay integra o creme do chupe.'}},
+d7:{name:'Massa artesanal com ragù de pato',desc:'Massa do dia. Ragù de coxa de pato em baixa temperatura com mirepoix e vinho tinto. Desfiado com redução de molho e chimichurri.',why:{montsecano:'Tânico suave e acidez acompanham a gordura do pato.','perez-cruz':'Carmenere para quem quer estrutura com o ragù.'}},
+d8:{name:'Torresmo de porco',desc:'Barriga de porco em baixa temperatura, frita com maisena. Demi-glace com alfarrobeira. Com batatas nativas, molho uchucuta e suflês de Airampo.',why:{'garage-rose':'Acidez e leve tânico limpam a fritura e a uchucuta.',glup:'Tinto leve para não tapar o sabor do torresmo.'}},
+d9:{name:'Polvo',desc:'Cozimento sous-vide a 90°C por 2 horas. Com molho anticuchera peruano (cebola, ají amarelo, cominho, ají panca, orégano, vinagre e shoyu).',why:{semillon:'Textura média sustenta o molho anticuchera.',talinay:'Salinidade e tensão cítrica com o ají e o limão.'}},
+d10:{name:'Risoto de boi',desc:'Arroz arbóreo com caldo de rabo bovino (5 horas). Manteiga, Grana Padano e chimichurri tradicional.',why:{montsecano:'Tânico sedoso respeita a textura cremosa do risoto.','perez-cruz':'Carmenere para quem quer tinto com mais estrutura.'}},
+d11:{name:'Charquicán vegetariano',desc:'Cebola, pimentão, batata e abóbora com ervilhas, milho e cenoura. Gema de ovo confitada a 63°C.',why:{glup:'Fruta fresca e acidez realçam a abóbora sem pesar.',montsecano:'Pinot elegante para uma preparação de verduras.'}},
+d12:{name:'Texturas de chañar',desc:'Crème brûlée com arrope de chañar, biscoito de cacau, terra e sorvete de chañar.',why:{erasmo:'Late Harvest com mel e frutas confitadas: harmonização doce clássica.'}},
+d13:{name:'Bolo de cenoura',desc:'Pão-de-ló de cenoura e cacau. Cobertura de cream cheese com raspas de laranja. Amêndoas caramelizadas.',why:{erasmo:'O dulçor e as notas de laranja vão com o bolo de cenoura.'}},
+d14:{name:'Pudim de baunilha',desc:'Pudim tradicional com caramelo (ovo, leite e açúcar).',why:{erasmo:'Dulçor floral complementa a baunilha.',azur:'Espumante seco como opção de encerramento fresco.'}},
+d15:{name:'Vieiras gratinadas',desc:'100g de vieiras com béchamel, vinho branco e Grana Padano ao forno.',why:{azur:'Borbulha e acidez cortam a gordura do gratinado.',semillon:'Textura média para o béchamel e o dulçor da vieira.'}},
+d16:{name:'Brócolis assado',desc:'Salteado em manteiga. Purê de legumes (tomate, abóbora, abobrinha, batatas) e chutney de tomates.',why:{aquitania:'Chardonnay cremoso integra o purê de legumes.',glup:'Tinto leve para quem prefere tinto com verduras assadas.'}},
+d17:{name:'Lomo saltado',desc:'Refogado de carne com shoyu e cerveja. Cebola, tomate, coentro. Arroz e batatas.',why:{'garage-rose':'Acidez e leve tânico com o shoyu e a fritura.',syrah:'Syrah especiado para as notas do molho.'}},
+d18:{name:'Tiradito de locos',desc:'Locos laminados cozidos. Molho verde (cebola, coentro, ají verde, limão) e maionese de limão.',why:{talinay:'Salinidade e tensão cítrica com o molho verde.',azur:'Borbulha para uma harmonização espumante do tiradito.'}},
+d19:{name:'Salada de folhas com figos',desc:'Molho de figos com queijo gorgonzola, amêndoas caramelizadas e figos infusionados.',why:{erasmo:'Dulçor floral combina com os figos e o queijo gorgonzola.','garage-rose':'Acidez e fruta vermelha equilibram o queijo gorgonzola.'}},
+d20:{name:'Sopa de abóbora',desc:'Abóbora e arrope de chañar, cozida e aligerada.',why:{aquitania:'Cremosidade e acidez integram o dulçor da abóbora.',semillon:'Textura média para sopa com notas doces.'}},
+d21:{name:'Camarões ao alho',desc:'Calibre 16-20 com sementes de coentro, pimenta e merkén. Azeite, lâminas de alho fritas e torrada multigrãos.',why:{azur:'Borbulha e acidez refrescam entre cada garfada.',talinay:'Salinidade e acidez limpam o azeite do alho.'}},
+d22:{name:'Espirais de massa com beterraba',desc:'Molho de beterraba emulsionado com azeite. Chimichurri e mousse de queijo de cabra.',why:{glup:'Acidez e fruta vermelha acompanham a beterraba e o queijo.',montsecano:'Pinot para quem quer tinto com massa.'}},
+d23:{name:'Costela bovina',desc:'Selada a vácuo com vinho tinto e mirepoix. Demi-glace e purê de abóbora assada.',why:{'perez-cruz':'Carmenere: tânico redondo agarra o colágeno do corte.',cabernet:'Cabernet para harmonização clássica com carne de cozimento longo.'}},
+d24:{name:'Peixe do dia',desc:'Corvina, pejeperro, mulata ou linguado. Cozido com manteiga e limão. Purê de ervilhas e favas.',why:{talinay:'Salinidade e acidez em linha com o limão e o peixe.',aquitania:'Chardonnay cremoso para o purê de ervilhas.'}},
+d25:{name:'Musaka de legumes',desc:'Camadas de berinjela e molho pomodoro. Recheada com ricota, gema e Grana Padano.',why:{montsecano:'Pinot delicado para a berinjela e o queijo.',glup:'Tinto suave e fresco que não tapa os legumes.'}},
+d26:{name:'Ají de gallina',desc:'Molho cremoso de ají amarelo com leite, manteiga, pão e queijo. Frango desfiado, arroz, ovo e azeitonas.',why:{'garage-rose':'Acidez e leve tânico com o picante cremoso do ají.',glup:'Tinto leve que não compete com o molho amarelo.'}},
+d27:{name:'Texturas de chocolate',desc:'Pão-de-ló, mousse, papel, sorvete (38%, 56%, 70%) e Namelaka de chocolate.',why:{erasmo:'Late Harvest com frutas confitadas para cacau suave.','perez-cruz':'Carmenere com notas de cacau que acompanham o chocolate.'}},
+d28:{name:'Tres leches',desc:'Pão-de-ló embebido em três leites com framboesas, merengue caramelizado e terra de doce de leite.',why:{erasmo:'Harmonização clássica de vinho doce com sobremesa cremosa.'}},
+d29:{name:'Cheesecake com maracujá',desc:'Cream cheese, ovo e gel de maracujá (agar-agar). Base de terra de pistache.',why:{erasmo:'Dulçor floral complementa a acidez do maracujá.'}},
+d30:{name:'Pastel de batata',desc:'Recheio chileno com frango, ovo e azeitona. Purê de batatas com manteiga e leite. Dourado ao forno.',why:{'garage-rose':'Equilibra o dulçor do recheio e a cremosidade do purê.',glup:'Tinto muito leve para não pesar sobre o pastel.'}},
+d31:{name:'Lasanha de legumes',desc:'Tomate, abobrinha, berinjela. Molho pomodoro, béchamel e Grana Padano.',why:{aquitania:'Chardonnay cremoso integra o béchamel e os legumes.',montsecano:'Pinot elegante para a lasanha de legumes.'}},
+d32:{name:'Filé bovino',desc:'180g finalizado com demi-glace. Purê de cenoura emulsionado e cenouras torneadas glaceadas.',why:{cabernet:'Cabernet orgânico: harmonização clássica com proteína bovina.',montsecano:'Pinot para quem quer tinto elegante mais do que potente.'}},
+d33:{name:'Ceviche de peixe branco',desc:'Leite de tigre com fumet, limão, aipo, gengibre, coentro e ají amarelo. Com cebola, cancha e batata-doce.',why:{talinay:'Tensão calcária e salinidade com o limão do ceviche.',azur:'Versão espumante da harmonização clássica com ceviches.'}},
+d34:{name:'Mix de folhas (maçã assada)',desc:'Maçã assada, cevada, mote, emulsão de beterraba. Molhos de framboesa e maçã.',why:{talinay:'Acidez que equilibra o dulçor da maçã assada.','garage-rose':'Fruta vermelha com a framboesa e beterraba do molho.'}},
+d35:{name:'Sopa de espinafre',desc:'Base de cebola, batata e caldo de legumes com clorofila de espinafre.',why:{aquitania:'Volume e acidez do Chardonnay para a sopa verde.',talinay:'Sauvignon fresco para uma sopa leve de verduras.'}},
+d36:{name:'Chupe de frutos do mar',desc:'Centola, polvo, camarão e vieiras. Refogado, leite e pão. Gratinado com Grana Padano.',why:{semillon:'Textura e acidez para o creme de frutos do mar.',aquitania:'Chardonnay cremoso para o gratinado.'}},
+d37:{name:'Massa curta com abóbora-doce',desc:'Molho de abóbora-doce emulsionado. Chimichurri e Grana Padano.',why:{glup:'Fruta fresca e acidez para o dulçor da abóbora.',aquitania:'Cremosidade do Chardonnay com o molho de abóbora-doce.'}},
+d38:{name:'Costelinha de porco',desc:'Braseada a vácuo com cerveja. Demi-glace com alfarrobeira. Purê de batata-doce e cebolas em conserva.',why:{syrah:'Syrah especiado para o porco e o dulçor da batata-doce.','perez-cruz':'Carmenere com taninos redondos para a costelinha.'}},
+d39:{name:'Pernil de cordeiro',desc:'Pernil dianteiro a vácuo a 85°C com vinho tinto. Purê de batata com manteiga sem lactose.',why:{cabernet:'Cabernet orgânico para o cordeiro de cozimento longo.',syrah:'Syrah com especiarias que complementam o guisado.'}},
+d40:{name:'Texturas de couve-flor',desc:'Purê de couve-flor caramelizada com manteiga. Couve-flor sous-vide com ají panca e gengibre, assada. Com pebre.',why:{aquitania:'Cremosidade e acidez para a couve-flor caramelizada.',glup:'Tinto suave se o cliente preferir tinto com legumes.'}},
+d41:{name:'Arroz cremoso com frutos do mar',desc:'Base tipo risoto. Mix de frutos do mar salteados (camarão, lulas, vieiras, polvo) com chalaca.',why:{semillon:'Textura e acidez para o molho cremoso de frutos do mar.',aquitania:'Chardonnay com volume para o arroz cremoso.'}},
+d42:{name:'Éclair de alfarroba',desc:'Massa choux recheada de mousse de alfarroba e ganache de café. Telha de alfarroba.',why:{erasmo:'Dulçor floral com as notas terrosas da alfarroba.'}},
+d43:{name:'Torta floresta negra',desc:'Panquecas embebidas em pisco. Gel de framboesa com creme de chocolate. Ganache de baunilha.',why:{erasmo:'Frutas confitadas e acidez equilibram o chocolate e o pisco.'}},
+d44:{name:'Mil-folhas de maçã',desc:'Folhas caramelizadas com açúcar, canela e manteiga. Sorvete de rica-rica e papel de airampo.',why:{erasmo:'Mel e frutas confitadas com a canela e a maçã.',azur:'Opção fresca para quem não quer vinho doce.'}},
+d45:{name:'Pulmay',desc:'Caldo com frango, porco, linguiça, camarão, mexilhões e batatas nativas. Pimentão, aipo, cebola, cenoura e vinho branco. Sem glúten / sem lactose.',why:{azur:'Borbulha refrescante para o mix intenso de frutos do mar e carnes.',talinay:'Branco salino e cítrico para o caldo de frutos do mar.'}},
+d46:{name:'Arroz chaufa',desc:'Arroz salteado com carne, ovo e pachicay. Shoyu, gengibre e azeite de gergelim. Folhas de cebolinha.',why:{'garage-rose':'Acidez e leve tânico com o shoyu e a fritura.',glup:'Tinto leve para não pesar sobre o chaufa.'}},
+d47:{name:'Alface de Sequitor ao fogo',desc:'A alface é a protagonista. Purê de peras ao vinho branco, peras brunoise assadas e demi-glace de legumes.',why:{talinay:'Acidez equilibra o dulçor da pera e as notas defumadas.','garage-rose':'Fruta vermelha fresca com a alface e a pera.'}},
+d48:{name:'Tiradito de vieiras',desc:'Sobre emulsão de abacate e leite de tigre. Bacon crocante.',why:{talinay:'Salinidade e tensão cítrica em linha com o leite de tigre.',azur:'Borbulha gastronômica para o tiradito.'}},
+d49:{name:'Salada de folhas com tomate',desc:'Tomates mondados, papel de tomate crocante, mousse de queijo de cabra e molho de tomate.',why:{talinay:'Acidez e salinidade com a frescura do tomate.','garage-rose':'Fruta vermelha e acidez com o queijo de cabra.'}},
+d50:{name:'Sopa de legumes',desc:'Base de batata, cebola e alho-poró.',why:{aquitania:'Volume suave do Chardonnay para a sopa de raízes.',talinay:'Sauvignon fresco para sopa leve de legumes.'}},
+d51:{name:'Massa artesanal com mexilhões',desc:'Molho cremoso de mexilhões com gengibre, limão e vinho branco. Coentro e raspas de limão.',why:{semillon:'Textura e acidez para os mexilhões e o gengibre.',aquitania:'Cremosidade do Chardonnay com o molho de mexilhões.'}},
+d52:{name:'Causa de frango',desc:'Desconstruída. Purê de batata com ají amarelo. Frango desfiado com molho golf, mousse de abacate e chalaca.',why:{talinay:'Acidez e frescura com o ají amarelo e o limão.','garage-rose':'Rosé versátil para o mix de sabores peruanos.'}},
+d53:{name:'Brisket',desc:'16 horas a 85°C com vinho tinto. Legumes da estação salteados (batatas, ollucos, cogumelos, tomate-cereja).',why:{cabernet:'Cabernet orgânico para o cozimento longo e os sucos.','perez-cruz':'Carmenere com taninos redondos para o brisket.'}},
+d54:{name:'Corvina com gnocchi',desc:'Corvina com gnocchi de batata, molho de beterraba e creme cítrico de fumet.',why:{aquitania:'Cremosidade para o gnocchi e o molho de beterraba.',semillon:'Textura e acidez para o fumet cítrico.'}},
+d55:{name:'Berinjela assada',desc:'Confitada a vácuo. Purê de homus de feijão pallar com berinjela. Chimichurri e crocante de cogumelos.',why:{glup:'Tinto suave para a berinjela e o homus.',montsecano:'Pinot elegante para os cogumelos e a berinjela.'}},
+d56:{name:'Pato com mil-folhas de batata',desc:'Pato grelhado (recomendado ao ponto ou mal passado). Demi-glace de pato. Mil-folhas com manteiga e tomilho.',why:{montsecano:'Pinot clássico com pato: tânico suave e acidez viva.',cabernet:'Cabernet para quem quer tinto intenso com o pato.'}},
+d57:{name:'Parfait de batata-doce',desc:'Sanduíche de sorvete. Creme, gema, rica-rica. Crocantes de batata-doce, gel de laranja e toffee.',why:{erasmo:'Dulçor floral com laranja e batata-doce.',azur:'Espumante seco se preferir um encerramento fresco.'}},
+d58:{name:'Tiramisù',desc:'Biscoito champanhe em café descafeinado e licor de amêndoas. Creme de mascarpone com cacau.',why:{erasmo:'Late Harvest com o café e o mascarpone.','perez-cruz':'Carmenere com notas de cacau para o tiramisù.'}},
+d59:{name:'Panna cotta de baunilha',desc:'Creme de baunilha de Madagascar gelificado com gelatina. Frutos vermelhos.',why:{erasmo:'Dulçor floral com a baunilha e os frutos vermelhos.',azur:'Borbulha seca para um encerramento leve.'}},
+d60:{name:'Sopa de couve-flor',desc:'Couve-flor picada fina, dourada em manteiga sem lactose até obter sabor avelã, vinho branco e caldo de legumes. Textura cremosa. Sem lactose.',why:{aquitania:'Cremosidade e acidez do Chardonnay integram o sabor avelã da couve-flor.',semillon:'Textura e acidez para o creme de legumes sem lactose.'}}
+}};
+
+// ── WINE TRANSLATIONS ────────────────────────────────────────────────────────
+const WINE_TRANS = {
+en:{
+azur:{identity:'Organic sparkling, traditional method, Extra Brut (very dry). Blend of cold-climate grapes from Limarí.',terroir:'Limarí Valley, northern Chile. Cold semi-arid coastal climate, camanchaca fog, calcareous soils. Marked acidity and very clear mineral sensation.',winery:'Organic management. Second fermentation in bottle (traditional method). Aged on lees. Without excess dosage sugar.',style:'Fine and persistent bubble. Citrus, green apple, white flowers and toast. Dry, high acidity, medium-light body, saline finish.',shortpitch:'It\'s an organic sparkling from Limarí Valley, very dry and fresh, with fine bubbles. Ideal for gratinated seafood, garlic prawns or to start with ceviches and tiraditos.',pitch:'It comes from the northern coast, where fog and wind keep the grapes very fresh. That gives it high acidity that cleanses the fat of the gratin or garlic, and the bubble carries the sauce away, leaving the palate ready for the next bite.'},
+talinay:{identity:'Dry white, 100% Sauvignon Blanc, Talinay vineyard. One of Chile\'s coldest and most calcareous terroirs.',terroir:'12 km from the Pacific Ocean. Cold coastal climate, morning camanchaca fog, sea breezes. Fractured calcareous rock: very high acidity, great tension and marked salinity.',winery:'Viña Tabalí, pioneer in the calcareous zone. Low yields, hand-harvested, cold fermentation, minimal wood.',style:'Lime, grapefruit, fine herbs, white flowers, stone and chalk. Very tense, high acidity, medium body, long citrus and saline finish.',shortpitch:'It\'s a very cold-coast Sauvignon, citric and saline, perfect for ceviches, tiraditos and white fish.',pitch:'The vines are planted almost on rock, very close to the sea. That gives the wine a natural tension and salinity that aligns with the lemon and salt of the ceviche or tiradito, and at the same time cleanses the trout broth without overpowering the fish flavour.'},
+aquitania:{identity:'Dry white, 100% Chardonnay, DO Casablanca Valley.',terroir:'Between Santiago and Valparaíso, near the ocean. Cold Mediterranean climate, morning fogs, clays and sands over granite.',winery:'Viña Aquitania, long tradition. Balance: freshness, defined fruit and moderate creaminess, without excess wood.',style:'Apple, pear, citrus, white flowers, hint of cream or soft butter. Marked acidity, medium body, slightly creamy texture.',shortpitch:'It\'s a fresh Casablanca Chardonnay, with some creaminess, very comfortable for soups, cheese dishes and fish with light sauces.',pitch:'It comes from a cold-climate valley, so it maintains very good acidity. At the same time it has enough volume to pair with creamy soups, vegetable lasagne or fish with sauce, without the combination feeling heavy.'},
+semillon:{identity:'Dry white, 100% Semillon from old vines (~1900) in Guarilihue, Itata dryland.',terroir:'Southern Chile, cool Mediterranean climate. Dryland hillsides without irrigation, granite soils rich in quartz. Good acidity, texture and mineral character.',winery:'Carter Mollenhauer: rescue of heritage vineyards. Organic, native yeasts, minimal wood. Emblematic centennial Semillon parcel.',style:'Ripe citrus, dry herbs, flowers, wet stone. Firm acidity, medium volume, sometimes creamy texture from lees and skin contact.',shortpitch:'It\'s a Semillon from centennial Itata vines, with good acidity and texture; ideal for chupes, creamy seafood and salmon-style trout.',pitch:'The vines were planted over a hundred years ago on dryland hillsides over granite. That gives the wine a natural acidity and very fine texture that clings to creamy sauces, like the chupe or octopus with corn pie, while maintaining freshness on the palate.'},
+'garage-rose':{identity:'Gastronomic dry rosé. Blend of Carignan and Monastrell, old dryland vines, Empedrado/Truquilemu area.',terroir:'Maule interior dryland. Mediterranean climate with hot summers. Head-trained vines, horse-worked, very poor granite soils.',winery:'Garage Wine Co.: small heritage vineyards, ancestral agriculture, minimal intervention. Table rosé, not pool rosé.',style:'Pale colour. Raspberry, cherry, Mediterranean herbs, flowers. Completely dry, high acidity, medium body, slight tannin grip. Very versatile.',shortpitch:'It\'s a rosé from old Maule vines, dry and with good acidity; works very well with fried dishes, slightly spicy preparations and those that mix sea and land.',pitch:'It\'s almost a very pale red: it has red fruit, high acidity and a small tannin grip that helps clean dishes like corn pie, chaufa with fried egg or pork crackling. It\'s a fresher alternative when the dish is intense but the guest doesn\'t want a heavy red.'},
+montsecano:{identity:'Cold-climate red, 100% Pinot Noir, DO Casablanca Valley. Biodynamic project.',terroir:'Coastal valley, morning fogs, ocean wind. Decomposed granite and sands: high acidity, fine tannin, great drinkability.',winery:'Small and acclaimed project. Biodynamics, minimal intervention. Fermentation in cement eggs. No new wood make-up.',style:'Strawberry, cherry, flowers, herbs, saline background. Juicy, medium body, silky tannin, vibrant acidity.',shortpitch:'It\'s a Casablanca Pinot Noir, very elegant and fresh, with soft tannin; perfect with duck, risottos, moussaka and juicy red meats.',pitch:'Being a cold-climate red, it has good acidity and very fine tannin. That means it pairs very well with creamy-textured dishes like risotto, and with meats like duck or fillet, without any feeling of heaviness.'},
+glup:{identity:'Light red, 100% Cinsault, Itata interior dryland.',terroir:'Hillsides near the sea, cool Mediterranean climate, old head-trained vines on granite soils. Moderate temperatures, cool nights: low-alcohol wines with great freshness.',winery:'Longaví Wines line. Heritage varieties, early harvest, little extraction, simple ageing. Very drinkable gastronomic wines.',style:'Morello cherry, strawberry, flowers, white pepper and herbs. Very light, soft tannin, marked acidity. Can be served slightly chilled.',shortpitch:'It\'s a very light and fresh red from Itata, ideal for slightly sweet or creamy dishes like corn pie, potato pie or charquicán.',pitch:'The vines are on dryland granite soils and harvested relatively early, so the wine has good acidity and little tannin. It\'s perfect when the traveller wants red but not something heavy or oaky.'},
+'perez-cruz':{identity:'Red, selected parcel Carmenere, DO Maipo Andes.',terroir:'South of Santiago, Andean foothills. Mediterranean climate, great thermal range. Alluvial and colluvial stony soils of volcanic origin.',winery:'Viña Pérez Cruz, single sustainably-managed vineyard. Limited Edition: precise versions of Bordeaux varieties. Ripe fruit, round tannins, balanced wood.',style:'Ripe black fruit, sweet spices, cocoa, roasted pepper, herbs. Medium-high but round tannin, medium-high body, long finish.',shortpitch:'It\'s a Maipo Andes Carmenere, with black fruit and firm but round tannins; ideal for short ribs, pork ribs and brisket.',pitch:'The vineyard is in the upper Maipo, on stony soils. That gives a Carmenere with structure and freshness. You feel the black fruit and spices, and the tannin grips very well to slow-cooked meats with concentrated sauces.'},
+cabernet:{identity:'Red, 100% organic Cabernet Sauvignon, Maipo Andes.',terroir:'World reference zone for Cabernet. Volcanic, alluvial soils with lots of stone and excellent drainage. Hot days and cold nights: full ripeness with acidity.',winery:'Antiyal, Álvaro Espinoza\'s project, biodynamic pioneer in Chile. Organic and biodynamic, moderate yields, balanced barrel.',style:'Cassis, plum, roasted pepper, graphite, soft tobacco, herbs. Full body, firm and polished tannins, good acidity, long finish.',shortpitch:'It\'s our organic Maipo Andes Cabernet, with structure and black fruit; perfect for fillets, short ribs, lamb and brisket.',pitch:'It\'s an Andean-climate Cabernet, with firm but very polished tannins and an acidity that prevents the wine feeling heavy. It pairs very well with the texture of red meats and long-cooked meats, and holds up to sauces with a red wine base.'},
+syrah:{identity:'Red, 100% Syrah, Azuda line by Clos de Luz, Almahue in Cachapoal.',terroir:'Almahue, interior of the Cachapoal valley. Temperate climate, moderately warm summers cooled by the Andes. Granite hillsides: fresh acidity and fine tannins.',winery:'Clos de Luz, family winery. Mediterranean varieties in old vineyards. Azuda in concrete tanks and clay amphoras. Freshness over power.',style:'Black fruit, blackberries, spices (pepper, herbs), floral notes, mineral background. Intense but fresh, medium-high body, good acidity, elegant tannins.',shortpitch:'It\'s an Almahue Syrah, intense but fresh, with lots of black fruit and spices; works very well with lamb, ribs, brisket and duck.',pitch:'Vinified in concrete and clay, which preserves freshness and fruit character. It has enough structure for long-cooked meats, but at the same time maintains an acidity that makes the pairing lighter.'},
+erasmo:{identity:'Natural sweet wine (Late Harvest), overripe Torontel grapes from Maule.',terroir:'Maule interior, Mediterranean climate, hot summers and dry autumns. Clay-loam and granite soils. The grape concentrates sugar and aromas on the vine.',winery:'Erasmo: Italian tradition with Maule dryland. Balanced Late Harvest: good acidity and intense floral aromas, without cloying sensations.',style:'White flowers, honey, stone fruit, candied fruits, orange peel. Marked sweetness with sufficient acidity. Unctuous texture, long finish.',shortpitch:'It\'s our dessert wine, a Torontel Late Harvest from Maule, with honey and candied fruit notes; pairs very well with tres leches, cheesecake, carrot cake or the chañar tasting.',pitch:'The grape is left to over-ripen on the vine to concentrate sugar and aromas. The result is a sweet wine but with enough acidity not to tire. It\'s the best option when the traveller wants to close with a classic dessert and wine pairing.'}
+},
+pt:{
+azur:{identity:'Espumante orgânico, método tradicional, Extra Brut (muito seco). Blend de uvas de clima frio do Limarí.',terroir:'Vale do Limarí, norte do Chile. Clima semiárido frio de costa, camanchaca, solos calcários. Acidez marcada e sensação mineral muito clara.',winery:'Manejo orgânico. Segunda fermentação em garrafa (método tradicional). Crianza sobre borras. Sem excesso de açúcar de dosagem.',style:'Borbulha fina e persistente. Cítricos, maçã verde, flores brancas e pão torrado. Seco, alta acidez, corpo médio-leve, final salino.',shortpitch:'É um espumante orgânico do Vale do Limarí, muito seco e fresco, com borbulha fina. Ideal para frutos do mar gratinados, camarões ao alho ou para começar com ceviches e tiraditos.',pitch:'Vem do norte do litoral, onde a neblina e o vento mantêm a uva muito fresca. Isso lhe dá alta acidez que limpa a gordura do gratinado ou do alho, e a borbulha arrasta o molho e deixa a boca pronta para o próximo bocado.'},
+talinay:{identity:'Branco seco, 100% Sauvignon Blanc, vinhedo Talinay. Um dos terroirs mais frios e calcários do Chile.',terroir:'12 km do Oceano Pacífico. Clima frio de costa, camanchaca matinal, brisas marinhas. Rocha calcária fraturada: altíssima acidez, grande tensão e marcada salinidade.',winery:'Viña Tabalí, pioneira na zona calcária. Baixos rendimentos, vindima manual, fermentação fria, madeira mínima.',style:'Lima, grapefruit, ervas finas, flores brancas, pedra e giz. Muito tenso, alta acidez, corpo médio, longo final cítrico e salino.',shortpitch:'É um Sauvignon de costa muito fria, cítrico e salino, perfeito para ceviches, tiraditos e peixes brancos.',pitch:'As parreiras estão plantadas quase sobre rocha, muito perto do mar. Isso dá ao vinho uma tensão e salinidade naturais que se alinham com o limão e o sal do ceviche ou do tiradito, e ao mesmo tempo limpa o caldo da truta sem tapar o sabor do peixe.'},
+aquitania:{identity:'Branco seco, 100% Chardonnay, DO Vale de Casablanca.',terroir:'Entre Santiago e Valparaíso, perto do oceano. Clima mediterrâneo frio, neblinas matinais, argilas e areias sobre granito.',winery:'Viña Aquitania, longa trajetória. Equilíbrio: frescor, fruta definida e cremosidade moderada, sem excesso de madeira.',style:'Maçã, pera, cítricos, flores brancas, toque de creme ou manteiga suave. Acidez marcada, corpo médio, textura levemente cremosa.',shortpitch:'É um Chardonnay fresco de Casablanca, com alguma cremosidade, muito confortável para sopas, pratos com queijo e peixes com molhos suaves.',pitch:'Vem de um vale de clima frio, por isso mantém muito boa acidez. Ao mesmo tempo tem volume suficiente para acompanhar sopas cremosas, lasanha de legumes ou um peixe com molho, sem que o conjunto fique pesado.'},
+semillon:{identity:'Branco seco, 100% Semillon de vinhas velhas (~1900) em Guarilihue, secano do Itata.',terroir:'Sul do Chile, clima mediterrâneo fresco. Colinas de sequeiro sem irrigação, solos graníticos ricos em quartzo. Boa acidez, textura e caráter mineral.',winery:'Carter Mollenhauer: resgate de vinhedos patrimoniais. Orgânico, leveduras nativas, madeira mínima. Parcela emblemática de Semillon centenário.',style:'Cítricos maduros, ervas secas, flores, pedra molhada. Acidez firme, volume médio, às vezes textura cremosa por borras e toque de cascas.',shortpitch:'É um Semillon de vinhas centenárias do Itata, com boa acidez e textura; ideal para chupes, frutos do mar cremosos e a truta estilo salmão.',pitch:'As parreiras foram plantadas há mais de cem anos em colinas de sequeiro sobre granito. Isso dá ao vinho uma acidez natural e uma textura muito fina que se agarra a molhos cremosos, como o chupe ou o polvo com pastelera de milho, mantendo o frescor na boca.'},
+'garage-rose':{identity:'Rosé seco gastronômico. Blend de Carinena e Monastrell, vinhas velhas de sequeiro, zona Empedrado/Truquilemu.',terroir:'Maule interior, sequeiro. Clima mediterrâneo com verões quentes. Vinhas em gobelet trabalhadas a cavalo, solos graníticos muito pobres.',winery:'Garage Wine Co.: pequenos vinhedos patrimoniais, agricultura ancestral, mínima intervenção. Rosé de mesa, não de piscina.',style:'Cor pálida. Framboesa, cereja, ervas mediterrâneas, flores. Completamente seco, alta acidez, corpo médio, leve adstringência tânica. Muito versátil.',shortpitch:'É um rosé de vinhas velhas do Maule, seco e com boa acidez; funciona muito bem com frituras, pratos com um pouco de picante e preparações que misturam mar e terra.',pitch:'É quase um tinto muito claro: tem fruta vermelha, alta acidez e uma pequena adstringência tânica que ajuda a limpar pratos como o pastel de milho, o chaufa com ovo frito ou o torresmo. É uma alternativa mais fresca quando o prato é intenso mas o cliente não quer um tinto pesado.'},
+montsecano:{identity:'Tinto de clima frio, 100% Pinot Noir, DO Vale de Casablanca. Projeto biodinâmico.',terroir:'Vale costeiro, neblinas matinais, vento do oceano. Granito decomposto e areias: alta acidez, tanino fino, grande beibilidade.',winery:'Projeto pequeno e reconhecido. Biodinâmica, mínima intervenção. Fermentação em ovos de cimento. Sem maquiagem de madeira nova.',style:'Morango, cereja, flores, ervas, fundo salino. Suculento, corpo médio, tanino sedoso, acidez viva.',shortpitch:'É um Pinot Noir de Casablanca, muito elegante e fresco, com tanino suave; vai perfeito com pato, risotos, musaka e carnes vermelhas ao ponto suculento.',pitch:'Por ser um tinto de clima frio, tem boa acidez e tanino muito fino. Isso faz com que se dê muito bem com pratos de textura cremosa como o risoto, e com carnes como o pato ou o filé, sem sensação de peso.'},
+glup:{identity:'Tinto leve, 100% Cinsault, sequeiro interior do Itata.',terroir:'Colinas próximas ao mar, clima mediterrâneo fresco, vinhas velhas em gobelet sobre solos graníticos. Temperaturas moderadas, noites frescas: vinhos de baixo teor alcoólico e grande frescor.',winery:'Linha Longaví Wines. Variedades patrimoniais, colheita precoce, pouca extração, crianza simples. Vinhos gastronômicos muito bebíveis.',style:'Ginja, morango, flores, pimenta branca e ervas. Muito leve, tanino suave, acidez marcada. Pode ser servido levemente fresco.',shortpitch:'É um tinto muito suave e fresco do Itata, ideal para pratos com algum dulçor ou cremosos como o pastel de milho, o pastel de batata ou o charquicán.',pitch:'As vinhas estão em sequeiro sobre solos graníticos e são colhidas relativamente cedo, por isso o vinho tem boa acidez e pouco tanino. É perfeito quando o viajante quer tinto, mas não algo pesado nem com muita madeira.'},
+'perez-cruz':{identity:'Tinto, Carmenere de seleção de parcelas, DO Maipo Andes.',terroir:'Ao sul de Santiago, sopé da Cordilheira. Clima mediterrâneo, grande amplitude térmica. Solos aluviais e coluviais, pedregosos, de origem vulcânica.',winery:'Viña Pérez Cruz, único vinhedo em manejo sustentável. Limited Edition: versões precisas de castas bordolesas. Fruta madura, taninos redondos, madeira equilibrada.',style:'Fruta negra madura, especiarias doces, cacau, pimentão assado, ervas. Tanino médio-alto mas redondo, corpo médio-alto, longo final.',shortpitch:'É um Carmenere do Maipo Andes, com fruta negra e taninos firmes mas redondos; ideal para costela, costelinha e brisket.',pitch:'O vinhedo está na parte alta do Maipo, sobre solos pedregosos. Isso dá um Carmenere com estrutura e frescor. Sente-se a fruta negra e as especiarias, e o tanino se agarra muito bem a carnes de cozimento lento, com molhos concentrados.'},
+cabernet:{identity:'Tinto, 100% Cabernet Sauvignon orgânico, Maipo Andes.',terroir:'Zona de referência mundial para Cabernet. Solos vulcânicos, aluviais, com muita pedra e excelente drenagem. Dias quentes e noites frias: maturação completa com acidez.',winery:'Antiyal, projeto de Álvaro Espinoza, pioneiro da biodinâmica no Chile. Orgânico e biodinâmico, rendimentos moderados, barrica equilibrada.',style:'Cassis, ameixa, pimentão assado, grafite, tabaco suave, ervas. Corpo pleno, taninos firmes e polidos, boa acidez, longo final.',shortpitch:'É o nosso Cabernet orgânico do Maipo Andes, com estrutura e fruta negra; perfeito para filés, costela, cordeiro e brisket.',pitch:'É um Cabernet de clima andino, com taninos firmes mas muito polidos e uma acidez que evita que o vinho fique pesado. Acompanha muito bem a textura de carnes vermelhas e de cozimento longo, e aguenta molhos com fundo de vinho tinto.'},
+syrah:{identity:'Tinto, 100% Syrah, linha Azuda de Clos de Luz, Almahue no Cachapoal.',terroir:'Almahue, interior do vale de Cachapoal. Clima temperado, verões quentes moderados pela Cordilheira. Encostas com solos graníticos: acidez fresca e taninos finos.',winery:'Clos de Luz, adega familiar. Variedades mediterrâneas em vinhedos antigos. Azuda em cubas de concreto e ânforas de barro. Frescor mais do que potência.',style:'Fruta negra, amoras, especiarias (pimenta, ervas), notas florais, fundo mineral. Intenso mas fresco, corpo médio-alto, boa acidez, taninos elegantes.',shortpitch:'É um Syrah de Almahue, intenso mas fresco, com muita fruta negra e especiarias; funciona muito bem com cordeiro, costelinha, brisket e pato.',pitch:'Vinificado em concreto e ânforas, o que conserva o frescor e o caráter da fruta. Tem estrutura suficiente para carnes de cozimento longo, mas ao mesmo tempo mantém uma acidez que torna o conjunto mais leve.'},
+erasmo:{identity:'Vinho doce natural (Late Harvest), uvas Torontel sobremaduras do Maule.',terroir:'Maule interior, clima mediterrâneo, verões quentes e outonos secos. Solos franco-argilosos e graníticos. A uva concentra açúcar e aromas na planta.',winery:'Erasmo: tradição italiana com o sequeiro do Maule. Late Harvest equilibrado: boa acidez e aromas florais intensos, sem sensações enjoativas.',style:'Flores brancas, mel, fruta de caroço, frutas confitadas, casca de laranja. Dulçor marcado com acidez suficiente. Textura untuosa, longo final.',shortpitch:'É o nosso vinho de sobremesa, um Late Harvest de Torontel do Maule, com notas de mel e frutas confitadas; vai muito bem com tres leches, cheesecake, bolo de cenoura ou a degustação de chañar.',pitch:'A uva é deixada para sobremadurar na planta para concentrar açúcar e aromas. O resultado é um vinho doce mas com acidez suficiente para não cansar. É a melhor opção quando o viajante quer encerrar com uma harmonização clássica de sobremesa e vinho.'}
+}};
+
+// ── GUION TRANSLATIONS ───────────────────────────────────────────────────────
+const GUION_TRANS = {
+en:[
+{title:'Aperitifs and welcome',text:'"While you look at the menu, we can offer something fresh by the glass. If you prefer bubbles, we have an organic sparkling from Limarí Valley, very dry with fine bubbles. If you prefer wine, our Talinay Sauvignon is citric and saline, ideal to start, especially if you\'ll be ordering ceviche or seafood dishes."'},
+{title:'Seafood and fish',text:'"For seafood dishes like ceviche, tiradito or trout sudado, the best match is coastal, cold-climate wines with good acidity and salinity. The Talinay Sauvignon comes from a vineyard a few kilometres from the sea, on calcareous soils. If the dish is creamier, like king crab chupe or octopus with corn pie, we suggest an Itata Semillon or a Chardonnay, which have more texture to sustain the sauce."'},
+{title:'Red meats, pork and lamb',text:'"For cuts like short ribs, lamb shank or brisket, we suggest reds from Maipo Andes or Almahue. The Pura Fe Cabernet is the classic Andean Maipo style. If you want something spicier, the Almahue Syrah has black fruit and spices with silkier tannin. If the dish has heat or frying, a dry rosé works better than a very heavy red."'},
+{title:'Vegetarian and vegetable cooking',text:'"For dishes like vegetable lasagne, stuffed zucchini or vegetarian charquicán, we look for wines that accompany the creaminess and umami of the vegetables without overpowering them. In whites, a Casablanca Chardonnay. In reds, an Itata Cinsault or a Casablanca Pinot are light and fresh, with very fine tannin."'},
+{title:'Desserts and closing experience',text:'"Most desserts are sweet and creamy. The best pairing is usually coffee or an infusion. If you want to pair with wine, we have a Torontel Late Harvest from Maule, which goes very well with tres leches, cheesecake or the chañar tasting. If you prefer a fresher, less sweet close, the dry sparkling is ideal with fruit or ice cream desserts."'}
+],
+pt:[
+{title:'Aperitivos e boas-vindas',text:'"Enquanto analisam o cardápio, podemos oferecer algo fresco por taça. Se preferirem borbulhas, temos um espumante orgânico do Vale do Limarí, muito seco e com borbulha fina. Se preferirem vinho, o nosso Sauvignon de Talinay é cítrico e salino, ideal para começar, especialmente se forem pedir ceviche ou pratos do mar."'},
+{title:'Frutos do mar e peixes',text:'"Para pratos de mar como o ceviche, o tiradito ou o sudado de truta, o que melhor funciona são vinhos de costa e clima frio, com boa acidez e salinidade. O Sauvignon de Talinay vem de um vinhedo a poucos quilômetros do mar, sobre solos calcários. Se o prato for mais cremoso, como o chupe de centola ou o polvo com pastelera de milho, sugerimos um Semillon do Itata ou um Chardonnay, que têm mais textura para sustentar o molho."'},
+{title:'Carnes vermelhas, porco e cordeiro',text:'"Para cortes como a costela, o pernil de cordeiro ou o brisket, sugerimos tintos do Maipo Andes ou de Almahue. O Cabernet Pura Fe é o estilo clássico do Maipo andino. Se quiserem algo mais especiado, o Syrah de Almahue tem fruta negra e especiarias com tanino mais sedoso. Se o prato tiver picante ou fritura, um rosé seco funciona melhor do que um tinto muito pesado."'},
+{title:'Cozinha vegetariana e verduras',text:'"Para pratos como a lasanha de legumes, a abobrinha recheada ou o charquicán vegetariano, buscamos vinhos que acompanhem a cremosidade e o umami das verduras sem tapá-los. Em brancos, um Chardonnay de Casablanca. Em tintos, um Cinsault do Itata ou um Pinot de Casablanca são suaves e frescos, com tanino muito fino."'},
+{title:'Sobremesas e encerramento da experiência',text:'"A maioria das sobremesas são doces e cremosas. A melhor combinação costuma ser um café ou uma infusão. Se quiserem harmonizar com vinho, temos um Late Harvest de Torontel do Maule, que vai muito bem com tres leches, cheesecake ou a degustação de chañar. Se preferirem um encerramento mais fresco e menos doce, o espumante seco é ideal com sobremesas de fruta ou sorvete."'}
+]};
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function getDishTr(d){ const tr=DISH_TRANS[currentLang]?.[d.id]; return tr?{...d,...tr,why:{...d.why,...tr.why}}:d; }
+function getWineTr(w){ const tr=WINE_TRANS[currentLang]?.[w.id]; return tr?{...w,...tr}:w; }
+function getGuionesTr(){ return GUION_TRANS[currentLang]||GUIONES; }
+function serviceLabel(s){ return s==='Almuerzo'?t('lunch'):s==='Cena'?t('dinner'):t('lunchDinner'); }
+function courseLabel(c){ return c==='Entrada'?t('starter'):c==='Plato principal'?t('main'):t('dessert'); }
+
+function setLang(lang, el) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  // update static UI
+  document.getElementById('app-title').textContent = t('appTitle');
+  document.getElementById('app-subtitle').textContent = t('appSubtitle');
+  const mainTabs = document.querySelectorAll('.main-tabs .tab');
+  if (mainTabs[0]) mainTabs[0].textContent = t('tabMenus');
+  if (mainTabs[1]) mainTabs[1].textContent = t('tabWines');
+  if (mainTabs[2]) mainTabs[2].textContent = t('tabGuiones');
+  const dishSearch = document.getElementById('dish-search');
+  if (dishSearch) dishSearch.placeholder = t('searchDish');
+  const wineSearch = document.getElementById('wine-search');
+  if (wineSearch) wineSearch.placeholder = t('searchWine');
+  const dayBtns = document.querySelectorAll('.day-btn');
+  if (dayBtns[0]) dayBtns[0].textContent = t('allDays');
+  for (let i=1;i<dayBtns.length;i++) dayBtns[i].textContent = t('day')+' '+i;
+  const wfTabs = document.querySelectorAll('.wine-filter-tabs .tab');
+  const wfKeys = ['all','sparkling','whites','rose','reds','sweet'];
+  wfTabs.forEach((b,i) => { if(wfKeys[i]) b.textContent = t(wfKeys[i]); });
+  // re-render content
+  selectedDish = null; selectedWine = null;
+  renderDishes(); renderWines();
+  if (currentTab === 'guiones') renderGuiones();
+}
+
+function setTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  ['menus','vinos','guiones'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  if (tab === 'guiones') renderGuiones();
+}
+
+function setDay(day, el) {
+  currentDay = day;
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  selectedDish = null;
+  renderDishes();
+}
+
+function setWineFilter(f, el) {
+  wineFilter = f;
+  document.querySelectorAll('.wine-filter-tabs .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  selectedWine = null;
+  renderWines();
+}
+
+function getWine(id) { return WINES.find(w => w.id === id); }
+function typeBadgeClass(t) { return {espumante:'badge-espumante',blanco:'badge-blanco',rosado:'badge-rosado',tinto:'badge-tinto',dulce:'badge-dulce'}[t]||''; }
+function typeLabel(tp) { return UI[currentLang]['lbl_'+tp] || UI.es['lbl_'+tp] || tp; }
+
+function renderDishes() {
+  const q = (document.getElementById('dish-search').value||'').toLowerCase();
+  const dishes = DISHES.filter(d => {
+    const tr = getDishTr(d);
+    const dayOk = currentDay === 'all' || d.day === currentDay;
+    const qOk = !q || tr.name.toLowerCase().includes(q) || tr.desc.toLowerCase().includes(q);
+    return dayOk && qOk;
+  });
+  if (!dishes.length) {
+    document.getElementById('dish-grid').innerHTML = `<div class="empty-state">${t('noDishes')}</div>`;
+    return;
+  }
+  const days = currentDay === 'all' ? ['1','2','3','4'] : [currentDay];
+  let html = '';
+  days.forEach(day => {
+    const dayDishes = dishes.filter(d => d.day === day);
+    if (!dayDishes.length) return;
+    if (currentDay === 'all') html += `<div class="day-heading">${t('day')} ${day}</div>`;
+    SERVICE_ORDER.forEach(service => {
+      const svcDishes = dayDishes.filter(d => d.service === service);
+      if (!svcDishes.length) return;
+      const dotClass = service === 'Cena' ? 'dot-dinner' : service === 'Almuerzo y Cena' ? 'dot-shared' : 'dot-lunch';
+      html += `<div class="service-block"><div class="service-header"><div class="service-dot ${dotClass}"></div><span class="service-label">${serviceLabel(service)}</span></div>`;
+      COURSE_ORDER.forEach(course => {
+        const courseDishes = svcDishes.filter(d => d.course === course);
+        if (!courseDishes.length) return;
+        html += `<div class="course-section"><div class="course-label">${courseLabel(course)}</div><div class="dish-row">`;
+        courseDishes.forEach(d => {
+          const tr = getDishTr(d);
+          html += `<div class="dish-card${selectedDish===d.id?' selected':''}" data-dish-id="${d.id}" onclick="selectDish('${d.id}')">
+            <div class="dish-name">${tr.name}</div>
+            <div class="dish-desc">${tr.desc}</div>
+            ${d.allergens.length ? `<div class="allergen-row">${d.allergens.map(a=>`<span class="allergen-tag">${a}</span>`).join('')}</div>` : ''}
+          </div>`;
+        });
+        html += `</div></div>`; // close dish-row and course-section
+      });
+      html += `</div>`;
+    });
+  });
+  document.getElementById('dish-grid').innerHTML = html;
+}
+
+function selectDish(id) {
+  selectedDish = selectedDish === id ? null : id;
+  renderDishes();
+  if (!selectedDish) return;
+  const card = document.querySelector(`[data-dish-id="${selectedDish}"]`);
+  if (!card) return;
+  const d = DISHES.find(x => x.id === selectedDish);
+  const sdtr = getDishTr(d);
+  const chips = d.wines.map(wid => {
+    const w = getWine(wid);
+    return `<div class="wine-chip" onclick="openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${sdtr.why[wid]||''}</div></div>`;
+  }).join('');
+  const panelHTML = `<div class="detail-panel" id="dish-inline-panel" style="margin-top:10px;">
+    <button class="close-btn" onclick="closeDishDetail()">&#215;</button>
+    <h2>${sdtr.name}</h2>
+    <p class="detail-meta">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)}</p>
+    <p class="detail-desc">${sdtr.desc}</p>
+    ${d.allergens.length ? `<div class="detail-section"><h3>${t('allergens')}</h3><div class="allergen-detail">${d.allergens.map(a=>`<span class="allergen-pill">${a}</span>`).join('')}</div></div>` : ''}
+    <div class="detail-section"><h3>${t('pairings')}</h3><div class="wine-suggestions">${chips}</div></div>
+  </div>`;
+  card.closest('.dish-row').insertAdjacentHTML('afterend', panelHTML);
+  document.getElementById('dish-inline-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function closeDishDetail() {
+  selectedDish = null;
+  renderDishes();
+}
+
+function openWineFromDish(wid) {
+  document.querySelectorAll('.main-tabs .tab').forEach((t,i) => t.classList.toggle('active', i===1));
+  ['menus','vinos','guiones'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t!=='vinos'));
+  currentTab = 'vinos';
+  selectWine(wid);
+}
+
+function renderWines() {
+  const q = (document.getElementById('wine-search').value||'').toLowerCase();
+  const wines = WINES.filter(w => {
+    const typeOk = wineFilter === 'todos' || w.type === wineFilter;
+    const qOk = !q || w.name.toLowerCase().includes(q) || w.valley.toLowerCase().includes(q) || w.style.toLowerCase().includes(q);
+    return typeOk && qOk;
+  });
+  document.getElementById('wine-grid').innerHTML = wines.map(w => {
+    const wtr = getWineTr(w);
+    return `<div class="wine-card${selectedWine===w.id?' selected':''}" data-wine-id="${w.id}" onclick="selectWine('${w.id}')">
+      <span class="wine-type-badge ${typeBadgeClass(w.type)}">${typeLabel(w.type)}</span>
+      <div class="wine-name">${w.name}</div>
+      <div class="wine-valley">${w.valley}</div>
+      <div class="wine-aroma">${wtr.style}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectWine(id) {
+  selectedWine = selectedWine === id ? null : id;
+  renderWines();
+  if (!selectedWine) return;
+  const card = document.querySelector(`[data-wine-id="${selectedWine}"]`);
+  if (!card) return;
+  const w = WINES.find(x => x.id === selectedWine);
+  const pairedDishes = DISHES.filter(d => d.wines.includes(selectedWine));
+  const wtr = getWineTr(w);
+  const panelHTML = `<div class="wine-detail" id="wine-inline-panel" style="margin-top:12px;grid-column:1/-1;">
+    <button class="close-btn" onclick="closeWineDetail()">&#215;</button>
+    <span class="wine-type-badge ${typeBadgeClass(w.type)}">${typeLabel(w.type)}</span>
+    <h2>${w.name}</h2>
+    <div class="valley">${w.valley}</div>
+    <div class="wine-section"><h3>${t('identity')}</h3><p>${wtr.identity}</p></div>
+    <div class="wine-section"><h3>${t('terroir')}</h3><p>${wtr.terroir}</p></div>
+    <div class="wine-section"><h3>${t('winery')}</h3><p>${wtr.winery}</p></div>
+    <div class="wine-section"><h3>${t('style')}</h3><p>${wtr.style}</p></div>
+    <div class="wine-section"><h3>${t('salesScript')}</h3>
+      <div class="guion-box">
+        <p><span class="guion-label">${t('shortPitch')}</span> ${wtr.shortpitch}</p>
+        <p style="margin-top:8px;"><span class="guion-label">${t('development')}</span> ${wtr.pitch}</p>
+      </div>
+    </div>
+    <div class="wine-section"><h3>${t('pairedDishes')} (${pairedDishes.length})</h3>
+      <div class="paired-dishes">${pairedDishes.map(d=>{const dtr=getDishTr(d);return`<div class="paired-dish">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)} — ${dtr.name}</div>`;}).join('')}</div>
+    </div>
+  </div>`;
+  card.insertAdjacentHTML('afterend', panelHTML);
+  document.getElementById('wine-inline-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function closeWineDetail() {
+  selectedWine = null;
+  renderWines();
+}
+
+function renderGuiones() {
+  const guiones = getGuionesTr();
+  document.getElementById('guiones-content').innerHTML = GUIONES.map((g, i) => {
+    const gtr = guiones[i] || g;
+    const wines = g.wines.map(wid => {
+      const w = getWine(wid);
+      return `<div class="wine-chip" onclick="openWineFromGuion('${wid}')">
+        <div class="wine-chip-name">${w.name}</div>
+        <div class="wine-chip-why">${w.valley}</div>
+      </div>`;
+    }).join('');
+    return `<div class="guion-card">
+      <h2>${gtr.title}</h2>
+      <div class="guion-text">${gtr.text}</div>
+      <div class="guion-section-title">${t('mentionedWines')}</div>
+      <div class="wine-suggestions">${wines}</div>
+    </div>`;
+  }).join('');
+}
+
+function openWineFromGuion(wid) {
+  document.querySelectorAll('.main-tabs .tab').forEach((t,i) => t.classList.toggle('active', i===1));
+  ['menus','vinos','guiones'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t!=='vinos'));
+  currentTab = 'vinos';
+  selectWine(wid);
+}
+
+renderDishes();
+renderWines();
+</script>
+</body>
+</html>
