@@ -183,6 +183,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <button class="tab active" onclick="setTab('menus',this)">Menús por día</button>
     <button class="tab" onclick="setTab('vinos',this)">Fichas de vino</button>
     <button class="tab" onclick="setTab('guiones',this)">Guiones de venta</button>
+    <button class="tab" onclick="setTab('desayuno',this)">Desayuno</button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -221,6 +222,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <!-- GUIONES TAB -->
   <div id="tab-guiones" class="hidden">
     <div id="guiones-content"></div>
+  </div>
+
+  <!-- DESAYUNO TAB -->
+  <div id="tab-desayuno" class="hidden">
+    <div id="desayuno-content"></div>
   </div>
 
   <footer style="margin-top:3rem;padding:1.25rem 0 0.5rem;border-top:0.5px solid var(--border);text-align:center;">
@@ -328,7 +334,7 @@ let currentLang = 'es';
 const UI = {
   es: {
     appTitle:'Explora Atacama — Vinos & Menús', appSubtitle:'Guía de servicio: maridajes, alérgenos y fichas de vino',
-    tabMenus:'Menús por día', tabWines:'Fichas de vino', tabGuiones:'Guiones de venta',
+    tabMenus:'Menús por día', tabWines:'Fichas de vino', tabGuiones:'Guiones de venta', tabBreakfast:'Desayuno',
     searchDish:'Buscar plato...', searchWine:'Buscar vino o cepa...',
     allDays:'Todos los días', day:'Día', lunch:'Almuerzo', dinner:'Cena', lunchDinner:'Almuerzo y Cena',
     starter:'Entrada', main:'Plato principal', dessert:'Postre',
@@ -342,7 +348,7 @@ const UI = {
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Service guide: pairings, allergens and wine sheets',
-    tabMenus:'Menus by day', tabWines:'Wine sheets', tabGuiones:'Sales scripts',
+    tabMenus:'Menus by day', tabWines:'Wine sheets', tabGuiones:'Sales scripts', tabBreakfast:'Breakfast',
     searchDish:'Search dish...', searchWine:'Search wine or grape...',
     allDays:'All days', day:'Day', lunch:'Lunch', dinner:'Dinner', lunchDinner:'Lunch & Dinner',
     starter:'Starter', main:'Main course', dessert:'Dessert',
@@ -356,7 +362,7 @@ const UI = {
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Guia de serviço: harmonizações, alérgenos e fichas de vinho',
-    tabMenus:'Menus por dia', tabWines:'Fichas de vinho', tabGuiones:'Roteiros de venda',
+    tabMenus:'Menus por dia', tabWines:'Fichas de vinho', tabGuiones:'Roteiros de venda', tabBreakfast:'Café da manhã',
     searchDish:'Buscar prato...', searchWine:'Buscar vinho ou uva...',
     allDays:'Todos os dias', day:'Dia', lunch:'Almoço', dinner:'Jantar', lunchDinner:'Almoço e Jantar',
     starter:'Entrada', main:'Prato principal', dessert:'Sobremesa',
@@ -562,6 +568,7 @@ function setLang(lang, el) {
   if (mainTabs[0]) mainTabs[0].textContent = t('tabMenus');
   if (mainTabs[1]) mainTabs[1].textContent = t('tabWines');
   if (mainTabs[2]) mainTabs[2].textContent = t('tabGuiones');
+  if (mainTabs[3]) mainTabs[3].textContent = t('tabBreakfast');
   const dishSearch = document.getElementById('dish-search');
   if (dishSearch) dishSearch.placeholder = t('searchDish');
   const wineSearch = document.getElementById('wine-search');
@@ -576,14 +583,16 @@ function setLang(lang, el) {
   selectedDish = null; selectedWine = null;
   renderDishes(); renderWines();
   if (currentTab === 'guiones') renderGuiones();
+  if (currentTab === 'desayuno') renderDesayuno();
 }
 
 function setTab(tab, el) {
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  ['menus','vinos','guiones'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  ['menus','vinos','guiones','desayuno'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'guiones') renderGuiones();
+  if (tab === 'desayuno') renderDesayuno();
 }
 
 function setDay(day, el) {
@@ -769,6 +778,87 @@ function openWineFromGuion(wid) {
 
 renderDishes();
 renderWines();
+
+// ── BREAKFAST DATA ───────────────────────────────────────────────────────────
+const BREAKFAST_MENU = [
+  {
+    title: { es:'Bebidas Calientes', en:'Hot Beverages', pt:'Bebidas Quentes' },
+    items: {
+      es: ['Espresso','Cappuccino','Latte','Americano','Té','Chocolate'],
+      en: ['Espresso','Cappuccino','Latte','Americano','Tea','Chocolate'],
+      pt: ['Espresso','Cappuccino','Latte','Americano','Chá','Chocolate']
+    }
+  },
+  {
+    title: { es:'Leche', en:'Milk', pt:'Leite' },
+    items: {
+      es: ['Soya','Sin lactosa','Entera','Descremada','Almendras'],
+      en: ['Soy','Lactose-free','Whole','Skim','Almond'],
+      pt: ['Soja','Sem lactose','Integral','Desnatado','Amêndoa']
+    }
+  },
+  {
+    title: { es:'Panqueques Clásicos', en:'Classic Pancakes', pt:'Panquecas Clássicas' },
+    items: {
+      es: ['Miel de maple','Miel de abeja','Manjar','Chocolate','Nutella'],
+      en: ['Maple syrup','Honey','Dulce de leche','Chocolate','Nutella'],
+      pt: ['Xarope de bordo','Mel','Doce de leite','Chocolate','Nutella']
+    }
+  },
+  {
+    title: { es:'Quinoa Tibia', en:'Warm Quinoa Porridge', pt:'Quinoa Morna' },
+    items: {
+      es: ['Manzana','Jugo de naranja'],
+      en: ['Apple','Orange juice'],
+      pt: ['Maçã','Suco de laranja']
+    }
+  },
+  {
+    title: { es:'Huevos', en:'Eggs', pt:'Ovos' },
+    items: {
+      es: ['Duros','A la copa','Fritos','Revueltos','Pochados'],
+      en: ['Hard-boiled','Soft-boiled','Sunny side-up','Scrambled','Poached'],
+      pt: ['Cozidos','Quentes','Estrelados','Mexidos','Pochê']
+    }
+  },
+  {
+    title: { es:'Omelette', en:'White Omelette', pt:'Omelete' },
+    items: {
+      es: ['Queso','Jamón','Tocino','Champiñón','Tomate','Cebolla'],
+      en: ['Cheese','Ham','Bacon','Mushroom','Tomato','Onion'],
+      pt: ['Queijo','Presunto','Bacon','Cogumelo','Tomate','Cebola']
+    }
+  },
+  {
+    title: { es:'Tostadas Francesas', en:'French Toast', pt:'Torradas Francesas' },
+    items: {
+      es: ['Miel de maple','Miel de abeja','Manjar','Chocolate','Nutella'],
+      en: ['Maple syrup','Honey','Dulce de leche','Chocolate','Nutella'],
+      pt: ['Xarope de bordo','Mel','Doce de leite','Chocolate','Nutella']
+    }
+  },
+  {
+    title: { es:'Tostadas con Queso Crema y Trucha', en:'Trout & Cream Cheese Open Toast', pt:'Torrada com Cream Cheese e Truta' },
+    items: {
+      es: ['Tostada integral','Queso crema','Palta','Trucha ahumada'],
+      en: ['Whole wheat bread','Cream cheese','Avocado','Smoked salmon trout'],
+      pt: ['Pão integral','Cream cheese','Abacate','Truta defumada']
+    }
+  }
+];
+
+function renderDesayuno() {
+  const lang = currentLang;
+  const html = BREAKFAST_MENU.map(cat => `
+    <div class="guion-card">
+      <h2>${cat.title[lang]}</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${cat.items[lang].map(item => `<span class="allergen-pill">${item}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('desayuno-content').innerHTML = html;
+}
 </script>
 </body>
 </html>
