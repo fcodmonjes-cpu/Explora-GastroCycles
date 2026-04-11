@@ -157,6 +157,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .guion-text { background: rgba(139, 26, 46, 0.2); border: 0.5px solid rgba(139, 26, 46, 0.35); border-radius: var(--radius-md); padding: 12px; margin-bottom: 1rem; font-size: 13px; color: #c97080; line-height: 1.6; }
 .guion-section-title { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
 
+/* Cocktails */
+.cocktail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.cocktail-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; animation: panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
+.cocktail-name { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
+.cocktail-method { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.75rem; font-style: italic; }
+.cocktail-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+.cocktail-meta-tag { font-size: 11px; color: var(--text-tertiary); background: var(--bg-secondary); border: 0.5px solid var(--border); border-radius: 4px; padding: 2px 8px; }
+.cocktail-section-label { font-size: 10px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+.cocktail-ingredient-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 0.5px solid var(--border); }
+.cocktail-ingredient-row:last-child { border-bottom: none; }
+.cocktail-ingredient-name { font-size: 13px; color: var(--text); }
+.cocktail-ingredient-amount { font-size: 12px; color: var(--text-secondary); white-space: nowrap; padding-left: 12px; text-align: right; }
+.cocktail-garnish { margin-top: 0.85rem; padding-top: 0.6rem; border-top: 0.5px solid var(--border); font-size: 12px; color: var(--text-secondary); }
+.cocktail-garnish strong { color: var(--text-tertiary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; display: block; margin-bottom: 2px; }
+
 .hidden { display: none !important; }
 .empty-state { font-size: 13px; color: var(--text-tertiary); padding: 2rem 0; text-align: center; }
 </style>
@@ -183,6 +198,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <button class="tab active" onclick="setTab('menus',this)">Menús por día</button>
     <button class="tab" onclick="setTab('vinos',this)">Fichas de vino</button>
     <button class="tab" onclick="setTab('guiones',this)">Guiones de venta</button>
+    <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -222,6 +238,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div id="tab-guiones" class="hidden">
     <div id="guiones-content"></div>
   </div>
+
+  <!-- COCKTAILS TAB -->
+  <div id="tab-cocktails" class="hidden">
+    <div id="cocktails-content"></div>
+  </div>
+
 
 
 <footer style="margin-top:3rem;padding:1.25rem 0 0.5rem;border-top:0.5px solid var(--border);text-align:center;">
@@ -329,7 +351,8 @@ let currentLang = 'es';
 const UI = {
   es: {
     appTitle:'Explora Atacama — Vinos & Menús', appSubtitle:'Guía de servicio: maridajes, alérgenos y fichas de vino',
-    tabMenus:'Menús por día', tabWines:'Fichas de vino', tabGuiones:'Guiones de venta',
+    tabMenus:'Menús por día', tabWines:'Fichas de vino', tabGuiones:'Guiones de venta', tabCocktails:'Cocktails',
+    ctMethod:'Método', ctGlass:'Vaso', ctIce:'Hielo', ctIngredients:'Ingredientes', ctGarnish:'Garnish',
     searchDish:'Buscar plato...', searchWine:'Buscar vino o cepa...',
     allDays:'Todos los días', day:'Día', lunch:'Almuerzo', dinner:'Cena', lunchDinner:'Almuerzo y Cena',
     starter:'Entrada', main:'Plato principal', dessert:'Postre',
@@ -343,7 +366,8 @@ const UI = {
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Service guide: pairings, allergens and wine sheets',
-    tabMenus:'Menus by day', tabWines:'Wine sheets', tabGuiones:'Sales scripts',
+    tabMenus:'Menus by day', tabWines:'Wine sheets', tabGuiones:'Sales scripts', tabCocktails:'Cocktails',
+    ctMethod:'Method', ctGlass:'Glass', ctIce:'Ice', ctIngredients:'Ingredients', ctGarnish:'Garnish',
     searchDish:'Search dish...', searchWine:'Search wine or grape...',
     allDays:'All days', day:'Day', lunch:'Lunch', dinner:'Dinner', lunchDinner:'Lunch & Dinner',
     starter:'Starter', main:'Main course', dessert:'Dessert',
@@ -357,7 +381,8 @@ const UI = {
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Guia de serviço: harmonizações, alérgenos e fichas de vinho',
-    tabMenus:'Menus por dia', tabWines:'Fichas de vinho', tabGuiones:'Roteiros de venda',
+    tabMenus:'Menus por dia', tabWines:'Fichas de vinho', tabGuiones:'Roteiros de venda', tabCocktails:'Cocktails',
+    ctMethod:'Método', ctGlass:'Copo', ctIce:'Gelo', ctIngredients:'Ingredientes', ctGarnish:'Decoração',
     searchDish:'Buscar prato...', searchWine:'Buscar vinho ou uva...',
     allDays:'Todos os dias', day:'Dia', lunch:'Almoço', dinner:'Jantar', lunchDinner:'Almoço e Jantar',
     starter:'Entrada', main:'Prato principal', dessert:'Sobremesa',
@@ -563,6 +588,7 @@ function setLang(lang, el) {
   if (mainTabs[0]) mainTabs[0].textContent = t('tabMenus');
   if (mainTabs[1]) mainTabs[1].textContent = t('tabWines');
   if (mainTabs[2]) mainTabs[2].textContent = t('tabGuiones');
+  if (mainTabs[3]) mainTabs[3].textContent = t('tabCocktails');
 
   const dishSearch = document.getElementById('dish-search');
   if (dishSearch) dishSearch.placeholder = t('searchDish');
@@ -578,14 +604,16 @@ function setLang(lang, el) {
   selectedDish = null; selectedWine = null;
   renderDishes(); renderWines();
   if (currentTab === 'guiones') renderGuiones();
+  if (currentTab === 'cocktails') renderCocktails();
 }
 
 function setTab(tab, el) {
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  ['menus','vinos','guiones'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  ['menus','vinos','guiones','cocktails'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'guiones') renderGuiones();
+  if (tab === 'cocktails') renderCocktails();
 }
 
 function setDay(day, el) {
@@ -771,6 +799,270 @@ function openWineFromGuion(wid) {
 
 renderDishes();
 renderWines();
+
+// ── COCKTAILS DATA ───────────────────────────────────────────────────────────
+const COCKTAILS = [
+  {
+    name: 'Jardín de los Aviadores',
+    method: {
+      es: 'Coctelera — dry shake, shake y doble colado',
+      en: 'Shaker — dry shake, shake and double strain',
+      pt: 'Coqueteleira — dry shake, shake e duplo coado'
+    },
+    glass: { es: 'Copa Martini', en: 'Martini glass', pt: 'Taça Martini' },
+    ice:   { es: 'Sin hielo', en: 'No ice', pt: 'Sem gelo' },
+    ingredients: [
+      ['Gin', '2 oz'],
+      ['St. Germain', '1 oz'],
+      ['Jarabe de goma', '0.5 oz'],
+      ['Jugo de limón', '1 oz']
+    ],
+    garnish: 'Rosa del año'
+  },
+  {
+    name: 'Altiplánico Sour',
+    method: {
+      es: 'Coctelera — dry shake, shake y doble colado',
+      en: 'Shaker — dry shake, shake and double strain',
+      pt: 'Coqueteleira — dry shake, shake e duplo coado'
+    },
+    glass: { es: 'Vaso London Rock', en: 'London Rock glass', pt: 'Copo London Rock' },
+    ice:   { es: 'Sin hielo', en: 'No ice', pt: 'Sem gelo' },
+    ingredients: [
+      ['Pisco', '3 oz'],
+      ['Jarabe de goma', '1 oz'],
+      ['Jugo de limón', '1 oz'],
+      ['Albúmina (clara de huevo)', '0.5 oz'],
+      ['Ayrampo', '0.5 oz']
+    ],
+    garnish: 'Rosas'
+  },
+  {
+    name: 'Aperol Spritz',
+    method: {
+      es: 'Directo — construir directamente en la copa',
+      en: 'Build — pour directly into the glass',
+      pt: 'Direto — construir diretamente na taça'
+    },
+    glass: { es: 'Copa de vino', en: 'Wine glass', pt: 'Taça de vinho' },
+    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    ingredients: [
+      ['Prosecco', '200 ml'],
+      ['Aperol', '2 oz'],
+      ['Agua con gas', 'Fill / hasta llenar']
+    ],
+    garnish: 'Rodaja de naranja'
+  },
+  {
+    name: 'St. Germain Spritz',
+    method: {
+      es: 'Directo — construir directamente en la copa',
+      en: 'Build — pour directly into the glass',
+      pt: 'Direto — construir diretamente na taça'
+    },
+    glass: { es: 'Copa de vino', en: 'Wine glass', pt: 'Taça de vinho' },
+    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    ingredients: [
+      ['Prosecco', '120 ml'],
+      ['St. Germain', '2 oz'],
+      ['Agua con gas', 'Rellenar / Fill']
+    ],
+    garnish: 'Slice o piel de limón'
+  },
+  {
+    name: 'Pistón',
+    method: {
+      es: 'Directo — construir directamente en la copa',
+      en: 'Build — pour directly into the glass',
+      pt: 'Direto — construir diretamente na taça'
+    },
+    glass: { es: 'Copa de vino', en: 'Wine glass', pt: 'Taça de vinho' },
+    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    ingredients: [
+      ['Pisco Kappa', '2 oz'],
+      ['Tónica', 'Rellenar / Fill']
+    ],
+    garnish: 'Slice o piel de naranja'
+  },
+  {
+    name: 'Summer Mule',
+    method: {
+      es: 'Directo — construir directamente en el vaso',
+      en: 'Build — pour directly into the glass',
+      pt: 'Direto — construir diretamente no copo'
+    },
+    glass: { es: 'Vaso Rocks grande', en: 'Large Rocks glass', pt: 'Copo Rocks grande' },
+    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    ingredients: [
+      ['Jugo de maracuyá', '2 oz'],
+      ['Jugo de limón', '1 oz'],
+      ['Jarabe de goma', '0.5 oz'],
+      ['Ginger Beer', 'Rellenar / Fill']
+    ],
+    garnish: 'Molle o slice / piel de naranja'
+  },
+  {
+    name: 'De la Huerta',
+    method: {
+      es: 'Machacar pepino y menta en coctelera, agitar y doble colado',
+      en: 'Muddle cucumber and mint in shaker, shake and double strain',
+      pt: 'Macerar pepino e menta na coqueteleira, agitar e duplo coado'
+    },
+    glass: { es: 'Vaso Long Drink', en: 'Long Drink glass', pt: 'Copo Long Drink' },
+    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    ingredients: [
+      ['Gin Neptuna', '2 oz'],
+      ['Jugo de limón', '1 oz'],
+      ['Jarabe de goma', '1 oz'],
+      ['Pepino', 'En rodajas (machacar)'],
+      ['Menta fresca', '5 a 8 hojas (machacar)'],
+      ['Tónica', 'Rellenar / Fill']
+    ],
+    garnish: 'Slice de pepino y brote de menta'
+  },
+  {
+    name: 'Rosa del Desierto',
+    method: {
+      es: 'Directo — construir directamente en el vaso',
+      en: 'Build — pour directly into the glass',
+      pt: 'Direto — construir diretamente no copo'
+    },
+    glass: { es: 'Vaso Long Drink', en: 'Long Drink glass', pt: 'Copo Long Drink' },
+    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    ingredients: [
+      ['Jugo de pomelo', '3 oz'],
+      ['Jugo de limón', '1 oz'],
+      ['Jarabe de rosas', '1 oz'],
+      ['Tónica', 'Rellenar / Fill']
+    ],
+    garnish: 'Rosa del año'
+  },
+  {
+    name: 'Toco en el Coco',
+    method: {
+      es: 'Directo — construir directamente en el vaso',
+      en: 'Build — pour directly into the glass',
+      pt: 'Direto — construir diretamente no copo'
+    },
+    glass: { es: 'Vaso Long Drink', en: 'Long Drink glass', pt: 'Copo Long Drink' },
+    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    ingredients: [
+      ['Agua', '150 ml'],
+      ['Crema de coco', '2 cucharadas'],
+      ['Jugo de limón', '2 oz'],
+      ['Coco rallado', '1 cuchara grande']
+    ],
+    garnish: 'Coco rallado tostado'
+  },
+  {
+    name: 'Cynar Julep',
+    method: {
+      es: 'Directo con menta machacada en el vaso',
+      en: 'Build with muddled mint directly in the glass',
+      pt: 'Direto com menta macerada no copo'
+    },
+    glass: { es: 'Vaso Long Drink', en: 'Long Drink glass', pt: 'Copo Long Drink' },
+    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    ingredients: [
+      ['Cynar', '2 oz'],
+      ['Jugo de limón', '1 oz'],
+      ['Menta fresca', '5 a 8 hojas (machacar)'],
+      ['Tónica', 'Rellenar / Fill']
+    ],
+    garnish: 'Brote de menta'
+  },
+  {
+    name: 'Negroni',
+    method: {
+      es: 'Refrescado y escanceado — mezclar con hielo en vaso mezclador, colar sobre el vaso',
+      en: 'Stirred and strained — stir with ice in mixing glass, strain into serving glass',
+      pt: 'Mexido e coado — misturar com gelo no copo misturador, coar no copo'
+    },
+    glass: { es: 'Vaso Rocks', en: 'Rocks glass', pt: 'Copo Rocks' },
+    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    ingredients: [
+      ['Tanqueray Gin', '1 oz'],
+      ['Vermouth 1757', '0.8 oz'],
+      ['Campari', '1 oz']
+    ],
+    garnish: 'Piel de naranja'
+  },
+  {
+    name: 'Margarita',
+    method: {
+      es: 'Cocteleado — agitar en coctelera con hielo y colar',
+      en: 'Shaken — shake with ice in shaker and strain',
+      pt: 'Chacoalhado — agitar na coqueteleira com gelo e coar'
+    },
+    glass: { es: 'Vaso Rocks', en: 'Rocks glass', pt: 'Copo Rocks' },
+    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    ingredients: [
+      ['Tequila', '2 oz'],
+      ['Jugo de limón', '1 oz'],
+      ['Cointreau', '3/4 oz'],
+      ['Sal', 'Rim media luna']
+    ],
+    garnish: 'Rim de sal y gajo de limón'
+  },
+  {
+    name: 'Rica Rica Sour',
+    method: {
+      es: 'Coctelera — dry shake, shake y doble colado',
+      en: 'Shaker — dry shake, shake and double strain',
+      pt: 'Coqueteleira — dry shake, shake e duplo coado'
+    },
+    glass: { es: 'Vaso Rocks', en: 'Rocks glass', pt: 'Copo Rocks' },
+    ice:   { es: 'Rocks', en: 'Rocks', pt: 'Rocks' },
+    ingredients: [
+      ['Pisco', '2 oz'],
+      ['Jugo de limón', '1 oz'],
+      ['Jarabe de goma', '1 oz'],
+      ['Rica Rica (hierba andina)', '0.5 oz']
+    ],
+    garnish: 'Rica Rica (hierba andina)'
+  },
+  {
+    name: 'Paloma',
+    method: {
+      es: 'Cocteleado — agitar en coctelera con hielo y colar',
+      en: 'Shaken — shake with ice in shaker and strain',
+      pt: 'Chacoalhado — agitar na coqueteleira com gelo e coar'
+    },
+    glass: { es: 'Vaso Long Drink corto', en: 'Short Long Drink glass', pt: 'Copo Long Drink curto' },
+    ice:   { es: 'Rocks', en: 'Rocks', pt: 'Rocks' },
+    ingredients: [
+      ['Tequila', '2 oz'],
+      ['Jugo de limón', '1 oz'],
+      ['Jugo de pomelo', '1 oz'],
+      ['Sal', 'Rim media luna']
+    ],
+    garnish: 'Gajo de pomelo y sal rim'
+  }
+];
+
+function renderCocktails() {
+  const lang = currentLang;
+  const ui = UI[lang];
+  const html = `<div class="cocktail-grid">${COCKTAILS.map(c => `
+    <div class="cocktail-card">
+      <div class="cocktail-name">${c.name}</div>
+      <div class="cocktail-method">${c.method[lang]}</div>
+      <div class="cocktail-meta-row">
+        <span class="cocktail-meta-tag">${ui.ctGlass}: ${c.glass[lang]}</span>
+        <span class="cocktail-meta-tag">${ui.ctIce}: ${c.ice[lang]}</span>
+      </div>
+      <div class="cocktail-section-label">${ui.ctIngredients}</div>
+      ${c.ingredients.map(([name, amount]) => `
+        <div class="cocktail-ingredient-row">
+          <span class="cocktail-ingredient-name">${name}</span>
+          <span class="cocktail-ingredient-amount">${amount}</span>
+        </div>`).join('')}
+      <div class="cocktail-garnish">
+        <strong>${ui.ctGarnish}</strong>${c.garnish}
+      </div>
+    </div>`).join('')}</div>`;
+  document.getElementById('cocktails-content').innerHTML = html;
+}
 
 </script>
 </body>
