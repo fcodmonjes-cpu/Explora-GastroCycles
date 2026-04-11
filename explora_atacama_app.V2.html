@@ -199,6 +199,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <button class="tab" onclick="setTab('vinos',this)">Fichas de vino</button>
     <button class="tab" onclick="setTab('guiones',this)">Guiones de venta</button>
     <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
+    <button class="tab" onclick="setTab('mocktails',this)">Mocktails</button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -241,7 +242,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <!-- COCKTAILS TAB -->
   <div id="tab-cocktails" class="hidden">
+    <div class="search-bar" style="margin-bottom:1.25rem;">
+      <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+      <input type="text" id="cocktail-search" placeholder="Buscar cocktail..." oninput="renderCocktails()">
+    </div>
     <div id="cocktails-content"></div>
+  </div>
+
+  <!-- MOCKTAILS TAB -->
+  <div id="tab-mocktails" class="hidden">
+    <div id="mocktails-content"></div>
   </div>
 
 
@@ -351,8 +361,8 @@ let currentLang = 'es';
 const UI = {
   es: {
     appTitle:'Explora Atacama — Vinos & Menús', appSubtitle:'Guía de servicio: maridajes, alérgenos y fichas de vino',
-    tabMenus:'Menús por día', tabWines:'Fichas de vino', tabGuiones:'Guiones de venta', tabCocktails:'Cocktails',
-    ctMethod:'Método', ctGlass:'Vaso', ctIce:'Hielo', ctIngredients:'Ingredientes', ctGarnish:'Garnish',
+    tabMenus:'Menús por día', tabWines:'Fichas de vino', tabGuiones:'Guiones de venta', tabCocktails:'Cocktails', tabMocktails:'Mocktails',
+    ctMethod:'Método', ctGlass:'Vaso', ctIce:'Hielo', ctIngredients:'Ingredientes', ctGarnish:'Garnish', ctSearch:'Buscar cocktail...',
     searchDish:'Buscar plato...', searchWine:'Buscar vino o cepa...',
     allDays:'Todos los días', day:'Día', lunch:'Almuerzo', dinner:'Cena', lunchDinner:'Almuerzo y Cena',
     starter:'Entrada', main:'Plato principal', dessert:'Postre',
@@ -366,8 +376,8 @@ const UI = {
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Service guide: pairings, allergens and wine sheets',
-    tabMenus:'Menus by day', tabWines:'Wine sheets', tabGuiones:'Sales scripts', tabCocktails:'Cocktails',
-    ctMethod:'Method', ctGlass:'Glass', ctIce:'Ice', ctIngredients:'Ingredients', ctGarnish:'Garnish',
+    tabMenus:'Menus by day', tabWines:'Wine sheets', tabGuiones:'Sales scripts', tabCocktails:'Cocktails', tabMocktails:'Mocktails',
+    ctMethod:'Method', ctGlass:'Glass', ctIce:'Ice', ctIngredients:'Ingredients', ctGarnish:'Garnish', ctSearch:'Search cocktail...',
     searchDish:'Search dish...', searchWine:'Search wine or grape...',
     allDays:'All days', day:'Day', lunch:'Lunch', dinner:'Dinner', lunchDinner:'Lunch & Dinner',
     starter:'Starter', main:'Main course', dessert:'Dessert',
@@ -381,8 +391,8 @@ const UI = {
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Guia de serviço: harmonizações, alérgenos e fichas de vinho',
-    tabMenus:'Menus por dia', tabWines:'Fichas de vinho', tabGuiones:'Roteiros de venda', tabCocktails:'Cocktails',
-    ctMethod:'Método', ctGlass:'Copo', ctIce:'Gelo', ctIngredients:'Ingredientes', ctGarnish:'Decoração',
+    tabMenus:'Menus por dia', tabWines:'Fichas de vinho', tabGuiones:'Roteiros de venda', tabCocktails:'Cocktails', tabMocktails:'Mocktails',
+    ctMethod:'Método', ctGlass:'Copo', ctIce:'Gelo', ctIngredients:'Ingredientes', ctGarnish:'Decoração', ctSearch:'Buscar cocktail...',
     searchDish:'Buscar prato...', searchWine:'Buscar vinho ou uva...',
     allDays:'Todos os dias', day:'Dia', lunch:'Almoço', dinner:'Jantar', lunchDinner:'Almoço e Jantar',
     starter:'Entrada', main:'Prato principal', dessert:'Sobremesa',
@@ -589,6 +599,9 @@ function setLang(lang, el) {
   if (mainTabs[1]) mainTabs[1].textContent = t('tabWines');
   if (mainTabs[2]) mainTabs[2].textContent = t('tabGuiones');
   if (mainTabs[3]) mainTabs[3].textContent = t('tabCocktails');
+  if (mainTabs[4]) mainTabs[4].textContent = t('tabMocktails');
+  const csearch = document.getElementById('cocktail-search');
+  if (csearch) csearch.placeholder = t('ctSearch');
 
   const dishSearch = document.getElementById('dish-search');
   if (dishSearch) dishSearch.placeholder = t('searchDish');
@@ -605,15 +618,17 @@ function setLang(lang, el) {
   renderDishes(); renderWines();
   if (currentTab === 'guiones') renderGuiones();
   if (currentTab === 'cocktails') renderCocktails();
+  if (currentTab === 'mocktails') renderMocktails();
 }
 
 function setTab(tab, el) {
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  ['menus','vinos','guiones','cocktails'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  ['menus','vinos','guiones','cocktails','mocktails'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'guiones') renderGuiones();
   if (tab === 'cocktails') renderCocktails();
+  if (tab === 'mocktails') renderMocktails();
 }
 
 function setDay(day, el) {
@@ -868,19 +883,6 @@ const COCKTAILS = [
     garnish: {es:'Slice o piel de naranja', en:'Orange slice or peel', pt:'Fatia ou casca de laranja'}
   },
   {
-    name: 'Summer Mule',
-    method: { es:'Directo — construir directamente en el vaso', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente no copo' },
-    glass:  { es:'Vaso Rocks grande', en:'Large Rocks glass', pt:'Copo Rocks grande' },
-    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
-    ingredients: [
-      [{es:'Jugo de maracuyá', en:'Passion fruit juice', pt:'Suco de maracujá'}, '2 oz'],
-      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
-      [{es:'Jarabe de goma', en:'Simple syrup', pt:'Xarope simples'}, '0.5 oz'],
-      ['Ginger Beer', {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
-    ],
-    garnish: {es:'Molle o slice / piel de naranja', en:'Molle or orange slice / peel', pt:'Molle ou fatia / casca de laranja'}
-  },
-  {
     name: 'De la Huerta',
     method: { es:'Machacar pepino y menta en coctelera, agitar y doble colado', en:'Muddle cucumber and mint in shaker, shake and double strain', pt:'Macerar pepino e menta na coqueteleira, agitar e duplo coado' },
     glass:  { es:'Vaso Long Drink', en:'Long Drink glass', pt:'Copo Long Drink' },
@@ -894,32 +896,6 @@ const COCKTAILS = [
       [{es:'Tónica', en:'Tonic water', pt:'Água tônica'}, {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
     ],
     garnish: {es:'Slice de pepino y brote de menta', en:'Cucumber slice and mint sprig', pt:'Fatia de pepino e broto de hortelã'}
-  },
-  {
-    name: 'Rosa del Desierto',
-    method: { es:'Directo — construir directamente en el vaso', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente no copo' },
-    glass:  { es:'Vaso Long Drink', en:'Long Drink glass', pt:'Copo Long Drink' },
-    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
-    ingredients: [
-      [{es:'Jugo de pomelo', en:'Grapefruit juice', pt:'Suco de pomelo'}, '3 oz'],
-      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
-      [{es:'Jarabe de rosas', en:'Rose syrup', pt:'Xarope de rosas'}, '1 oz'],
-      [{es:'Tónica', en:'Tonic water', pt:'Água tônica'}, {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
-    ],
-    garnish: {es:'Rosa del año', en:'Year\'s rose', pt:'Rosa do ano'}
-  },
-  {
-    name: 'Toco en el Coco',
-    method: { es:'Directo — construir directamente en el vaso', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente no copo' },
-    glass:  { es:'Vaso Long Drink', en:'Long Drink glass', pt:'Copo Long Drink' },
-    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
-    ingredients: [
-      [{es:'Agua', en:'Water', pt:'Água'}, '150 ml'],
-      [{es:'Crema de coco', en:'Coconut cream', pt:'Creme de coco'}, {es:'2 cucharadas', en:'2 tbsp', pt:'2 colheres'}],
-      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '2 oz'],
-      [{es:'Coco rallado', en:'Shredded coconut', pt:'Coco ralado'}, {es:'1 cuchara grande', en:'1 tbsp', pt:'1 colher grande'}]
-    ],
-    garnish: {es:'Coco rallado tostado', en:'Toasted shredded coconut', pt:'Coco ralado tostado'}
   },
   {
     name: 'Cynar Julep',
@@ -987,11 +963,52 @@ const COCKTAILS = [
   }
 ];
 
-function renderCocktails() {
-  const lang = currentLang;
-  const ui = UI[lang];
+// ── MOCKTAILS DATA ───────────────────────────────────────────────────────────
+const MOCKTAILS = [
+  {
+    name: 'Summer Mule',
+    method: { es:'Directo — construir directamente en el vaso', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente no copo' },
+    glass:  { es:'Vaso Rocks grande', en:'Large Rocks glass', pt:'Copo Rocks grande' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
+    ingredients: [
+      [{es:'Jugo de maracuyá', en:'Passion fruit juice', pt:'Suco de maracujá'}, '2 oz'],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Jarabe de goma', en:'Simple syrup', pt:'Xarope simples'}, '0.5 oz'],
+      ['Ginger Beer', {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
+    ],
+    garnish: {es:'Molle o slice / piel de naranja', en:'Molle or orange slice / peel', pt:'Molle ou fatia / casca de laranja'}
+  },
+  {
+    name: 'Rosa del Desierto',
+    method: { es:'Directo — construir directamente en el vaso', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente no copo' },
+    glass:  { es:'Vaso Long Drink', en:'Long Drink glass', pt:'Copo Long Drink' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
+    ingredients: [
+      [{es:'Jugo de pomelo', en:'Grapefruit juice', pt:'Suco de pomelo'}, '3 oz'],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Jarabe de rosas', en:'Rose syrup', pt:'Xarope de rosas'}, '1 oz'],
+      [{es:'Tónica', en:'Tonic water', pt:'Água tônica'}, {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
+    ],
+    garnish: {es:'Rosa del año', en:'Year\'s rose', pt:'Rosa do ano'}
+  },
+  {
+    name: 'Coco en el Toco',
+    method: { es:'Directo — construir directamente en el vaso', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente no copo' },
+    glass:  { es:'Vaso Long Drink', en:'Long Drink glass', pt:'Copo Long Drink' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
+    ingredients: [
+      [{es:'Agua', en:'Water', pt:'Água'}, '150 ml'],
+      [{es:'Crema de coco', en:'Coconut cream', pt:'Creme de coco'}, {es:'2 cucharadas', en:'2 tbsp', pt:'2 colheres'}],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '2 oz'],
+      [{es:'Coco rallado', en:'Shredded coconut', pt:'Coco ralado'}, {es:'1 cuchara grande', en:'1 tbsp', pt:'1 colher grande'}]
+    ],
+    garnish: {es:'Coco rallado tostado', en:'Toasted shredded coconut', pt:'Coco ralado tostado'}
+  }
+];
+
+function buildDrinkCard(c, lang, ui) {
   const tr = v => typeof v === 'object' ? v[lang] : v;
-  const html = `<div class="cocktail-grid">${COCKTAILS.map(c => `
+  return `
     <div class="cocktail-card">
       <div class="cocktail-name">${c.name}</div>
       <div class="cocktail-method">${c.method[lang]}</div>
@@ -1008,8 +1025,24 @@ function renderCocktails() {
       <div class="cocktail-garnish">
         <strong>${ui.ctGarnish}</strong>${tr(c.garnish)}
       </div>
-    </div>`).join('')}</div>`;
-  document.getElementById('cocktails-content').innerHTML = html;
+    </div>`;
+}
+
+function renderCocktails() {
+  const lang = currentLang;
+  const ui = UI[lang];
+  const q = (document.getElementById('cocktail-search')?.value || '').toLowerCase();
+  const list = q ? COCKTAILS.filter(c => c.name.toLowerCase().includes(q)) : COCKTAILS;
+  document.getElementById('cocktails-content').innerHTML =
+    list.length ? `<div class="cocktail-grid">${list.map(c => buildDrinkCard(c, lang, ui)).join('')}</div>`
+                : `<p class="empty-state">${ui.noDishes}</p>`;
+}
+
+function renderMocktails() {
+  const lang = currentLang;
+  const ui = UI[lang];
+  document.getElementById('mocktails-content').innerHTML =
+    `<div class="cocktail-grid">${MOCKTAILS.map(c => buildDrinkCard(c, lang, ui)).join('')}</div>`;
 }
 
 </script>
