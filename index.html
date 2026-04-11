@@ -801,248 +801,196 @@ renderDishes();
 renderWines();
 
 // ── COCKTAILS DATA ───────────────────────────────────────────────────────────
+// Ingredient entries: [name, amount]
+// name  → string (brand/proper noun) OR {es,en,pt} object
+// amount → string OR {es,en,pt} object when it contains descriptive text
 const COCKTAILS = [
   {
     name: 'Jardín de los Aviadores',
-    method: {
-      es: 'Coctelera — dry shake, shake y doble colado',
-      en: 'Shaker — dry shake, shake and double strain',
-      pt: 'Coqueteleira — dry shake, shake e duplo coado'
-    },
-    glass: { es: 'Copa Martini', en: 'Martini glass', pt: 'Taça Martini' },
-    ice:   { es: 'Sin hielo', en: 'No ice', pt: 'Sem gelo' },
+    method: { es:'Coctelera — dry shake, shake y doble colado', en:'Shaker — dry shake, shake and double strain', pt:'Coqueteleira — dry shake, shake e duplo coado' },
+    glass:  { es:'Copa Martini', en:'Martini glass', pt:'Taça Martini' },
+    ice:    { es:'Sin hielo', en:'No ice', pt:'Sem gelo' },
     ingredients: [
       ['Gin', '2 oz'],
       ['St. Germain', '1 oz'],
-      ['Jarabe de goma', '0.5 oz'],
-      ['Jugo de limón', '1 oz']
+      [{es:'Jarabe de goma', en:'Simple syrup', pt:'Xarope simples'}, '0.5 oz'],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz']
     ],
-    garnish: 'Rosa del año'
+    garnish: {es:'Rosa del año', en:'Year\'s rose', pt:'Rosa do ano'}
   },
   {
     name: 'Altiplánico Sour',
-    method: {
-      es: 'Coctelera — dry shake, shake y doble colado',
-      en: 'Shaker — dry shake, shake and double strain',
-      pt: 'Coqueteleira — dry shake, shake e duplo coado'
-    },
-    glass: { es: 'Vaso London Rock', en: 'London Rock glass', pt: 'Copo London Rock' },
-    ice:   { es: 'Sin hielo', en: 'No ice', pt: 'Sem gelo' },
+    method: { es:'Coctelera — dry shake, shake y doble colado', en:'Shaker — dry shake, shake and double strain', pt:'Coqueteleira — dry shake, shake e duplo coado' },
+    glass:  { es:'Vaso London Rock', en:'London Rock glass', pt:'Copo London Rock' },
+    ice:    { es:'Sin hielo', en:'No ice', pt:'Sem gelo' },
     ingredients: [
       ['Pisco', '3 oz'],
-      ['Jarabe de goma', '1 oz'],
-      ['Jugo de limón', '1 oz'],
-      ['Albúmina (clara de huevo)', '0.5 oz'],
+      [{es:'Jarabe de goma', en:'Simple syrup', pt:'Xarope simples'}, '1 oz'],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Albúmina (clara de huevo)', en:'Egg white (albumin)', pt:'Clara de ovo (albumina)'}, '0.5 oz'],
       ['Ayrampo', '0.5 oz']
     ],
-    garnish: 'Rosas'
+    garnish: {es:'Rosas', en:'Roses', pt:'Rosas'}
   },
   {
     name: 'Aperol Spritz',
-    method: {
-      es: 'Directo — construir directamente en la copa',
-      en: 'Build — pour directly into the glass',
-      pt: 'Direto — construir diretamente na taça'
-    },
-    glass: { es: 'Copa de vino', en: 'Wine glass', pt: 'Taça de vinho' },
-    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    method: { es:'Directo — construir directamente en la copa', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente na taça' },
+    glass:  { es:'Copa de vino', en:'Wine glass', pt:'Taça de vinho' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
     ingredients: [
       ['Prosecco', '200 ml'],
       ['Aperol', '2 oz'],
-      ['Agua con gas', 'Fill / hasta llenar']
+      [{es:'Agua con gas', en:'Sparkling water', pt:'Água com gás'}, {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
     ],
-    garnish: 'Rodaja de naranja'
+    garnish: {es:'Rodaja de naranja', en:'Orange slice', pt:'Fatia de laranja'}
   },
   {
     name: 'St. Germain Spritz',
-    method: {
-      es: 'Directo — construir directamente en la copa',
-      en: 'Build — pour directly into the glass',
-      pt: 'Direto — construir diretamente na taça'
-    },
-    glass: { es: 'Copa de vino', en: 'Wine glass', pt: 'Taça de vinho' },
-    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    method: { es:'Directo — construir directamente en la copa', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente na taça' },
+    glass:  { es:'Copa de vino', en:'Wine glass', pt:'Taça de vinho' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
     ingredients: [
       ['Prosecco', '120 ml'],
       ['St. Germain', '2 oz'],
-      ['Agua con gas', 'Rellenar / Fill']
+      [{es:'Agua con gas', en:'Sparkling water', pt:'Água com gás'}, {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
     ],
-    garnish: 'Slice o piel de limón'
+    garnish: {es:'Slice o piel de limón', en:'Lemon slice or peel', pt:'Fatia ou casca de limão'}
   },
   {
     name: 'Pistón',
-    method: {
-      es: 'Directo — construir directamente en la copa',
-      en: 'Build — pour directly into the glass',
-      pt: 'Direto — construir diretamente na taça'
-    },
-    glass: { es: 'Copa de vino', en: 'Wine glass', pt: 'Taça de vinho' },
-    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    method: { es:'Directo — construir directamente en la copa', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente na taça' },
+    glass:  { es:'Copa de vino', en:'Wine glass', pt:'Taça de vinho' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
     ingredients: [
       ['Pisco Kappa', '2 oz'],
-      ['Tónica', 'Rellenar / Fill']
+      [{es:'Tónica', en:'Tonic water', pt:'Água tônica'}, {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
     ],
-    garnish: 'Slice o piel de naranja'
+    garnish: {es:'Slice o piel de naranja', en:'Orange slice or peel', pt:'Fatia ou casca de laranja'}
   },
   {
     name: 'Summer Mule',
-    method: {
-      es: 'Directo — construir directamente en el vaso',
-      en: 'Build — pour directly into the glass',
-      pt: 'Direto — construir diretamente no copo'
-    },
-    glass: { es: 'Vaso Rocks grande', en: 'Large Rocks glass', pt: 'Copo Rocks grande' },
-    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    method: { es:'Directo — construir directamente en el vaso', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente no copo' },
+    glass:  { es:'Vaso Rocks grande', en:'Large Rocks glass', pt:'Copo Rocks grande' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
     ingredients: [
-      ['Jugo de maracuyá', '2 oz'],
-      ['Jugo de limón', '1 oz'],
-      ['Jarabe de goma', '0.5 oz'],
-      ['Ginger Beer', 'Rellenar / Fill']
+      [{es:'Jugo de maracuyá', en:'Passion fruit juice', pt:'Suco de maracujá'}, '2 oz'],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Jarabe de goma', en:'Simple syrup', pt:'Xarope simples'}, '0.5 oz'],
+      ['Ginger Beer', {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
     ],
-    garnish: 'Molle o slice / piel de naranja'
+    garnish: {es:'Molle o slice / piel de naranja', en:'Molle or orange slice / peel', pt:'Molle ou fatia / casca de laranja'}
   },
   {
     name: 'De la Huerta',
-    method: {
-      es: 'Machacar pepino y menta en coctelera, agitar y doble colado',
-      en: 'Muddle cucumber and mint in shaker, shake and double strain',
-      pt: 'Macerar pepino e menta na coqueteleira, agitar e duplo coado'
-    },
-    glass: { es: 'Vaso Long Drink', en: 'Long Drink glass', pt: 'Copo Long Drink' },
-    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    method: { es:'Machacar pepino y menta en coctelera, agitar y doble colado', en:'Muddle cucumber and mint in shaker, shake and double strain', pt:'Macerar pepino e menta na coqueteleira, agitar e duplo coado' },
+    glass:  { es:'Vaso Long Drink', en:'Long Drink glass', pt:'Copo Long Drink' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
     ingredients: [
       ['Gin Neptuna', '2 oz'],
-      ['Jugo de limón', '1 oz'],
-      ['Jarabe de goma', '1 oz'],
-      ['Pepino', 'En rodajas (machacar)'],
-      ['Menta fresca', '5 a 8 hojas (machacar)'],
-      ['Tónica', 'Rellenar / Fill']
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Jarabe de goma', en:'Simple syrup', pt:'Xarope simples'}, '1 oz'],
+      [{es:'Pepino', en:'Cucumber', pt:'Pepino'}, {es:'En rodajas (machacar)', en:'Sliced (to muddle)', pt:'Fatiado (macerar)'}],
+      [{es:'Menta fresca', en:'Fresh mint', pt:'Hortelã fresca'}, {es:'5 a 8 hojas (machacar)', en:'5 to 8 leaves (to muddle)', pt:'5 a 8 folhas (macerar)'}],
+      [{es:'Tónica', en:'Tonic water', pt:'Água tônica'}, {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
     ],
-    garnish: 'Slice de pepino y brote de menta'
+    garnish: {es:'Slice de pepino y brote de menta', en:'Cucumber slice and mint sprig', pt:'Fatia de pepino e broto de hortelã'}
   },
   {
     name: 'Rosa del Desierto',
-    method: {
-      es: 'Directo — construir directamente en el vaso',
-      en: 'Build — pour directly into the glass',
-      pt: 'Direto — construir diretamente no copo'
-    },
-    glass: { es: 'Vaso Long Drink', en: 'Long Drink glass', pt: 'Copo Long Drink' },
-    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    method: { es:'Directo — construir directamente en el vaso', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente no copo' },
+    glass:  { es:'Vaso Long Drink', en:'Long Drink glass', pt:'Copo Long Drink' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
     ingredients: [
-      ['Jugo de pomelo', '3 oz'],
-      ['Jugo de limón', '1 oz'],
-      ['Jarabe de rosas', '1 oz'],
-      ['Tónica', 'Rellenar / Fill']
+      [{es:'Jugo de pomelo', en:'Grapefruit juice', pt:'Suco de pomelo'}, '3 oz'],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Jarabe de rosas', en:'Rose syrup', pt:'Xarope de rosas'}, '1 oz'],
+      [{es:'Tónica', en:'Tonic water', pt:'Água tônica'}, {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
     ],
-    garnish: 'Rosa del año'
+    garnish: {es:'Rosa del año', en:'Year\'s rose', pt:'Rosa do ano'}
   },
   {
     name: 'Toco en el Coco',
-    method: {
-      es: 'Directo — construir directamente en el vaso',
-      en: 'Build — pour directly into the glass',
-      pt: 'Direto — construir diretamente no copo'
-    },
-    glass: { es: 'Vaso Long Drink', en: 'Long Drink glass', pt: 'Copo Long Drink' },
-    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    method: { es:'Directo — construir directamente en el vaso', en:'Build — pour directly into the glass', pt:'Direto — construir diretamente no copo' },
+    glass:  { es:'Vaso Long Drink', en:'Long Drink glass', pt:'Copo Long Drink' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
     ingredients: [
-      ['Agua', '150 ml'],
-      ['Crema de coco', '2 cucharadas'],
-      ['Jugo de limón', '2 oz'],
-      ['Coco rallado', '1 cuchara grande']
+      [{es:'Agua', en:'Water', pt:'Água'}, '150 ml'],
+      [{es:'Crema de coco', en:'Coconut cream', pt:'Creme de coco'}, {es:'2 cucharadas', en:'2 tbsp', pt:'2 colheres'}],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '2 oz'],
+      [{es:'Coco rallado', en:'Shredded coconut', pt:'Coco ralado'}, {es:'1 cuchara grande', en:'1 tbsp', pt:'1 colher grande'}]
     ],
-    garnish: 'Coco rallado tostado'
+    garnish: {es:'Coco rallado tostado', en:'Toasted shredded coconut', pt:'Coco ralado tostado'}
   },
   {
     name: 'Cynar Julep',
-    method: {
-      es: 'Directo con menta machacada en el vaso',
-      en: 'Build with muddled mint directly in the glass',
-      pt: 'Direto com menta macerada no copo'
-    },
-    glass: { es: 'Vaso Long Drink', en: 'Long Drink glass', pt: 'Copo Long Drink' },
-    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    method: { es:'Directo con menta machacada en el vaso', en:'Build with muddled mint directly in the glass', pt:'Direto com hortelã macerada no copo' },
+    glass:  { es:'Vaso Long Drink', en:'Long Drink glass', pt:'Copo Long Drink' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
     ingredients: [
       ['Cynar', '2 oz'],
-      ['Jugo de limón', '1 oz'],
-      ['Menta fresca', '5 a 8 hojas (machacar)'],
-      ['Tónica', 'Rellenar / Fill']
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Menta fresca', en:'Fresh mint', pt:'Hortelã fresca'}, {es:'5 a 8 hojas (machacar)', en:'5 to 8 leaves (to muddle)', pt:'5 a 8 folhas (macerar)'}],
+      [{es:'Tónica', en:'Tonic water', pt:'Água tônica'}, {es:'Hasta llenar', en:'Fill', pt:'Completar'}]
     ],
-    garnish: 'Brote de menta'
+    garnish: {es:'Brote de menta', en:'Mint sprig', pt:'Broto de hortelã'}
   },
   {
     name: 'Negroni',
-    method: {
-      es: 'Refrescado y escanceado — mezclar con hielo en vaso mezclador, colar sobre el vaso',
-      en: 'Stirred and strained — stir with ice in mixing glass, strain into serving glass',
-      pt: 'Mexido e coado — misturar com gelo no copo misturador, coar no copo'
-    },
-    glass: { es: 'Vaso Rocks', en: 'Rocks glass', pt: 'Copo Rocks' },
-    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    method: { es:'Refrescado y escanceado — mezclar con hielo en vaso mezclador, colar sobre el vaso', en:'Stirred and strained — stir with ice in mixing glass, strain into serving glass', pt:'Mexido e coado — misturar com gelo no copo misturador, coar no copo' },
+    glass:  { es:'Vaso Rocks', en:'Rocks glass', pt:'Copo Rocks' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
     ingredients: [
       ['Tanqueray Gin', '1 oz'],
       ['Vermouth 1757', '0.8 oz'],
       ['Campari', '1 oz']
     ],
-    garnish: 'Piel de naranja'
+    garnish: {es:'Piel de naranja', en:'Orange peel', pt:'Casca de laranja'}
   },
   {
     name: 'Margarita',
-    method: {
-      es: 'Cocteleado — agitar en coctelera con hielo y colar',
-      en: 'Shaken — shake with ice in shaker and strain',
-      pt: 'Chacoalhado — agitar na coqueteleira com gelo e coar'
-    },
-    glass: { es: 'Vaso Rocks', en: 'Rocks glass', pt: 'Copo Rocks' },
-    ice:   { es: 'Cubos', en: 'Cubes', pt: 'Cubos' },
+    method: { es:'Cocteleado — agitar en coctelera con hielo y colar', en:'Shaken — shake with ice in shaker and strain', pt:'Chacoalhado — agitar na coqueteleira com gelo e coar' },
+    glass:  { es:'Vaso Rocks', en:'Rocks glass', pt:'Copo Rocks' },
+    ice:    { es:'Cubos', en:'Cubes', pt:'Cubos' },
     ingredients: [
       ['Tequila', '2 oz'],
-      ['Jugo de limón', '1 oz'],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
       ['Cointreau', '3/4 oz'],
-      ['Sal', 'Rim media luna']
+      [{es:'Sal', en:'Salt', pt:'Sal'}, {es:'Rim media luna', en:'Half-moon rim', pt:'Rim meia lua'}]
     ],
-    garnish: 'Rim de sal y gajo de limón'
+    garnish: {es:'Rim de sal y gajo de limón', en:'Salt rim and lemon wedge', pt:'Rim de sal e gomo de limão'}
   },
   {
     name: 'Rica Rica Sour',
-    method: {
-      es: 'Coctelera — dry shake, shake y doble colado',
-      en: 'Shaker — dry shake, shake and double strain',
-      pt: 'Coqueteleira — dry shake, shake e duplo coado'
-    },
-    glass: { es: 'Vaso Rocks', en: 'Rocks glass', pt: 'Copo Rocks' },
-    ice:   { es: 'Rocks', en: 'Rocks', pt: 'Rocks' },
+    method: { es:'Coctelera — dry shake, shake y doble colado', en:'Shaker — dry shake, shake and double strain', pt:'Coqueteleira — dry shake, shake e duplo coado' },
+    glass:  { es:'Vaso Rocks', en:'Rocks glass', pt:'Copo Rocks' },
+    ice:    { es:'Rocks', en:'Rocks', pt:'Rocks' },
     ingredients: [
       ['Pisco', '2 oz'],
-      ['Jugo de limón', '1 oz'],
-      ['Jarabe de goma', '1 oz'],
-      ['Rica Rica (hierba andina)', '0.5 oz']
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Jarabe de goma', en:'Simple syrup', pt:'Xarope simples'}, '1 oz'],
+      [{es:'Rica Rica (hierba andina)', en:'Rica Rica (Andean herb)', pt:'Rica Rica (erva andina)'}, '0.5 oz']
     ],
-    garnish: 'Rica Rica (hierba andina)'
+    garnish: {es:'Rica Rica (hierba andina)', en:'Rica Rica (Andean herb)', pt:'Rica Rica (erva andina)'}
   },
   {
     name: 'Paloma',
-    method: {
-      es: 'Cocteleado — agitar en coctelera con hielo y colar',
-      en: 'Shaken — shake with ice in shaker and strain',
-      pt: 'Chacoalhado — agitar na coqueteleira com gelo e coar'
-    },
-    glass: { es: 'Vaso Long Drink corto', en: 'Short Long Drink glass', pt: 'Copo Long Drink curto' },
-    ice:   { es: 'Rocks', en: 'Rocks', pt: 'Rocks' },
+    method: { es:'Cocteleado — agitar en coctelera con hielo y colar', en:'Shaken — shake with ice in shaker and strain', pt:'Chacoalhado — agitar na coqueteleira com gelo e coar' },
+    glass:  { es:'Vaso Long Drink corto', en:'Short Long Drink glass', pt:'Copo Long Drink curto' },
+    ice:    { es:'Rocks', en:'Rocks', pt:'Rocks' },
     ingredients: [
       ['Tequila', '2 oz'],
-      ['Jugo de limón', '1 oz'],
-      ['Jugo de pomelo', '1 oz'],
-      ['Sal', 'Rim media luna']
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Jugo de pomelo', en:'Grapefruit juice', pt:'Suco de pomelo'}, '1 oz'],
+      [{es:'Sal', en:'Salt', pt:'Sal'}, {es:'Rim media luna', en:'Half-moon rim', pt:'Rim meia lua'}]
     ],
-    garnish: 'Gajo de pomelo y sal rim'
+    garnish: {es:'Gajo de pomelo y sal rim', en:'Grapefruit wedge and salt rim', pt:'Gomo de pomelo e rim de sal'}
   }
 ];
 
 function renderCocktails() {
   const lang = currentLang;
   const ui = UI[lang];
+  const tr = v => typeof v === 'object' ? v[lang] : v;
   const html = `<div class="cocktail-grid">${COCKTAILS.map(c => `
     <div class="cocktail-card">
       <div class="cocktail-name">${c.name}</div>
@@ -1054,11 +1002,11 @@ function renderCocktails() {
       <div class="cocktail-section-label">${ui.ctIngredients}</div>
       ${c.ingredients.map(([name, amount]) => `
         <div class="cocktail-ingredient-row">
-          <span class="cocktail-ingredient-name">${name}</span>
-          <span class="cocktail-ingredient-amount">${amount}</span>
+          <span class="cocktail-ingredient-name">${tr(name)}</span>
+          <span class="cocktail-ingredient-amount">${tr(amount)}</span>
         </div>`).join('')}
       <div class="cocktail-garnish">
-        <strong>${ui.ctGarnish}</strong>${c.garnish}
+        <strong>${ui.ctGarnish}</strong>${tr(c.garnish)}
       </div>
     </div>`).join('')}</div>`;
   document.getElementById('cocktails-content').innerHTML = html;
