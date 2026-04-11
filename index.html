@@ -118,11 +118,34 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .allergen-pill { font-size: 12px; padding: 3px 10px; border-radius: 20px; background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border-md); }
 .allergen-pill.pill-mariscos { background: rgba(14,116,144,0.15); color: #67e8f9; border-color: rgba(14,116,144,0.4); }
 .wine-suggestions { display: flex; flex-direction: column; gap: 8px; }
-.wine-chip { background: rgba(139, 26, 46, 0.2); border: 0.5px solid rgba(139, 26, 46, 0.4); border-radius: var(--radius-md); padding: 8px 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
-.wine-chip:hover { background: rgba(139, 26, 46, 0.3); }
-.wine-chip.chip-active { border-color: rgba(139, 26, 46, 0.8); background: rgba(139, 26, 46, 0.3); }
-.wine-chip-name { font-size: 13px; font-weight: 500; color: #e8a0aa; }
-.wine-chip-why { font-size: 12px; color: #c97080; margin-top: 2px; }
+.wine-chip { background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius-md); padding: 8px 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.wine-chip-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.wine-chip-why { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+/* chip colors per wine type */
+.wine-chip.chip-espumante { background: rgba(14,165,233,0.12); border-color: rgba(14,165,233,0.35); }
+.wine-chip.chip-espumante:hover, .wine-chip.chip-espumante.chip-active { background: rgba(14,165,233,0.22); border-color: rgba(14,165,233,0.7); }
+.wine-chip.chip-espumante .wine-chip-name { color: #7dd3fc; }
+.wine-chip.chip-espumante .wine-chip-why { color: #38bdf8; }
+.wine-chip.chip-blanco { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); }
+.wine-chip.chip-blanco:hover, .wine-chip.chip-blanco.chip-active { background: rgba(34,197,94,0.2); border-color: rgba(34,197,94,0.6); }
+.wine-chip.chip-blanco .wine-chip-name { color: #86efac; }
+.wine-chip.chip-blanco .wine-chip-why { color: #4ade80; }
+.wine-chip.chip-semillon { background: rgba(202,138,4,0.12); border-color: rgba(202,138,4,0.35); }
+.wine-chip.chip-semillon:hover, .wine-chip.chip-semillon.chip-active { background: rgba(202,138,4,0.22); border-color: rgba(202,138,4,0.7); }
+.wine-chip.chip-semillon .wine-chip-name { color: #fcd34d; }
+.wine-chip.chip-semillon .wine-chip-why { color: #f59e0b; }
+.wine-chip.chip-rosado { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); }
+.wine-chip.chip-rosado:hover, .wine-chip.chip-rosado.chip-active { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.6); }
+.wine-chip.chip-rosado .wine-chip-name { color: #fca5a5; }
+.wine-chip.chip-rosado .wine-chip-why { color: #f87171; }
+.wine-chip.chip-tinto { background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.35); }
+.wine-chip.chip-tinto:hover, .wine-chip.chip-tinto.chip-active { background: rgba(139,92,246,0.22); border-color: rgba(139,92,246,0.7); }
+.wine-chip.chip-tinto .wine-chip-name { color: #c4b5fd; }
+.wine-chip.chip-tinto .wine-chip-why { color: #a78bfa; }
+.wine-chip.chip-dulce { background: rgba(251,146,60,0.12); border-color: rgba(251,146,60,0.35); }
+.wine-chip.chip-dulce:hover, .wine-chip.chip-dulce.chip-active { background: rgba(251,146,60,0.22); border-color: rgba(251,146,60,0.7); }
+.wine-chip.chip-dulce .wine-chip-name { color: #fdba74; }
+.wine-chip.chip-dulce .wine-chip-why { color: #fb923c; }
 .wine-sub-panel { margin-top: 12px; background: var(--bg-secondary); border: 0.5px solid rgba(139,26,46,0.3); border-radius: var(--radius-md); padding: 1rem; animation: panelIn 0.25s cubic-bezier(0.34,1.1,0.64,1) both; }
 .close-btn { float: right; font-size: 20px; line-height: 1; cursor: pointer; color: var(--text-tertiary); background: none; border: none; padding: 0 0 0 8px; }
 .close-btn:hover { color: var(--text); }
@@ -134,11 +157,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .wine-card:hover { border-color: var(--border-md); }
 .wine-card.selected { border-color: var(--wine-red); border-width: 1.5px; }
 .wine-type-badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; display: inline-block; margin-bottom: 6px; }
-.badge-espumante { background: #F4C0D1; color: #72243E; }
-.badge-blanco { background: var(--gold-light); color: #633806; }
-.badge-rosado { background: var(--coral-light); color: #993C1D; }
-.badge-tinto { background: var(--wine-red-light); color: var(--wine-red-dark); }
-.badge-dulce { background: var(--teal-light); color: #0F6E56; }
+.badge-espumante { background: rgba(14,165,233,0.18); color: #7dd3fc; }
+.badge-blanco { background: rgba(34,197,94,0.15); color: #86efac; }
+.badge-semillon { background: rgba(202,138,4,0.18); color: #fcd34d; }
+.badge-rosado { background: var(--coral-light); color: #f87171; }
+.badge-tinto { background: rgba(139,92,246,0.2); color: #c4b5fd; }
+.badge-dulce { background: rgba(251,146,60,0.2); color: #fdba74; }
 .wine-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
 .wine-valley { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
 .wine-aroma { font-size: 12px; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -310,7 +334,7 @@ const DISHES = [
   {id:'d41',day:'3',service:'Cena',course:'Plato principal',name:'Arroz cremoso con mariscos',desc:'Base tipo risotto (arroz sofrito, vino blanco, caldo de camarones/langostinos con mirr pois). Incorpora tomate y mix de mariscos salteados (camarón, calamares, ostiones, pulpo) con vino blanco y mantequilla. Garnitura de chalaca (cebolla, tomate, cilantro, limón). Alérgenos: Lácteos (mantequilla).',allergens:['Mariscos','Lácteos'],wines:['semillon','aquitania'],why:{semillon:'Textura y acidez para la salsa cremosa de mariscos.',aquitania:'Chardonnay con volumen para el arroz cremoso.'}},
   {id:'d42',day:'3',service:'Almuerzo y Cena',course:'Postre',name:'Eclair de algarrobo',desc:'Masa choux crocante rellena de mousse de algarrobo, ganache de café descafeinado y teja de algarrobo. Sabor chocolatoso y terroso. Alérgenos: Gluten (masa), Lácteos (mousse, ganache).',allergens:['Gluten','Lácteos'],wines:['erasmo'],why:{erasmo:'Dulzor floral con las notas terrosas del algarrobo.'}},
   {id:'d43',day:'3',service:'Almuerzo y Cena',course:'Postre',name:'Torta selva negra',desc:'Torta de panqueques (no bizcocho) remojada en pisco. Rellena de gel de frambuesa con crema de chocolate. Terminada con ganache de vainilla y gel de frambuesa. Alérgenos: Gluten (panqueques), Lácteos (crema, ganache).',allergens:['Gluten','Lácteos'],wines:['erasmo'],why:{erasmo:'Frutas confitadas y acidez equilibran el chocolate y el pisco.'}},
-  {id:'d44',day:'3',service:'Almuerzo y Cena',course:'Postre',name:'Milhoja de manzana',desc:'Hojas caramelizadas con azúcar, canela y mantequilla sobre tierra de canela. Acompañada de helado de rica-rica y papel de airampo. Alérgenos: Gluten y Lácteos (milhoja).',allergens:['Gluten','Lácteos'],wines:['erasmo','azur'],why:{erasmo:'Miel y frutas confitadas con la canela y la manzana.',azur:'Opción fresca para quien no quiere vino dulce.'}},
+  {id:'d44',day:'3',service:'Almuerzo y Cena',course:'Postre',name:'Milhoja de manzana',desc:'Láminas de manzana caramelizadas con azúcar, canela y mantequilla sobre tierra de canela. Acompañada de helado de rica-rica y papel de airampo. Sin gluten. Alérgenos: Lácteos (mantequilla, helado).',allergens:['Lácteos'],wines:['erasmo','azur'],why:{erasmo:'Miel y frutas confitadas con la canela y la manzana.',azur:'Opción fresca para quien no quiere vino dulce.'}},
   {id:'d45',day:'4',service:'Almuerzo',course:'Plato principal',name:'Pulmay',desc:'Caldo caliente con contramuslo de pollo, cerdo, longaniza/chorizo, camarón, choro, choritos con concha y papas nativas. Vegetales: pimentón, apio, cebolla, zanahoria y vino blanco. Observación: Apto para gluten free y sin lactosa.',allergens:['Mariscos'],wines:['azur','talinay'],why:{azur:'Burbuja refrescante para la mezcla intensa de mariscos y carnes.',talinay:'Blanco salino y cítrico para el caldo de mariscos.'}},
   {id:'d46',day:'4',service:'Almuerzo',course:'Plato principal',name:'Arroz chaufa',desc:'Arroz del día anterior salteado con carne, huevo y "pachicay" (bulbo de cebollín, pimentón, aceite de maravilla y de sésamo). Saborizado con soya, jengibre y aceite de sésamo. Terminado con hojas de cebollín. Alérgenos: Gluten (soya).',allergens:['Gluten (soya)'],wines:['garage-rose','glup'],why:{'garage-rose':'Acidez y agarre tánico con la soya y la fritura.',glup:'Tinto ligero para no pesar sobre el chaufa.'}},
   {id:'d47',day:'4',service:'Almuerzo',course:'Plato principal',name:'Lechuga de Sequitor al fuego',desc:'Protagonista es la lechuga. Acompañada de puré de peras (al vino blanco), peras brunoise rostizadas y demi-glace de vegetales (apio, zanahoria, tomate, champiñón, papa, jengibre cocinado por horas).',allergens:[],wines:['talinay','garage-rose'],why:{talinay:'Acidez equilibra el dulzor de la pera y las notas ahumadas.','garage-rose':'Fruta roja fresca con la lechuga y la pera.'}},
@@ -333,7 +357,7 @@ const WINES = [
   {id:'azur',type:'espumante',name:'Azur Extra Brut',valley:'Valle del Limarí',identity:'Espumante orgánico, método tradicional, Extra Brut (muy seco). Mezcla de uvas de clima frío del Limarí.',terroir:'Valle del Limarí, norte chico de Chile. Clima semiárido frío de costa, camanchaca, suelos calcáreos. Acidez marcada y sensación mineral muy clara.',winery:'Manejo orgánico. Segunda fermentación en botella (método tradicional). Crianza sobre lías. Sin exceso de azúcar de dosaje.',style:'Burbuja fina y persistente. Cítricos, manzana verde, flores blancas y pan tostado. Seco, acidez alta, cuerpo medio-ligero, final salino.',shortpitch:'Es un espumante orgánico del valle del Limarí, muy seco y fresco, con burbuja fina. Ideal para mariscos gratinados, camarones al ajillo o para comenzar con ceviches y tiraditos.',pitch:'Viene de la costa del norte chico, donde la niebla y el viento mantienen la uva muy fresca. Eso le da una acidez alta que limpia la grasa del gratín o del ajo, y la burbuja arrastra la salsa y deja la boca lista para el siguiente bocado.'},
   {id:'talinay',type:'blanco',name:'Talinay Sauvignon Blanc',valley:'Tabalí, Valle del Limarí',identity:'Blanco seco, 100% Sauvignon Blanc, viñedo Talinay. Uno de los terroirs más fríos y calcáreos de Chile.',terroir:'12 km del océano Pacífico. Clima frío de costa, camanchaca matinal, brisas marinas. Roca calcárea fracturada: altísima acidez, gran tensión y marcada salinidad.',winery:'Viña Tabalí, pionera en la zona calcárea. Rendimientos bajos, vendimia manual, fermentación fría, mínima madera.',style:'Lima, pomelo, hierbas finas, flores blancas, piedra y tiza. Muy tenso, acidez alta, cuerpo medio, final largo cítrico y salino.',shortpitch:'Es un Sauvignon de costa muy fría, cítrico y salino, perfecto para ceviches, tiraditos y pescados blancos.',pitch:'Las parras están plantadas casi sobre roca, muy cerca del mar. Eso le da una tensión y una salinidad natural que se alinea con el limón y la sal del ceviche o del tiradito, y a la vez limpia el caldo del sudado de trucha sin tapar el sabor del pescado.'},
   {id:'aquitania',type:'blanco',name:'Aquitania Chardonnay',valley:'Valle de Casablanca',identity:'Blanco seco, 100% Chardonnay, DO Valle de Casablanca.',terroir:'Entre Santiago y Valparaíso, cerca del océano. Clima mediterráneo frío, nieblas matinales, arcillas y arenas sobre granito.',winery:'Viña Aquitania, larga trayectoria. Equilibrio: frescor, fruta definida y cremosidad moderada, sin exceso de madera.',style:'Manzana, pera, cítricos, flores blancas, toque de crema o mantequilla suave. Acidez marcada, cuerpo medio, textura ligeramente cremosa.',shortpitch:'Es un Chardonnay fresco de Casablanca, con algo de cremosidad, muy cómodo para sopas, platos con queso y pescados con salsas suaves.',pitch:'Viene de un valle de clima frío, por eso mantiene muy buena acidez. Al mismo tiempo tiene volumen suficiente para ir de la mano con sopas cremosas, lasaña de vegetales o un pescado con salsa, sin que el conjunto se vuelva pesado.'},
-  {id:'semillon',type:'blanco',name:'La Palma Semillón',valley:'Carter Mollenhauer, Itata Secano Interior',identity:'Blanco seco, 100% Semillón de viñas viejas (~1900) en Guarilihue, secano del Itata.',terroir:'Sur de Chile, clima mediterráneo fresco. Lomas de secano sin riego, suelos graníticos ricos en cuarzo. Buena acidez, textura y carácter mineral.',winery:'Carter Mollenhauer: rescate de viñedos patrimoniales. Orgánico, levaduras nativas, mínima madera. Parcela emblemática de Semillón centenario.',style:'Cítricos maduros, hierbas secas, flores, piedra mojada. Acidez firme, volumen medio, a veces textura cremosa por lías y toque de pieles.',shortpitch:'Es un Semillón de viñas centenarias del Itata, con buena acidez y textura; ideal para chupes, mariscos cremosos y el sudado de trucha.',pitch:'Las parras se plantaron hace más de cien años en lomas de secano sobre granito. Eso le da al vino una acidez natural y una textura muy fina que se agarra a salsas cremosas, como el chupe o el pulpo con pastelera, pero manteniendo frescor en boca.'},
+  {id:'semillon',type:'blanco',badge:'badge-semillon',name:'La Palma Semillón',valley:'Carter Mollenhauer, Itata Secano Interior',identity:'Blanco seco, 100% Semillón de viñas viejas (~1900) en Guarilihue, secano del Itata.',terroir:'Sur de Chile, clima mediterráneo fresco. Lomas de secano sin riego, suelos graníticos ricos en cuarzo. Buena acidez, textura y carácter mineral.',winery:'Carter Mollenhauer: rescate de viñedos patrimoniales. Orgánico, levaduras nativas, mínima madera. Parcela emblemática de Semillón centenario.',style:'Cítricos maduros, hierbas secas, flores, piedra mojada. Acidez firme, volumen medio, a veces textura cremosa por lías y toque de pieles.',shortpitch:'Es un Semillón de viñas centenarias del Itata, con buena acidez y textura; ideal para chupes, mariscos cremosos y el sudado de trucha.',pitch:'Las parras se plantaron hace más de cien años en lomas de secano sobre granito. Eso le da al vino una acidez natural y una textura muy fina que se agarra a salsas cremosas, como el chupe o el pulpo con pastelera, pero manteniendo frescor en boca.'},
   {id:'garage-rose',type:'rosado',name:'Garage Wine Co. Old Vine Pale Rosé',valley:'Maule Secano',identity:'Rosado seco gastronómico. Mezcla de Cariñena y Monastrell, viñas viejas de secano, zona Empedrado/Truquilemu.',terroir:'Maule interior, secano. Clima mediterráneo con veranos calurosos. Viñas en cabeza, trabajadas a caballo, suelos graníticos muy pobres.',winery:'Garage Wine Co.: pequeños viñedos patrimoniales, agricultura ancestral, mínima intervención. Rosado de mesa, no de piscina.',style:'Color pálido. Frambuesa, cereza, hierbas mediterráneas, flores. Completamente seco, acidez alta, cuerpo medio, leve agarre tánico. Muy versátil.',shortpitch:'Es un rosado de viñas viejas del Maule, seco y con buena acidez; funciona muy bien con frituras, platos con un poco de picor y preparaciones que mezclan mar y tierra.',pitch:'Es casi un tinto muy claro: tiene fruta roja, acidez alta y un pequeño agarre tánico que ayuda a limpiar platos como el pastel de choclo, el chaufa con huevo frito o el chicharrón. Es una alternativa más fresca cuando el plato es intenso pero el comensal no quiere un tinto pesado.'},
   {id:'montsecano',type:'tinto',name:'Montsecano Pinot Noir',valley:'Valle de Casablanca',identity:'Tinto de clima frío, 100% Pinot Noir, DO Valle de Casablanca. Proyecto biodinámico.',terroir:'Valle costero, nieblas matinales, viento del océano. Granito descompuesto y arenas: alta acidez, tanino fino, gran bebilidad.',winery:'Proyecto pequeño y reconocido. Biodinámica, mínima intervención. Fermentación en huevos de cemento. Sin maquillaje de madera nueva.',style:'Frutilla, cereza, flores, hierbas, fondo salino. Jugoso, cuerpo medio, tanino sedoso, acidez viva.',shortpitch:'Es un Pinot Noir de Casablanca, muy elegante y fresco, con tanino suave; va perfecto con pato, risottos, moussaka y carnes rojas en punto jugoso.',pitch:'Al ser un tinto de clima frío, tiene buena acidez y tanino muy fino. Eso hace que se lleve muy bien con platos de textura cremosa como el risotto, y con carnes como el pato o el filete, sin sensación de pesadez.'},
   {id:'glup',type:'tinto',name:'Glup Cinsault',valley:'Longaví, Itata Secano Interior',identity:'Tinto ligero, 100% Cinsault, secano interior del Itata.',terroir:'Lomas cercanas al mar, clima mediterráneo fresco, viñas viejas en cabeza sobre suelos graníticos. Temperaturas moderadas, noches frescas: vinos de baja graduación y gran frescor.',winery:'Línea de Longaví Wines. Variedades patrimoniales, cosecha temprana, poca extracción, crianza sencilla. Vinos gastronómicos muy bebibles.',style:'Guinda, frutilla, flores, pimienta blanca y hierbas. Muy ligero, tanino suave, acidez marcada. Se puede servir ligeramente fresco.',shortpitch:'Es un tinto muy suave y fresco del Itata, ideal para platos algo dulces o cremosos como el pastel de choclo, el pastel de papa o el charquicán.',pitch:'Las viñas están en secano sobre suelos graníticos y se cosechan relativamente temprano, por eso el vino tiene buena acidez y poco tanino. Es perfecto cuando el viajero quiere tinto, pero no algo pesado ni con mucha madera.'},
@@ -457,7 +481,7 @@ d40:{name:'Cauliflower textures',desc:'Caramelised cauliflower purée with abund
 d41:{name:'Creamy seafood rice',desc:'Risotto-style base (sautéed rice, white wine, shrimp/langoustine stock with mirepoix). Incorporates tomato and a sautéed seafood mix (shrimp, squid, scallops, octopus) with white wine and butter. Garnished with chalaca (onion, tomato, cilantro, lemon). Allergens: Dairy (butter).',why:{semillon:'Texture and acidity for the creamy seafood sauce.',aquitania:'Full Chardonnay volume for the creamy rice.'}},
 d42:{name:'Algarrobo éclair',desc:'Crispy choux pastry filled with algarrobo mousse, decaffeinated coffee ganache and an algarrobo tile. Chocolatey and earthy flavour. Allergens: Gluten (pastry), Dairy (mousse, ganache).',why:{erasmo:'Floral sweetness with the earthy notes of algarrobo.'}},
 d43:{name:'Black Forest cake',desc:'Crepe cake (not sponge) soaked in pisco. Filled with raspberry gel and chocolate cream. Finished with vanilla ganache and raspberry gel. Allergens: Gluten (crepes), Dairy (cream, ganache).',why:{erasmo:'Candied fruit and acidity balance the chocolate and pisco.'}},
-d44:{name:'Apple millefeuille',desc:'Caramelised layers with sugar, cinnamon and butter on a cinnamon soil. Served with rica-rica ice cream and airampo paper. Allergens: Gluten and Dairy (millefeuille).',why:{erasmo:'Honey and candied fruit with the cinnamon and apple.',azur:'Fresh option for those who don\'t want sweet wine.'}},
+d44:{name:'Apple millefeuille',desc:'Caramelised apple slices with sugar, cinnamon and butter on a cinnamon soil. Served with rica-rica ice cream and airampo paper. Gluten free. Allergens: Dairy (butter, ice cream).',why:{erasmo:'Honey and candied fruit with the cinnamon and apple.',azur:'Fresh option for those who don\'t want sweet wine.'}},
 d45:{name:'Pulmay',desc:'Hot broth with chicken thigh, pork, sausage/chorizo, shrimp, choro, mussels with shell and native potatoes. Vegetables: bell pepper, celery, onion, carrot and white wine. Note: Suitable for gluten free and lactose free.',why:{azur:'Refreshing bubble for the intense mix of seafood and meat.',talinay:'Saline and citric white for the seafood broth.'}},
 d46:{name:'Chaufa rice',desc:'Previous day\'s rice stir-fried with meat, egg and "pachicay" (spring onion bulb, bell pepper, sunflower and sesame oils). Flavoured with soy sauce, ginger and sesame oil. Finished with chive leaves. Allergens: Gluten (soy sauce).',why:{'garage-rose':'Acidity and tannin grip with the soy and frying.',glup:'Light red to not weigh down the chaufa.'}},
 d47:{name:'Sequitor lettuce over fire',desc:'Lettuce is the protagonist. Served with pear purée (in white wine), brunoise roasted pears and vegetable demi-glace (celery, carrot, tomato, mushroom, potato, ginger cooked for hours).',why:{talinay:'Acidity balances the pear sweetness and smoky notes.','garage-rose':'Fresh red fruit with the lettuce and pear.'}},
@@ -519,7 +543,7 @@ d40:{name:'Texturas de couve-flor',desc:'Purê de couve-flor caramelizada com ab
 d41:{name:'Arroz cremoso com frutos do mar',desc:'Base tipo risoto (arroz refogado, vinho branco, caldo de camarão/lagostim com mirepoix). Incorpora tomate e mix de frutos do mar salteados (camarão, lulas, vieiras, polvo) com vinho branco e manteiga. Guarnição de chalaca (cebola, tomate, coentro, limão). Alergênicos: Laticínios (manteiga).',why:{semillon:'Textura e acidez para o molho cremoso de frutos do mar.',aquitania:'Chardonnay com volume para o arroz cremoso.'}},
 d42:{name:'Éclair de alfarroba',desc:'Massa choux crocante recheada de mousse de alfarroba, ganache de café descafeinado e telha de alfarroba. Sabor achocolatado e terroso. Alergênicos: Glúten (massa), Laticínios (mousse, ganache).',why:{erasmo:'Dulçor floral com as notas terrosas da alfarroba.'}},
 d43:{name:'Torta floresta negra',desc:'Torta de panquecas (não pão-de-ló) embebida em pisco. Recheada de gel de framboesa com creme de chocolate. Finalizada com ganache de baunilha e gel de framboesa. Alergênicos: Glúten (panquecas), Laticínios (creme, ganache).',why:{erasmo:'Frutas confitadas e acidez equilibram o chocolate e o pisco.'}},
-d44:{name:'Mil-folhas de maçã',desc:'Folhas caramelizadas com açúcar, canela e manteiga sobre terra de canela. Acompanhada de sorvete de rica-rica e papel de airampo. Alergênicos: Glúten e Laticínios (mil-folhas).',why:{erasmo:'Mel e frutas confitadas com a canela e a maçã.',azur:'Opção fresca para quem não quer vinho doce.'}},
+d44:{name:'Mil-folhas de maçã',desc:'Lâminas de maçã caramelizadas com açúcar, canela e manteiga sobre terra de canela. Acompanhada de sorvete de rica-rica e papel de airampo. Sem glúten. Alergênicos: Laticínios (manteiga, sorvete).',why:{erasmo:'Mel e frutas confitadas com a canela e a maçã.',azur:'Opção fresca para quem não quer vinho doce.'}},
 d45:{name:'Pulmay',desc:'Caldo quente com sobrecoxa de frango, porco, linguiça/chorizo, camarão, choro, mexilhões com concha e batatas nativas. Legumes: pimentão, aipo, cebola, cenoura e vinho branco. Observação: Apto para sem glúten e sem lactose.',why:{azur:'Borbulha refrescante para o mix intenso de frutos do mar e carnes.',talinay:'Branco salino e cítrico para o caldo de frutos do mar.'}},
 d46:{name:'Arroz chaufa',desc:'Arroz do dia anterior salteado com carne, ovo e "pachicay" (bulbo de cebolinha, pimentão, azeite de girassol e de gergelim). Temperado com shoyu, gengibre e azeite de gergelim. Finalizado com folhas de cebolinha. Alergênicos: Glúten (shoyu).',why:{'garage-rose':'Acidez e leve tânico com o shoyu e a fritura.',glup:'Tinto leve para não pesar sobre o chaufa.'}},
 d47:{name:'Alface de Sequitor ao fogo',desc:'A alface é a protagonista. Acompanhada de purê de peras (ao vinho branco), peras brunoise assadas e demi-glace de legumes (aipo, cenoura, tomate, cogumelo, batata, gengibre cozido por horas).',why:{talinay:'Acidez equilibra o dulçor da pera e as notas defumadas.','garage-rose':'Fruta vermelha fresca com a alface e a pera.'}},
@@ -652,7 +676,15 @@ function setWineFilter(f, el) {
 }
 
 function getWine(id) { return WINES.find(w => w.id === id); }
-function typeBadgeClass(t) { return {espumante:'badge-espumante',blanco:'badge-blanco',rosado:'badge-rosado',tinto:'badge-tinto',dulce:'badge-dulce'}[t]||''; }
+function typeBadgeClass(w) {
+  if (w && typeof w === 'object') { if (w.badge) return w.badge; return {espumante:'badge-espumante',blanco:'badge-blanco',rosado:'badge-rosado',tinto:'badge-tinto',dulce:'badge-dulce'}[w.type]||''; }
+  return {espumante:'badge-espumante',blanco:'badge-blanco',rosado:'badge-rosado',tinto:'badge-tinto',dulce:'badge-dulce'}[w]||'';
+}
+function typeChipClass(w) {
+  if (!w) return '';
+  if (w.badge === 'badge-semillon') return 'chip-semillon';
+  return {espumante:'chip-espumante',blanco:'chip-blanco',rosado:'chip-rosado',tinto:'chip-tinto',dulce:'chip-dulce'}[w.type]||'';
+}
 function typeLabel(tp) { return UI[currentLang]['lbl_'+tp] || UI.es['lbl_'+tp] || tp; }
 
 function renderDishes() {
@@ -708,7 +740,7 @@ function selectDish(id) {
   const sdtr = getDishTr(d);
   const chips = d.wines.map(wid => {
     const w = getWine(wid);
-    return `<div class="wine-chip" onclick="openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${sdtr.why[wid]||''}</div></div>`;
+    return `<div class="wine-chip ${typeChipClass(w)}" onclick="openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${sdtr.why[wid]||''}</div></div>`;
   }).join('');
   const panelHTML = `<div class="detail-panel" id="dish-inline-panel" style="margin-top:10px;">
     <button class="close-btn" onclick="closeDishDetail()">&#215;</button>
@@ -745,7 +777,7 @@ function openWineFromDish(wid) {
   const subHTML = `<div class="wine-sub-panel" id="dish-wine-sub-panel" data-wid="${wid}">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
       <div>
-        <span class="wine-type-badge ${typeBadgeClass(w.type)}" style="margin-bottom:4px;display:inline-block;">${typeLabel(w.type)}</span>
+        <span class="wine-type-badge ${typeBadgeClass(w)}" style="margin-bottom:4px;display:inline-block;">${typeLabel(w.type)}</span>
         <div style="font-size:15px;font-weight:500;color:var(--text);">${w.name}</div>
         <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${w.valley}</div>
       </div>
@@ -784,7 +816,7 @@ function renderWines() {
   document.getElementById('wine-grid').innerHTML = wines.map(w => {
     const wtr = getWineTr(w);
     return `<div class="wine-card${selectedWine===w.id?' selected':''}" data-wine-id="${w.id}" onclick="selectWine('${w.id}')">
-      <span class="wine-type-badge ${typeBadgeClass(w.type)}">${typeLabel(w.type)}</span>
+      <span class="wine-type-badge ${typeBadgeClass(w)}">${typeLabel(w.type)}</span>
       <div class="wine-name">${w.name}</div>
       <div class="wine-valley">${w.valley}</div>
       <div class="wine-aroma">${wtr.style}</div>
@@ -803,7 +835,7 @@ function selectWine(id) {
   const wtr = getWineTr(w);
   const panelHTML = `<div class="wine-detail" id="wine-inline-panel" style="margin-top:12px;grid-column:1/-1;">
     <button class="close-btn" onclick="closeWineDetail()">&#215;</button>
-    <span class="wine-type-badge ${typeBadgeClass(w.type)}">${typeLabel(w.type)}</span>
+    <span class="wine-type-badge ${typeBadgeClass(w)}">${typeLabel(w.type)}</span>
     <h2>${w.name}</h2>
     <div class="valley">${w.valley}</div>
     <div class="wine-section"><h3>${t('identity')}</h3><p>${wtr.identity}</p></div>
@@ -835,7 +867,7 @@ function renderGuiones() {
     const gtr = guiones[i] || g;
     const wines = g.wines.map(wid => {
       const w = getWine(wid);
-      return `<div class="wine-chip" onclick="openWineFromGuion('${wid}')">
+      return `<div class="wine-chip ${typeChipClass(w)}" onclick="openWineFromGuion('${wid}')">
         <div class="wine-chip-name">${w.name}</div>
         <div class="wine-chip-why">${w.valley}</div>
       </div>`;
