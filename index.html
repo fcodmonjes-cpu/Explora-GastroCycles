@@ -110,6 +110,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   from { opacity: 0; transform: translateY(-6px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0)   scale(1);    }
 }
+@keyframes sparkle-pulse {
+  0%, 100% { opacity: 0.45; transform: scale(0.85); }
+  50%       { opacity: 1;    transform: scale(1.1);  }
+}
+.tab-sparkle { display:inline-block; color:#fcd34d; font-size:9px; margin-right:4px; vertical-align:middle; animation:sparkle-pulse 2.8s ease-in-out infinite; }
 
 /* Detail panel */
 .detail-panel { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; animation: panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
@@ -237,7 +242,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <button class="tab" onclick="setTab('guiones',this)">Guiones de venta</button>
     <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
     <button class="tab" onclick="setTab('mocktails',this)">Mocktails</button>
-    <button class="tab" onclick="setTab('momentos',this)">Momentos</button>
+    <button class="tab" onclick="setTab('momentos',this)"><span class="tab-sparkle">✦</span><span id="tab-momentos-label">Momentos</span></button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -248,10 +253,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
     <div class="day-selector">
       <button class="day-btn active" onclick="setDay('all',this)">Todos los días</button>
-      <button class="day-btn" onclick="setDay('1',this)">Día 1</button>
-      <button class="day-btn" onclick="setDay('2',this)">Día 2</button>
-      <button class="day-btn" onclick="setDay('3',this)">Día 3</button>
-      <button class="day-btn" onclick="setDay('4',this)">Día 4</button>
+      <button class="day-btn" onclick="setDay('1',this)">D1</button>
+      <button class="day-btn" onclick="setDay('2',this)">D2</button>
+      <button class="day-btn" onclick="setDay('3',this)">D3</button>
+      <button class="day-btn" onclick="setDay('4',this)">D4</button>
     </div>
     <div id="dish-grid"></div>
   </div>
@@ -648,7 +653,8 @@ function setLang(lang, el) {
   if (mainTabs[2]) mainTabs[2].textContent = t('tabGuiones');
   if (mainTabs[3]) mainTabs[3].textContent = t('tabCocktails');
   if (mainTabs[4]) mainTabs[4].textContent = t('tabMocktails');
-  if (mainTabs[5]) mainTabs[5].textContent = t('tabMomentos');
+  const momentosLabel = document.getElementById('tab-momentos-label');
+  if (momentosLabel) momentosLabel.textContent = t('tabMomentos');
   const csearch = document.getElementById('cocktail-search');
   if (csearch) csearch.placeholder = t('ctSearch');
 
@@ -658,7 +664,7 @@ function setLang(lang, el) {
   if (wineSearch) wineSearch.placeholder = t('searchWine');
   const dayBtns = document.querySelectorAll('.day-btn');
   if (dayBtns[0]) dayBtns[0].textContent = t('allDays');
-  for (let i=1;i<dayBtns.length;i++) dayBtns[i].textContent = t('day')+' '+i;
+  for (let i=1;i<dayBtns.length;i++) dayBtns[i].textContent = 'D'+i;
   const wfTabs = document.querySelectorAll('.wine-filter-tabs .tab');
   const wfKeys = ['all','sparkling','whites','rose','reds','sweet'];
   wfTabs.forEach((b,i) => { if(wfKeys[i]) b.textContent = t(wfKeys[i]); });
