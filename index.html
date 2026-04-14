@@ -722,9 +722,10 @@ function typeLabel(tp) { return UI[currentLang]['lbl_'+tp] || UI.es['lbl_'+tp] |
 
 function renderDishes() {
   const q = (document.getElementById('dish-search').value||'').toLowerCase();
+  const searching = q.length > 0;
   const dishes = DISHES.filter(d => {
     const tr = getDishTr(d);
-    const dayOk = currentDay === 'all' || d.day === currentDay;
+    const dayOk = searching || currentDay === 'all' || d.day === currentDay;
     const qOk = !q || tr.name.toLowerCase().includes(q) || tr.desc.toLowerCase().includes(q);
     return dayOk && qOk;
   });
@@ -732,12 +733,12 @@ function renderDishes() {
     document.getElementById('dish-grid').innerHTML = `<div class="empty-state">${t('noDishes')}</div>`;
     return;
   }
-  const days = currentDay === 'all' ? ['1','2','3','4'] : [currentDay];
+  const days = (currentDay === 'all' || searching) ? ['1','2','3','4'] : [currentDay];
   let html = '';
   days.forEach(day => {
     const dayDishes = dishes.filter(d => d.day === day);
     if (!dayDishes.length) return;
-    if (currentDay === 'all') html += `<div class="day-heading">${t('day')} ${day}</div>`;
+    if (currentDay === 'all' || searching) html += `<div class="day-heading">${t('day')} ${day}</div>`;
     SERVICE_ORDER.forEach(service => {
       const svcDishes = dayDishes.filter(d => d.service === service);
       if (!svcDishes.length) return;
