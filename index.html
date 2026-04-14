@@ -207,6 +207,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 .hidden { display: none !important; }
 .empty-state { font-size: 13px; color: var(--text-tertiary); padding: 2rem 0; text-align: center; }
+
+.momentos-notice { display:flex; align-items:center; gap:10px; background: rgba(202,138,4,0.15); border: 0.5px solid rgba(202,138,4,0.4); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 1.5rem; font-size: 13px; color: #fcd34d; }
+.momentos-group { margin-bottom: 2rem; }
+.momentos-group-label { font-size: 12px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; padding-bottom: 6px; border-bottom: 0.5px solid var(--border); }
 </style>
 </head>
 <body>
@@ -233,6 +237,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <button class="tab" onclick="setTab('guiones',this)">Guiones de venta</button>
     <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
     <button class="tab" onclick="setTab('mocktails',this)">Mocktails</button>
+    <button class="tab" onclick="setTab('momentos',this)">Momentos</button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -287,7 +292,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div id="mocktails-content"></div>
   </div>
 
-
+  <!-- MOMENTOS TAB -->
+  <div id="tab-momentos" class="hidden">
+    <div class="momentos-notice">
+      <span>⚠</span>
+      <span id="momentos-notice-text">Próximamente · Esta carta aún no está disponible en el bar</span>
+    </div>
+    <div id="momentos-content"></div>
+  </div>
 
 <footer style="margin-top:3rem;padding:1.25rem 0 0.5rem;border-top:0.5px solid var(--border);text-align:center;">
     <p style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.04em;">&copy; Developed by Francisco Monjes</p>
@@ -394,7 +406,8 @@ let currentLang = 'es';
 const UI = {
   es: {
     appTitle:'Explora Atacama — Vinos & Menús', appSubtitle:'Guía de servicio: maridajes, alérgenos y fichas de vino',
-    tabMenus:'Menús por día', tabWines:'Fichas de vino', tabGuiones:'Guiones de venta', tabCocktails:'Cocktails', tabMocktails:'Mocktails',
+    tabMenus:'Menús por día', tabWines:'Fichas de vino', tabGuiones:'Guiones de venta', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos',
+    momentAllDay:'Todo el día', momentPreDinner:'Pre Dinner · Aperitivos', momentAfterDinner:'After Dinner', momentNotice:'Próximamente · Esta carta aún no está disponible en el bar',
     ctMethod:'Método', ctGlass:'Vaso', ctIce:'Hielo', ctIngredients:'Ingredientes', ctGarnish:'Garnish', ctSearch:'Buscar cocktail...',
     searchDish:'Buscar plato...', searchWine:'Buscar vino o cepa...',
     allDays:'Todos los días', day:'Día', lunch:'Almuerzo', dinner:'Cena', lunchDinner:'Almuerzo y Cena',
@@ -409,7 +422,8 @@ const UI = {
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Service guide: pairings, allergens and wine sheets',
-    tabMenus:'Menus by day', tabWines:'Wine sheets', tabGuiones:'Sales scripts', tabCocktails:'Cocktails', tabMocktails:'Mocktails',
+    tabMenus:'Menus by day', tabWines:'Wine sheets', tabGuiones:'Sales scripts', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos',
+    momentAllDay:'All Day', momentPreDinner:'Before Dinner · Aperitifs', momentAfterDinner:'After Dinner', momentNotice:'Coming Soon · This menu is not yet available at the bar',
     ctMethod:'Method', ctGlass:'Glass', ctIce:'Ice', ctIngredients:'Ingredients', ctGarnish:'Garnish', ctSearch:'Search cocktail...',
     searchDish:'Search dish...', searchWine:'Search wine or grape...',
     allDays:'All days', day:'Day', lunch:'Lunch', dinner:'Dinner', lunchDinner:'Lunch & Dinner',
@@ -424,7 +438,8 @@ const UI = {
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Guia de serviço: harmonizações, alérgenos e fichas de vinho',
-    tabMenus:'Menus por dia', tabWines:'Fichas de vinho', tabGuiones:'Roteiros de venda', tabCocktails:'Cocktails', tabMocktails:'Mocktails',
+    tabMenus:'Menus por dia', tabWines:'Fichas de vinho', tabGuiones:'Roteiros de venda', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos',
+    momentAllDay:'Todo o dia', momentPreDinner:'Antes do Jantar · Aperitivos', momentAfterDinner:'Após o Jantar', momentNotice:'Em breve · Este cardápio ainda não está disponível no bar',
     ctMethod:'Método', ctGlass:'Copo', ctIce:'Gelo', ctIngredients:'Ingredientes', ctGarnish:'Decoração', ctSearch:'Buscar cocktail...',
     searchDish:'Buscar prato...', searchWine:'Buscar vinho ou uva...',
     allDays:'Todos os dias', day:'Dia', lunch:'Almoço', dinner:'Jantar', lunchDinner:'Almoço e Jantar',
@@ -633,6 +648,7 @@ function setLang(lang, el) {
   if (mainTabs[2]) mainTabs[2].textContent = t('tabGuiones');
   if (mainTabs[3]) mainTabs[3].textContent = t('tabCocktails');
   if (mainTabs[4]) mainTabs[4].textContent = t('tabMocktails');
+  if (mainTabs[5]) mainTabs[5].textContent = t('tabMomentos');
   const csearch = document.getElementById('cocktail-search');
   if (csearch) csearch.placeholder = t('ctSearch');
 
@@ -655,6 +671,9 @@ function setLang(lang, el) {
   if (currentTab === 'guiones') renderGuiones();
   if (currentTab === 'cocktails') renderCocktails();
   if (currentTab === 'mocktails') renderMocktails();
+  if (currentTab === 'momentos') renderMomentos();
+  const mn = document.getElementById('momentos-notice-text');
+  if (mn) mn.textContent = t('momentNotice');
   if (prevDish && currentTab === 'menus') {
     selectDish(prevDish);
     if (prevSubWine) openWineFromDish(prevSubWine);
@@ -666,10 +685,11 @@ function setTab(tab, el) {
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  ['menus','vinos','guiones','cocktails','mocktails'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  ['menus','vinos','guiones','cocktails','mocktails','momentos'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'guiones') renderGuiones();
   if (tab === 'cocktails') renderCocktails();
   if (tab === 'mocktails') renderMocktails();
+  if (tab === 'momentos') renderMomentos();
 }
 
 function setDay(day, el) {
@@ -1172,6 +1192,112 @@ const MOCKTAILS = [
   }
 ];
 
+// ── MOMENTOS DATA ────────────────────────────────────────────────────────────
+const MOMENTOS = [
+  {
+    name: 'Rica-Rica Sour',
+    moment: 'all-day',
+    method: { es:'Batido con albúmina', en:'Shaken with egg white', pt:'Batido com clara de ovo' },
+    glass:  { es:'Copa Late Harvest', en:'Late Harvest glass', pt:'Taça Late Harvest' },
+    ice:    { es:'-', en:'-', pt:'-' },
+    ingredients: [
+      [{es:'Pisco transparente', en:'Clear pisco', pt:'Pisco transparente'}, '3 oz'],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Jarabe de rica-rica', en:'Rica-rica syrup', pt:'Xarope de rica-rica'}, '1.5 oz']
+    ],
+    garnish: { es:'Rica-rica en polvo', en:'Rica-rica powder', pt:'Pó de rica-rica' }
+  },
+  {
+    name: 'Lickancielo',
+    moment: 'all-day',
+    method: { es:'Batido', en:'Shaken', pt:'Batido' },
+    glass:  { es:'Copa flauta', en:'Flute glass', pt:'Taça flauta' },
+    ice:    { es:'-', en:'-', pt:'-' },
+    ingredients: [
+      ['Gin Goodwinds', '1 oz'],
+      ['Lickanchello', '1.5 oz'],
+      ['St Germain', '0.5 oz'],
+      [{es:'Jarabe simple', en:'Simple syrup', pt:'Xarope simples'}, '1.5 oz'],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Slice de pepino 6 cm', en:'Cucumber slice 6 cm', pt:'Fatia de pepino 6 cm'}, '']
+    ],
+    garnish: { es:'Slice de pepino', en:'Cucumber slice', pt:'Fatia de pepino' }
+  },
+  {
+    name: 'Passion Pepper Frozen',
+    moment: 'all-day',
+    method: { es:'Licuado Frozen', en:'Blended Frozen', pt:'Batido Frozen' },
+    glass:  { es:'Kero', en:'Kero', pt:'Kero' },
+    ice:    { es:'-', en:'-', pt:'-' },
+    ingredients: [
+      [{es:'Maracuyá', en:'Passion fruit', pt:'Maracujá'}, '2 oz'],
+      ['Vodka', '1.5 oz'],
+      [{es:'Jarabe simple', en:'Simple syrup', pt:'Xarope simples'}, '1.5 oz'],
+      [{es:'Pimienta molle', en:'Molle pepper', pt:'Pimenta molle'}, {es:'4 unid.', en:'4 units', pt:'4 unid.'}]
+    ],
+    garnish: { es:'Pimienta molle', en:'Molle pepper', pt:'Pimenta molle' }
+  },
+  {
+    name: 'Pink Desert Collins',
+    moment: 'pre-dinner',
+    method: { es:'Batido', en:'Shaken', pt:'Batido' },
+    glass:  { es:'Copa de vino', en:'Wine glass', pt:'Taça de vinho' },
+    ice:    { es:'-', en:'-', pt:'-' },
+    ingredients: [
+      ['Gin Goodwinds', '1 oz'],
+      [{es:'Jarabe de Ayrampo y Rosas', en:'Ayrampo & Rose syrup', pt:'Xarope de Ayrampo e Rosas'}, '1 oz'],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, '1 oz'],
+      [{es:'Hojas de menta', en:'Mint leaves', pt:'Folhas de hortelã'}, {es:'3 unid.', en:'3 units', pt:'3 unid.'}],
+      [{es:'Tónica', en:'Tonic water', pt:'Água tônica'}, {es:'Completar', en:'Top up', pt:'Completar'}]
+    ],
+    garnish: { es:'Hojas de menta y rosa del año', en:'Mint leaves and year rose', pt:'Folhas de hortelã e rosa do ano' }
+  },
+  {
+    name: 'Margarita de Cachiyuyo',
+    moment: 'pre-dinner',
+    method: { es:'Batido', en:'Shaken', pt:'Batido' },
+    glass:  { es:'Kero', en:'Kero', pt:'Kero' },
+    ice:    { es:'-', en:'-', pt:'-' },
+    ingredients: [
+      [{es:'Tequila fumado de cachiyuyo', en:'Cachiyuyo-smoked tequila', pt:'Tequila defumado com cachiyuyo'}, {es:'1 parte', en:'1 part', pt:'1 parte'}],
+      [{es:'Tequila blanco', en:'White tequila', pt:'Tequila branco'}, {es:'2 partes', en:'2 parts', pt:'2 partes'}],
+      [{es:'Jugo de limón', en:'Lemon juice', pt:'Suco de limão'}, {es:'3 partes', en:'3 parts', pt:'3 partes'}],
+      [{es:'Jarabe simple', en:'Simple syrup', pt:'Xarope simples'}, {es:'4 partes', en:'4 parts', pt:'4 partes'}],
+      [{es:'Tomate', en:'Tomato', pt:'Tomate'}, {es:'1 corte', en:'1 cut', pt:'1 corte'}]
+    ],
+    garnish: { es:'Sal de cachiyuyo y tomate deshidratado, gajo de limón, tomate y cachiyuyo', en:'Cachiyuyo & dehydrated tomato salt, lemon wedge, tomato and cachiyuyo', pt:'Sal de cachiyuyo e tomate desidratado, gomo de limão, tomate e cachiyuyo' }
+  },
+  {
+    name: 'Chañaroni',
+    moment: 'after-dinner',
+    method: { es:'Clarificado con leche', en:'Milk-clarified', pt:'Clarificado com leite' },
+    glass:  { es:'Vaso corto', en:'Rocks glass', pt:'Copo curto' },
+    ice:    { es:'-', en:'-', pt:'-' },
+    ingredients: [
+      ['Campari', {es:'1 parte', en:'1 part', pt:'1 parte'}],
+      ['Vermouth Rosso', {es:'2 partes', en:'2 parts', pt:'2 partes'}],
+      [{es:'Whisky de Chañar', en:'Chañar whisky', pt:'Whisky de Chañar'}, {es:'3 partes', en:'3 parts', pt:'3 partes'}],
+      [{es:'Leche entera', en:'Whole milk', pt:'Leite integral'}, {es:'4 partes', en:'4 parts', pt:'4 partes'}]
+    ],
+    garnish: { es:'Piel de naranja', en:'Orange peel', pt:'Casca de laranja' }
+  },
+  {
+    name: 'Espresso de Arrope',
+    moment: 'after-dinner',
+    method: { es:'Batido', en:'Shaken', pt:'Batido' },
+    glass:  { es:'Vaso corto', en:'Rocks glass', pt:'Copo curto' },
+    ice:    { es:'-', en:'-', pt:'-' },
+    ingredients: [
+      ['Vodka', '1 oz'],
+      [{es:'Arrope de chañar', en:'Chañar arrope', pt:'Arrope de chañar'}, '0.5 oz'],
+      [{es:'Jarabe simple', en:'Simple syrup', pt:'Xarope simples'}, '0.5 oz'],
+      ['Amaretto', '0.25 oz'],
+      [{es:'Café Lungo', en:'Lungo coffee', pt:'Café lungo'}, {es:'1 unid.', en:'1 unit', pt:'1 unid.'}]
+    ],
+    garnish: { es:'Palito de canela', en:'Cinnamon stick', pt:'Canela em pau' }
+  }
+];
+
 function buildDrinkCard(c, lang, ui) {
   const tr = v => typeof v === 'object' ? v[lang] : v;
   return `
@@ -1214,6 +1340,27 @@ function renderMocktails() {
   const ui = UI[lang];
   document.getElementById('mocktails-content').innerHTML =
     `<div class="cocktail-grid">${MOCKTAILS.map(c => buildDrinkCard(c, lang, ui)).join('')}</div>`;
+}
+
+function renderMomentos() {
+  const lang = currentLang;
+  const ui = UI[lang];
+  const groups = [
+    { key: 'all-day',      label: t('momentAllDay') },
+    { key: 'pre-dinner',   label: t('momentPreDinner') },
+    { key: 'after-dinner', label: t('momentAfterDinner') },
+  ];
+  const html = groups.map(g => {
+    const drinks = MOMENTOS.filter(c => c.moment === g.key);
+    if (!drinks.length) return '';
+    return `<div class="momentos-group">
+      <div class="momentos-group-label">${g.label}</div>
+      <div class="cocktail-grid">${drinks.map(c => buildDrinkCard(c, lang, ui)).join('')}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('momentos-content').innerHTML = html || `<p class="empty-state">${ui.noDishes||''}</p>`;
+  const mn = document.getElementById('momentos-notice-text');
+  if (mn) mn.textContent = t('momentNotice');
 }
 
 </script>
