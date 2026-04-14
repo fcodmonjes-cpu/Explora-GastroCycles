@@ -114,6 +114,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   0%, 100% { opacity: 0.45; transform: scale(0.85); }
   50%       { opacity: 1;    transform: scale(1.1);  }
 }
+@keyframes notice-glow {
+  0%, 100% { box-shadow: 0 0 6px 0px rgba(202,138,4,0.15), inset 0 0 0px rgba(202,138,4,0); }
+  50%       { box-shadow: 0 0 18px 4px rgba(202,138,4,0.35), inset 0 0 8px rgba(202,138,4,0.08); }
+}
 .tab-sparkle { display:inline-block; color:#fcd34d; font-size:9px; margin-right:4px; vertical-align:middle; animation:sparkle-pulse 2.8s ease-in-out infinite; }
 
 /* Detail panel */
@@ -213,7 +217,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .hidden { display: none !important; }
 .empty-state { font-size: 13px; color: var(--text-tertiary); padding: 2rem 0; text-align: center; }
 
-.momentos-notice { display:flex; align-items:center; gap:10px; background: rgba(202,138,4,0.15); border: 0.5px solid rgba(202,138,4,0.4); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 1.5rem; font-size: 13px; color: #fcd34d; }
+.momentos-notice { display:flex; align-items:center; gap:10px; background: rgba(202,138,4,0.15); border: 0.5px solid rgba(202,138,4,0.4); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 1.5rem; font-size: 13px; color: #fcd34d; animation: notice-glow 3.2s ease-in-out infinite; }
 .momentos-group { margin-bottom: 2rem; }
 .momentos-group-label { font-size: 12px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; padding-bottom: 6px; border-bottom: 0.5px solid var(--border); }
 </style>
