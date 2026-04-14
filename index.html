@@ -77,6 +77,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .day-btn { padding: 5px 12px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; }
 .day-btn:hover { background: var(--bg-secondary); }
 .day-btn.active { background: var(--gold); color: white; border-color: var(--gold); font-weight: 500; }
+@keyframes today-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(14,165,233,0.25), 0 0 7px 1px rgba(14,165,233,0.1); }
+  50%       { box-shadow: 0 0 0 1px rgba(14,165,233,0.65), 0 0 14px 4px rgba(14,165,233,0.28); }
+}
+.day-btn-today { animation: today-glow 3s ease-in-out infinite; }
 
 /* Day heading */
 .day-heading { font-size: 14px; font-weight: 500; color: var(--text); margin: 1.5rem 0 1rem; padding-bottom: 6px; border-bottom: 0.5px solid var(--border); }
@@ -934,6 +939,17 @@ function openWineFromGuion(wid) {
 
 renderDishes();
 renderWines();
+
+// Auto-highlight today's menu cycle day
+(function() {
+  const anchor = new Date(2026, 3, 14); // 2026-04-14 = Día 4
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diff = Math.round((today - anchor) / 86400000);
+  const cycleDay = ((diff + 3) % 4 + 4) % 4 + 1; // anchor→4, +1→1, +2→2, +3→3
+  const btns = document.querySelectorAll('.day-btn');
+  if (btns[cycleDay]) btns[cycleDay].classList.add('day-btn-today');
+})();
 
 // ── LANGUAGE SHORTCUTS ───────────────────────────────────────────────────────
 // Desktop: Tab key cycles ES → EN → PT (skipped when focus is inside an input)
