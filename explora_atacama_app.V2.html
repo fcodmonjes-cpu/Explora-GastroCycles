@@ -296,8 +296,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-order-body { display:none; padding:12px 14px; border-top:0.5px solid var(--border); }
 .cf-order-card.open .cf-order-body { display:block; }
 .cf-order-special-full { font-size:13px; color:var(--gold); background:rgba(202,138,4,0.08); border-radius:6px; padding:8px 10px; margin-bottom:10px; }
-.cf-done-btn { width:100%; padding:10px; border-radius:var(--radius-md); border:none; background:rgba(76,175,80,0.14); color:#4caf50; font-size:13px; font-weight:500; cursor:pointer; transition:background .15s; margin-top:10px; }
-.cf-done-btn:hover { background:rgba(76,175,80,0.25); }
+.cf-done-btn { width:100%; padding:10px; border-radius:var(--radius-md); border:none; background:rgba(76,175,80,0.14); color:#4caf50; font-size:13px; font-weight:500; cursor:pointer; transition:background .15s, transform .1s; margin-top:10px; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cf-done-btn:hover  { background:rgba(76,175,80,0.25); }
+.cf-done-btn:active { background:rgba(76,175,80,0.32); transform:scale(0.98); }
 .cf-milk-btns { display:flex; gap:6px; margin-bottom:6px; }
 .cf-milk-type-btn { flex:1; padding:9px 6px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-size:12px; cursor:pointer; text-align:center; transition:all .15s; touch-action:manipulation; user-select:none; }
 .cf-milk-type-btn:hover { border-color:var(--gold); color:var(--text); }
@@ -2142,8 +2143,9 @@ let cf_tableBuffer       = '';
 const CF_MILK_INDICES = new Set([1,2,3,4,5]);
 let cf_baristaRef = null, cf_baristaFn = null;
 let cf_elapsedInterval = null;
-let cf_pollInterval    = null; // polling fallback — re-reads Firebase every 4 s via REST
+let cf_pollInterval    = null; // polling fallback — re-reads Firebase every 2 s via REST
 let cf_lastQueueHash   = '';   // fingerprint of last rendered queue — prevents unnecessary re-renders
+const cf_optimisticallyDone = new Set(); // ids the barista just tapped Listo on, awaiting server confirmation
 
 function cfInitFirebase(){
   if (cf_fbApp) return cf_fbDb;
@@ -2224,6 +2226,7 @@ function cfExitServiceMode(){
   if (cf_elapsedInterval){ clearInterval(cf_elapsedInterval); cf_elapsedInterval=null; }
   if (cf_pollInterval){ clearInterval(cf_pollInterval); cf_pollInterval=null; }
   cf_lastQueueHash = '';
+  cf_optimisticallyDone.clear();
   cfShowServicePanel();
 }
 
@@ -2378,6 +2381,7 @@ function cfSubmitOrder(){
 // ── Barista view ─────────────────────────────────────────────────────────────
 function cfRenderBaristaView(){
   cf_lastQueueHash = ''; // force full render on first load
+  cf_optimisticallyDone.clear();
   const panel = document.getElementById('cf-panel-service');
   if (!panel) return;
   panel.innerHTML = `
@@ -2467,7 +2471,10 @@ function cfAddNewOrdersFromPoll(orders){
   const visibleIds = new Set(
     [...list.querySelectorAll('.cf-order-card')].map(c=>c.id.replace('cf-ocard-',''))
   );
-  const newOrders = orders.filter(o=>!visibleIds.has(o.id));
+  // Skip orders that the barista just tapped Listo on — even if the REST
+  // endpoint hasn't propagated the status:'done' yet, we don't want to
+  // resurrect a card the user just dismissed.
+  const newOrders = orders.filter(o=>!visibleIds.has(o.id) && !cf_optimisticallyDone.has(o.id));
   if (!newOrders.length) return;
   const empty = list.querySelector('.cf-queue-empty');
   if (empty) empty.remove();
@@ -2524,11 +2531,12 @@ function cfRenderQueue(orders){
   const targetIds = new Set(orders.map(o=>o.id));
 
   // Phase 0 — REVIVE any card that's currently animating out but whose order
-  // has come back into the target set. This protects against false leaving
-  // states caused by transient inconsistencies.
+  // has come back into the target set. Skip cards the barista just tapped
+  // Listo on — those should stay leaving even if a stale listener event fires
+  // with old data showing them still pending.
   list.querySelectorAll('.cf-order-card.cf-card-leaving').forEach(card=>{
     const id = card.id.replace('cf-ocard-','');
-    if (targetIds.has(id)){
+    if (targetIds.has(id) && !cf_optimisticallyDone.has(id)){
       card.classList.remove('cf-card-leaving');
       card.style.maxHeight = ''; // restore CSS default
     }
@@ -2594,7 +2602,39 @@ function cfTickElapsed(){
 }
 
 function cfMarkDone(id){
-  cfInitFirebase().ref(CF_ORDERS_PATH+'/'+id).update({status:'done'});
+  // Optimistic UI: animate the card out IMMEDIATELY, without waiting for the
+  // WebSocket listener to fire. If the WebSocket has a hiccup the listener
+  // can be delayed or never fire, leaving the card visually stuck even
+  // though the database update succeeded (refresh would clear it).
+  // Marking the id as "optimistically done" prevents Phase 0 of cfRenderQueue
+  // from reviving the card if a stale listener event fires with old data.
+  cf_optimisticallyDone.add(id);
+  const card = document.getElementById('cf-ocard-'+id);
+  if (card && !card.classList.contains('cf-card-leaving')){
+    card.style.maxHeight = card.scrollHeight + 'px';
+    void card.offsetHeight; // force reflow so the transition has a starting point
+    card.classList.add('cf-card-leaving');
+    setTimeout(()=>{
+      if (card.parentElement && card.classList.contains('cf-card-leaving')) card.remove();
+    }, 360);
+  }
+
+  // Fire the actual write. If it fails (network, rules, etc.) revive the card.
+  const writeRef = cfInitFirebase().ref(CF_ORDERS_PATH+'/'+id);
+  const writePromise = writeRef.update({status:'done'});
+  if (writePromise && writePromise.catch){
+    writePromise.catch(()=>{
+      cf_optimisticallyDone.delete(id);
+      const stillThere = document.getElementById('cf-ocard-'+id);
+      if (stillThere && stillThere.classList.contains('cf-card-leaving')){
+        stillThere.classList.remove('cf-card-leaving');
+        stillThere.style.maxHeight = '';
+      }
+    });
+  }
+  // Safety: clear the optimistic flag after enough time for the listener to
+  // catch up. After this, normal Phase 0 revival rules apply again.
+  setTimeout(()=>cf_optimisticallyDone.delete(id), 5000);
 }
 
 function cfClearDoneOrders(){
