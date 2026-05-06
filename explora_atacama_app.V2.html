@@ -68,7 +68,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .tab.active { background: var(--wine-red); color: white; border-color: var(--wine-red); font-weight: 500; }
 
 .search-bar { position: relative; margin-bottom: 1.25rem; }
-.search-bar input { width: 100%; padding: 8px 12px 8px 36px; border: 0.5px solid var(--border-md); border-radius: var(--radius-md); font-size: 14px; background: var(--surface); color: var(--text); outline: none; }
+/* Font-size must be ≥ 16px to prevent iOS Safari from auto-zooming when the
+   input gains focus. Padding compensated to keep total height visually
+   close to the previous 14 px design. */
+.search-bar input { width: 100%; padding: 7px 12px 7px 36px; border: 0.5px solid var(--border-md); border-radius: var(--radius-md); font-size: 16px; background: var(--surface); color: var(--text); outline: none; }
 .search-bar input:focus { border-color: var(--wine-red); }
 .search-bar input::placeholder { color: var(--text-tertiary); }
 .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-tertiary); pointer-events: none; }
@@ -254,7 +257,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-drink-sel-btn:hover { border-color:var(--gold); color:var(--text); }
 .cf-drink-sel-btn.selected { border-color:var(--gold); background:rgba(202,138,4,0.12); color:var(--gold); font-weight:500; }
 .cf-order-label { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:6px; display:block; }
-.cf-order-textarea { width:100%; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--text); font-size:13px; padding:9px 12px; resize:none; outline:none; box-sizing:border-box; font-family:inherit; }
+/* Font-size must be ≥ 16px to prevent iOS Safari from auto-zooming when
+   the textarea gains focus. Padding tightened slightly so the visual
+   footprint stays close to the prior 13 px design. */
+.cf-order-textarea { width:100%; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--text); font-size:16px; padding:7px 12px; resize:none; outline:none; box-sizing:border-box; font-family:inherit; line-height:1.35; }
 .cf-order-textarea:focus { border-color:var(--gold); }
 .cf-order-row { margin-bottom:0.9rem; }
 .cf-submit-btn { width:100%; padding:13px; border-radius:var(--radius-md); border:none; background:var(--wine-red); color:#fff; font-size:13px; font-weight:500; letter-spacing:0.04em; cursor:pointer; transition:opacity .15s; margin-top:0.25rem; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
@@ -2371,7 +2377,7 @@ function cfRenderWaiterView(){
         <button class="cf-milk-type-btn" data-milk="vegetal"     onclick="cfSelectMilkType('vegetal')">${t('cfMilkVegetal')}</button>
       </div>
       <div id="cf-vegetal-spec-row" style="display:none;margin-top:8px">
-        <textarea class="cf-order-textarea" id="cf-vegetal-spec" rows="1" placeholder="${t('cfMilkVegetalSpec')}" style="height:34px;padding:8px 12px"></textarea>
+        <textarea class="cf-order-textarea" id="cf-vegetal-spec" rows="1" placeholder="${t('cfMilkVegetalSpec')}" style="height:38px;padding:7px 12px"></textarea>
       </div>
     </div>
     <div class="cf-order-row">
