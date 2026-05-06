@@ -2365,10 +2365,12 @@ function cfRenderBaristaView(){
 
   // Detach any existing listener before subscribing
   if (cf_baristaRef && cf_baristaFn){ cf_baristaRef.off('value',cf_baristaFn); }
-  cf_baristaRef = cfInitFirebase().ref(CF_ORDERS_PATH).orderByChild('timestamp');
+  cf_baristaRef = cfInitFirebase().ref(CF_ORDERS_PATH);
   cf_baristaFn  = snap => {
     const orders = [];
     snap.forEach(child=>orders.push({id:child.key,...child.val()}));
+    // Sort oldest-first client-side (no Firebase index required)
+    orders.sort((a,b)=>(a.timestamp||0)-(b.timestamp||0));
     cfRenderQueue(orders.filter(o=>o.status==='pending'));
   };
   cf_baristaRef.on('value', cf_baristaFn);
