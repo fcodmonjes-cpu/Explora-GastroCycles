@@ -573,10 +573,9 @@ const UI = {
     lbl_espumante:'Espumante', lbl_blanco:'Blanco', lbl_rosado:'Rosado', lbl_tinto:'Tinto', lbl_dulce:'Dulce',
     cfServiceMode:'✦ Modo Servicio', cfPinTitle:'Modo Servicio', cfPinSub:'Introduce tu código de acceso', cfPinError:'Código incorrecto',
     cfWaiterTitle:'Nueva Orden', cfWaiterSub:'Selecciona bebida · anota el pedido especial',
-    cfSelectDrink:'Bebida', cfTableLabel:'Mesa / Habitación (opcional)', cfSpecialRequest:'Petición especial (opcional)', cfSpecialPlaceholder:'Ej: sin azúcar, leche de avena…',
+    cfSelectDrink:'Bebida', cfTableLabel:'Mesa (opcional)', cfTablePlaceholder:'Mesa', cfSpecialRequest:'Petición especial (opcional)', cfSpecialPlaceholder:'Ej: sin azúcar, leche de avena…',
     cfSubmitOrder:'Enviar orden al barista', cfConfirm:'✓ Orden enviada',
     cfBaristaTitle:'Cola de pedidos', cfQueueEmpty:'Sin pedidos pendientes', cfMarkDone:'Listo ✓', cfClearDone:'Limpiar completados', cfExit:'Salir',
-    cfChocHot:'Chocolate Caliente', cfIcedLatte:'Iced Latte',
     cfMilkType:'Tipo de leche', cfMilkEntera:'Entera', cfMilkSinLactosa:'Sin lactosa', cfMilkVegetal:'Vegetal', cfMilkVegetalSpec:'Especificar (avena, almendra…)'
   },
   en: {
@@ -596,10 +595,9 @@ const UI = {
     lbl_espumante:'Sparkling', lbl_blanco:'White', lbl_rosado:'Rosé', lbl_tinto:'Red', lbl_dulce:'Sweet',
     cfServiceMode:'✦ Service Mode', cfPinTitle:'Service Mode', cfPinSub:'Enter your access code', cfPinError:'Incorrect code',
     cfWaiterTitle:'New Order', cfWaiterSub:'Select drink · note special request',
-    cfSelectDrink:'Drink', cfTableLabel:'Table / Room (optional)', cfSpecialRequest:'Special request (optional)', cfSpecialPlaceholder:'e.g. no sugar, oat milk…',
+    cfSelectDrink:'Drink', cfTableLabel:'Table (optional)', cfTablePlaceholder:'Table', cfSpecialRequest:'Special request (optional)', cfSpecialPlaceholder:'e.g. no sugar, oat milk…',
     cfSubmitOrder:'Send order to barista', cfConfirm:'✓ Order sent',
     cfBaristaTitle:'Order queue', cfQueueEmpty:'No pending orders', cfMarkDone:'Done ✓', cfClearDone:'Clear completed', cfExit:'Exit',
-    cfChocHot:'Hot Chocolate', cfIcedLatte:'Iced Latte',
     cfMilkType:'Milk type', cfMilkEntera:'Whole', cfMilkSinLactosa:'Lactose-free', cfMilkVegetal:'Plant-based', cfMilkVegetalSpec:'Specify (oat, almond…)'
   },
   pt: {
@@ -619,10 +617,9 @@ const UI = {
     lbl_espumante:'Espumante', lbl_blanco:'Branco', lbl_rosado:'Rosé', lbl_tinto:'Tinto', lbl_dulce:'Doce',
     cfServiceMode:'✦ Modo Serviço', cfPinTitle:'Modo Serviço', cfPinSub:'Insira seu código de acesso', cfPinError:'Código incorreto',
     cfWaiterTitle:'Novo Pedido', cfWaiterSub:'Selecione a bebida · anote o pedido especial',
-    cfSelectDrink:'Bebida', cfTableLabel:'Mesa / Quarto (opcional)', cfSpecialRequest:'Pedido especial (opcional)', cfSpecialPlaceholder:'Ex: sem açúcar, leite de aveia…',
+    cfSelectDrink:'Bebida', cfTableLabel:'Mesa (opcional)', cfTablePlaceholder:'Mesa', cfSpecialRequest:'Pedido especial (opcional)', cfSpecialPlaceholder:'Ex: sem açúcar, leite de aveia…',
     cfSubmitOrder:'Enviar pedido ao barista', cfConfirm:'✓ Pedido enviado',
     cfBaristaTitle:'Fila de pedidos', cfQueueEmpty:'Sem pedidos pendentes', cfMarkDone:'Pronto ✓', cfClearDone:'Limpar concluídos', cfExit:'Sair',
-    cfChocHot:'Chocolate Quente', cfIcedLatte:'Iced Latte',
     cfMilkType:'Tipo de leite', cfMilkEntera:'Integral', cfMilkSinLactosa:'Sem lactose', cfMilkVegetal:'Vegetal', cfMilkVegetalSpec:'Especificar (aveia, amêndoa…)'
   }
 };
@@ -1152,8 +1149,16 @@ document.addEventListener('keydown', function(e) {
     setTimeout(function() { appEl.style.transition = ''; }, 180);
   }
 
+  // True while the user is inside the Café > Service Mode flow (PIN, waiter
+  // or barista view). Language swipe is disabled there to avoid accidental
+  // language toggles while typing on the numpad or interacting with cards.
+  function inServiceMode(){
+    return currentTab === 'cafe' && cf_activeInnerTab === 'service';
+  }
+
   document.addEventListener('touchstart', function(e) {
     if (busy || e.touches.length > 1) return;
+    if (inServiceMode()) { aborted = true; return; }
     sx = e.touches[0].clientX;
     sy = e.touches[0].clientY;
     tracking = false;
@@ -1597,7 +1602,7 @@ es:{
       {at:42,text:'⚠ Detener — umbral de amargor alcanzado'}]}],
   drinks:[
     {name:'Espresso',tagline:'La base de todo',
-     philosophy:'Un espresso solo es la expresión más pura del café. No hay dónde esconderse — sin leche, sin dilución. Cuando un huésped lo pide, sabe lo que quiere. Tu trabajo es no interponerte. Servir en una taza demitasse caliente. Un pequeño vaso de agua sin gas al lado, siempre.',
+     philosophy:'Un espresso solo es la expresión más pura del café: 25–30 ml concentrados, sin leche ni dilución. Nació en Italia a comienzos del siglo XX con la primera máquina a vapor de Luigi Bezzera, y desde entonces se convirtió en la base sobre la cual se construye toda la cultura del café moderno. Se sirve en taza demitasse caliente, tradicionalmente acompañado de un pequeño vaso de agua sin gas para refrescar el paladar.',
      params:[{l:'Dosis',v:'7–8',u:'gramos'},{l:'Rendimiento',v:'25–30',u:'ml'},{l:'Tiempo',v:'25–30',u:'segundos'},{l:'Temp',v:'92°',u:'celsius'},{l:'Presión',v:'9',u:'bar'},{l:'Taza',v:'60 ml',u:'caliente'}],
      steps:[{t:'Purga el portafiltro',d:'Deja correr agua caliente para limpiar residuos y estabilizar la temperatura.'},
             {t:'Dosa y distribuye',d:'Pesa 7–8g. Distribuye de manera uniforme antes de tampar.'},
@@ -1607,15 +1612,15 @@ es:{
      milk:null,
      serviceNote:'Nunca dejes reposar un espresso. Comienza a oxidarse en 30 segundos. Extráelo y sírvelo.'},
     {name:'Cappuccino',tagline:'El ritual de la mañana',
-     philosophy:'El cappuccino es el desayuno de Italia. Nunca fue pensado para la tarde. En Explora lo servimos correctamente: equilibrado, sin excesos de espuma ni leche. Un tercio de cada uno. Si un huésped lo pide después del almuerzo — no lo corrijas. Simplemente hazlo bien.',
+     philosophy:'El cappuccino es el desayuno tradicional de Italia. Su nombre proviene del color del hábito de los frailes capuchinos. Pensado siempre para la mañana — en la cultura italiana, la leche tibia después del almuerzo se considera difícil de digerir. Un cappuccino bien preparado es equilibrado: un tercio espresso, un tercio leche vaporizada, un tercio espuma. Sin excesos.',
      params:[{l:'Espresso',v:'1 taza',u:'30ml'},{l:'Leche',v:'60 ml',u:'vaporizada'},{l:'Espuma',v:'1–2 cm',u:'gruesa'},{l:'Temp',v:'62°',u:'celsius'},{l:'Taza',v:'150–180',u:'ml'},{l:'Ratio',v:'1:1:1',u:'esp:leche:espuma'}],
      steps:[{t:'Extrae tu espresso',d:'Base primero. Siempre.'},
             {t:'Vaporiza con aireación activa',d:'Introduce el pitón justo bajo la superficie. <em>Escucha ese sonido chirriante.</em>'},
             {t:'Verifica la textura',d:'La leche debe verse brillante y fluir como pintura. Sin burbujas grandes.'},
             {t:'Vierte desde altura',d:'Deja caer desde 10 cm para integrar, luego baja para definir la capa.'},
             {t:'Sin tapa ni funda',d:'Es un cappuccino. Se sirve en taza, limpio.'}],
-     milk:'La espuma de un cappuccino debe mantenerse 2–3 minutos sin colapsar. Si cae antes de que el huésped lo tome, la textura no fue correcta.',
-     serviceNote:'No agregues azúcar. Preséntalo limpio. Un huésped que quiera azúcar lo pedirá.'},
+     milk:'La espuma de un cappuccino debe mantenerse 2–3 minutos sin colapsar. Si cae antes de tomarse, la textura no fue correcta.',
+     serviceNote:'No agregues azúcar. Preséntalo limpio. Quien quiera azúcar lo pedirá.'},
     {name:'Flat White',tagline:'La bebida del barista',
      philosophy:'Nació en Australia y Nueva Zelanda en los años 80, como reacción al cappuccino con demasiada espuma. Es un doble ristretto con microespuma perfectamente integrada. Sin capas, sin decoración. Solo café y leche en su forma más directa.',
      params:[{l:'Espresso',v:'2 ristrettos',u:''},{l:'Leche',v:'100 ml',u:'microespuma'},{l:'Espuma',v:'mínima',u:'~2mm'},{l:'Temp',v:'60°',u:'celsius'},{l:'Taza',v:'150–160',u:'ml'},{l:'Ratio',v:'~1:3',u:'café:leche'}],
@@ -1625,7 +1630,7 @@ es:{
             {t:'Vierte a través de la crema',d:'El café y la leche deben fundirse. Sin que la espuma flote.'},
             {t:'Termina limpio',d:'Sin decoración. Si hay una capa visible de espuma, hay demasiada.'}],
      milk:'Este es el más difícil de hacer bien. La ventana entre microespuma perfecta y leche sin textura es estrecha. Practica diariamente.',
-     serviceNote:'Si un huésped duda entre Flat White y Cappuccino: pregunta si prefiere más sabor a café o más suavidad de leche. Eso decide.'},
+     serviceNote:'Si hay duda entre Flat White y Cappuccino: pregunta si se prefiere más sabor a café o más suavidad de leche. Eso decide.'},
     {name:'Latte',tagline:'La introducción gentil',
      philosophy:'Caffè latte significa café con leche. En Italia era una bebida casera — se hacía en casa por la mañana. Fuera de Italia, se convirtió en la bebida de cafetería más popular del mundo. Es suave, accesible y generoso. No lo subestimes: un latte bien hecho es técnicamente exigente.',
      params:[{l:'Espresso',v:'1–2 tazas',u:'30–60ml'},{l:'Leche',v:'200 ml',u:'vaporizada'},{l:'Espuma',v:'5 mm',u:'cap'},{l:'Temp',v:'63°',u:'celsius'},{l:'Taza',v:'240–300',u:'ml'},{l:'Ratio',v:'1:4',u:'café:leche'}],
@@ -1634,16 +1639,16 @@ es:{
             {t:'Vierte lentamente',d:'Desde bajo para mezclar suavemente. La leche envuelve el café.'},
             {t:'Termina con espuma',d:'Una capa fina de 5mm. No más. Es un latte, no un cappuccino.'}],
      milk:'El latte es la bebida de leche más fácil de hacer bien pero también la más fácil de hacer mal. Una leche demasiado caliente o sin textura arruina la experiencia.',
-     serviceNote:'Si un huésped pide un latte grande — usa dos tazas de espresso. Nunca añadas solo más leche.'},
-    {name:'Cortado',tagline:'Para huéspedes que saben lo que quieren',
-     philosophy:'Cortado viene del español cortar — la leche corta la acidez del espresso. Es una bebida de proporción exacta: ni más ni menos. Popular en España y América Latina. En Explora es ideal para huéspedes que quieren café de verdad pero con un poco de suavidad.',
+     serviceNote:'Para un latte grande — usa dos tazas de espresso. Nunca añadas solo más leche.'},
+    {name:'Cortado',tagline:'Proporción exacta',
+     philosophy:'Cortado viene del español cortar — la leche corta la acidez del espresso. Es una bebida de proporción exacta: ni más ni menos. Surgió en España y se popularizó por toda América Latina, donde se conoce también como pingado en Brasil o tallat en Cataluña. Ideal para quienes quieren café de verdad con un toque de suavidad.',
      params:[{l:'Espresso',v:'1 taza',u:'30ml'},{l:'Leche',v:'30 ml',u:'caliente'},{l:'Espuma',v:'ninguna',u:'—'},{l:'Temp',v:'55–60°',u:'celsius'},{l:'Taza',v:'90 ml',u:'vidrio'},{l:'Ratio',v:'1:1',u:'exacto'}],
      steps:[{t:'Extrae espresso estándar',d:'Sin ajustes. El espresso debe funcionar solo.'},
             {t:'Vaporiza con mínima aireación',d:'Solo calentar y suavizar. Sin crear espuma.'},
             {t:'Vierte plano',d:'La leche cae directo sobre el espresso. Sin latte art.'},
             {t:'Sirve sin ceremonias',d:'Es un cortado. Limpio. Directo.'}],
      milk:'La leche del cortado debe ser cálida y ligeramente texturizada pero nunca espumosa. Si flota, es demasiada aireación.',
-     serviceNote:'Sirve en vaso pequeño, no en taza de cerámica, cuando sea posible. La presentación en vidrio es parte de la identidad del cortado.'},
+     serviceNote:'Sirve en vaso pequeño de vidrio cuando sea posible. La presentación en vidrio es parte de la identidad del cortado.'},
     {name:'Macchiato',tagline:'El shot marcado',
      philosophy:'Espresso macchiato significa espresso manchado. Una cucharada de espuma sobre la crema. No más. Es la forma más discreta de suavizar un espresso sin alterar su carácter. Muy apreciado por quienes quieren espresso pero con un gesto mínimo de leche.',
      params:[{l:'Espresso',v:'1 taza',u:'30ml'},{l:'Espuma',v:'1 cucharadita',u:''},{l:'Leche',v:'ninguna',u:'solo espuma'},{l:'Temp',v:'90°+',u:'servir caliente'},{l:'Taza',v:'60 ml',u:'demitasse'},{l:'Ratio',v:'95:5',u:'café:espuma'}],
@@ -1652,7 +1657,7 @@ es:{
             {t:'Coloca en el centro de la crema',d:'Una mancha. No lo cubras todo.'},
             {t:'Sirve inmediatamente',d:'El espresso no espera.'}],
      milk:null,
-     serviceNote:'No confundir con Latte Macchiato — que es lo opuesto: leche manchada con espresso. Si un huésped pide un macchiato sin especificar, pregunta amablemente cuál prefiere.'},
+     serviceNote:'No confundir con Latte Macchiato — que es lo opuesto: leche manchada con espresso. Si se pide macchiato sin especificar, confirma cuál.'},
     {name:'Americano',tagline:'Espresso extendido — con matices',
      philosophy:'El Americano nació en Europa durante la Segunda Guerra Mundial. Los soldados americanos encontraban el espresso demasiado intenso y pedían agua adicional. Con el tiempo se convirtió en una bebida por derecho propio. Bien hecho, conserva la complejidad del espresso pero a un ritmo más lento.',
      params:[{l:'Espresso',v:'1–2 tazas',u:''},{l:'Agua caliente',v:'120–150',u:'ml'},{l:'Ratio',v:'1:4',u:'esp:agua'},{l:'Temp agua',v:'90°',u:'celsius'},{l:'Taza',v:'200–240',u:'ml'},{l:'Orden',v:'agua primero',u:'luego espresso'}],
@@ -1660,24 +1665,35 @@ es:{
             {t:'Extrae el espresso sobre el agua',d:'La crema flota y se preserva en la superficie.'},
             {t:'No mezcles',d:'La estratificación natural es parte de la bebida.'}],
      milk:null,
-     serviceNote:'Americano vs Long Black: usan los mismos ingredientes en diferente orden. El Long Black es más concentrado y preserva mejor la crema. Si un huésped quiere saber cuál pedir, pregunta si prefiere más cuerpo o más suavidad.'},
+     serviceNote:'Americano vs Long Black: usan los mismos ingredientes en diferente orden. El Long Black es más concentrado y preserva mejor la crema.'},
     {name:'Long Black',tagline:'La respuesta australiana al café de filtro',
      philosophy:'El Long Black es el gemelo oscuro del Flat White — también de Australia y Nueva Zelanda. Se hace al revés del Americano: el espresso va sobre el agua, preservando la crema intacta. El resultado es más concentrado, más aromático, más complejo.',
      params:[{l:'Espresso',v:'2 tazas',u:'60ml'},{l:'Agua caliente',v:'120',u:'ml'},{l:'Ratio',v:'1:2',u:'más concentrado'},{l:'Temp agua',v:'92°',u:'celsius'},{l:'Taza',v:'200',u:'ml'},{l:'Orden',v:'espresso al final',u:'sobre agua'}],
      steps:[{t:'Agrega agua caliente a la taza',d:'Aproximadamente la mitad.'},
             {t:'Extrae el doble shot sobre el agua',d:'La crema queda intacta y aromática en la superficie.'},
-            {t:'Sirve sin mezclar',d:'El huésped puede decidir cómo integrarlo.'}],
+            {t:'Sirve sin mezclar',d:'Quien lo toma decide cómo integrarlo.'}],
      milk:null,
-     serviceNote:'Si un huésped lo quiere con leche — sugiere un latte o flat white. Agregar leche a un Long Black le quita su razón de ser.'},
-    {name:'Espresso Romano',tagline:'El gesto inesperado',
-     philosophy:'El Espresso Romano no es romano para nada — sus orígenes son inciertos y probablemente americanos. Pero es una preparación interesante: la cáscara de limón exprimida sobre el espresso añade aceites cítricos que interactúan con los compuestos amargos del café, suavizando el final. Es también una excelente forma de comenzar una conversación.',
-     params:[{l:'Espresso',v:'1 taza',u:'30ml'},{l:'Cáscara limón',v:'1 trocito',u:''},{l:'Azúcar',v:'opcional',u:'—'},{l:'Taza',v:'60 ml',u:'demitasse'},{l:'Agua',v:'vaso pequeño',u:'extra'},{l:'Servicio',v:'cáscara aparte',u:'el huésped elige'}],
-     steps:[{t:'Extrae el espresso estándar',d:'Sin ajustes en el shot.'},
-            {t:'Corta un trocito de cáscara de limón',d:'Solo la piel exterior. Sin la parte blanca amarga.'},
-            {t:'Exprime los aceites',d:'Dobla la cáscara sobre la taza. Los aceites caen sobre la crema.'},
-            {t:'Explícalo brevemente',d:'<em>"Los aceites del limón suavizan el amargor del espresso."</em> Una frase es suficiente.'}],
-     milk:null,
-     serviceNote:'Esta es una bebida que genera conversación. Los huéspedes que nunca la han probado la recordarán. Úsala cuando quieras crear un momento memorable en la mesa.'}],
+     serviceNote:'Si se pide con leche — sugiere un latte o flat white. Agregar leche a un Long Black le quita su razón de ser.'},
+    {name:'Iced Latte',tagline:'Café con leche en frío',
+     philosophy:'El iced latte se popularizó en Estados Unidos en los años 80, como respuesta al verano. La idea es simple: un espresso recién extraído cae sobre hielo y leche fría, preservando todo el aroma sin cocinar la leche. La clave es el orden — hielo, espresso, leche — y no mezclar de inmediato. La estratificación inicial muestra que el café estaba fresco.',
+     params:[{l:'Espresso',v:'2 tazas',u:'60ml'},{l:'Hielo',v:'lleno',u:'cubos grandes'},{l:'Leche fría',v:'180–200',u:'ml'},{l:'Vaso',v:'350–400',u:'ml alto'},{l:'Ratio',v:'1:3',u:'café:leche'},{l:'Servicio',v:'bombilla',u:'larga'}],
+     steps:[{t:'Llena el vaso de hielo',d:'Cubos grandes — derriten más lento, diluyen menos.'},
+            {t:'Extrae doble espresso',d:'Estándar. No alteres el shot — la dilución la da el hielo.'},
+            {t:'Vierte el espresso sobre el hielo',d:'Que caiga directamente. La crema se preserva en la superficie.'},
+            {t:'Añade la leche fría',d:'Vierte lentamente por el costado del vaso para mantener el contraste visual.'},
+            {t:'No revuelvas',d:'La estratificación café/leche es parte de la presentación. Quien lo toma la mezcla con la bombilla.'}],
+     milk:'La leche se sirve fría — directa del refrigerador. No vaporizar, no calentar. Una leche tibia tiraría todo el efecto refrescante.',
+     serviceNote:'Si la mesa pide endulzado, usa jarabe simple (líquido) — el azúcar granulada no se disuelve en frío. Sírvelo aparte para que se autorregule.'},
+    {name:'Chocolate Caliente',tagline:'Cacao y leche texturizada',
+     philosophy:'El chocolate caliente tiene raíces en las culturas mesoamericanas — los mayas y aztecas lo bebían como ceremonia, mezclado con chile y especias. Llegó a Europa con los españoles en el siglo XVI y evolucionó hacia la versión dulce que conocemos hoy. La preparación moderna combina cacao en polvo con leche texturizada de barista, dando una bebida sedosa con la misma base técnica que un cappuccino.',
+     params:[{l:'Cacao',v:'1 sobre',u:'Lavazza'},{l:'Leche',v:'200 ml',u:'vaporizada'},{l:'Espuma',v:'1 cm',u:'sedosa'},{l:'Temp',v:'62–65°',u:'celsius'},{l:'Taza',v:'200–240',u:'ml'},{l:'Cobertura',v:'cacao',u:'opcional'}],
+     steps:[{t:'Vierte el sobre de cacao Lavazza',d:'Directo en la taza de servicio.'},
+            {t:'Disuelve con un poco de leche caliente',d:'Añade ~30ml de leche y revuelve hasta formar una pasta lisa, sin grumos. Esta base concentrada es la clave del sabor.'},
+            {t:'Vaporiza la leche restante',d:'Textura tipo cappuccino — aireación activa primero, integración después. Brillante, no espumosa.'},
+            {t:'Vierte la leche texturizada sobre la pasta',d:'Desde altura para integrar en los primeros segundos, luego baja para definir la capa de espuma.'},
+            {t:'Termina con cacao en polvo',d:'Espolvorea ligeramente sobre la espuma. Aporta aroma y presentación.'}],
+     milk:'La leche debe vaporizarse igual que para un cappuccino: 60–65°C, microespuma sedosa. Una leche sin textura deja el chocolate plano y separado.',
+     serviceNote:'Si el sobre no se disuelve completamente, sigue revolviendo antes de añadir la leche vaporizada. Un grumo en el fondo de la taza arruina los últimos sorbos.'}],
   base:[
     {label:'Qué es el espresso',text:'El espresso es café preparado forzando agua caliente (92°C) a través de café molido fino bajo alta presión (9 bar) en 25–30 segundos. El resultado es una bebida concentrada, de entre 25 y 30 ml, cubierta por una capa de crema. No es simplemente café fuerte — es un método de extracción completamente diferente.'},
     {label:'Lavazza Intenso — Conoce tu café',text:'<strong>Mezcla:</strong> Arabica y Robusta. <strong>Perfil:</strong> chocolate oscuro, frutos secos tostados, madera suave. La Robusta aporta cuerpo, crema persistente y cafeína. La Arabica aporta acidez equilibrada y complejidad aromática. Es una mezcla diseñada para espresso: funciona bien con y sin leche.'},
@@ -1722,7 +1738,7 @@ en:{
       {at:42,text:'⚠ Stop — bitterness threshold reached'}]}],
   drinks:[
     {name:'Espresso',tagline:'The foundation of everything',
-     philosophy:'A single espresso is the purest expression of the coffee. There is nowhere to hide — no milk, no dilution. When a guest orders one, they know what they want. Your job is not to get in the way. Serve in a warmed demitasse. A small glass of still water on the side, always.',
+     philosophy:'A single espresso is the purest expression of coffee: 25–30 ml concentrated, no milk, no dilution. Born in Italy at the start of the 20th century with Luigi Bezzera\'s first steam machine, it became the foundation on which all of modern coffee culture is built. Served in a warmed demitasse, traditionally accompanied by a small glass of still water to refresh the palate.',
      params:[{l:'Dose',v:'7–8',u:'grams'},{l:'Yield',v:'25–30',u:'ml'},{l:'Time',v:'25–30',u:'seconds'},{l:'Temp',v:'92°',u:'celsius'},{l:'Pressure',v:'9',u:'bar'},{l:'Cup',v:'60 ml',u:'warmed'}],
      steps:[{t:'Flush the group head',d:'Run hot water through to clear residue and stabilise temperature.'},
             {t:'Dose and distribute',d:'Weigh 7–8g. Distribute evenly before tamping.'},
@@ -1732,15 +1748,15 @@ en:{
      milk:null,
      serviceNote:'Never let an espresso sit. It begins oxidizing within 30 seconds. Pull it and serve it.'},
     {name:'Cappuccino',tagline:'The morning ritual',
-     philosophy:"The cappuccino is Italy's breakfast drink. It was never meant for afternoon. At Explora we serve it correctly: balanced, no excess foam or milk. One third of each. If a guest orders one after lunch — don't correct them. Just make it well.",
+     philosophy:"The cappuccino is Italy's traditional breakfast drink. Its name comes from the color of the Capuchin friars' habit. Always meant for the morning — in Italian culture, warm milk after lunch is considered hard to digest. A well-made cappuccino is balanced: one third espresso, one third steamed milk, one third foam. No excess.",
      params:[{l:'Espresso',v:'1 shot',u:'30ml'},{l:'Milk',v:'60 ml',u:'steamed'},{l:'Foam',v:'1–2 cm',u:'thick'},{l:'Temp',v:'62°',u:'celsius'},{l:'Cup',v:'150–180',u:'ml'},{l:'Ratio',v:'1:1:1',u:'esp:milk:foam'}],
      steps:[{t:'Pull your espresso',d:'Base first. Always.'},
             {t:'Steam milk with active aeration',d:'Tip just below the surface. <em>Listen for that chirping sound.</em>'},
             {t:'Check texture',d:'Milk should look glossy and flow like paint. No large bubbles.'},
             {t:'Pour from height',d:'Drop from 10cm to integrate, then lower to define the layer.'},
             {t:'No lid, no sleeve',d:"It's a cappuccino. Serve in a cup, clean."}],
-     milk:'The foam in a cappuccino should hold for 2–3 minutes without collapsing. If it falls before the guest drinks, the texture was wrong.',
-     serviceNote:'Do not add sugar. Present it clean. A guest who wants sugar will ask.'},
+     milk:'The foam in a cappuccino should hold for 2–3 minutes without collapsing. If it falls before it is drunk, the texture was wrong.',
+     serviceNote:'Do not add sugar. Present it clean. Whoever wants sugar will ask for it.'},
     {name:'Flat White',tagline:"The barista's drink",
      philosophy:'Born in Australia and New Zealand in the 1980s, as a reaction to cappuccino with too much foam. It is a double ristretto with perfectly integrated microfoam. No layers, no decoration. Just coffee and milk in their most direct form.',
      params:[{l:'Espresso',v:'2 ristretto',u:'shots'},{l:'Milk',v:'100 ml',u:'microfoam'},{l:'Foam',v:'minimal',u:'~2mm'},{l:'Temp',v:'60°',u:'celsius'},{l:'Cup',v:'150–160',u:'ml'},{l:'Ratio',v:'~1:3',u:'coffee:milk'}],
@@ -1750,7 +1766,7 @@ en:{
             {t:'Pour through the crema',d:'Coffee and milk must fuse. No floating foam layer.'},
             {t:'Finish clean',d:'No decoration. If there is a visible foam layer on top, there is too much.'}],
      milk:'This is the hardest milk to do well. The window between perfect microfoam and textureless milk is narrow. Practice daily.',
-     serviceNote:'If a guest is undecided between a Flat White and a Cappuccino: ask if they prefer more coffee flavor or more milk comfort. That decides it.'},
+     serviceNote:'When undecided between a Flat White and a Cappuccino: ask if they prefer more coffee flavor or more milk comfort. That decides it.'},
     {name:'Latte',tagline:'The gentle introduction',
      philosophy:'Caffè latte means coffee with milk. In Italy it was a home drink — made in the morning at home. Outside Italy it became the most popular café drink in the world. It is soft, accessible and generous. Do not underestimate it: a well-made latte is technically demanding.',
      params:[{l:'Espresso',v:'1–2 shots',u:'30–60ml'},{l:'Milk',v:'200 ml',u:'steamed'},{l:'Foam',v:'5 mm',u:'cap'},{l:'Temp',v:'63°',u:'celsius'},{l:'Cup',v:'240–300',u:'ml'},{l:'Ratio',v:'1:4',u:'coffee:milk'}],
@@ -1759,16 +1775,16 @@ en:{
             {t:'Pour slowly',d:'From low to gently blend. The milk wraps around the coffee.'},
             {t:'Finish with foam',d:'A thin 5mm cap. No more. It is a latte, not a cappuccino.'}],
      milk:'The latte is the easiest milk drink to make well and also the easiest to make badly. Milk that is too hot or textureless ruins the experience.',
-     serviceNote:"If a guest orders a 'large latte' — use two espresso shots. Never just add more milk."},
-    {name:'Cortado',tagline:'For guests who know what they want',
-     philosophy:'Cortado comes from the Spanish cortar — to cut. The milk cuts the acidity of the espresso. It is a drink of exact proportion: no more, no less. Popular in Spain and Latin America. At Explora it is ideal for guests who want real coffee but with a little softness.',
+     serviceNote:"For a 'large latte' — use two espresso shots. Never just add more milk."},
+    {name:'Cortado',tagline:'Exact proportion',
+     philosophy:'Cortado comes from the Spanish cortar — to cut. The milk cuts the acidity of the espresso. It is a drink of exact proportion: no more, no less. It originated in Spain and spread across Latin America, where it is also known as pingado in Brazil and tallat in Catalonia. Ideal for those who want real coffee with just a touch of softness.',
      params:[{l:'Espresso',v:'1 shot',u:'30ml'},{l:'Milk',v:'30 ml',u:'warm'},{l:'Foam',v:'none',u:'—'},{l:'Temp',v:'55–60°',u:'celsius'},{l:'Cup',v:'90 ml',u:'glass'},{l:'Ratio',v:'1:1',u:'exact'}],
      steps:[{t:'Pull standard espresso',d:'No adjustments. The espresso must work on its own.'},
             {t:'Steam with minimal aeration',d:'Just warm and soften. No foam creation.'},
             {t:'Pour flat',d:'Milk falls directly onto the espresso. No latte art.'},
             {t:'Serve without ceremony',d:"It's a cortado. Clean. Direct."}],
      milk:'Cortado milk should be warm and slightly textured but never foamy. If it floats, there was too much aeration.',
-     serviceNote:'Serve in a small glass, not a ceramic cup, when possible. The glass presentation is part of the cortado identity.'},
+     serviceNote:'Serve in a small glass when possible. The glass presentation is part of the cortado identity.'},
     {name:'Macchiato',tagline:'The marked shot',
      philosophy:"Espresso macchiato means 'stained espresso.' A teaspoon of foam on the crema. Nothing more. It is the most discreet way to soften an espresso without altering its character. Appreciated by those who want espresso but with the smallest gesture of milk.",
      params:[{l:'Espresso',v:'1 shot',u:'30ml'},{l:'Foam',v:'1 teaspoon',u:''},{l:'Milk',v:'none',u:'foam only'},{l:'Temp',v:'90°+',u:'serve hot'},{l:'Cup',v:'60 ml',u:'demitasse'},{l:'Ratio',v:'95:5',u:'coffee:foam'}],
@@ -1777,7 +1793,7 @@ en:{
             {t:'Place on center of crema',d:'A stain. Do not cover everything.'},
             {t:'Serve immediately',d:'The espresso does not wait.'}],
      milk:null,
-     serviceNote:"Do not confuse with a Latte Macchiato — which is the opposite: milk stained with espresso. If a guest orders a macchiato without specifying, ask politely which they prefer."},
+     serviceNote:"Do not confuse with a Latte Macchiato — which is the opposite: milk stained with espresso. If a macchiato is ordered without specifying, confirm which one."},
     {name:'Americano',tagline:'Espresso extended — with nuance',
      philosophy:'The Americano was born in WWII Europe. American soldiers found espresso too intense and asked for additional water. Over time it became a drink in its own right. Well made, it preserves the complexity of the espresso but at a slower pace.',
      params:[{l:'Espresso',v:'1–2 shots',u:''},{l:'Hot water',v:'120–150',u:'ml'},{l:'Ratio',v:'1:4',u:'esp:water'},{l:'Water temp',v:'90°',u:'celsius'},{l:'Cup',v:'200–240',u:'ml'},{l:'Order',v:'water first',u:'then espresso'}],
@@ -1785,24 +1801,35 @@ en:{
             {t:'Pull espresso over the water',d:'The crema floats and is preserved on the surface.'},
             {t:'Do not stir',d:'The natural layering is part of the drink.'}],
      milk:null,
-     serviceNote:'Americano vs Long Black: same ingredients, different order. The Long Black is more concentrated and preserves the crema better. If a guest wants to know which to order, ask if they prefer more body or more softness.'},
+     serviceNote:'Americano vs Long Black: same ingredients, different order. The Long Black is more concentrated and preserves the crema better.'},
     {name:'Long Black',tagline:'The Australasian answer to filter coffee',
      philosophy:"The Long Black is the Flat White's dark twin — also from Australia and New Zealand. Made in reverse order to the Americano: espresso goes over the water, preserving the crema intact. The result is more concentrated, more aromatic, more complex.",
      params:[{l:'Espresso',v:'2 shots',u:'60ml'},{l:'Hot water',v:'120',u:'ml'},{l:'Ratio',v:'1:2',u:'more concentrated'},{l:'Water temp',v:'92°',u:'celsius'},{l:'Cup',v:'200',u:'ml'},{l:'Order',v:'espresso last',u:'over water'}],
      steps:[{t:'Add hot water to cup',d:'Approximately halfway.'},
             {t:'Pull double shot over the water',d:'Crema stays intact and aromatic on the surface.'},
-            {t:'Serve without stirring',d:'The guest can decide how to integrate it.'}],
+            {t:'Serve without stirring',d:'Whoever drinks it can decide how to integrate it.'}],
      milk:null,
-     serviceNote:'If a guest wants it with milk — suggest a latte or flat white instead. Adding milk to a Long Black removes its reason for existing.'},
-    {name:'Espresso Romano',tagline:'The unexpected gesture',
-     philosophy:"Espresso Romano is not Roman at all — its origins are unclear and probably American. But it is an interesting preparation: lemon peel expressed over the espresso adds citrus oils that interact with the bitter compounds in the coffee, softening the finish. It is also an excellent way to start a conversation.",
-     params:[{l:'Espresso',v:'1 shot',u:'30ml'},{l:'Lemon peel',v:'1 small',u:'twist'},{l:'Sugar',v:'optional',u:'—'},{l:'Cup',v:'60 ml',u:'demitasse'},{l:'Extra water',v:'small glass',u:''},{l:'Serve peel',v:'aside',u:'guest chooses'}],
-     steps:[{t:'Pull standard espresso',d:'No adjustments to the shot.'},
-            {t:'Cut a small lemon twist',d:'Only the outer peel. Not the bitter white pith.'},
-            {t:'Express the oils',d:'Fold the peel over the cup. The oils fall onto the crema.'},
-            {t:'Explain it briefly',d:'<em>"The lemon oils soften the bitterness of the espresso."</em> One sentence is enough.'}],
-     milk:null,
-     serviceNote:'This is a conversation-starting drink. Guests who have never had it will remember it. Use it when you want to create a memorable moment at the table.'}],
+     serviceNote:'If asked for it with milk — suggest a latte or flat white instead. Adding milk to a Long Black removes its reason for existing.'},
+    {name:'Iced Latte',tagline:'Coffee with milk, cold',
+     philosophy:'The iced latte became popular in the United States in the 1980s as a summer answer to the latte. The idea is simple: a freshly pulled espresso falling over ice and cold milk, preserving the full aroma without cooking the milk. The key is the order — ice, espresso, milk — and not stirring right away. The initial layering shows the coffee was fresh.',
+     params:[{l:'Espresso',v:'2 shots',u:'60ml'},{l:'Ice',v:'full',u:'large cubes'},{l:'Cold milk',v:'180–200',u:'ml'},{l:'Glass',v:'350–400',u:'ml tall'},{l:'Ratio',v:'1:3',u:'coffee:milk'},{l:'Service',v:'long straw',u:''}],
+     steps:[{t:'Fill the glass with ice',d:'Large cubes — they melt slower and dilute less.'},
+            {t:'Pull a double espresso',d:'Standard. Do not adjust the shot — dilution comes from the ice.'},
+            {t:'Pour the espresso over the ice',d:'Let it drop directly. The crema is preserved on top.'},
+            {t:'Add the cold milk',d:'Pour slowly down the side of the glass to keep the visual contrast.'},
+            {t:'Do not stir',d:'The coffee/milk layering is part of the presentation. Whoever drinks it integrates it with the straw.'}],
+     milk:'Milk is served cold — straight from the fridge. Do not steam, do not warm. Lukewarm milk would kill the refreshing effect.',
+     serviceNote:'If sweetened, use simple syrup (liquid) — granulated sugar will not dissolve in cold liquid. Serve it on the side so the guest can adjust.'},
+    {name:'Hot Chocolate',tagline:'Cocoa and textured milk',
+     philosophy:'Hot chocolate has its roots in Mesoamerican cultures — Mayans and Aztecs drank it ceremonially, mixed with chili and spices. It reached Europe with the Spanish in the 16th century and evolved into the sweet version we know today. The modern preparation combines cocoa powder with barista-textured milk, giving a silky drink with the same technical base as a cappuccino.',
+     params:[{l:'Cocoa',v:'1 sachet',u:'Lavazza'},{l:'Milk',v:'200 ml',u:'steamed'},{l:'Foam',v:'1 cm',u:'silky'},{l:'Temp',v:'62–65°',u:'celsius'},{l:'Cup',v:'200–240',u:'ml'},{l:'Topping',v:'cocoa',u:'optional'}],
+     steps:[{t:'Pour the Lavazza cocoa sachet',d:'Directly into the serving cup.'},
+            {t:'Dissolve with a little hot milk',d:'Add ~30ml of milk and stir into a smooth paste, no lumps. This concentrated base is the key to the flavor.'},
+            {t:'Steam the remaining milk',d:'Cappuccino-style texture — active aeration first, integration after. Glossy, not foamy.'},
+            {t:'Pour the textured milk over the paste',d:'From height to integrate in the first seconds, then lower to define the foam cap.'},
+            {t:'Finish with cocoa powder',d:'Lightly dust on top. Adds aroma and presentation.'}],
+     milk:'Milk should be steamed exactly as for a cappuccino: 60–65°C, silky microfoam. Textureless milk leaves the chocolate flat and separated.',
+     serviceNote:'If the sachet does not fully dissolve, keep stirring before adding the steamed milk. A lump at the bottom of the cup ruins the last sips.'}],
   base:[
     {label:'What is espresso',text:'Espresso is coffee prepared by forcing hot water (92°C) through finely ground coffee under high pressure (9 bar) in 25–30 seconds. The result is a concentrated beverage of 25–30 ml, topped with a layer of crema. It is not simply strong coffee — it is an entirely different extraction method.'},
     {label:'Lavazza Intenso — Know your coffee',text:'<strong>Blend:</strong> Arabica and Robusta. <strong>Profile:</strong> dark chocolate, toasted nuts, soft wood. The Robusta contributes body, persistent crema and caffeine. The Arabica brings balanced acidity and aromatic complexity. It is a blend designed for espresso: works well with and without milk.'},
@@ -1847,7 +1874,7 @@ pt:{
       {at:42,text:'⚠ Parar — limite de amargor atingido'}]}],
   drinks:[
     {name:'Espresso',tagline:'A base de tudo',
-     philosophy:'Um espresso simples é a expressão mais pura do café. Não há onde se esconder — sem leite, sem diluição. Quando um hóspede pede um, sabe o que quer. Seu trabalho é não atrapalhar. Servir em uma xícara demitasse aquecida. Um pequeno copo de água sem gás ao lado, sempre.',
+     philosophy:'Um espresso simples é a expressão mais pura do café: 25–30 ml concentrados, sem leite, sem diluição. Nasceu na Itália no início do século XX com a primeira máquina a vapor de Luigi Bezzera, e desde então tornou-se a base sobre a qual se constrói toda a cultura moderna do café. Servido em xícara demitasse aquecida, tradicionalmente acompanhado de um pequeno copo de água sem gás para refrescar o paladar.',
      params:[{l:'Dose',v:'7–8',u:'gramas'},{l:'Rendimento',v:'25–30',u:'ml'},{l:'Tempo',v:'25–30',u:'segundos'},{l:'Temp',v:'92°',u:'celsius'},{l:'Pressão',v:'9',u:'bar'},{l:'Xícara',v:'60 ml',u:'aquecida'}],
      steps:[{t:'Purge o grupo',d:'Deixe correr água quente para limpar resíduos e estabilizar a temperatura.'},
             {t:'Dose e distribua',d:'Pese 7–8g. Distribua uniformemente antes de tampar.'},
@@ -1857,15 +1884,15 @@ pt:{
      milk:null,
      serviceNote:'Nunca deixe um espresso esperar. Começa a oxidar em 30 segundos. Extraia e sirva.'},
     {name:'Cappuccino',tagline:'O ritual da manhã',
-     philosophy:'O cappuccino é o café da manhã da Itália. Nunca foi pensado para a tarde. No Explora o servimos corretamente: equilibrado, sem excesso de espuma ou leite. Um terço de cada. Se um hóspede pedir depois do almoço — não corrija. Apenas faça bem feito.',
+     philosophy:'O cappuccino é o café da manhã tradicional da Itália. Seu nome vem da cor do hábito dos frades capuchinhos. Pensado sempre para a manhã — na cultura italiana, leite morno depois do almoço é considerado difícil de digerir. Um cappuccino bem feito é equilibrado: um terço espresso, um terço leite vaporizado, um terço espuma. Sem excessos.',
      params:[{l:'Espresso',v:'1 dose',u:'30ml'},{l:'Leite',v:'60 ml',u:'vaporizado'},{l:'Espuma',v:'1–2 cm',u:'espessa'},{l:'Temp',v:'62°',u:'celsius'},{l:'Xícara',v:'150–180',u:'ml'},{l:'Ratio',v:'1:1:1',u:'esp:leite:espuma'}],
      steps:[{t:'Extraia o espresso',d:'A base primeiro. Sempre.'},
             {t:'Vaporize com aeração ativa',d:'Bico logo abaixo da superfície. <em>Ouça o som chiante.</em>'},
             {t:'Verifique a textura',d:'O leite deve parecer brilhante e fluir como tinta. Sem bolhas grandes.'},
             {t:'Despeje de altura',d:'Solte de 10cm para integrar, depois abaixe para definir a camada.'},
             {t:'Sem tampa ou capa',d:'É um cappuccino. Sirva em xícara, limpo.'}],
-     milk:'A espuma de um cappuccino deve se manter por 2–3 minutos sem colapsar. Se cair antes de o hóspede beber, a textura estava errada.',
-     serviceNote:'Não adicione açúcar. Apresente limpo. Um hóspede que queira açúcar vai pedir.'},
+     milk:'A espuma de um cappuccino deve se manter por 2–3 minutos sem colapsar. Se cair antes de ser bebido, a textura estava errada.',
+     serviceNote:'Não adicione açúcar. Apresente limpo. Quem quiser açúcar vai pedir.'},
     {name:'Flat White',tagline:'A bebida do barista',
      philosophy:'Nasceu na Austrália e Nova Zelândia nos anos 80, como reação ao cappuccino com espuma demais. É um ristretto duplo com microespuma perfeitamente integrada. Sem camadas, sem decoração. Apenas café e leite em sua forma mais direta.',
      params:[{l:'Espresso',v:'2 ristrettos',u:''},{l:'Leite',v:'100 ml',u:'microespuma'},{l:'Espuma',v:'mínima',u:'~2mm'},{l:'Temp',v:'60°',u:'celsius'},{l:'Xícara',v:'150–160',u:'ml'},{l:'Ratio',v:'~1:3',u:'café:leite'}],
@@ -1875,7 +1902,7 @@ pt:{
             {t:'Despeje através da crema',d:'Café e leite devem se fundir. Sem camada de espuma flutuando.'},
             {t:'Termine limpo',d:'Sem decoração. Se há uma camada visível de espuma no topo, é demais.'}],
      milk:'Esta é a bebida de leite mais difícil de fazer bem. A janela entre microespuma perfeita e leite sem textura é estreita. Pratique diariamente.',
-     serviceNote:'Se um hóspede está indeciso entre Flat White e Cappuccino: pergunte se prefere mais sabor de café ou mais suavidade de leite. Isso decide.'},
+     serviceNote:'Em caso de dúvida entre Flat White e Cappuccino: pergunte se prefere mais sabor de café ou mais suavidade de leite. Isso decide.'},
     {name:'Latte',tagline:'A introdução gentil',
      philosophy:'Caffè latte significa café com leite. Na Itália era uma bebida caseira — feita em casa de manhã. Fora da Itália tornou-se a bebida de café mais popular do mundo. É suave, acessível e generosa. Não subestime: um latte bem feito é tecnicamente exigente.',
      params:[{l:'Espresso',v:'1–2 doses',u:'30–60ml'},{l:'Leite',v:'200 ml',u:'vaporizado'},{l:'Espuma',v:'5 mm',u:'cap'},{l:'Temp',v:'63°',u:'celsius'},{l:'Xícara',v:'240–300',u:'ml'},{l:'Ratio',v:'1:4',u:'café:leite'}],
@@ -1884,16 +1911,16 @@ pt:{
             {t:'Despeje lentamente',d:'De baixo para misturar suavemente. O leite envolve o café.'},
             {t:'Termine com espuma',d:'Uma camada fina de 5mm. Não mais. É um latte, não cappuccino.'}],
      milk:'O latte é a bebida de leite mais fácil de fazer bem mas também a mais fácil de fazer mal. Leite quente demais ou sem textura arruína a experiência.',
-     serviceNote:"Se um hóspede pede um 'latte grande' — use duas doses de espresso. Nunca apenas adicione mais leite."},
-    {name:'Cortado',tagline:'Para hóspedes que sabem o que querem',
-     philosophy:'Cortado vem do espanhol cortar. O leite corta a acidez do espresso. É uma bebida de proporção exata: nem mais nem menos. Popular na Espanha e América Latina. No Explora é ideal para hóspedes que querem café de verdade mas com um pouco de suavidade.',
+     serviceNote:"Para um 'latte grande' — use duas doses de espresso. Nunca apenas adicione mais leite."},
+    {name:'Cortado',tagline:'Proporção exata',
+     philosophy:'Cortado vem do espanhol cortar — o leite corta a acidez do espresso. É uma bebida de proporção exata: nem mais nem menos. Surgiu na Espanha e se popularizou por toda a América Latina, onde também é conhecido como pingado no Brasil ou tallat na Catalunha. Ideal para quem quer café de verdade com um toque de suavidade.',
      params:[{l:'Espresso',v:'1 dose',u:'30ml'},{l:'Leite',v:'30 ml',u:'quente'},{l:'Espuma',v:'nenhuma',u:'—'},{l:'Temp',v:'55–60°',u:'celsius'},{l:'Xícara',v:'90 ml',u:'vidro'},{l:'Ratio',v:'1:1',u:'exato'}],
      steps:[{t:'Extraia espresso padrão',d:'Sem ajustes. O espresso deve funcionar sozinho.'},
             {t:'Vaporize com aeração mínima',d:'Apenas aquecer e suavizar. Sem criar espuma.'},
             {t:'Despeje plano',d:'O leite cai diretamente no espresso. Sem latte art.'},
             {t:'Sirva sem cerimônias',d:'É um cortado. Limpo. Direto.'}],
      milk:'O leite do cortado deve ser quente e levemente texturizado mas nunca espumoso. Se flutua, aeração demais.',
-     serviceNote:'Sirva em copo pequeno, não em xícara de cerâmica, quando possível. A apresentação em vidro é parte da identidade do cortado.'},
+     serviceNote:'Sirva em copo pequeno de vidro quando possível. A apresentação em vidro é parte da identidade do cortado.'},
     {name:'Macchiato',tagline:'O shot marcado',
      philosophy:"Espresso macchiato significa 'espresso manchado'. Uma colher de chá de espuma na crema. Nada mais. É a forma mais discreta de suavizar um espresso sem alterar seu caráter. Apreciado por quem quer espresso mas com o menor gesto de leite.",
      params:[{l:'Espresso',v:'1 dose',u:'30ml'},{l:'Espuma',v:'1 col. chá',u:''},{l:'Leite',v:'nenhum',u:'só espuma'},{l:'Temp',v:'90°+',u:'servir quente'},{l:'Xícara',v:'60 ml',u:'demitasse'},{l:'Ratio',v:'95:5',u:'café:espuma'}],
@@ -1902,7 +1929,7 @@ pt:{
             {t:'Coloque no centro da crema',d:'Uma mancha. Não cubra tudo.'},
             {t:'Sirva imediatamente',d:'O espresso não espera.'}],
      milk:null,
-     serviceNote:'Não confundir com Latte Macchiato — que é o oposto: leite manchado com espresso. Se um hóspede pede macchiato sem especificar, pergunte gentilmente qual prefere.'},
+     serviceNote:'Não confundir com Latte Macchiato — que é o oposto: leite manchado com espresso. Se for pedido macchiato sem especificar, confirme qual.'},
     {name:'Americano',tagline:'Espresso estendido — com nuances',
      philosophy:'O Americano nasceu na Europa durante a Segunda Guerra Mundial. Os soldados americanos achavam o espresso intenso demais e pediam água adicional. Com o tempo tornou-se uma bebida por direito próprio. Bem feito, preserva a complexidade do espresso mas em ritmo mais lento.',
      params:[{l:'Espresso',v:'1–2 doses',u:''},{l:'Água quente',v:'120–150',u:'ml'},{l:'Ratio',v:'1:4',u:'esp:água'},{l:'Temp água',v:'90°',u:'celsius'},{l:'Xícara',v:'200–240',u:'ml'},{l:'Ordem',v:'água primeiro',u:'depois espresso'}],
@@ -1910,24 +1937,35 @@ pt:{
             {t:'Extraia o espresso sobre a água',d:'A crema flutua e é preservada na superfície.'},
             {t:'Não misture',d:'A estratificação natural é parte da bebida.'}],
      milk:null,
-     serviceNote:'Americano vs Long Black: mesmos ingredientes, ordem diferente. O Long Black é mais concentrado e preserva melhor a crema. Se um hóspede quer saber qual pedir, pergunte se prefere mais corpo ou mais suavidade.'},
+     serviceNote:'Americano vs Long Black: mesmos ingredientes, ordem diferente. O Long Black é mais concentrado e preserva melhor a crema.'},
     {name:'Long Black',tagline:'A resposta australiana ao café de filtro',
      philosophy:'O Long Black é o gêmeo sombrio do Flat White — também da Austrália e Nova Zelândia. É feito na ordem inversa ao Americano: o espresso vai sobre a água, preservando a crema intacta. O resultado é mais concentrado, mais aromático, mais complexo.',
      params:[{l:'Espresso',v:'2 doses',u:'60ml'},{l:'Água quente',v:'120',u:'ml'},{l:'Ratio',v:'1:2',u:'mais concentrado'},{l:'Temp água',v:'92°',u:'celsius'},{l:'Xícara',v:'200',u:'ml'},{l:'Ordem',v:'espresso por último',u:'sobre água'}],
      steps:[{t:'Adicione água quente à xícara',d:'Aproximadamente até a metade.'},
             {t:'Extraia dose dupla sobre a água',d:'A crema permanece intacta e aromática na superfície.'},
-            {t:'Sirva sem misturar',d:'O hóspede pode decidir como integrar.'}],
+            {t:'Sirva sem misturar',d:'Quem bebe decide como integrar.'}],
      milk:null,
-     serviceNote:'Se um hóspede quiser com leite — sugira um latte ou flat white. Adicionar leite a um Long Black remove sua razão de existir.'},
-    {name:'Espresso Romano',tagline:'O gesto inesperado',
-     philosophy:'O Espresso Romano não é romano — suas origens são incertas e provavelmente americanas. Mas é uma preparação interessante: a casca de limão espremida sobre o espresso adiciona óleos cítricos que interagem com os compostos amargos do café, suavizando o final. Também é uma excelente forma de iniciar uma conversa.',
-     params:[{l:'Espresso',v:'1 dose',u:'30ml'},{l:'Casca limão',v:'1 pedaço',u:''},{l:'Açúcar',v:'opcional',u:'—'},{l:'Xícara',v:'60 ml',u:'demitasse'},{l:'Água extra',v:'copo pequeno',u:''},{l:'Sirva casca',v:'à parte',u:'hóspede escolhe'}],
-     steps:[{t:'Extraia o espresso padrão',d:'Sem ajustes no shot.'},
-            {t:'Corte um pedaço de casca de limão',d:'Apenas a pele exterior. Sem a parte branca amarga.'},
-            {t:'Expresse os óleos',d:'Dobre a casca sobre a xícara. Os óleos caem sobre a crema.'},
-            {t:'Explique brevemente',d:'<em>"Os óleos do limão suavizam o amargor do espresso."</em> Uma frase é suficiente.'}],
-     milk:null,
-     serviceNote:'Esta é uma bebida que gera conversa. Hóspedes que nunca provaram vão se lembrar. Use quando quiser criar um momento memorável na mesa.'}],
+     serviceNote:'Se for pedido com leite — sugira um latte ou flat white. Adicionar leite a um Long Black remove sua razão de existir.'},
+    {name:'Iced Latte',tagline:'Café com leite, gelado',
+     philosophy:'O iced latte popularizou-se nos Estados Unidos nos anos 80, como resposta de verão ao latte. A ideia é simples: um espresso recém-extraído cai sobre gelo e leite frio, preservando todo o aroma sem cozinhar o leite. A chave é a ordem — gelo, espresso, leite — e não misturar de imediato. A estratificação inicial mostra que o café estava fresco.',
+     params:[{l:'Espresso',v:'2 doses',u:'60ml'},{l:'Gelo',v:'cheio',u:'cubos grandes'},{l:'Leite frio',v:'180–200',u:'ml'},{l:'Copo',v:'350–400',u:'ml alto'},{l:'Ratio',v:'1:3',u:'café:leite'},{l:'Serviço',v:'canudo longo',u:''}],
+     steps:[{t:'Encha o copo de gelo',d:'Cubos grandes — derretem mais devagar, diluem menos.'},
+            {t:'Extraia espresso duplo',d:'Padrão. Não altere o shot — a diluição vem do gelo.'},
+            {t:'Despeje o espresso sobre o gelo',d:'Deixe cair diretamente. A crema é preservada na superfície.'},
+            {t:'Adicione o leite frio',d:'Despeje lentamente pelo lado do copo para manter o contraste visual.'},
+            {t:'Não mexa',d:'A estratificação café/leite é parte da apresentação. Quem bebe integra com o canudo.'}],
+     milk:'O leite é servido frio — direto da geladeira. Não vaporizar, não aquecer. Leite morno mataria o efeito refrescante.',
+     serviceNote:'Se pedir adoçado, use xarope simples (líquido) — o açúcar granulado não dissolve em frio. Sirva à parte para o ajuste do hóspede.'},
+    {name:'Chocolate Quente',tagline:'Cacau e leite texturizado',
+     philosophy:'O chocolate quente tem raízes nas culturas mesoamericanas — maias e astecas o bebiam ceremonialmente, misturado com pimenta e especiarias. Chegou à Europa com os espanhóis no século XVI e evoluiu para a versão doce que conhecemos hoje. A preparação moderna combina cacau em pó com leite texturizado de barista, gerando uma bebida sedosa com a mesma base técnica de um cappuccino.',
+     params:[{l:'Cacau',v:'1 sachê',u:'Lavazza'},{l:'Leite',v:'200 ml',u:'vaporizado'},{l:'Espuma',v:'1 cm',u:'sedosa'},{l:'Temp',v:'62–65°',u:'celsius'},{l:'Xícara',v:'200–240',u:'ml'},{l:'Cobertura',v:'cacau',u:'opcional'}],
+     steps:[{t:'Despeje o sachê de cacau Lavazza',d:'Direto na xícara de serviço.'},
+            {t:'Dissolva com um pouco de leite quente',d:'Adicione ~30ml de leite e mexa até formar uma pasta lisa, sem grumos. Esta base concentrada é a chave do sabor.'},
+            {t:'Vaporize o leite restante',d:'Textura tipo cappuccino — aeração ativa primeiro, integração depois. Brilhante, não espumoso.'},
+            {t:'Despeje o leite texturizado sobre a pasta',d:'De altura para integrar nos primeiros segundos, depois abaixe para definir a camada de espuma.'},
+            {t:'Termine com cacau em pó',d:'Polvilhe levemente sobre a espuma. Adiciona aroma e apresentação.'}],
+     milk:'O leite deve ser vaporizado igual ao cappuccino: 60–65°C, microespuma sedosa. Leite sem textura deixa o chocolate plano e separado.',
+     serviceNote:'Se o sachê não dissolver completamente, continue mexendo antes de adicionar o leite vaporizado. Um grumo no fundo da xícara arruína os últimos goles.'}],
   base:[
     {label:'O que é espresso',text:'O espresso é café preparado forçando água quente (92°C) através de café moído fino sob alta pressão (9 bar) em 25–30 segundos. O resultado é uma bebida concentrada de 25–30 ml, coberta por uma camada de crema. Não é simplesmente café forte — é um método de extração completamente diferente.'},
     {label:'Lavazza Intenso — Conheça seu café',text:'<strong>Blend:</strong> Arabica e Robusta. <strong>Perfil:</strong> chocolate amargo, nozes torradas, madeira suave. A Robusta contribui com corpo, crema persistente e cafeína. A Arabica traz acidez equilibrada e complexidade aromática. É um blend projetado para espresso: funciona bem com e sem leite.'},
@@ -2139,8 +2177,9 @@ let cf_milkType          = null;  // 'entera' | 'sin-lactosa' | 'vegetal' | null
 let cf_needsMilk         = false;
 let cf_pinBuffer         = '';
 let cf_tableBuffer       = '';
-// Indices in COFFEE_DATA that require milk (Cappuccino=1, Flat White=2, Latte=3, Cortado=4, Macchiato=5)
-const CF_MILK_INDICES = new Set([1,2,3,4,5]);
+// Indices in COFFEE_DATA that require milk:
+// Cappuccino=1, Flat White=2, Latte=3, Cortado=4, Macchiato=5, Iced Latte=8, Chocolate Caliente=9
+const CF_MILK_INDICES = new Set([1,2,3,4,5,8,9]);
 let cf_baristaRef = null, cf_baristaFn = null;
 let cf_elapsedInterval = null;
 let cf_pollInterval    = null; // polling fallback — re-reads Firebase every 2 s via REST
@@ -2246,9 +2285,7 @@ function cfRenderWaiterView(){
     <div class="cf-order-row">
       <span class="cf-order-label">${t('cfSelectDrink')}</span>
       <div class="cf-drink-grid">
-        ${d.drinks.map((dr,i)=>`<button class="cf-drink-sel-btn" data-i="${i}" onclick="cfSelectDrinkForOrder(${i},null,${CF_MILK_INDICES.has(i)})">${dr.name}</button>`).join('')}
-        <button class="cf-drink-sel-btn" data-extra="choc" onclick="cfSelectDrinkForOrder(null,'${t('cfChocHot')}',true)">${t('cfChocHot')}</button>
-        <button class="cf-drink-sel-btn" data-extra="iced" onclick="cfSelectDrinkForOrder(null,'${t('cfIcedLatte')}',true)">${t('cfIcedLatte')}</button>
+        ${d.drinks.map((dr,i)=>`<button class="cf-drink-sel-btn" data-i="${i}" onclick="cfSelectDrinkForOrder(${i},${CF_MILK_INDICES.has(i)})">${dr.name}</button>`).join('')}
       </div>
     </div>
     <div class="cf-order-row" id="cf-milk-row" style="display:none">
@@ -2265,7 +2302,7 @@ function cfRenderWaiterView(){
     <div class="cf-order-row">
       <span class="cf-order-label">${t('cfTableLabel')}</span>
       <div class="cf-table-numpad">
-        <div class="cf-table-numpad-display empty" id="cf-table-display">Mesa / Hab</div>
+        <div class="cf-table-numpad-display empty" id="cf-table-display">${t('cfTablePlaceholder')}</div>
         <div class="cf-numpad-grid" style="gap:5px">
           <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('1')">1</button>
           <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('2')">2</button>
@@ -2304,26 +2341,21 @@ function cfTableNumpadPress(key){
       disp.textContent = cf_tableBuffer;
       disp.classList.remove('empty');
     } else {
-      disp.textContent = 'Mesa / Hab';
+      disp.textContent = t('cfTablePlaceholder');
       disp.classList.add('empty');
     }
   }
 }
 
-function cfSelectDrinkForOrder(i, extraName, needsMilk){
+function cfSelectDrinkForOrder(i, needsMilk){
   cf_selectedDrinkIdx  = i;
-  cf_selectedDrinkName = extraName || null;
+  cf_selectedDrinkName = null;
   cf_needsMilk         = needsMilk || false;
   cf_milkType          = null; // reset milk choice when drink changes
   // Highlight tapped drink button
   document.querySelectorAll('.cf-drink-sel-btn').forEach(b=>b.classList.remove('selected'));
-  if (i !== null){
-    const btns = document.querySelectorAll('.cf-drink-sel-btn[data-i]');
-    if (btns[i]) btns[i].classList.add('selected');
-  } else {
-    const key = extraName === t('cfChocHot') ? 'choc' : 'iced';
-    document.querySelector(`.cf-drink-sel-btn[data-extra="${key}"]`)?.classList.add('selected');
-  }
+  const btns = document.querySelectorAll('.cf-drink-sel-btn[data-i]');
+  if (btns[i]) btns[i].classList.add('selected');
   // Show / hide milk row
   const milkRow = document.getElementById('cf-milk-row');
   if (milkRow) milkRow.style.display = cf_needsMilk ? 'block' : 'none';
@@ -2374,7 +2406,7 @@ function cfSubmitOrder(){
     cf_tableBuffer = '';
     const sp = document.getElementById('cf-order-special'); if(sp) sp.value='';
     const td = document.getElementById('cf-table-display');
-    if(td){ td.textContent='Mesa / Hab'; td.classList.add('empty'); }
+    if(td){ td.textContent=t('cfTablePlaceholder'); td.classList.add('empty'); }
   }).catch(()=>{ if(btn) btn.disabled=false; });
 }
 
