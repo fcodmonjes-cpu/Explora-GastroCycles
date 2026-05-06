@@ -280,6 +280,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-order-special-full { font-size:13px; color:var(--gold); background:rgba(202,138,4,0.08); border-radius:6px; padding:8px 10px; margin-bottom:10px; }
 .cf-done-btn { width:100%; padding:10px; border-radius:var(--radius-md); border:none; background:rgba(76,175,80,0.14); color:#4caf50; font-size:13px; font-weight:500; cursor:pointer; transition:background .15s; margin-top:10px; }
 .cf-done-btn:hover { background:rgba(76,175,80,0.25); }
+.cf-milk-btns { display:flex; gap:6px; margin-bottom:6px; }
+.cf-milk-type-btn { flex:1; padding:9px 6px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-size:12px; cursor:pointer; text-align:center; transition:all .15s; }
+.cf-milk-type-btn:hover { border-color:var(--gold); color:var(--text); }
+.cf-milk-type-btn.selected { border-color:var(--gold); background:rgba(202,138,4,0.12); color:var(--gold); font-weight:500; }
 .cf-table-numpad { max-width:220px; }
 .cf-table-numpad-display { font-family:'Courier Prime','Courier New',monospace; font-size:22px; letter-spacing:0.2em; text-align:center; padding:8px 12px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--gold); margin-bottom:8px; min-height:44px; display:flex; align-items:center; justify-content:center; transition:color .15s; }
 .cf-table-numpad-display.empty { color:var(--text-tertiary); font-size:13px; letter-spacing:0.05em; }
@@ -553,7 +557,8 @@ const UI = {
     cfSelectDrink:'Bebida', cfTableLabel:'Mesa / Habitación (opcional)', cfSpecialRequest:'Petición especial (opcional)', cfSpecialPlaceholder:'Ej: sin azúcar, leche de avena…',
     cfSubmitOrder:'Enviar orden al barista', cfConfirm:'✓ Orden enviada',
     cfBaristaTitle:'Cola de pedidos', cfQueueEmpty:'Sin pedidos pendientes', cfMarkDone:'Listo ✓', cfClearDone:'Limpiar completados', cfExit:'Salir',
-    cfChocHot:'Chocolate Caliente', cfIcedLatte:'Iced Latte'
+    cfChocHot:'Chocolate Caliente', cfIcedLatte:'Iced Latte',
+    cfMilkType:'Tipo de leche', cfMilkEntera:'Entera', cfMilkSinLactosa:'Sin lactosa', cfMilkVegetal:'Vegetal', cfMilkVegetalSpec:'Especificar (avena, almendra…)'
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Service guide: pairings, allergens and wine sheets',
@@ -575,7 +580,8 @@ const UI = {
     cfSelectDrink:'Drink', cfTableLabel:'Table / Room (optional)', cfSpecialRequest:'Special request (optional)', cfSpecialPlaceholder:'e.g. no sugar, oat milk…',
     cfSubmitOrder:'Send order to barista', cfConfirm:'✓ Order sent',
     cfBaristaTitle:'Order queue', cfQueueEmpty:'No pending orders', cfMarkDone:'Done ✓', cfClearDone:'Clear completed', cfExit:'Exit',
-    cfChocHot:'Hot Chocolate', cfIcedLatte:'Iced Latte'
+    cfChocHot:'Hot Chocolate', cfIcedLatte:'Iced Latte',
+    cfMilkType:'Milk type', cfMilkEntera:'Whole', cfMilkSinLactosa:'Lactose-free', cfMilkVegetal:'Plant-based', cfMilkVegetalSpec:'Specify (oat, almond…)'
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Guia de serviço: harmonizações, alérgenos e fichas de vinho',
@@ -597,7 +603,8 @@ const UI = {
     cfSelectDrink:'Bebida', cfTableLabel:'Mesa / Quarto (opcional)', cfSpecialRequest:'Pedido especial (opcional)', cfSpecialPlaceholder:'Ex: sem açúcar, leite de aveia…',
     cfSubmitOrder:'Enviar pedido ao barista', cfConfirm:'✓ Pedido enviado',
     cfBaristaTitle:'Fila de pedidos', cfQueueEmpty:'Sem pedidos pendentes', cfMarkDone:'Pronto ✓', cfClearDone:'Limpar concluídos', cfExit:'Sair',
-    cfChocHot:'Chocolate Quente', cfIcedLatte:'Iced Latte'
+    cfChocHot:'Chocolate Quente', cfIcedLatte:'Iced Latte',
+    cfMilkType:'Tipo de leite', cfMilkEntera:'Integral', cfMilkSinLactosa:'Sem lactose', cfMilkVegetal:'Vegetal', cfMilkVegetalSpec:'Especificar (aveia, amêndoa…)'
   }
 };
 function t(k){ return UI[currentLang][k] || UI.es[k]; }
@@ -2107,10 +2114,14 @@ const CF_ORDERS_PATH  = 'orders';
 
 let cf_fbApp = null, cf_fbDb = null;
 let cf_mode = null; // 'waiter' | 'barista' | null
-let cf_selectedDrinkIdx = null;
+let cf_selectedDrinkIdx  = null;
 let cf_selectedDrinkName = null;
-let cf_pinBuffer = '';
-let cf_tableBuffer = '';
+let cf_milkType          = null;  // 'entera' | 'sin-lactosa' | 'vegetal' | null
+let cf_needsMilk         = false;
+let cf_pinBuffer         = '';
+let cf_tableBuffer       = '';
+// Indices in COFFEE_DATA that require milk (Cappuccino=1, Flat White=2, Latte=3, Cortado=4, Macchiato=5)
+const CF_MILK_INDICES = new Set([1,2,3,4,5]);
 let cf_baristaRef = null, cf_baristaFn = null;
 let cf_elapsedInterval = null;
 
@@ -2182,6 +2193,8 @@ function cfExitServiceMode(){
   cf_mode = null;
   cf_selectedDrinkIdx  = null;
   cf_selectedDrinkName = null;
+  cf_milkType          = null;
+  cf_needsMilk         = false;
   cf_tableBuffer       = '';
   if (cf_baristaRef && cf_baristaFn){ cf_baristaRef.off('value',cf_baristaFn); cf_baristaRef=null; cf_baristaFn=null; }
   if (cf_elapsedInterval){ clearInterval(cf_elapsedInterval); cf_elapsedInterval=null; }
@@ -2204,9 +2217,20 @@ function cfRenderWaiterView(){
     <div class="cf-order-row">
       <span class="cf-order-label">${t('cfSelectDrink')}</span>
       <div class="cf-drink-grid">
-        ${d.drinks.map((dr,i)=>`<button class="cf-drink-sel-btn" data-i="${i}" onclick="cfSelectDrinkForOrder(${i},null)">${dr.name}</button>`).join('')}
-        <button class="cf-drink-sel-btn" data-extra="choc" onclick="cfSelectDrinkForOrder(null,'${t('cfChocHot')}')">${t('cfChocHot')}</button>
-        <button class="cf-drink-sel-btn" data-extra="iced" onclick="cfSelectDrinkForOrder(null,'${t('cfIcedLatte')}')">${t('cfIcedLatte')}</button>
+        ${d.drinks.map((dr,i)=>`<button class="cf-drink-sel-btn" data-i="${i}" onclick="cfSelectDrinkForOrder(${i},null,${CF_MILK_INDICES.has(i)})">${dr.name}</button>`).join('')}
+        <button class="cf-drink-sel-btn" data-extra="choc" onclick="cfSelectDrinkForOrder(null,'${t('cfChocHot')}',true)">${t('cfChocHot')}</button>
+        <button class="cf-drink-sel-btn" data-extra="iced" onclick="cfSelectDrinkForOrder(null,'${t('cfIcedLatte')}',true)">${t('cfIcedLatte')}</button>
+      </div>
+    </div>
+    <div class="cf-order-row" id="cf-milk-row" style="display:none">
+      <span class="cf-order-label">${t('cfMilkType')}</span>
+      <div class="cf-milk-btns">
+        <button class="cf-milk-type-btn" data-milk="entera"      onclick="cfSelectMilkType('entera')">${t('cfMilkEntera')}</button>
+        <button class="cf-milk-type-btn" data-milk="sin-lactosa" onclick="cfSelectMilkType('sin-lactosa')">${t('cfMilkSinLactosa')}</button>
+        <button class="cf-milk-type-btn" data-milk="vegetal"     onclick="cfSelectMilkType('vegetal')">${t('cfMilkVegetal')}</button>
+      </div>
+      <div id="cf-vegetal-spec-row" style="display:none;margin-top:8px">
+        <textarea class="cf-order-textarea" id="cf-vegetal-spec" rows="1" placeholder="${t('cfMilkVegetalSpec')}" style="height:34px;padding:8px 12px"></textarea>
       </div>
     </div>
     <div class="cf-order-row">
@@ -2257,10 +2281,12 @@ function cfTableNumpadPress(key){
   }
 }
 
-function cfSelectDrinkForOrder(i, extraName){
+function cfSelectDrinkForOrder(i, extraName, needsMilk){
   cf_selectedDrinkIdx  = i;
   cf_selectedDrinkName = extraName || null;
-  // highlight the tapped button
+  cf_needsMilk         = needsMilk || false;
+  cf_milkType          = null; // reset milk choice when drink changes
+  // Highlight tapped drink button
   document.querySelectorAll('.cf-drink-sel-btn').forEach(b=>b.classList.remove('selected'));
   if (i !== null){
     const btns = document.querySelectorAll('.cf-drink-sel-btn[data-i]');
@@ -2269,6 +2295,23 @@ function cfSelectDrinkForOrder(i, extraName){
     const key = extraName === t('cfChocHot') ? 'choc' : 'iced';
     document.querySelector(`.cf-drink-sel-btn[data-extra="${key}"]`)?.classList.add('selected');
   }
+  // Show / hide milk row
+  const milkRow = document.getElementById('cf-milk-row');
+  if (milkRow) milkRow.style.display = cf_needsMilk ? 'block' : 'none';
+  document.querySelectorAll('.cf-milk-type-btn').forEach(b=>b.classList.remove('selected'));
+  const vsr = document.getElementById('cf-vegetal-spec-row');
+  if (vsr) vsr.style.display = 'none';
+  // Submit enabled only if milk not required yet; will re-enable after milk chosen
+  const sub = document.getElementById('cf-submit-btn');
+  if (sub) sub.disabled = cf_needsMilk;
+}
+
+function cfSelectMilkType(type){
+  cf_milkType = type;
+  document.querySelectorAll('.cf-milk-type-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelector(`.cf-milk-type-btn[data-milk="${type}"]`)?.classList.add('selected');
+  const vsr = document.getElementById('cf-vegetal-spec-row');
+  if (vsr) vsr.style.display = type === 'vegetal' ? 'block' : 'none';
   const sub = document.getElementById('cf-submit-btn');
   if (sub) sub.disabled = false;
 }
@@ -2279,18 +2322,26 @@ function cfSubmitOrder(){
   const drinkName = cf_selectedDrinkName || d.drinks[cf_selectedDrinkIdx]?.name || '?';
   const drinkIdx  = cf_selectedDrinkIdx; // null for extras
   const special   = (document.getElementById('cf-order-special')?.value||'').trim();
+  const milkSpec  = cf_milkType === 'vegetal' ? (document.getElementById('cf-vegetal-spec')?.value||'').trim() : '';
   const table     = cf_tableBuffer.trim();
   const btn       = document.getElementById('cf-submit-btn');
   if (btn) btn.disabled = true;
   cfInitFirebase().ref(CF_ORDERS_PATH).push({
     drink: drinkName, drinkIdx,
+    milkType: cf_milkType || null, milkSpec: milkSpec || null,
     special, table, timestamp: Date.now(), status:'pending', lang: currentLang
   }).then(()=>{
     const msg = document.getElementById('cf-confirm-msg');
     if (msg){ msg.style.display='block'; setTimeout(()=>msg.style.display='none',2000); }
     cf_selectedDrinkIdx  = null;
     cf_selectedDrinkName = null;
+    cf_milkType          = null;
+    cf_needsMilk         = false;
     document.querySelectorAll('.cf-drink-sel-btn').forEach(b=>b.classList.remove('selected'));
+    document.querySelectorAll('.cf-milk-type-btn').forEach(b=>b.classList.remove('selected'));
+    const milkRow = document.getElementById('cf-milk-row'); if(milkRow) milkRow.style.display='none';
+    const vsr = document.getElementById('cf-vegetal-spec-row'); if(vsr) vsr.style.display='none';
+    const vs  = document.getElementById('cf-vegetal-spec'); if(vs) vs.value='';
     cf_tableBuffer = '';
     const sp = document.getElementById('cf-order-special'); if(sp) sp.value='';
     const td = document.getElementById('cf-table-display');
@@ -2344,8 +2395,9 @@ function cfRenderQueue(orders){
       <div class="cf-order-top" onclick="cfToggleOrderCard('${o.id}')">
         <div style="flex:1;min-width:0">
           <div class="cf-order-drink">${o.drink}</div>
-          ${o.table  ? `<div class="cf-order-meta">⌂ ${o.table}</div>`:''}
-          ${o.special? `<div class="cf-order-meta">⚑ ${o.special}</div>`:''}
+          ${o.table     ? `<div class="cf-order-meta">⌂ ${o.table}</div>`:''}
+          ${o.milkType  ? `<div class="cf-order-meta">🥛 ${o.milkType}${o.milkSpec?' — '+o.milkSpec:''}</div>`:''}
+          ${o.special   ? `<div class="cf-order-meta">⚑ ${o.special}</div>`:''}
         </div>
         <div class="cf-order-elapsed" id="cf-elapsed-${o.id}" data-ts="${o.timestamp}">0s</div>
       </div>
