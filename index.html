@@ -2171,10 +2171,14 @@ function cfNumpadPress(key){
     cfSubmitPin(cf_pinBuffer);
     return;
   } else {
-    if (cf_pinBuffer.length < 6) cf_pinBuffer += key;
+    if (cf_pinBuffer.length < 3) cf_pinBuffer += key;
   }
   const disp = document.getElementById('cf-numpad-display');
   if (disp) disp.textContent = cf_pinBuffer.length ? cf_pinBuffer.replace(/./g,'●') : '· · ·';
+  // Auto-submit as soon as 3 digits are entered (both valid codes are 3 digits)
+  if (cf_pinBuffer.length === 3){
+    setTimeout(()=>cfSubmitPin(cf_pinBuffer), 350);
+  }
 }
 
 function cfSubmitPin(val){
