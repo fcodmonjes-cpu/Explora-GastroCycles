@@ -2381,19 +2381,23 @@ function cfRenderBaristaView(){
   };
   cf_baristaRef.on('value', cf_baristaFn);
 
-  // Polling fallback: every 6 seconds do a fresh once('value') read so orders
-  // always appear even if the WebSocket real-time update is missed.
+  // Polling fallback via REST API (bypasses SDK cache — always hits server).
+  // SDK's .once('value') reuses the WebSocket cache when an .on() listener is
+  // active on the same ref, so it can miss new orders. The REST endpoint is
+  // always authoritative and doesn't share state with the SDK listener.
   if (cf_pollInterval) clearInterval(cf_pollInterval);
-  cf_pollInterval = setInterval(()=>{
+  const CF_REST_URL = CF_FIREBASE_CONFIG.databaseURL + '/' + CF_ORDERS_PATH + '.json';
+  cf_pollInterval = setInterval(async ()=>{
     if (cf_mode !== 'barista'){ clearInterval(cf_pollInterval); cf_pollInterval=null; return; }
-    cfInitFirebase().ref(CF_ORDERS_PATH).once('value').then(snap=>{
+    try {
+      const resp = await fetch(CF_REST_URL);
+      const data = await resp.json();
       if (cf_mode !== 'barista') return;
-      const all = [];
-      snap.forEach(c=>all.push({id:c.key,...c.val()}));
+      const all = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
       all.sort((a,b)=>(a.timestamp||0)-(b.timestamp||0));
       cfRenderQueue(all.filter(o=>o.status==='pending'));
-    }).catch(()=>{});
-  }, 6000);
+    } catch(e){}
+  }, 4000);
 
   if (cf_elapsedInterval) clearInterval(cf_elapsedInterval);
   cf_elapsedInterval = setInterval(cfTickElapsed, 1000);
