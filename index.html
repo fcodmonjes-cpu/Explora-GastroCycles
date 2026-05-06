@@ -2403,9 +2403,12 @@ function cfRenderBaristaView(){
   cf_baristaRef.on('value', cf_baristaFn);
 
   // Polling fallback via REST API (bypasses SDK cache — always hits server).
-  // SDK's .once('value') reuses the WebSocket cache when an .on() listener is
-  // active on the same ref, so it can miss new orders. The REST endpoint is
-  // always authoritative and doesn't share state with the SDK listener.
+  // IMPORTANT: polling is STRICTLY ADDITIVE. It can only add orders the
+  // WebSocket listener might have missed. It NEVER removes or shrinks the
+  // queue. This protects against the empty-state flash that happens when
+  // Firebase REST returns transient inconsistent data (null / partial set)
+  // during a concurrent write. The WebSocket listener is the single source
+  // of truth for removals and state changes.
   if (cf_pollInterval) clearInterval(cf_pollInterval);
   const CF_REST_URL = CF_FIREBASE_CONFIG.databaseURL + '/' + CF_ORDERS_PATH + '.json';
   cf_pollInterval = setInterval(async ()=>{
@@ -2416,7 +2419,7 @@ function cfRenderBaristaView(){
       if (cf_mode !== 'barista') return;
       const all = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
       all.sort((a,b)=>(a.timestamp||0)-(b.timestamp||0));
-      cfRenderQueue(all.filter(o=>o.status==='pending'));
+      cfAddNewOrdersFromPoll(all.filter(o=>o.status==='pending'));
     } catch(e){}
   }, 2000);
 
@@ -2454,8 +2457,38 @@ function cfBuildOrderCardEl(o, ld){
   return wrap.firstElementChild;
 }
 
-// Diff-render: only add new cards and remove completed ones. Existing cards
-// (and their open/scroll state) are never touched, so there's no flicker.
+// Polling-only: append orders the WebSocket listener might have missed.
+// Never removes, never re-orders, never updates the hash — leaves all that
+// to the listener. This guarantees a transient inconsistent REST response
+// can never cause a visual disappearance.
+function cfAddNewOrdersFromPoll(orders){
+  const list = document.getElementById('cf-queue-list');
+  if (!list || !orders.length) return;
+  const visibleIds = new Set(
+    [...list.querySelectorAll('.cf-order-card')].map(c=>c.id.replace('cf-ocard-',''))
+  );
+  const newOrders = orders.filter(o=>!visibleIds.has(o.id));
+  if (!newOrders.length) return;
+  const empty = list.querySelector('.cf-queue-empty');
+  if (empty) empty.remove();
+  const ld = COFFEE_DATA[currentLang] || COFFEE_DATA.es;
+  newOrders.forEach(o=>{
+    try {
+      const card = cfBuildOrderCardEl(o, ld);
+      card.classList.add('cf-card-entering','new-order');
+      list.appendChild(card);
+      setTimeout(()=>card.classList.remove('new-order'), 3200);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        if (card.parentElement) card.classList.remove('cf-card-entering');
+      }));
+    } catch(e){ console.error('[cfAddNewOrdersFromPoll]', e); }
+  });
+  cfTickElapsed();
+}
+
+// Diff-render (called by the WebSocket listener — authoritative):
+// adds new cards, fades out completed ones, revives any leaving card whose
+// order has come back, leaves all other cards untouched.
 function cfRenderQueue(orders){
   const list = document.getElementById('cf-queue-list');
   if (!list) return;
@@ -2490,6 +2523,17 @@ function cfRenderQueue(orders){
   const ld = COFFEE_DATA[currentLang] || COFFEE_DATA.es;
   const targetIds = new Set(orders.map(o=>o.id));
 
+  // Phase 0 — REVIVE any card that's currently animating out but whose order
+  // has come back into the target set. This protects against false leaving
+  // states caused by transient inconsistencies.
+  list.querySelectorAll('.cf-order-card.cf-card-leaving').forEach(card=>{
+    const id = card.id.replace('cf-ocard-','');
+    if (targetIds.has(id)){
+      card.classList.remove('cf-card-leaving');
+      card.style.maxHeight = ''; // restore CSS default
+    }
+  });
+
   // Phase 1 — fade-out / collapse cards no longer in the queue.
   list.querySelectorAll('.cf-order-card').forEach(card=>{
     const id = card.id.replace('cf-ocard-','');
@@ -2499,20 +2543,25 @@ function cfRenderQueue(orders){
       // force a layout pass so the next class change starts from this height
       void card.offsetHeight;
       card.classList.add('cf-card-leaving');
-      setTimeout(()=>{ if (card.parentElement) card.remove(); }, 360);
+      // Removal is conditional on the card still being in leaving state when
+      // the timer fires — Phase 0 above can revive it before then.
+      setTimeout(()=>{
+        if (card.parentElement && card.classList.contains('cf-card-leaving')) card.remove();
+      }, 360);
     }
   });
 
   // Phase 2 — insert new cards (existing ones remain untouched).
   // Orders are sorted oldest-first, so existing cards are already in the right
   // order; new ones append at the tail naturally.
+  // Calculate "first load" BEFORE inserting anything so subsequent iterations
+  // share the same value (otherwise the second card would no longer count as first-load).
+  const isFirstLoad = list.querySelectorAll('.cf-order-card').length === 0;
   try {
     orders.forEach(o=>{
       if (document.getElementById('cf-ocard-'+o.id)) return; // already rendered
       const card = cfBuildOrderCardEl(o, ld);
       card.classList.add('cf-card-entering');
-      // Highlight as new for a brief moment
-      const isFirstLoad = list.children.length === 0 && orders.length > 1;
       if (!isFirstLoad){
         card.classList.add('new-order');
         setTimeout(()=>card.classList.remove('new-order'), 3200);
