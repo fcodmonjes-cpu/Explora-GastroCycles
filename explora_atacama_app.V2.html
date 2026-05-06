@@ -243,14 +243,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-numpad { max-width:232px; margin:0 auto; }
 .cf-numpad-display { font-family:'Courier Prime','Courier New',monospace; font-size:28px; letter-spacing:0.3em; text-align:center; padding:12px 16px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--gold); margin-bottom:10px; min-height:54px; display:flex; align-items:center; justify-content:center; }
 .cf-numpad-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
-.cf-numpad-key { padding:15px 8px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text); font-size:18px; cursor:pointer; text-align:center; transition:background .1s; font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
+.cf-numpad-key { padding:15px 8px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text); font-size:18px; cursor:pointer; text-align:center; transition:background .1s; font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; touch-action:manipulation; user-select:none; }
 .cf-numpad-key:active { background:var(--bg-secondary); }
 .cf-numpad-key.cf-nk-del { color:var(--text-tertiary); font-size:15px; }
 .cf-numpad-key.cf-nk-ok { background:var(--wine-red); color:#fff; border-color:var(--wine-red); font-size:20px; }
 .cf-waiter-header { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); margin-bottom:0.2rem; }
 .cf-waiter-sub { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:1.25rem; }
 .cf-drink-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:1rem; }
-.cf-drink-sel-btn { padding:10px 8px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-size:12px; cursor:pointer; text-align:center; transition:all .15s; }
+.cf-drink-sel-btn { padding:10px 8px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-size:12px; cursor:pointer; text-align:center; transition:all .15s; touch-action:manipulation; user-select:none; }
 .cf-drink-sel-btn:hover { border-color:var(--gold); color:var(--text); }
 .cf-drink-sel-btn.selected { border-color:var(--gold); background:rgba(202,138,4,0.12); color:var(--gold); font-weight:500; }
 .cf-order-label { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:6px; display:block; }
@@ -281,7 +281,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-done-btn { width:100%; padding:10px; border-radius:var(--radius-md); border:none; background:rgba(76,175,80,0.14); color:#4caf50; font-size:13px; font-weight:500; cursor:pointer; transition:background .15s; margin-top:10px; }
 .cf-done-btn:hover { background:rgba(76,175,80,0.25); }
 .cf-milk-btns { display:flex; gap:6px; margin-bottom:6px; }
-.cf-milk-type-btn { flex:1; padding:9px 6px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-size:12px; cursor:pointer; text-align:center; transition:all .15s; }
+.cf-milk-type-btn { flex:1; padding:9px 6px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-size:12px; cursor:pointer; text-align:center; transition:all .15s; touch-action:manipulation; user-select:none; }
 .cf-milk-type-btn:hover { border-color:var(--gold); color:var(--text); }
 .cf-milk-type-btn.selected { border-color:var(--gold); background:rgba(202,138,4,0.12); color:var(--gold); font-weight:500; }
 .cf-table-numpad { max-width:220px; }
@@ -2124,7 +2124,8 @@ let cf_tableBuffer       = '';
 const CF_MILK_INDICES = new Set([1,2,3,4,5]);
 let cf_baristaRef = null, cf_baristaFn = null;
 let cf_elapsedInterval = null;
-let cf_pollInterval    = null; // polling fallback — re-reads Firebase every 6 s in case WebSocket misses an update
+let cf_pollInterval    = null; // polling fallback — re-reads Firebase every 4 s via REST
+let cf_lastQueueHash   = '';   // fingerprint of last rendered queue — prevents unnecessary re-renders
 
 function cfInitFirebase(){
   if (cf_fbApp) return cf_fbDb;
@@ -2204,6 +2205,7 @@ function cfExitServiceMode(){
   if (cf_baristaRef && cf_baristaFn){ cf_baristaRef.off('value',cf_baristaFn); cf_baristaRef=null; cf_baristaFn=null; }
   if (cf_elapsedInterval){ clearInterval(cf_elapsedInterval); cf_elapsedInterval=null; }
   if (cf_pollInterval){ clearInterval(cf_pollInterval); cf_pollInterval=null; }
+  cf_lastQueueHash = '';
   cfShowServicePanel();
 }
 
@@ -2357,6 +2359,7 @@ function cfSubmitOrder(){
 
 // ── Barista view ─────────────────────────────────────────────────────────────
 function cfRenderBaristaView(){
+  cf_lastQueueHash = ''; // force full render on first load
   const panel = document.getElementById('cf-panel-service');
   if (!panel) return;
   panel.innerHTML = `
@@ -2406,36 +2409,59 @@ function cfRenderBaristaView(){
 function cfRenderQueue(orders){
   const list = document.getElementById('cf-queue-list');
   if (!list) return;
-  if (!orders.length){ list.innerHTML=`<p class="cf-queue-empty">${t('cfQueueEmpty')}</p>`; return; }
+
+  // Build a fingerprint: IDs in order. If nothing changed, skip DOM update entirely
+  // to avoid flickering and collapsing expanded cards on every poll cycle.
+  const hash = orders.map(o=>o.id).join(',');
+  if (hash === cf_lastQueueHash) return;
+  cf_lastQueueHash = hash;
+
+  if (!orders.length){
+    list.innerHTML=`<p class="cf-queue-empty">${t('cfQueueEmpty')}</p>`;
+    return;
+  }
+
+  // Remember which cards are currently expanded so we can restore them after re-render
+  const openIds = new Set(
+    [...list.querySelectorAll('.cf-order-card.open')].map(el=>el.id.replace('cf-ocard-',''))
+  );
+
   const ld = COFFEE_DATA[currentLang] || COFFEE_DATA.es;
   try {
-  list.innerHTML = orders.map(o=>{
-    const dr = ld.drinks[o.drinkIdx] || null;
-    const stepsHtml = dr ? `
-      <p class="cf-philosophy" style="margin-bottom:8px">${dr.philosophy}</p>
-      ${dr.params?`<div class="cf-param-row">${dr.params.map(p=>`<div class="cf-param-box"><div class="cf-p-label">${p.l}</div><div class="cf-p-value">${p.v}</div><div class="cf-p-unit">${p.u}</div></div>`).join('')}</div>`:''}
-      <div class="cf-steps-label">${ld.methodLabel}</div>
-      ${dr.steps.map((s,n)=>`<div class="cf-step-item"><div class="cf-step-num">${n+1}</div><div><div class="cf-step-title">${s.t}</div><div class="cf-step-desc">${s.d}</div></div></div>`).join('')}
-      ${dr.milk?`<div class="cf-milk-block"><div class="cf-m-label">${ld.milkLabel}</div><p>${dr.milk}</p></div>`:''}` : '';
-    return `
-    <div class="cf-order-card" id="cf-ocard-${o.id}">
-      <div class="cf-order-top" onclick="cfToggleOrderCard('${o.id}')">
-        <div style="flex:1;min-width:0">
-          <div class="cf-order-drink">${o.drink}</div>
-          ${o.table     ? `<div class="cf-order-meta">⌂ ${o.table}</div>`:''}
-          ${o.milkType  ? `<div class="cf-order-meta">🥛 ${o.milkType}${o.milkSpec?' — '+o.milkSpec:''}</div>`:''}
-          ${o.special   ? `<div class="cf-order-meta">⚑ ${o.special}</div>`:''}
+    list.innerHTML = orders.map(o=>{
+      const dr = ld.drinks[o.drinkIdx] || null;
+      const stepsHtml = dr ? `
+        <p class="cf-philosophy" style="margin-bottom:8px">${dr.philosophy}</p>
+        ${dr.params?`<div class="cf-param-row">${dr.params.map(p=>`<div class="cf-param-box"><div class="cf-p-label">${p.l}</div><div class="cf-p-value">${p.v}</div><div class="cf-p-unit">${p.u}</div></div>`).join('')}</div>`:''}
+        <div class="cf-steps-label">${ld.methodLabel}</div>
+        ${dr.steps.map((s,n)=>`<div class="cf-step-item"><div class="cf-step-num">${n+1}</div><div><div class="cf-step-title">${s.t}</div><div class="cf-step-desc">${s.d}</div></div></div>`).join('')}
+        ${dr.milk?`<div class="cf-milk-block"><div class="cf-m-label">${ld.milkLabel}</div><p>${dr.milk}</p></div>`:''}` : '';
+      return `
+      <div class="cf-order-card" id="cf-ocard-${o.id}">
+        <div class="cf-order-top" onclick="cfToggleOrderCard('${o.id}')">
+          <div style="flex:1;min-width:0">
+            <div class="cf-order-drink">${o.drink}</div>
+            ${o.table    ?`<div class="cf-order-meta">⌂ ${o.table}</div>`:''}
+            ${o.milkType ?`<div class="cf-order-meta">🥛 ${o.milkType}${o.milkSpec?' — '+o.milkSpec:''}</div>`:''}
+            ${o.special  ?`<div class="cf-order-meta">⚑ ${o.special}</div>`:''}
+          </div>
+          <div class="cf-order-elapsed" id="cf-elapsed-${o.id}" data-ts="${o.timestamp}">0s</div>
         </div>
-        <div class="cf-order-elapsed" id="cf-elapsed-${o.id}" data-ts="${o.timestamp}">0s</div>
-      </div>
-      <div class="cf-order-body">
-        ${o.special?`<div class="cf-order-special-full">⚑ ${o.special}</div>`:''}
-        ${stepsHtml}
-        <button class="cf-done-btn" onclick="cfMarkDone('${o.id}')">${t('cfMarkDone')}</button>
-      </div>
-    </div>`;
-  }).join('');
-  cfTickElapsed();
+        <div class="cf-order-body">
+          ${o.special?`<div class="cf-order-special-full">⚑ ${o.special}</div>`:''}
+          ${stepsHtml}
+          <button class="cf-done-btn" onclick="cfMarkDone('${o.id}')">${t('cfMarkDone')}</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Restore previously open cards
+    openIds.forEach(id=>{
+      const card = document.getElementById('cf-ocard-'+id);
+      if (card) card.classList.add('open');
+    });
+
+    cfTickElapsed();
   } catch(e){ console.error('[cfRenderQueue]', e); }
 }
 
