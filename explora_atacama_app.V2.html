@@ -257,9 +257,35 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-order-textarea { width:100%; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--text); font-size:13px; padding:9px 12px; resize:none; outline:none; box-sizing:border-box; font-family:inherit; }
 .cf-order-textarea:focus { border-color:var(--gold); }
 .cf-order-row { margin-bottom:0.9rem; }
-.cf-submit-btn { width:100%; padding:13px; border-radius:var(--radius-md); border:none; background:var(--wine-red); color:#fff; font-size:13px; font-weight:500; letter-spacing:0.04em; cursor:pointer; transition:opacity .15s; margin-top:0.25rem; }
+.cf-submit-btn { width:100%; padding:13px; border-radius:var(--radius-md); border:none; background:var(--wine-red); color:#fff; font-size:13px; font-weight:500; letter-spacing:0.04em; cursor:pointer; transition:opacity .15s; margin-top:0.25rem; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
 .cf-submit-btn:hover { opacity:0.85; }
 .cf-submit-btn:disabled { opacity:0.38; cursor:default; }
+/* Cart (multi-item order builder) */
+.cf-cart-section { background:rgba(78,160,255,0.04); border:0.5px solid rgba(78,160,255,0.28); border-radius:var(--radius-md); padding:10px 12px 6px; margin-bottom:1rem; }
+.cf-cart-title { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(158,201,255,0.85); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; }
+.cf-cart-count { color:rgba(158,201,255,0.6); font-weight:500; }
+.cf-cart-row { display:flex; align-items:flex-start; gap:8px; padding:8px 0; border-top:0.5px solid rgba(255,255,255,0.045); }
+.cf-cart-row:first-of-type { border-top:none; padding-top:4px; }
+.cf-cart-qty { font-family:'Courier Prime','Courier New',monospace; font-size:12px; font-weight:500; color:#9ec9ff; background:rgba(78,160,255,0.14); border:0.5px solid rgba(78,160,255,0.35); border-radius:5px; padding:3px 7px; min-width:30px; text-align:center; flex-shrink:0; line-height:1.2; }
+.cf-cart-text { flex:1; min-width:0; padding-top:1px; }
+.cf-cart-name { font-size:13px; color:var(--text); line-height:1.25; }
+.cf-cart-mods { font-size:11px; color:var(--text-tertiary); line-height:1.35; margin-top:2px; }
+.cf-cart-special { font-size:11px; color:var(--gold); font-style:italic; margin-top:2px; }
+.cf-cart-actions { display:flex; gap:4px; align-items:center; flex-shrink:0; }
+.cf-cart-btn { width:26px; height:26px; border-radius:5px; border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-size:13px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform .1s, background .15s, border-color .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; padding:0; }
+.cf-cart-btn:hover { background:var(--bg-secondary); }
+.cf-cart-btn:active { transform:scale(0.92); }
+.cf-cart-btn.cf-cb-plus { color:#9ec9ff; border-color:rgba(78,160,255,0.4); }
+.cf-cart-btn.cf-cb-plus:hover { background:rgba(78,160,255,0.1); }
+.cf-cart-btn.cf-cb-rm { color:#d68a8a; border-color:rgba(214,138,138,0.32); font-size:14px; }
+.cf-cart-btn.cf-cb-rm:hover { background:rgba(214,138,138,0.08); }
+/* "Add to order" button — dashed blue accent so it doesn't compete with
+   the wine-red final Submit. */
+.cf-add-item-btn { width:100%; padding:11px; border-radius:var(--radius-md); border:0.5px dashed rgba(78,160,255,0.5); background:transparent; color:rgba(158,201,255,0.9); font-size:12px; letter-spacing:0.04em; cursor:pointer; transition:all .15s; margin-top:4px; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cf-add-item-btn:hover { background:rgba(78,160,255,0.08); border-color:rgba(78,160,255,0.75); color:#bfdaff; }
+.cf-add-item-btn:active { transform:scale(0.99); }
+.cf-add-item-btn:disabled { opacity:0.35; cursor:default; }
+.cf-builder-divider { height:0.5px; background:var(--border); margin:1.1rem 0 1rem; opacity:0.5; }
 .cf-confirm-msg { text-align:center; padding:1rem; font-size:14px; color:#4caf50; display:none; letter-spacing:0.04em; }
 .cf-barista-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:8px; }
 .cf-barista-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); }
@@ -296,13 +322,36 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-order-body { display:none; padding:12px 14px; border-top:0.5px solid var(--border); }
 .cf-order-card.open .cf-order-body { display:block; }
 .cf-order-special-full { font-size:13px; color:var(--gold); background:rgba(202,138,4,0.08); border-radius:6px; padding:8px 10px; margin-bottom:10px; }
+/* Ticket items — multi-drink order body */
+.cf-ticket-items { padding:6px 14px 10px; border-top:0.5px solid rgba(255,255,255,0.05); }
+.cf-ticket-item { display:flex; align-items:flex-start; gap:10px; padding:7px 0; border-top:0.5px solid rgba(255,255,255,0.04); }
+.cf-ticket-item:first-child { border-top:none; padding-top:6px; }
+.cf-ti-qty { font-family:'Courier Prime','Courier New',monospace; font-size:13px; font-weight:500; color:#9ec9ff; background:rgba(78,160,255,0.13); border:0.5px solid rgba(78,160,255,0.3); border-radius:5px; padding:3px 7px; min-width:32px; text-align:center; flex-shrink:0; line-height:1.2; }
+.cf-ti-text { flex:1; min-width:0; padding-top:1px; }
+.cf-ti-name { font-size:14px; font-weight:500; color:var(--text); line-height:1.25; }
+.cf-ti-mods { font-size:11px; color:var(--text-tertiary); margin-top:2px; line-height:1.35; }
+.cf-ti-special { font-size:11px; color:var(--gold); font-style:italic; margin-top:2px; }
+.cf-ticket-footer { padding:0 14px 12px; }
+.cf-ticket-footer .cf-done-btn { margin-top:0; }
 .cf-done-btn { width:100%; padding:10px; border-radius:var(--radius-md); border:none; background:rgba(76,175,80,0.14); color:#4caf50; font-size:13px; font-weight:500; cursor:pointer; transition:background .15s, transform .1s; margin-top:10px; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
 .cf-done-btn:hover  { background:rgba(76,175,80,0.25); }
 .cf-done-btn:active { background:rgba(76,175,80,0.32); transform:scale(0.98); }
 .cf-milk-btns { display:flex; gap:6px; margin-bottom:6px; }
-.cf-milk-type-btn { flex:1; padding:9px 6px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-size:12px; cursor:pointer; text-align:center; transition:all .15s; touch-action:manipulation; user-select:none; }
-.cf-milk-type-btn:hover { border-color:var(--gold); color:var(--text); }
-.cf-milk-type-btn.selected { border-color:var(--gold); background:rgba(202,138,4,0.12); color:var(--gold); font-weight:500; }
+.cf-milk-type-btn,
+.cf-shot-type-btn { flex:1; padding:9px 6px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-size:12px; cursor:pointer; text-align:center; transition:all .18s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cf-milk-type-btn:hover,
+.cf-shot-type-btn:hover { border-color:#4ea0ff; color:var(--text); }
+/* Blue-glow selected state — used for milk type + shot type so the chosen
+   modifier stands out clearly among the drink/numpad buttons around it. */
+.cf-milk-type-btn.selected,
+.cf-shot-type-btn.selected {
+  border-color:#4ea0ff;
+  background:rgba(78,160,255,0.14);
+  color:#9ec9ff;
+  font-weight:500;
+  box-shadow:0 0 0 1px rgba(78,160,255,0.55), 0 0 14px rgba(78,160,255,0.40);
+}
+.cf-shot-btns { display:flex; gap:6px; margin-bottom:6px; }
 .cf-table-numpad { max-width:220px; }
 .cf-table-numpad-display { font-family:'Courier Prime','Courier New',monospace; font-size:22px; letter-spacing:0.2em; text-align:center; padding:8px 12px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--gold); margin-bottom:8px; min-height:44px; display:flex; align-items:center; justify-content:center; transition:color .15s; }
 .cf-table-numpad-display.empty { color:var(--text-tertiary); font-size:13px; letter-spacing:0.05em; }
@@ -576,7 +625,9 @@ const UI = {
     cfSelectDrink:'Bebida', cfTableLabel:'Mesa (opcional)', cfTablePlaceholder:'Mesa', cfSpecialRequest:'Petición especial (opcional)', cfSpecialPlaceholder:'Ej: sin azúcar, leche de avena…',
     cfSubmitOrder:'Enviar orden al barista', cfConfirm:'✓ Orden enviada',
     cfBaristaTitle:'Cola de pedidos', cfQueueEmpty:'Sin pedidos pendientes', cfMarkDone:'Listo ✓', cfClearDone:'Limpiar completados', cfExit:'Salir',
-    cfMilkType:'Tipo de leche', cfMilkEntera:'Entera', cfMilkSinLactosa:'Sin lactosa', cfMilkVegetal:'Vegetal', cfMilkVegetalSpec:'Especificar (avena, almendra…)'
+    cfMilkType:'Tipo de leche', cfMilkEntera:'Entera', cfMilkSinLactosa:'Sin lactosa', cfMilkVegetal:'Vegetal', cfMilkVegetalSpec:'Especificar (avena, almendra…)',
+    cfShotType:'Carga', cfShotSimple:'Simple', cfShotDoble:'Doble',
+    cfAddToOrder:'+ Agregar al pedido', cfCartTitle:'Tu pedido', cfCartDrink:'bebida', cfCartDrinks:'bebidas', cfBuilderTitle:'Agregar bebida'
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Service guide: pairings, allergens and wine sheets',
@@ -598,7 +649,9 @@ const UI = {
     cfSelectDrink:'Drink', cfTableLabel:'Table (optional)', cfTablePlaceholder:'Table', cfSpecialRequest:'Special request (optional)', cfSpecialPlaceholder:'e.g. no sugar, oat milk…',
     cfSubmitOrder:'Send order to barista', cfConfirm:'✓ Order sent',
     cfBaristaTitle:'Order queue', cfQueueEmpty:'No pending orders', cfMarkDone:'Done ✓', cfClearDone:'Clear completed', cfExit:'Exit',
-    cfMilkType:'Milk type', cfMilkEntera:'Whole', cfMilkSinLactosa:'Lactose-free', cfMilkVegetal:'Plant-based', cfMilkVegetalSpec:'Specify (oat, almond…)'
+    cfMilkType:'Milk type', cfMilkEntera:'Whole', cfMilkSinLactosa:'Lactose-free', cfMilkVegetal:'Plant-based', cfMilkVegetalSpec:'Specify (oat, almond…)',
+    cfShotType:'Shot', cfShotSimple:'Single', cfShotDoble:'Double',
+    cfAddToOrder:'+ Add to order', cfCartTitle:'Your order', cfCartDrink:'drink', cfCartDrinks:'drinks', cfBuilderTitle:'Add drink'
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Guia de serviço: harmonizações, alérgenos e fichas de vinho',
@@ -620,7 +673,9 @@ const UI = {
     cfSelectDrink:'Bebida', cfTableLabel:'Mesa (opcional)', cfTablePlaceholder:'Mesa', cfSpecialRequest:'Pedido especial (opcional)', cfSpecialPlaceholder:'Ex: sem açúcar, leite de aveia…',
     cfSubmitOrder:'Enviar pedido ao barista', cfConfirm:'✓ Pedido enviado',
     cfBaristaTitle:'Fila de pedidos', cfQueueEmpty:'Sem pedidos pendentes', cfMarkDone:'Pronto ✓', cfClearDone:'Limpar concluídos', cfExit:'Sair',
-    cfMilkType:'Tipo de leite', cfMilkEntera:'Integral', cfMilkSinLactosa:'Sem lactose', cfMilkVegetal:'Vegetal', cfMilkVegetalSpec:'Especificar (aveia, amêndoa…)'
+    cfMilkType:'Tipo de leite', cfMilkEntera:'Integral', cfMilkSinLactosa:'Sem lactose', cfMilkVegetal:'Vegetal', cfMilkVegetalSpec:'Especificar (aveia, amêndoa…)',
+    cfShotType:'Carga', cfShotSimple:'Simples', cfShotDoble:'Duplo',
+    cfAddToOrder:'+ Adicionar ao pedido', cfCartTitle:'Seu pedido', cfCartDrink:'bebida', cfCartDrinks:'bebidas', cfBuilderTitle:'Adicionar bebida'
   }
 };
 function t(k){ return UI[currentLang][k] || UI.es[k]; }
@@ -2177,9 +2232,17 @@ let cf_milkType          = null;  // 'entera' | 'sin-lactosa' | 'vegetal' | null
 let cf_needsMilk         = false;
 let cf_pinBuffer         = '';
 let cf_tableBuffer       = '';
-// Indices in COFFEE_DATA that require milk:
+// Indices in COFFEE_DATA that require a milk-type modifier:
 // Cappuccino=1, Flat White=2, Latte=3, Cortado=4, Macchiato=5, Iced Latte=8, Chocolate Caliente=9
 const CF_MILK_INDICES = new Set([1,2,3,4,5,8,9]);
+// Indices that require a shot-load modifier (single / double):
+// Espresso=0, Americano=6
+const CF_SHOT_INDICES = new Set([0,6]);
+// Multi-item cart for the waiter view. Each entry:
+//   { drinkIdx, drink, milkType, milkSpec, shotType, special, qty }
+let cf_cart = [];
+let cf_shotType = null;
+let cf_needsShot = false;
 let cf_baristaRef = null, cf_baristaFn = null;
 let cf_elapsedInterval = null;
 let cf_pollInterval    = null; // polling fallback — re-reads Firebase every 2 s via REST
@@ -2259,8 +2322,11 @@ function cfExitServiceMode(){
   cf_selectedDrinkIdx  = null;
   cf_selectedDrinkName = null;
   cf_milkType          = null;
+  cf_shotType          = null;
   cf_needsMilk         = false;
+  cf_needsShot         = false;
   cf_tableBuffer       = '';
+  cf_cart              = [];
   if (cf_baristaRef && cf_baristaFn){ cf_baristaRef.off('value',cf_baristaFn); cf_baristaRef=null; cf_baristaFn=null; }
   if (cf_elapsedInterval){ clearInterval(cf_elapsedInterval); cf_elapsedInterval=null; }
   if (cf_pollInterval){ clearInterval(cf_pollInterval); cf_pollInterval=null; }
@@ -2282,10 +2348,28 @@ function cfRenderWaiterView(){
       </div>
       <button class="cf-exit-btn" onclick="cfExitServiceMode()">${t('cfExit')}</button>
     </div>
+
+    <!-- Cart: hidden when empty, populated by cfRenderCart() -->
+    <div class="cf-cart-section" id="cf-cart-section" style="display:none">
+      <div class="cf-cart-title">
+        <span>${t('cfCartTitle')}</span>
+        <span class="cf-cart-count" id="cf-cart-count"></span>
+      </div>
+      <div id="cf-cart-list"></div>
+    </div>
+
+    <!-- Builder: pick drink + modifiers -->
     <div class="cf-order-row">
       <span class="cf-order-label">${t('cfSelectDrink')}</span>
       <div class="cf-drink-grid">
-        ${d.drinks.map((dr,i)=>`<button class="cf-drink-sel-btn" data-i="${i}" onclick="cfSelectDrinkForOrder(${i},${CF_MILK_INDICES.has(i)})">${dr.name}</button>`).join('')}
+        ${d.drinks.map((dr,i)=>`<button class="cf-drink-sel-btn" data-i="${i}" onclick="cfSelectDrinkForOrder(${i})">${dr.name}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cf-order-row" id="cf-shot-row" style="display:none">
+      <span class="cf-order-label">${t('cfShotType')}</span>
+      <div class="cf-shot-btns">
+        <button class="cf-shot-type-btn" data-shot="simple" onclick="cfSelectShotType('simple')">${t('cfShotSimple')}</button>
+        <button class="cf-shot-type-btn" data-shot="doble"  onclick="cfSelectShotType('doble')">${t('cfShotDoble')}</button>
       </div>
     </div>
     <div class="cf-order-row" id="cf-milk-row" style="display:none">
@@ -2299,6 +2383,15 @@ function cfRenderWaiterView(){
         <textarea class="cf-order-textarea" id="cf-vegetal-spec" rows="1" placeholder="${t('cfMilkVegetalSpec')}" style="height:34px;padding:8px 12px"></textarea>
       </div>
     </div>
+    <div class="cf-order-row">
+      <span class="cf-order-label">${t('cfSpecialRequest')}</span>
+      <textarea class="cf-order-textarea" id="cf-order-special" rows="2" placeholder="${t('cfSpecialPlaceholder')}"></textarea>
+    </div>
+    <button class="cf-add-item-btn" id="cf-add-item-btn" onclick="cfAddToCart()" disabled>${t('cfAddToOrder')}</button>
+
+    <div class="cf-builder-divider"></div>
+
+    <!-- Order details: table -->
     <div class="cf-order-row">
       <span class="cf-order-label">${t('cfTableLabel')}</span>
       <div class="cf-table-numpad">
@@ -2319,12 +2412,13 @@ function cfRenderWaiterView(){
         </div>
       </div>
     </div>
-    <div class="cf-order-row">
-      <span class="cf-order-label">${t('cfSpecialRequest')}</span>
-      <textarea class="cf-order-textarea" id="cf-order-special" rows="2" placeholder="${t('cfSpecialPlaceholder')}"></textarea>
-    </div>
+
     <button class="cf-submit-btn" id="cf-submit-btn" onclick="cfSubmitOrder()" disabled>${t('cfSubmitOrder')}</button>
     <div class="cf-confirm-msg" id="cf-confirm-msg">${t('cfConfirm')}</div>`;
+
+  // Re-render the cart in case the waiter re-entered the view with items
+  // already staged (e.g., after a language switch).
+  cfRenderCart();
 }
 
 function cfTableNumpadPress(key){
@@ -2347,24 +2441,27 @@ function cfTableNumpadPress(key){
   }
 }
 
-function cfSelectDrinkForOrder(i, needsMilk){
+function cfSelectDrinkForOrder(i){
   cf_selectedDrinkIdx  = i;
   cf_selectedDrinkName = null;
-  cf_needsMilk         = needsMilk || false;
-  cf_milkType          = null; // reset milk choice when drink changes
+  cf_needsMilk         = CF_MILK_INDICES.has(i);
+  cf_needsShot         = CF_SHOT_INDICES.has(i);
+  cf_milkType          = null;
+  cf_shotType          = null;
   // Highlight tapped drink button
   document.querySelectorAll('.cf-drink-sel-btn').forEach(b=>b.classList.remove('selected'));
   const btns = document.querySelectorAll('.cf-drink-sel-btn[data-i]');
   if (btns[i]) btns[i].classList.add('selected');
-  // Show / hide milk row
+  // Show / hide modifier rows
   const milkRow = document.getElementById('cf-milk-row');
   if (milkRow) milkRow.style.display = cf_needsMilk ? 'block' : 'none';
   document.querySelectorAll('.cf-milk-type-btn').forEach(b=>b.classList.remove('selected'));
   const vsr = document.getElementById('cf-vegetal-spec-row');
   if (vsr) vsr.style.display = 'none';
-  // Submit enabled only if milk not required yet; will re-enable after milk chosen
-  const sub = document.getElementById('cf-submit-btn');
-  if (sub) sub.disabled = cf_needsMilk;
+  const shotRow = document.getElementById('cf-shot-row');
+  if (shotRow) shotRow.style.display = cf_needsShot ? 'block' : 'none';
+  document.querySelectorAll('.cf-shot-type-btn').forEach(b=>b.classList.remove('selected'));
+  cfUpdateAddToOrderBtnState();
 }
 
 function cfSelectMilkType(type){
@@ -2373,38 +2470,176 @@ function cfSelectMilkType(type){
   document.querySelector(`.cf-milk-type-btn[data-milk="${type}"]`)?.classList.add('selected');
   const vsr = document.getElementById('cf-vegetal-spec-row');
   if (vsr) vsr.style.display = type === 'vegetal' ? 'block' : 'none';
-  const sub = document.getElementById('cf-submit-btn');
-  if (sub) sub.disabled = false;
+  cfUpdateAddToOrderBtnState();
+}
+
+function cfSelectShotType(type){
+  cf_shotType = type;
+  document.querySelectorAll('.cf-shot-type-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelector(`.cf-shot-type-btn[data-shot="${type}"]`)?.classList.add('selected');
+  cfUpdateAddToOrderBtnState();
+}
+
+// "Add to order" enabled only when current builder selection is complete:
+//   - a drink is chosen
+//   - if drink needs milk, a milk type is picked
+//   - if drink needs shot, a shot load is picked
+function cfUpdateAddToOrderBtnState(){
+  const btn = document.getElementById('cf-add-item-btn');
+  if (!btn) return;
+  const valid =
+    cf_selectedDrinkIdx !== null &&
+    (!cf_needsMilk || !!cf_milkType) &&
+    (!cf_needsShot || !!cf_shotType);
+  btn.disabled = !valid;
+}
+
+// Reset only the per-item builder area (drink selection, modifiers, note).
+// Cart and table number persist so the waiter can keep adding items.
+function cfResetBuilder(){
+  cf_selectedDrinkIdx  = null;
+  cf_selectedDrinkName = null;
+  cf_milkType          = null;
+  cf_shotType          = null;
+  cf_needsMilk         = false;
+  cf_needsShot         = false;
+  document.querySelectorAll('.cf-drink-sel-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.cf-milk-type-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.cf-shot-type-btn').forEach(b=>b.classList.remove('selected'));
+  const milkRow = document.getElementById('cf-milk-row'); if(milkRow) milkRow.style.display='none';
+  const shotRow = document.getElementById('cf-shot-row'); if(shotRow) shotRow.style.display='none';
+  const vsr = document.getElementById('cf-vegetal-spec-row'); if(vsr) vsr.style.display='none';
+  const vs  = document.getElementById('cf-vegetal-spec'); if(vs) vs.value='';
+  const sp  = document.getElementById('cf-order-special'); if(sp) sp.value='';
+  cfUpdateAddToOrderBtnState();
+}
+
+// Add the current builder selection to the cart. If there's already an item
+// with identical drink + modifiers + note, just bump that row's qty so the
+// waiter doesn't end up with duplicate cart rows for the same configuration.
+function cfAddToCart(){
+  if (cf_selectedDrinkIdx === null) return;
+  const d = getCoffeeData();
+  const drink    = d.drinks[cf_selectedDrinkIdx]?.name || '?';
+  const milkSpec = cf_milkType === 'vegetal' ? (document.getElementById('cf-vegetal-spec')?.value||'').trim() : '';
+  const special  = (document.getElementById('cf-order-special')?.value||'').trim();
+  const item = {
+    drinkIdx: cf_selectedDrinkIdx,
+    drink,
+    milkType: cf_milkType || null,
+    milkSpec: milkSpec || null,
+    shotType: cf_shotType || null,
+    special:  special || '',
+    qty: 1
+  };
+  // Merge with existing matching row
+  const matchIdx = cf_cart.findIndex(it =>
+    it.drinkIdx === item.drinkIdx &&
+    (it.milkType||null) === item.milkType &&
+    (it.milkSpec||null) === item.milkSpec &&
+    (it.shotType||null) === item.shotType &&
+    (it.special||'') === item.special
+  );
+  if (matchIdx >= 0) cf_cart[matchIdx].qty += 1;
+  else cf_cart.push(item);
+  cfRenderCart();
+  cfResetBuilder();
+}
+
+function cfIncCartItem(idx){
+  if (!cf_cart[idx]) return;
+  cf_cart[idx].qty += 1;
+  cfRenderCart();
+}
+function cfDecCartItem(idx){
+  if (!cf_cart[idx]) return;
+  cf_cart[idx].qty -= 1;
+  if (cf_cart[idx].qty <= 0) cf_cart.splice(idx,1);
+  cfRenderCart();
+}
+function cfRemoveCartItem(idx){
+  if (!cf_cart[idx]) return;
+  cf_cart.splice(idx,1);
+  cfRenderCart();
+}
+
+// Build the human-readable modifier string for one cart item.
+// Examples:  "doble"   "sin lactosa"   "doble · vegetal — avena"
+function cfFormatItemMods(it){
+  const parts = [];
+  if (it.shotType) parts.push(it.shotType === 'doble' ? t('cfShotDoble').toLowerCase() : t('cfShotSimple').toLowerCase());
+  if (it.milkType){
+    const milkLabel = it.milkType === 'entera'      ? t('cfMilkEntera').toLowerCase()
+                    : it.milkType === 'sin-lactosa' ? t('cfMilkSinLactosa').toLowerCase()
+                    : it.milkType === 'vegetal'     ? t('cfMilkVegetal').toLowerCase()
+                    : it.milkType;
+    parts.push(it.milkSpec ? `${milkLabel} — ${it.milkSpec}` : milkLabel);
+  }
+  return parts.join(' · ');
+}
+
+function cfRenderCart(){
+  const section = document.getElementById('cf-cart-section');
+  const list    = document.getElementById('cf-cart-list');
+  const count   = document.getElementById('cf-cart-count');
+  const submit  = document.getElementById('cf-submit-btn');
+  if (!section || !list) return;
+  if (!cf_cart.length){
+    section.style.display = 'none';
+    if (submit) submit.disabled = true;
+    return;
+  }
+  section.style.display = 'block';
+  const totalQty = cf_cart.reduce((s,it)=>s+(it.qty||1),0);
+  if (count) count.textContent = `${totalQty} ${totalQty === 1 ? t('cfCartDrink') : t('cfCartDrinks')}`;
+  list.innerHTML = cf_cart.map((it,idx)=>{
+    const mods = cfFormatItemMods(it);
+    return `
+      <div class="cf-cart-row">
+        <div class="cf-cart-qty">${it.qty}×</div>
+        <div class="cf-cart-text">
+          <div class="cf-cart-name">${it.drink}</div>
+          ${mods ? `<div class="cf-cart-mods">${mods}</div>` : ''}
+          ${it.special ? `<div class="cf-cart-special">⚑ ${it.special}</div>` : ''}
+        </div>
+        <div class="cf-cart-actions">
+          <button class="cf-cart-btn cf-cb-plus"  aria-label="+" onclick="cfIncCartItem(${idx})">+</button>
+          <button class="cf-cart-btn"             aria-label="−" onclick="cfDecCartItem(${idx})">−</button>
+          <button class="cf-cart-btn cf-cb-rm"    aria-label="×" onclick="cfRemoveCartItem(${idx})">×</button>
+        </div>
+      </div>`;
+  }).join('');
+  if (submit) submit.disabled = false;
 }
 
 function cfSubmitOrder(){
-  if (cf_selectedDrinkIdx === null && cf_selectedDrinkName === null) return;
-  const d = getCoffeeData();
-  const drinkName = cf_selectedDrinkName || d.drinks[cf_selectedDrinkIdx]?.name || '?';
-  const drinkIdx  = cf_selectedDrinkIdx; // null for extras
-  const special   = (document.getElementById('cf-order-special')?.value||'').trim();
-  const milkSpec  = cf_milkType === 'vegetal' ? (document.getElementById('cf-vegetal-spec')?.value||'').trim() : '';
-  const table     = cf_tableBuffer.trim();
-  const btn       = document.getElementById('cf-submit-btn');
+  if (!cf_cart.length) return;
+  const table = cf_tableBuffer.trim();
+  const btn   = document.getElementById('cf-submit-btn');
   if (btn) btn.disabled = true;
+  // Multi-item ticket: store each cart entry under `items`. Legacy fields
+  // (drink, drinkIdx, milkType…) are intentionally omitted — the barista
+  // renderer reads `items` first and falls back to legacy shape only when
+  // missing (for any old orders still in the DB).
+  const items = cf_cart.map(it => ({
+    drinkIdx: it.drinkIdx,
+    drink:    it.drink,
+    milkType: it.milkType || null,
+    milkSpec: it.milkSpec || null,
+    shotType: it.shotType || null,
+    special:  it.special || '',
+    qty:      Math.max(1, it.qty|0)
+  }));
   cfInitFirebase().ref(CF_ORDERS_PATH).push({
-    drink: drinkName, drinkIdx,
-    milkType: cf_milkType || null, milkSpec: milkSpec || null,
-    special, table, timestamp: Date.now(), status:'pending', lang: currentLang
+    items, table, timestamp: Date.now(), status:'pending', lang: currentLang
   }).then(()=>{
     const msg = document.getElementById('cf-confirm-msg');
     if (msg){ msg.style.display='block'; setTimeout(()=>msg.style.display='none',2000); }
-    cf_selectedDrinkIdx  = null;
-    cf_selectedDrinkName = null;
-    cf_milkType          = null;
-    cf_needsMilk         = false;
-    document.querySelectorAll('.cf-drink-sel-btn').forEach(b=>b.classList.remove('selected'));
-    document.querySelectorAll('.cf-milk-type-btn').forEach(b=>b.classList.remove('selected'));
-    const milkRow = document.getElementById('cf-milk-row'); if(milkRow) milkRow.style.display='none';
-    const vsr = document.getElementById('cf-vegetal-spec-row'); if(vsr) vsr.style.display='none';
-    const vs  = document.getElementById('cf-vegetal-spec'); if(vs) vs.value='';
+    // Reset everything for the next order
+    cf_cart = [];
     cf_tableBuffer = '';
-    const sp = document.getElementById('cf-order-special'); if(sp) sp.value='';
+    cfResetBuilder();
+    cfRenderCart();
     const td = document.getElementById('cf-table-display');
     if(td){ td.textContent=t('cfTablePlaceholder'); td.classList.add('empty'); }
   }).catch(()=>{ if(btn) btn.disabled=false; });
@@ -2463,30 +2698,62 @@ function cfRenderBaristaView(){
   cf_elapsedInterval = setInterval(cfTickElapsed, 1000);
 }
 
-// Build a fresh DOM element for a single order card (no innerHTML on container)
+// Build a fresh DOM element for a single order card. An order is now a
+// "ticket" — one table, one or more items. For backwards compatibility,
+// orders without an `items` array (legacy single-drink shape) are wrapped
+// in a synthetic single-element items list so the same renderer handles both.
 function cfBuildOrderCardEl(o, ld){
-  const dr = ld.drinks[o.drinkIdx] || null;
-  const stepsHtml = dr ? `
-    <p class="cf-philosophy" style="margin-bottom:8px">${dr.philosophy}</p>
-    ${dr.params?`<div class="cf-param-row">${dr.params.map(p=>`<div class="cf-param-box"><div class="cf-p-label">${p.l}</div><div class="cf-p-value">${p.v}</div><div class="cf-p-unit">${p.u}</div></div>`).join('')}</div>`:''}
-    <div class="cf-steps-label">${ld.methodLabel}</div>
-    ${dr.steps.map((s,n)=>`<div class="cf-step-item"><div class="cf-step-num">${n+1}</div><div><div class="cf-step-title">${s.t}</div><div class="cf-step-desc">${s.d}</div></div></div>`).join('')}
-    ${dr.milk?`<div class="cf-milk-block"><div class="cf-m-label">${ld.milkLabel}</div><p>${dr.milk}</p></div>`:''}` : '';
+  const items = (o.items && o.items.length)
+    ? o.items
+    : [{
+        drink: o.drink, drinkIdx: o.drinkIdx,
+        milkType: o.milkType, milkSpec: o.milkSpec,
+        shotType: o.shotType, special: o.special, qty: 1
+      }];
+  const totalQty = items.reduce((s,it)=>s+(it.qty||1),0);
+
+  // Modifier label for one item — same shape as the cart side.
+  const fmtMods = it => {
+    const parts = [];
+    if (it.shotType) parts.push(it.shotType === 'doble' ? t('cfShotDoble').toLowerCase() : t('cfShotSimple').toLowerCase());
+    if (it.milkType){
+      const milkLabel = it.milkType === 'entera'      ? t('cfMilkEntera').toLowerCase()
+                      : it.milkType === 'sin-lactosa' ? t('cfMilkSinLactosa').toLowerCase()
+                      : it.milkType === 'vegetal'     ? t('cfMilkVegetal').toLowerCase()
+                      : it.milkType;
+      parts.push(it.milkSpec ? `${milkLabel} — ${it.milkSpec}` : milkLabel);
+    }
+    return parts.join(' · ');
+  };
+
+  const itemsHtml = items.map(it=>{
+    const mods = fmtMods(it);
+    return `
+      <div class="cf-ticket-item">
+        <div class="cf-ti-qty">${it.qty || 1}×</div>
+        <div class="cf-ti-text">
+          <div class="cf-ti-name">${it.drink || '?'}</div>
+          ${mods ? `<div class="cf-ti-mods">${mods}</div>` : ''}
+          ${it.special ? `<div class="cf-ti-special">⚑ ${it.special}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  const headerLabel = o.table
+    ? `⌂ ${o.table} · ${totalQty}`
+    : `${totalQty} ${totalQty === 1 ? t('cfCartDrink') : t('cfCartDrinks')}`;
+
   const wrap = document.createElement('div');
   wrap.innerHTML = `
     <div class="cf-order-card" id="cf-ocard-${o.id}">
-      <div class="cf-order-top" onclick="cfToggleOrderCard('${o.id}')">
+      <div class="cf-order-top">
         <div style="flex:1;min-width:0">
-          <div class="cf-order-drink">${o.drink}</div>
-          ${o.table    ?`<div class="cf-order-meta">⌂ ${o.table}</div>`:''}
-          ${o.milkType ?`<div class="cf-order-meta">🥛 ${o.milkType}${o.milkSpec?' — '+o.milkSpec:''}</div>`:''}
-          ${o.special  ?`<div class="cf-order-meta">⚑ ${o.special}</div>`:''}
+          <div class="cf-order-drink">${headerLabel}</div>
         </div>
         <div class="cf-order-elapsed" id="cf-elapsed-${o.id}" data-ts="${o.timestamp}">0s</div>
       </div>
-      <div class="cf-order-body">
-        ${o.special?`<div class="cf-order-special-full">⚑ ${o.special}</div>`:''}
-        ${stepsHtml}
+      <div class="cf-ticket-items">${itemsHtml}</div>
+      <div class="cf-ticket-footer">
         <button class="cf-done-btn" onclick="cfMarkDone('${o.id}')">${t('cfMarkDone')}</button>
       </div>
     </div>`.trim();
