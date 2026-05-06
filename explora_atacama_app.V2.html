@@ -232,6 +232,54 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-tab-btn:hover { background:var(--bg-secondary); color:#c07d2a; }
 .cf-tab-btn.active { background:var(--wine-red); border-color:var(--wine-red); color:#fff; font-weight:500; }
 .cf-panel { display:none; } .cf-panel.active { display:block; }
+/* ── ORDER SYSTEM ────────────────────────────────────────────── */
+.cf-service-tab-btn { grid-column:1/-1; background:transparent; border:0.5px solid rgba(192,125,42,0.35); border-radius:var(--radius-md); padding:9px 8px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(192,125,42,0.65); cursor:pointer; text-align:center; transition:all .15s; margin-top:2px; }
+.cf-service-tab-btn:hover { background:rgba(192,125,42,0.08); color:#d4a44c; }
+.cf-service-tab-btn.active { background:rgba(192,125,42,0.14); border-color:#d4a44c; color:#d4a44c; }
+.cf-gate { text-align:center; padding:2.5rem 1rem; }
+.cf-gate-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:22px; color:var(--gold); margin-bottom:0.4rem; }
+.cf-gate-sub { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:1.5rem; }
+.cf-pin-error { font-size:11px; color:#e55; margin-top:8px; min-height:16px; text-align:center; }
+.cf-numpad { max-width:232px; margin:0 auto; }
+.cf-numpad-display { font-family:'Courier Prime','Courier New',monospace; font-size:28px; letter-spacing:0.3em; text-align:center; padding:12px 16px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--gold); margin-bottom:10px; min-height:54px; display:flex; align-items:center; justify-content:center; }
+.cf-numpad-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.cf-numpad-key { padding:15px 8px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text); font-size:18px; cursor:pointer; text-align:center; transition:background .1s; font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
+.cf-numpad-key:active { background:var(--bg-secondary); }
+.cf-numpad-key.cf-nk-del { color:var(--text-tertiary); font-size:15px; }
+.cf-numpad-key.cf-nk-ok { background:var(--wine-red); color:#fff; border-color:var(--wine-red); font-size:20px; }
+.cf-waiter-header { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); margin-bottom:0.2rem; }
+.cf-waiter-sub { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:1.25rem; }
+.cf-drink-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:1rem; }
+.cf-drink-sel-btn { padding:10px 8px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-size:12px; cursor:pointer; text-align:center; transition:all .15s; }
+.cf-drink-sel-btn:hover { border-color:var(--gold); color:var(--text); }
+.cf-drink-sel-btn.selected { border-color:var(--gold); background:rgba(202,138,4,0.12); color:var(--gold); font-weight:500; }
+.cf-order-label { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:6px; display:block; }
+.cf-order-textarea { width:100%; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--text); font-size:13px; padding:9px 12px; resize:none; outline:none; box-sizing:border-box; font-family:inherit; }
+.cf-order-textarea:focus { border-color:var(--gold); }
+.cf-order-row { margin-bottom:0.9rem; }
+.cf-submit-btn { width:100%; padding:13px; border-radius:var(--radius-md); border:none; background:var(--wine-red); color:#fff; font-size:13px; font-weight:500; letter-spacing:0.04em; cursor:pointer; transition:opacity .15s; margin-top:0.25rem; }
+.cf-submit-btn:hover { opacity:0.85; }
+.cf-submit-btn:disabled { opacity:0.38; cursor:default; }
+.cf-confirm-msg { text-align:center; padding:1rem; font-size:14px; color:#4caf50; display:none; letter-spacing:0.04em; }
+.cf-barista-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:8px; }
+.cf-barista-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); }
+.cf-clear-btn { font-size:11px; color:var(--text-tertiary); background:none; border:0.5px solid var(--border); border-radius:var(--radius-md); padding:5px 10px; cursor:pointer; }
+.cf-exit-btn { font-size:11px; color:var(--text-tertiary); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; }
+.cf-queue-empty { text-align:center; color:var(--text-tertiary); font-size:12px; padding:3rem 1rem; font-family:'Courier Prime','Courier New',monospace; letter-spacing:0.1em; text-transform:uppercase; }
+.cf-order-card { border:0.5px solid var(--border); border-radius:var(--radius-md); background:var(--surface); margin-bottom:8px; overflow:hidden; transition:border-color .2s; }
+.cf-order-card.new-order { border-color:var(--gold); animation:cfpulse 1.2s ease 2; }
+@keyframes cfpulse { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 14px 3px rgba(202,138,4,0.35)} }
+.cf-order-top { display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; }
+.cf-order-drink { font-size:15px; font-weight:500; color:var(--text); }
+.cf-order-meta { font-size:11px; color:var(--text-tertiary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cf-order-elapsed { font-family:'Courier Prime','Courier New',monospace; font-size:13px; color:var(--gold); min-width:52px; text-align:right; font-weight:500; flex-shrink:0; }
+.cf-order-elapsed.warn { color:#e07b3a; }
+.cf-order-elapsed.urgent { color:#e55; }
+.cf-order-body { display:none; padding:12px 14px; border-top:0.5px solid var(--border); }
+.cf-order-card.open .cf-order-body { display:block; }
+.cf-order-special-full { font-size:13px; color:var(--gold); background:rgba(202,138,4,0.08); border-radius:6px; padding:8px 10px; margin-bottom:10px; }
+.cf-done-btn { width:100%; padding:10px; border-radius:var(--radius-md); border:none; background:rgba(76,175,80,0.14); color:#4caf50; font-size:13px; font-weight:500; cursor:pointer; transition:background .15s; margin-top:10px; }
+.cf-done-btn:hover { background:rgba(76,175,80,0.25); }
 .cf-drink-list { display:flex; flex-direction:column; gap:6px; }
 .cf-drink-card { border:0.5px solid var(--border); border-radius:var(--radius-md); background:var(--surface); overflow:hidden; transition:border-color .2s; }
 .cf-drink-card.open { border-color:rgba(192,125,42,0.5); }
@@ -281,6 +329,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-btn-primary { background:rgba(192,125,42,0.85); color:#fff; } .cf-btn-primary:hover { background:rgba(192,125,42,1); }
 .cf-btn-ghost { background:none; border:0.5px solid var(--border); color:var(--text-secondary); } .cf-btn-ghost:hover { border-color:rgba(192,125,42,0.4); color:#c07d2a; }
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
 <div class="app">
@@ -492,7 +542,13 @@ const UI = {
     pairedDishes:'Platos del menú con este vino', mentionedWines:'Vinos mencionados',
     noDishes:'No se encontraron platos',
     all:'Todos', sparkling:'Espumante', whites:'Blancos', rose:'Rosado', reds:'Tintos', sweet:'Dulce',
-    lbl_espumante:'Espumante', lbl_blanco:'Blanco', lbl_rosado:'Rosado', lbl_tinto:'Tinto', lbl_dulce:'Dulce'
+    lbl_espumante:'Espumante', lbl_blanco:'Blanco', lbl_rosado:'Rosado', lbl_tinto:'Tinto', lbl_dulce:'Dulce',
+    cfServiceMode:'✦ Modo Servicio', cfPinTitle:'Modo Servicio', cfPinSub:'Introduce tu código de acceso', cfPinError:'Código incorrecto',
+    cfWaiterTitle:'Nueva Orden', cfWaiterSub:'Selecciona bebida · anota el pedido especial',
+    cfSelectDrink:'Bebida', cfTableLabel:'Mesa / Habitación (opcional)', cfSpecialRequest:'Petición especial (opcional)', cfSpecialPlaceholder:'Ej: sin azúcar, leche de avena…',
+    cfSubmitOrder:'Enviar orden al barista', cfConfirm:'✓ Orden enviada',
+    cfBaristaTitle:'Cola de pedidos', cfQueueEmpty:'Sin pedidos pendientes', cfMarkDone:'Listo ✓', cfClearDone:'Limpiar completados', cfExit:'Salir',
+    cfChocHot:'Chocolate Caliente', cfIcedLatte:'Iced Latte'
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Service guide: pairings, allergens and wine sheets',
@@ -508,7 +564,13 @@ const UI = {
     pairedDishes:'Menu dishes with this wine', mentionedWines:'Mentioned wines',
     noDishes:'No dishes found',
     all:'All', sparkling:'Sparkling', whites:'Whites', rose:'Rosé', reds:'Reds', sweet:'Sweet',
-    lbl_espumante:'Sparkling', lbl_blanco:'White', lbl_rosado:'Rosé', lbl_tinto:'Red', lbl_dulce:'Sweet'
+    lbl_espumante:'Sparkling', lbl_blanco:'White', lbl_rosado:'Rosé', lbl_tinto:'Red', lbl_dulce:'Sweet',
+    cfServiceMode:'✦ Service Mode', cfPinTitle:'Service Mode', cfPinSub:'Enter your access code', cfPinError:'Incorrect code',
+    cfWaiterTitle:'New Order', cfWaiterSub:'Select drink · note special request',
+    cfSelectDrink:'Drink', cfTableLabel:'Table / Room (optional)', cfSpecialRequest:'Special request (optional)', cfSpecialPlaceholder:'e.g. no sugar, oat milk…',
+    cfSubmitOrder:'Send order to barista', cfConfirm:'✓ Order sent',
+    cfBaristaTitle:'Order queue', cfQueueEmpty:'No pending orders', cfMarkDone:'Done ✓', cfClearDone:'Clear completed', cfExit:'Exit',
+    cfChocHot:'Hot Chocolate', cfIcedLatte:'Iced Latte'
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Guia de serviço: harmonizações, alérgenos e fichas de vinho',
@@ -524,7 +586,13 @@ const UI = {
     pairedDishes:'Pratos do menu com este vinho', mentionedWines:'Vinhos mencionados',
     noDishes:'Nenhum prato encontrado',
     all:'Todos', sparkling:'Espumante', whites:'Brancos', rose:'Rosé', reds:'Tintos', sweet:'Doce',
-    lbl_espumante:'Espumante', lbl_blanco:'Branco', lbl_rosado:'Rosé', lbl_tinto:'Tinto', lbl_dulce:'Doce'
+    lbl_espumante:'Espumante', lbl_blanco:'Branco', lbl_rosado:'Rosé', lbl_tinto:'Tinto', lbl_dulce:'Doce',
+    cfServiceMode:'✦ Modo Serviço', cfPinTitle:'Modo Serviço', cfPinSub:'Insira seu código de acesso', cfPinError:'Código incorreto',
+    cfWaiterTitle:'Novo Pedido', cfWaiterSub:'Selecione a bebida · anote o pedido especial',
+    cfSelectDrink:'Bebida', cfTableLabel:'Mesa / Quarto (opcional)', cfSpecialRequest:'Pedido especial (opcional)', cfSpecialPlaceholder:'Ex: sem açúcar, leite de aveia…',
+    cfSubmitOrder:'Enviar pedido ao barista', cfConfirm:'✓ Pedido enviado',
+    cfBaristaTitle:'Fila de pedidos', cfQueueEmpty:'Sem pedidos pendentes', cfMarkDone:'Pronto ✓', cfClearDone:'Limpar concluídos', cfExit:'Sair',
+    cfChocHot:'Chocolate Quente', cfIcedLatte:'Iced Latte'
   }
 };
 function t(k){ return UI[currentLang][k] || UI.es[k]; }
@@ -1890,15 +1958,23 @@ function renderCafeTab(){
     </div>
     <div class="cf-tabs">
       ${d.tabs.map((tab,i)=>`<button class="cf-tab-btn${cf_activeInnerTab===d.tabKeys[i]?' active':''}" onclick="cfSetInnerTab('${d.tabKeys[i]}',this)">${tab}</button>`).join('')}
+      <button class="cf-service-tab-btn${cf_activeInnerTab==='service'?' active':''}" onclick="cfSetInnerTab('service',this)">${t('cfServiceMode')}</button>
     </div>
     <div class="cf-panel${cf_activeInnerTab==='drinks'?' active':''}" id="cf-panel-drinks">${drinksHtml}</div>
     <div class="cf-panel${cf_activeInnerTab==='base'?' active':''}" id="cf-panel-base">${baseHtml}</div>
     <div class="cf-panel${cf_activeInnerTab==='milk'?' active':''}" id="cf-panel-milk">${milkHtml}</div>
     <div class="cf-panel${cf_activeInnerTab==='timer'?' active':''}" id="cf-panel-timer">${timerHtml}</div>
-    <p style="font-family:'Courier Prime','Courier New',monospace;font-size:9px;letter-spacing:0.1em;text-align:center;color:var(--text-tertiary);margin-top:2rem;opacity:0.5">${d.footer}</p>`;
+    <div class="cf-panel${cf_activeInnerTab==='service'?' active':''}" id="cf-panel-service"></div>
+    <p style="font-family:'Courier Prime','Courier New',monospace;font-size:9px;letter-spacing:0.1em;text-align:center;color:var(--text-tertiary);margin-top:2rem;opacity:0.5;${cf_activeInnerTab==='service'?'display:none':''}">${d.footer}</p>`;
 
   cfRenderDrinks();
   cfRenderTimerBtns();
+  // Restore service mode panel on language switch
+  if (cf_activeInnerTab === 'service') {
+    if (cf_mode === 'waiter') cfRenderWaiterView();
+    else if (cf_mode === 'barista') cfRenderBaristaView();
+    else cfShowServicePanel();
+  }
   // Restore timer display if running
   document.getElementById('cf-timer-display').textContent = (cf_ms/1000).toFixed(1) || '0.0';
   if (cf_running) document.getElementById('cf-start-btn').textContent = d.stopBtn;
@@ -1943,6 +2019,7 @@ function cfSetInnerTab(key, btn){
   const panel = document.getElementById('cf-panel-'+key);
   if (panel) panel.classList.add('active');
   if (key==='timer') cfRenderTimerBtns();
+  if (key==='service') cfShowServicePanel();
 }
 
 function cfRenderTimerBtns(){
@@ -2007,6 +2084,260 @@ function cfUpdateTimerDisplay(){
       phase.textContent = msg;
     }
   }
+}
+
+// ── ORDER SYSTEM ─────────────────────────────────────────────────────────────
+const CF_FIREBASE_CONFIG = {
+  apiKey:"AIzaSyDVyaPMAPVsbQFUhsGTYnnOdQQH1zffjfc",
+  authDomain:"explora-cafe-orders.firebaseapp.com",
+  databaseURL:"https://explora-cafe-orders-default-rtdb.firebaseio.com",
+  projectId:"explora-cafe-orders",
+  storageBucket:"explora-cafe-orders.firebasestorage.app",
+  messagingSenderId:"898891226322",
+  appId:"1:898891226322:web:6923459e61eca72ce5e10b"
+};
+const CF_WAITER_CODE = '555';
+const CF_BARISTA_CODE = '999';
+const CF_ORDERS_PATH  = 'orders';
+
+let cf_fbApp = null, cf_fbDb = null;
+let cf_mode = null; // 'waiter' | 'barista' | null
+let cf_selectedDrinkIdx = null;
+let cf_selectedDrinkName = null;
+let cf_pinBuffer = '';
+let cf_baristaRef = null, cf_baristaFn = null;
+let cf_elapsedInterval = null;
+
+function cfInitFirebase(){
+  if (cf_fbApp) return cf_fbDb;
+  cf_fbApp = firebase.initializeApp(CF_FIREBASE_CONFIG);
+  cf_fbDb  = firebase.database();
+  return cf_fbDb;
+}
+
+// ── Gate (PIN screen) ────────────────────────────────────────────────────────
+function cfShowServicePanel(){
+  cf_mode = null;
+  cf_pinBuffer = '';
+  const panel = document.getElementById('cf-panel-service');
+  if (!panel) return;
+  panel.innerHTML = `
+    <div class="cf-gate">
+      <div class="cf-gate-title">${t('cfPinTitle')}</div>
+      <div class="cf-gate-sub">${t('cfPinSub')}</div>
+      <div class="cf-numpad">
+        <div class="cf-numpad-display" id="cf-numpad-display">· · ·</div>
+        <div class="cf-pin-error" id="cf-pin-error"></div>
+        <div class="cf-numpad-grid">
+          <button class="cf-numpad-key" onclick="cfNumpadPress('1')">1</button>
+          <button class="cf-numpad-key" onclick="cfNumpadPress('2')">2</button>
+          <button class="cf-numpad-key" onclick="cfNumpadPress('3')">3</button>
+          <button class="cf-numpad-key" onclick="cfNumpadPress('4')">4</button>
+          <button class="cf-numpad-key" onclick="cfNumpadPress('5')">5</button>
+          <button class="cf-numpad-key" onclick="cfNumpadPress('6')">6</button>
+          <button class="cf-numpad-key" onclick="cfNumpadPress('7')">7</button>
+          <button class="cf-numpad-key" onclick="cfNumpadPress('8')">8</button>
+          <button class="cf-numpad-key" onclick="cfNumpadPress('9')">9</button>
+          <button class="cf-numpad-key cf-nk-del" onclick="cfNumpadPress('del')">⌫</button>
+          <button class="cf-numpad-key" onclick="cfNumpadPress('0')">0</button>
+          <button class="cf-numpad-key cf-nk-ok" onclick="cfNumpadPress('ok')">→</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function cfNumpadPress(key){
+  if (key === 'del'){
+    cf_pinBuffer = cf_pinBuffer.slice(0,-1);
+  } else if (key === 'ok'){
+    cfSubmitPin(cf_pinBuffer);
+    return;
+  } else {
+    if (cf_pinBuffer.length < 6) cf_pinBuffer += key;
+  }
+  const disp = document.getElementById('cf-numpad-display');
+  if (disp) disp.textContent = cf_pinBuffer.length ? cf_pinBuffer.replace(/./g,'●') : '· · ·';
+}
+
+function cfSubmitPin(val){
+  const code = (val||'').trim();
+  if (code === CF_WAITER_CODE){ cf_pinBuffer=''; cf_mode='waiter'; cfRenderWaiterView(); }
+  else if (code === CF_BARISTA_CODE){ cf_pinBuffer=''; cf_mode='barista'; cfRenderBaristaView(); }
+  else {
+    cf_pinBuffer = '';
+    const err  = document.getElementById('cf-pin-error');
+    const disp = document.getElementById('cf-numpad-display');
+    if (err){ err.textContent=t('cfPinError'); setTimeout(()=>err.textContent='',2200); }
+    if (disp){ disp.textContent='· · ·'; }
+  }
+}
+
+function cfExitServiceMode(){
+  cf_mode = null;
+  cf_selectedDrinkIdx  = null;
+  cf_selectedDrinkName = null;
+  if (cf_baristaRef && cf_baristaFn){ cf_baristaRef.off('value',cf_baristaFn); cf_baristaRef=null; cf_baristaFn=null; }
+  if (cf_elapsedInterval){ clearInterval(cf_elapsedInterval); cf_elapsedInterval=null; }
+  cfShowServicePanel();
+}
+
+// ── Waiter view ──────────────────────────────────────────────────────────────
+function cfRenderWaiterView(){
+  const panel = document.getElementById('cf-panel-service');
+  if (!panel) return;
+  const d = getCoffeeData();
+  panel.innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;gap:8px">
+      <div>
+        <div class="cf-waiter-header">${t('cfWaiterTitle')}</div>
+        <div class="cf-waiter-sub">${t('cfWaiterSub')}</div>
+      </div>
+      <button class="cf-exit-btn" onclick="cfExitServiceMode()">${t('cfExit')}</button>
+    </div>
+    <div class="cf-order-row">
+      <span class="cf-order-label">${t('cfSelectDrink')}</span>
+      <div class="cf-drink-grid">
+        ${d.drinks.map((dr,i)=>`<button class="cf-drink-sel-btn" data-i="${i}" onclick="cfSelectDrinkForOrder(${i},null)">${dr.name}</button>`).join('')}
+        <button class="cf-drink-sel-btn" data-extra="choc" onclick="cfSelectDrinkForOrder(null,'${t('cfChocHot')}')">${t('cfChocHot')}</button>
+        <button class="cf-drink-sel-btn" data-extra="iced" onclick="cfSelectDrinkForOrder(null,'${t('cfIcedLatte')}')">${t('cfIcedLatte')}</button>
+      </div>
+    </div>
+    <div class="cf-order-row">
+      <span class="cf-order-label">${t('cfTableLabel')}</span>
+      <input class="cf-order-textarea" id="cf-order-table" type="text" placeholder="Mesa 5 / Hab 12" style="height:36px;padding:8px 12px">
+    </div>
+    <div class="cf-order-row">
+      <span class="cf-order-label">${t('cfSpecialRequest')}</span>
+      <textarea class="cf-order-textarea" id="cf-order-special" rows="2" placeholder="${t('cfSpecialPlaceholder')}"></textarea>
+    </div>
+    <button class="cf-submit-btn" id="cf-submit-btn" onclick="cfSubmitOrder()" disabled>${t('cfSubmitOrder')}</button>
+    <div class="cf-confirm-msg" id="cf-confirm-msg">${t('cfConfirm')}</div>`;
+}
+
+function cfSelectDrinkForOrder(i, extraName){
+  cf_selectedDrinkIdx  = i;
+  cf_selectedDrinkName = extraName || null;
+  // highlight the tapped button
+  document.querySelectorAll('.cf-drink-sel-btn').forEach(b=>b.classList.remove('selected'));
+  if (i !== null){
+    const btns = document.querySelectorAll('.cf-drink-sel-btn[data-i]');
+    if (btns[i]) btns[i].classList.add('selected');
+  } else {
+    const key = extraName === t('cfChocHot') ? 'choc' : 'iced';
+    document.querySelector(`.cf-drink-sel-btn[data-extra="${key}"]`)?.classList.add('selected');
+  }
+  const sub = document.getElementById('cf-submit-btn');
+  if (sub) sub.disabled = false;
+}
+
+function cfSubmitOrder(){
+  if (cf_selectedDrinkIdx === null && cf_selectedDrinkName === null) return;
+  const d = getCoffeeData();
+  const drinkName = cf_selectedDrinkName || d.drinks[cf_selectedDrinkIdx]?.name || '?';
+  const drinkIdx  = cf_selectedDrinkIdx; // null for extras
+  const special   = (document.getElementById('cf-order-special')?.value||'').trim();
+  const table     = (document.getElementById('cf-order-table')?.value||'').trim();
+  const btn       = document.getElementById('cf-submit-btn');
+  if (btn) btn.disabled = true;
+  cfInitFirebase().ref(CF_ORDERS_PATH).push({
+    drink: drinkName, drinkIdx,
+    special, table, timestamp: Date.now(), status:'pending', lang: currentLang
+  }).then(()=>{
+    const msg = document.getElementById('cf-confirm-msg');
+    if (msg){ msg.style.display='block'; setTimeout(()=>msg.style.display='none',2000); }
+    cf_selectedDrinkIdx  = null;
+    cf_selectedDrinkName = null;
+    document.querySelectorAll('.cf-drink-sel-btn').forEach(b=>b.classList.remove('selected'));
+    const sp = document.getElementById('cf-order-special'); if(sp) sp.value='';
+    const tb = document.getElementById('cf-order-table');   if(tb) tb.value='';
+  }).catch(()=>{ if(btn) btn.disabled=false; });
+}
+
+// ── Barista view ─────────────────────────────────────────────────────────────
+function cfRenderBaristaView(){
+  const panel = document.getElementById('cf-panel-service');
+  if (!panel) return;
+  panel.innerHTML = `
+    <div class="cf-barista-header">
+      <div class="cf-barista-title">${t('cfBaristaTitle')}</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="cf-clear-btn" onclick="cfClearDoneOrders()">${t('cfClearDone')}</button>
+        <button class="cf-exit-btn" onclick="cfExitServiceMode()">${t('cfExit')}</button>
+      </div>
+    </div>
+    <div id="cf-queue-list"><p class="cf-queue-empty">${t('cfQueueEmpty')}</p></div>`;
+
+  // Detach any existing listener before subscribing
+  if (cf_baristaRef && cf_baristaFn){ cf_baristaRef.off('value',cf_baristaFn); }
+  cf_baristaRef = cfInitFirebase().ref(CF_ORDERS_PATH).orderByChild('timestamp');
+  cf_baristaFn  = snap => {
+    const orders = [];
+    snap.forEach(child=>orders.push({id:child.key,...child.val()}));
+    cfRenderQueue(orders.filter(o=>o.status==='pending'));
+  };
+  cf_baristaRef.on('value', cf_baristaFn);
+
+  if (cf_elapsedInterval) clearInterval(cf_elapsedInterval);
+  cf_elapsedInterval = setInterval(cfTickElapsed, 1000);
+}
+
+function cfRenderQueue(orders){
+  const list = document.getElementById('cf-queue-list');
+  if (!list) return;
+  if (!orders.length){ list.innerHTML=`<p class="cf-queue-empty">${t('cfQueueEmpty')}</p>`; return; }
+  const ld = COFFEE_DATA[currentLang] || COFFEE_DATA.es;
+  list.innerHTML = orders.map(o=>{
+    const dr = ld.drinks[o.drinkIdx] || null;
+    const stepsHtml = dr ? `
+      <p class="cf-philosophy" style="margin-bottom:8px">${dr.philosophy}</p>
+      ${dr.params?`<div class="cf-param-row">${dr.params.map(p=>`<div class="cf-param-box"><div class="cf-p-label">${p.l}</div><div class="cf-p-value">${p.v}</div><div class="cf-p-unit">${p.u}</div></div>`).join('')}</div>`:''}
+      <div class="cf-steps-label">${ld.methodLabel}</div>
+      ${dr.steps.map((s,n)=>`<div class="cf-step-item"><div class="cf-step-num">${n+1}</div><div><div class="cf-step-title">${s.t}</div><div class="cf-step-desc">${s.d}</div></div></div>`).join('')}
+      ${dr.milk?`<div class="cf-milk-block"><div class="cf-m-label">${ld.milkLabel}</div><p>${dr.milk}</p></div>`:''}` : '';
+    return `
+    <div class="cf-order-card" id="cf-ocard-${o.id}">
+      <div class="cf-order-top" onclick="cfToggleOrderCard('${o.id}')">
+        <div style="flex:1;min-width:0">
+          <div class="cf-order-drink">${o.drink}</div>
+          ${o.table  ? `<div class="cf-order-meta">⌂ ${o.table}</div>`:''}
+          ${o.special? `<div class="cf-order-meta">⚑ ${o.special}</div>`:''}
+        </div>
+        <div class="cf-order-elapsed" id="cf-elapsed-${o.id}" data-ts="${o.timestamp}">0s</div>
+      </div>
+      <div class="cf-order-body">
+        ${o.special?`<div class="cf-order-special-full">⚑ ${o.special}</div>`:''}
+        ${stepsHtml}
+        <button class="cf-done-btn" onclick="cfMarkDone('${o.id}')">${t('cfMarkDone')}</button>
+      </div>
+    </div>`;
+  }).join('');
+  cfTickElapsed();
+}
+
+function cfToggleOrderCard(id){
+  document.getElementById('cf-ocard-'+id)?.classList.toggle('open');
+}
+
+function cfTickElapsed(){
+  const now = Date.now();
+  document.querySelectorAll('[id^="cf-elapsed-"]').forEach(el=>{
+    const ts   = parseInt(el.dataset.ts||0);
+    const diff = now - ts;
+    const mins = Math.floor(diff/60000);
+    const secs = Math.floor((diff%60000)/1000);
+    el.textContent = mins>0 ? `${mins}m ${secs}s` : `${secs}s`;
+    el.classList.toggle('warn',   mins>=5  && mins<10);
+    el.classList.toggle('urgent', mins>=10);
+  });
+}
+
+function cfMarkDone(id){
+  cfInitFirebase().ref(CF_ORDERS_PATH+'/'+id).update({status:'done'});
+}
+
+function cfClearDoneOrders(){
+  cfInitFirebase().ref(CF_ORDERS_PATH).orderByChild('status').equalTo('done')
+    .once('value', snap=>snap.forEach(c=>c.ref.remove()));
 }
 
 </script>
