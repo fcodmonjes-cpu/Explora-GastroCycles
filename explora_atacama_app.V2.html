@@ -280,6 +280,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-order-special-full { font-size:13px; color:var(--gold); background:rgba(202,138,4,0.08); border-radius:6px; padding:8px 10px; margin-bottom:10px; }
 .cf-done-btn { width:100%; padding:10px; border-radius:var(--radius-md); border:none; background:rgba(76,175,80,0.14); color:#4caf50; font-size:13px; font-weight:500; cursor:pointer; transition:background .15s; margin-top:10px; }
 .cf-done-btn:hover { background:rgba(76,175,80,0.25); }
+.cf-table-numpad { max-width:220px; }
+.cf-table-numpad-display { font-family:'Courier Prime','Courier New',monospace; font-size:22px; letter-spacing:0.2em; text-align:center; padding:8px 12px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--gold); margin-bottom:8px; min-height:44px; display:flex; align-items:center; justify-content:center; transition:color .15s; }
+.cf-table-numpad-display.empty { color:var(--text-tertiary); font-size:13px; letter-spacing:0.05em; }
+.cf-nk-sm { padding:11px 6px !important; font-size:16px !important; }
+.cf-nk-clr { color:var(--text-tertiary) !important; font-size:13px !important; }
 .cf-drink-list { display:flex; flex-direction:column; gap:6px; }
 .cf-drink-card { border:0.5px solid var(--border); border-radius:var(--radius-md); background:var(--surface); overflow:hidden; transition:border-color .2s; }
 .cf-drink-card.open { border-color:rgba(192,125,42,0.5); }
@@ -2105,6 +2110,7 @@ let cf_mode = null; // 'waiter' | 'barista' | null
 let cf_selectedDrinkIdx = null;
 let cf_selectedDrinkName = null;
 let cf_pinBuffer = '';
+let cf_tableBuffer = '';
 let cf_baristaRef = null, cf_baristaFn = null;
 let cf_elapsedInterval = null;
 
@@ -2176,6 +2182,7 @@ function cfExitServiceMode(){
   cf_mode = null;
   cf_selectedDrinkIdx  = null;
   cf_selectedDrinkName = null;
+  cf_tableBuffer       = '';
   if (cf_baristaRef && cf_baristaFn){ cf_baristaRef.off('value',cf_baristaFn); cf_baristaRef=null; cf_baristaFn=null; }
   if (cf_elapsedInterval){ clearInterval(cf_elapsedInterval); cf_elapsedInterval=null; }
   cfShowServicePanel();
@@ -2204,7 +2211,23 @@ function cfRenderWaiterView(){
     </div>
     <div class="cf-order-row">
       <span class="cf-order-label">${t('cfTableLabel')}</span>
-      <input class="cf-order-textarea" id="cf-order-table" type="text" placeholder="Mesa 5 / Hab 12" style="height:36px;padding:8px 12px">
+      <div class="cf-table-numpad">
+        <div class="cf-table-numpad-display empty" id="cf-table-display">Mesa / Hab</div>
+        <div class="cf-numpad-grid" style="gap:5px">
+          <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('1')">1</button>
+          <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('2')">2</button>
+          <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('3')">3</button>
+          <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('4')">4</button>
+          <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('5')">5</button>
+          <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('6')">6</button>
+          <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('7')">7</button>
+          <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('8')">8</button>
+          <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('9')">9</button>
+          <button class="cf-numpad-key cf-nk-sm cf-nk-del" onclick="cfTableNumpadPress('del')">⌫</button>
+          <button class="cf-numpad-key cf-nk-sm" onclick="cfTableNumpadPress('0')">0</button>
+          <button class="cf-numpad-key cf-nk-sm cf-nk-clr" onclick="cfTableNumpadPress('clr')">✕</button>
+        </div>
+      </div>
     </div>
     <div class="cf-order-row">
       <span class="cf-order-label">${t('cfSpecialRequest')}</span>
@@ -2212,6 +2235,26 @@ function cfRenderWaiterView(){
     </div>
     <button class="cf-submit-btn" id="cf-submit-btn" onclick="cfSubmitOrder()" disabled>${t('cfSubmitOrder')}</button>
     <div class="cf-confirm-msg" id="cf-confirm-msg">${t('cfConfirm')}</div>`;
+}
+
+function cfTableNumpadPress(key){
+  if (key === 'del'){
+    cf_tableBuffer = cf_tableBuffer.slice(0,-1);
+  } else if (key === 'clr'){
+    cf_tableBuffer = '';
+  } else {
+    if (cf_tableBuffer.length < 5) cf_tableBuffer += key;
+  }
+  const disp = document.getElementById('cf-table-display');
+  if (disp){
+    if (cf_tableBuffer.length){
+      disp.textContent = cf_tableBuffer;
+      disp.classList.remove('empty');
+    } else {
+      disp.textContent = 'Mesa / Hab';
+      disp.classList.add('empty');
+    }
+  }
 }
 
 function cfSelectDrinkForOrder(i, extraName){
@@ -2236,7 +2279,7 @@ function cfSubmitOrder(){
   const drinkName = cf_selectedDrinkName || d.drinks[cf_selectedDrinkIdx]?.name || '?';
   const drinkIdx  = cf_selectedDrinkIdx; // null for extras
   const special   = (document.getElementById('cf-order-special')?.value||'').trim();
-  const table     = (document.getElementById('cf-order-table')?.value||'').trim();
+  const table     = cf_tableBuffer.trim();
   const btn       = document.getElementById('cf-submit-btn');
   if (btn) btn.disabled = true;
   cfInitFirebase().ref(CF_ORDERS_PATH).push({
@@ -2248,8 +2291,10 @@ function cfSubmitOrder(){
     cf_selectedDrinkIdx  = null;
     cf_selectedDrinkName = null;
     document.querySelectorAll('.cf-drink-sel-btn').forEach(b=>b.classList.remove('selected'));
+    cf_tableBuffer = '';
     const sp = document.getElementById('cf-order-special'); if(sp) sp.value='';
-    const tb = document.getElementById('cf-order-table');   if(tb) tb.value='';
+    const td = document.getElementById('cf-table-display');
+    if(td){ td.textContent='Mesa / Hab'; td.classList.add('empty'); }
   }).catch(()=>{ if(btn) btn.disabled=false; });
 }
 
