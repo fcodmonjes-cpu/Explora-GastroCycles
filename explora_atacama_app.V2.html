@@ -266,15 +266,33 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-clear-btn { font-size:11px; color:var(--text-tertiary); background:none; border:0.5px solid var(--border); border-radius:var(--radius-md); padding:5px 10px; cursor:pointer; }
 .cf-exit-btn { font-size:11px; color:var(--text-tertiary); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; }
 .cf-queue-empty { text-align:center; color:var(--text-tertiary); font-size:12px; padding:3rem 1rem; font-family:'Courier Prime','Courier New',monospace; letter-spacing:0.1em; text-transform:uppercase; }
-.cf-order-card { border:0.5px solid var(--border); border-radius:var(--radius-md); background:var(--surface); margin-bottom:8px; overflow:hidden; transition:border-color .2s; }
-.cf-order-card.new-order { border-color:var(--gold); animation:cfpulse 1.2s ease 2; }
-@keyframes cfpulse { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 14px 3px rgba(202,138,4,0.35)} }
-.cf-order-top { display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; }
+.cf-order-card {
+  border:0.5px solid var(--border); border-radius:var(--radius-md); background:var(--surface);
+  margin-bottom:8px; overflow:hidden;
+  max-height:2000px; opacity:1; transform:translateY(0);
+  transition: border-color .25s ease, box-shadow .3s ease,
+              opacity .26s ease, transform .26s ease,
+              max-height .32s ease, margin .32s ease,
+              padding .32s ease, border-width .32s ease;
+  will-change: opacity, transform, max-height;
+}
+.cf-order-card.cf-card-entering { opacity:0; transform:translateY(-8px); }
+.cf-order-card.cf-card-leaving {
+  opacity:0; transform:translateX(10px);
+  max-height:0 !important; margin-top:0 !important; margin-bottom:0 !important;
+  border-width:0 !important; pointer-events:none;
+}
+.cf-order-card.new-order { border-color:var(--gold); animation:cfpulse 1.4s ease 2; }
+@keyframes cfpulse { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 16px 2px rgba(202,138,4,0.42)} }
+.cf-order-top { display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; transition:background .18s ease; touch-action:manipulation; user-select:none; }
+.cf-order-top:hover { background:rgba(255,255,255,0.025); }
+.cf-order-card.open .cf-order-top { background:rgba(255,255,255,0.02); }
 .cf-order-drink { font-size:15px; font-weight:500; color:var(--text); }
 .cf-order-meta { font-size:11px; color:var(--text-tertiary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.cf-order-elapsed { font-family:'Courier Prime','Courier New',monospace; font-size:13px; color:var(--gold); min-width:52px; text-align:right; font-weight:500; flex-shrink:0; }
+.cf-order-elapsed { font-family:'Courier Prime','Courier New',monospace; font-size:13px; color:var(--gold); min-width:52px; text-align:right; font-weight:500; flex-shrink:0; transition:color .35s ease; }
 .cf-order-elapsed.warn { color:#e07b3a; }
-.cf-order-elapsed.urgent { color:#e55; }
+.cf-order-elapsed.urgent { color:#e55; animation:cfurgentpulse 1.8s ease infinite; }
+@keyframes cfurgentpulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
 .cf-order-body { display:none; padding:12px 14px; border-top:0.5px solid var(--border); }
 .cf-order-card.open .cf-order-body { display:block; }
 .cf-order-special-full { font-size:13px; color:var(--gold); background:rgba(202,138,4,0.08); border-radius:6px; padding:8px 10px; margin-bottom:10px; }
@@ -2400,67 +2418,111 @@ function cfRenderBaristaView(){
       all.sort((a,b)=>(a.timestamp||0)-(b.timestamp||0));
       cfRenderQueue(all.filter(o=>o.status==='pending'));
     } catch(e){}
-  }, 4000);
+  }, 2000);
 
   if (cf_elapsedInterval) clearInterval(cf_elapsedInterval);
   cf_elapsedInterval = setInterval(cfTickElapsed, 1000);
 }
 
+// Build a fresh DOM element for a single order card (no innerHTML on container)
+function cfBuildOrderCardEl(o, ld){
+  const dr = ld.drinks[o.drinkIdx] || null;
+  const stepsHtml = dr ? `
+    <p class="cf-philosophy" style="margin-bottom:8px">${dr.philosophy}</p>
+    ${dr.params?`<div class="cf-param-row">${dr.params.map(p=>`<div class="cf-param-box"><div class="cf-p-label">${p.l}</div><div class="cf-p-value">${p.v}</div><div class="cf-p-unit">${p.u}</div></div>`).join('')}</div>`:''}
+    <div class="cf-steps-label">${ld.methodLabel}</div>
+    ${dr.steps.map((s,n)=>`<div class="cf-step-item"><div class="cf-step-num">${n+1}</div><div><div class="cf-step-title">${s.t}</div><div class="cf-step-desc">${s.d}</div></div></div>`).join('')}
+    ${dr.milk?`<div class="cf-milk-block"><div class="cf-m-label">${ld.milkLabel}</div><p>${dr.milk}</p></div>`:''}` : '';
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <div class="cf-order-card" id="cf-ocard-${o.id}">
+      <div class="cf-order-top" onclick="cfToggleOrderCard('${o.id}')">
+        <div style="flex:1;min-width:0">
+          <div class="cf-order-drink">${o.drink}</div>
+          ${o.table    ?`<div class="cf-order-meta">⌂ ${o.table}</div>`:''}
+          ${o.milkType ?`<div class="cf-order-meta">🥛 ${o.milkType}${o.milkSpec?' — '+o.milkSpec:''}</div>`:''}
+          ${o.special  ?`<div class="cf-order-meta">⚑ ${o.special}</div>`:''}
+        </div>
+        <div class="cf-order-elapsed" id="cf-elapsed-${o.id}" data-ts="${o.timestamp}">0s</div>
+      </div>
+      <div class="cf-order-body">
+        ${o.special?`<div class="cf-order-special-full">⚑ ${o.special}</div>`:''}
+        ${stepsHtml}
+        <button class="cf-done-btn" onclick="cfMarkDone('${o.id}')">${t('cfMarkDone')}</button>
+      </div>
+    </div>`.trim();
+  return wrap.firstElementChild;
+}
+
+// Diff-render: only add new cards and remove completed ones. Existing cards
+// (and their open/scroll state) are never touched, so there's no flicker.
 function cfRenderQueue(orders){
   const list = document.getElementById('cf-queue-list');
   if (!list) return;
 
-  // Build a fingerprint: IDs in order. If nothing changed, skip DOM update entirely
-  // to avoid flickering and collapsing expanded cards on every poll cycle.
+  // Fingerprint: IDs in current order. Bail when nothing changed.
   const hash = orders.map(o=>o.id).join(',');
   if (hash === cf_lastQueueHash) return;
   cf_lastQueueHash = hash;
 
+  // Empty state — animate any remaining cards out, then show placeholder.
   if (!orders.length){
-    list.innerHTML=`<p class="cf-queue-empty">${t('cfQueueEmpty')}</p>`;
+    const remaining = [...list.querySelectorAll('.cf-order-card:not(.cf-card-leaving)')];
+    if (!remaining.length){
+      if (!list.querySelector('.cf-queue-empty')){
+        list.innerHTML = `<p class="cf-queue-empty">${t('cfQueueEmpty')}</p>`;
+      }
+      return;
+    }
+    remaining.forEach(c=>c.classList.add('cf-card-leaving'));
+    const expected = cf_lastQueueHash;
+    setTimeout(()=>{
+      if (cf_lastQueueHash !== expected) return;
+      list.innerHTML = `<p class="cf-queue-empty">${t('cfQueueEmpty')}</p>`;
+    }, 340);
     return;
   }
 
-  // Remember which cards are currently expanded so we can restore them after re-render
-  const openIds = new Set(
-    [...list.querySelectorAll('.cf-order-card.open')].map(el=>el.id.replace('cf-ocard-',''))
-  );
+  // Remove the empty placeholder if present
+  const empty = list.querySelector('.cf-queue-empty');
+  if (empty) empty.remove();
 
   const ld = COFFEE_DATA[currentLang] || COFFEE_DATA.es;
+  const targetIds = new Set(orders.map(o=>o.id));
+
+  // Phase 1 — fade-out / collapse cards no longer in the queue.
+  list.querySelectorAll('.cf-order-card').forEach(card=>{
+    const id = card.id.replace('cf-ocard-','');
+    if (!targetIds.has(id) && !card.classList.contains('cf-card-leaving')){
+      // Pin current height so the collapse can transition smoothly
+      card.style.maxHeight = card.scrollHeight + 'px';
+      // force a layout pass so the next class change starts from this height
+      void card.offsetHeight;
+      card.classList.add('cf-card-leaving');
+      setTimeout(()=>{ if (card.parentElement) card.remove(); }, 360);
+    }
+  });
+
+  // Phase 2 — insert new cards (existing ones remain untouched).
+  // Orders are sorted oldest-first, so existing cards are already in the right
+  // order; new ones append at the tail naturally.
   try {
-    list.innerHTML = orders.map(o=>{
-      const dr = ld.drinks[o.drinkIdx] || null;
-      const stepsHtml = dr ? `
-        <p class="cf-philosophy" style="margin-bottom:8px">${dr.philosophy}</p>
-        ${dr.params?`<div class="cf-param-row">${dr.params.map(p=>`<div class="cf-param-box"><div class="cf-p-label">${p.l}</div><div class="cf-p-value">${p.v}</div><div class="cf-p-unit">${p.u}</div></div>`).join('')}</div>`:''}
-        <div class="cf-steps-label">${ld.methodLabel}</div>
-        ${dr.steps.map((s,n)=>`<div class="cf-step-item"><div class="cf-step-num">${n+1}</div><div><div class="cf-step-title">${s.t}</div><div class="cf-step-desc">${s.d}</div></div></div>`).join('')}
-        ${dr.milk?`<div class="cf-milk-block"><div class="cf-m-label">${ld.milkLabel}</div><p>${dr.milk}</p></div>`:''}` : '';
-      return `
-      <div class="cf-order-card" id="cf-ocard-${o.id}">
-        <div class="cf-order-top" onclick="cfToggleOrderCard('${o.id}')">
-          <div style="flex:1;min-width:0">
-            <div class="cf-order-drink">${o.drink}</div>
-            ${o.table    ?`<div class="cf-order-meta">⌂ ${o.table}</div>`:''}
-            ${o.milkType ?`<div class="cf-order-meta">🥛 ${o.milkType}${o.milkSpec?' — '+o.milkSpec:''}</div>`:''}
-            ${o.special  ?`<div class="cf-order-meta">⚑ ${o.special}</div>`:''}
-          </div>
-          <div class="cf-order-elapsed" id="cf-elapsed-${o.id}" data-ts="${o.timestamp}">0s</div>
-        </div>
-        <div class="cf-order-body">
-          ${o.special?`<div class="cf-order-special-full">⚑ ${o.special}</div>`:''}
-          ${stepsHtml}
-          <button class="cf-done-btn" onclick="cfMarkDone('${o.id}')">${t('cfMarkDone')}</button>
-        </div>
-      </div>`;
-    }).join('');
-
-    // Restore previously open cards
-    openIds.forEach(id=>{
-      const card = document.getElementById('cf-ocard-'+id);
-      if (card) card.classList.add('open');
+    orders.forEach(o=>{
+      if (document.getElementById('cf-ocard-'+o.id)) return; // already rendered
+      const card = cfBuildOrderCardEl(o, ld);
+      card.classList.add('cf-card-entering');
+      // Highlight as new for a brief moment
+      const isFirstLoad = list.children.length === 0 && orders.length > 1;
+      if (!isFirstLoad){
+        card.classList.add('new-order');
+        setTimeout(()=>card.classList.remove('new-order'), 3200);
+      }
+      list.appendChild(card);
+      // Trigger the entering→base transition on the next paint
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        if (card.parentElement) card.classList.remove('cf-card-entering');
+      }));
     });
-
     cfTickElapsed();
   } catch(e){ console.error('[cfRenderQueue]', e); }
 }
