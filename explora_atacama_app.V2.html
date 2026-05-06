@@ -2124,6 +2124,7 @@ let cf_tableBuffer       = '';
 const CF_MILK_INDICES = new Set([1,2,3,4,5]);
 let cf_baristaRef = null, cf_baristaFn = null;
 let cf_elapsedInterval = null;
+let cf_pollInterval    = null; // polling fallback — re-reads Firebase every 6 s in case WebSocket misses an update
 
 function cfInitFirebase(){
   if (cf_fbApp) return cf_fbDb;
@@ -2198,6 +2199,7 @@ function cfExitServiceMode(){
   cf_tableBuffer       = '';
   if (cf_baristaRef && cf_baristaFn){ cf_baristaRef.off('value',cf_baristaFn); cf_baristaRef=null; cf_baristaFn=null; }
   if (cf_elapsedInterval){ clearInterval(cf_elapsedInterval); cf_elapsedInterval=null; }
+  if (cf_pollInterval){ clearInterval(cf_pollInterval); cf_pollInterval=null; }
   cfShowServicePanel();
 }
 
@@ -2375,6 +2377,20 @@ function cfRenderBaristaView(){
   };
   cf_baristaRef.on('value', cf_baristaFn);
 
+  // Polling fallback: every 6 seconds do a fresh once('value') read so orders
+  // always appear even if the WebSocket real-time update is missed.
+  if (cf_pollInterval) clearInterval(cf_pollInterval);
+  cf_pollInterval = setInterval(()=>{
+    if (cf_mode !== 'barista'){ clearInterval(cf_pollInterval); cf_pollInterval=null; return; }
+    cfInitFirebase().ref(CF_ORDERS_PATH).once('value').then(snap=>{
+      if (cf_mode !== 'barista') return;
+      const all = [];
+      snap.forEach(c=>all.push({id:c.key,...c.val()}));
+      all.sort((a,b)=>(a.timestamp||0)-(b.timestamp||0));
+      cfRenderQueue(all.filter(o=>o.status==='pending'));
+    }).catch(()=>{});
+  }, 6000);
+
   if (cf_elapsedInterval) clearInterval(cf_elapsedInterval);
   cf_elapsedInterval = setInterval(cfTickElapsed, 1000);
 }
@@ -2384,6 +2400,7 @@ function cfRenderQueue(orders){
   if (!list) return;
   if (!orders.length){ list.innerHTML=`<p class="cf-queue-empty">${t('cfQueueEmpty')}</p>`; return; }
   const ld = COFFEE_DATA[currentLang] || COFFEE_DATA.es;
+  try {
   list.innerHTML = orders.map(o=>{
     const dr = ld.drinks[o.drinkIdx] || null;
     const stepsHtml = dr ? `
@@ -2411,6 +2428,7 @@ function cfRenderQueue(orders){
     </div>`;
   }).join('');
   cfTickElapsed();
+  } catch(e){ console.error('[cfRenderQueue]', e); }
 }
 
 function cfToggleOrderCard(id){
