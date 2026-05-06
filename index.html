@@ -2349,15 +2349,6 @@ function cfRenderWaiterView(){
       <button class="cf-exit-btn" onclick="cfExitServiceMode()">${t('cfExit')}</button>
     </div>
 
-    <!-- Cart: hidden when empty, populated by cfRenderCart() -->
-    <div class="cf-cart-section" id="cf-cart-section" style="display:none">
-      <div class="cf-cart-title">
-        <span>${t('cfCartTitle')}</span>
-        <span class="cf-cart-count" id="cf-cart-count"></span>
-      </div>
-      <div id="cf-cart-list"></div>
-    </div>
-
     <!-- Builder: pick drink + modifiers -->
     <div class="cf-order-row">
       <span class="cf-order-label">${t('cfSelectDrink')}</span>
@@ -2388,6 +2379,17 @@ function cfRenderWaiterView(){
       <textarea class="cf-order-textarea" id="cf-order-special" rows="2" placeholder="${t('cfSpecialPlaceholder')}"></textarea>
     </div>
     <button class="cf-add-item-btn" id="cf-add-item-btn" onclick="cfAddToCart()" disabled>${t('cfAddToOrder')}</button>
+
+    <!-- Cart: review of staged items, sits right above the table + submit so
+         the waiter sees the final list immediately before sending. Hidden
+         when empty; populated by cfRenderCart(). -->
+    <div class="cf-cart-section" id="cf-cart-section" style="display:none;margin-top:1rem">
+      <div class="cf-cart-title">
+        <span>${t('cfCartTitle')}</span>
+        <span class="cf-cart-count" id="cf-cart-count"></span>
+      </div>
+      <div id="cf-cart-list"></div>
+    </div>
 
     <div class="cf-builder-divider"></div>
 
