@@ -693,6 +693,18 @@ let selectedDish = null;
 let selectedWine = null;
 let currentLang = 'es';
 
+// ── Shift roster state (declared early to avoid TDZ when setLang fires
+// staffingRender on first boot — the rest of the staffing module lives
+// later in the script, but its state must be reachable from the moment
+// any code path touches it). ────────────────────────────────────────────────
+const STAFFING_PATH       = 'staffing';
+const STAFFING_AM_START   = 6 * 60 + 30;   // 06:30 in minutes since midnight
+const STAFFING_AM_END     = 15 * 60;       // 15:00 — handoff
+const STAFFING_PM_START   = 15 * 60;       // 15:00
+const STAFFING_PM_END     = 23 * 60 + 30;  // 23:30
+let STAFFING_DATA         = null;          // { dayKey: { ...dayData } }
+let STAFFING_MONTH_KEY    = null;          // "YYYY-MM" currently loaded
+
 // ── UI STRINGS ──────────────────────────────────────────────────────────────
 const UI = {
   es: {
@@ -2447,13 +2459,10 @@ function cfInitFirebase(){
 // it lives entirely in Firebase, never in the HTML. Update via Firebase
 // Console: paste a new {day: {viajeros, geo_senior_*, geos_*, apoyo_*}}
 // object under /staffing/{nextMonthKey}.
-const STAFFING_PATH       = 'staffing';
-const STAFFING_AM_START   = 6 * 60 + 30;   // 06:30 in minutes since midnight
-const STAFFING_AM_END     = 15 * 60;       // 15:00 — handoff
-const STAFFING_PM_START   = 15 * 60;       // 15:00
-const STAFFING_PM_END     = 23 * 60 + 30;  // 23:30
-let STAFFING_DATA         = null;          // { dayKey: { ...dayData } }
-let STAFFING_MONTH_KEY    = null;          // "YYYY-MM" currently loaded
+//
+// State (STAFFING_PATH, STAFFING_*_START/END, STAFFING_DATA,
+// STAFFING_MONTH_KEY) is declared early in the script — see the top — so
+// setLang's boot call to staffingRender doesn't trip TDZ on those let/const.
 
 function staffingMonthKey(d){
   const y = d.getFullYear();
