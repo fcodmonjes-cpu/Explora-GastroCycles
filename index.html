@@ -54,9 +54,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 .app { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem; }
 
-.header { padding: 1rem 0 1.5rem; border-bottom: 0.5px solid var(--border); margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+.header { padding: 1rem 0 1.5rem; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between; }
 .header-text h1 { font-size: 20px; font-weight: 500; color: var(--text); }
 .header-text p { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+/* Staffing panel — sits between header and tabs. Always renders the bottom
+   divider line so it inherits the role the header's border-bottom used to
+   play. Content varies: active shift, off-hours hint, or empty (data missing). */
+.staffing-panel { margin: 0 0 1.5rem; padding: 0 0 0.9rem; border-bottom: 0.5px solid var(--border); font-family: 'Courier Prime','Courier New',monospace; }
+.staffing-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.7rem; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; }
+.staffing-shift { color: var(--gold); font-weight: 500; }
+.staffing-viajeros { color: var(--text-tertiary); }
+.staffing-row { display:grid; grid-template-columns: 78px 1fr; gap:14px; align-items:baseline; margin-bottom:3px; }
+.staffing-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); }
+.staffing-names { font-family: inherit; font-size: 12px; color: var(--text-secondary); line-height: 1.45; }
+.staffing-off { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-tertiary); opacity: 0.55; padding: 4px 0; }
+/* When panel has no rendered content it collapses to just the divider */
+.staffing-panel:empty { padding: 0; }
 .lang-toggle { display: flex; gap: 4px; flex-shrink: 0; }
 .lang-btn { padding: 4px 9px; border-radius: 6px; border: 0.5px solid var(--border-md); font-size: 11px; font-weight: 500; cursor: pointer; background: transparent; color: var(--text-tertiary); letter-spacing: 0.04em; transition: all 0.15s; }
 .lang-btn:hover { background: var(--bg-secondary); color: var(--text-secondary); }
@@ -497,6 +510,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
   </div>
 
+  <!-- Shift roster panel — populated from /staffing/{YYYY-MM}/{day} on Firebase.
+       Always renders the bottom divider line; content varies by current shift. -->
+  <div class="staffing-panel" id="staffing-panel"></div>
+
   <div class="main-tabs">
     <button class="tab active" onclick="setTab('menus',this)">Menú</button>
     <button class="tab" onclick="setTab('vinos',this)">Vinos</button>
@@ -708,7 +725,8 @@ const UI = {
     cfHistEmpty:'Sin pedidos registrados este día',
     cfHistTickets:'tickets', cfHistTicket:'ticket',
     cfHistAvgPrep:'preparación promedio', cfHistTopDrinks:'Más pedidas',
-    cfHistLoading:'Cargando…'
+    cfHistLoading:'Cargando…',
+    staffViajeros:'viajeros', staffSenior:'Senior', staffComedor:'Comedor', staffApoyo:'Apoyo', staffNext:'Próximo'
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'The detail, at hand.',
@@ -740,7 +758,8 @@ const UI = {
     cfHistEmpty:'No orders recorded for this day',
     cfHistTickets:'tickets', cfHistTicket:'ticket',
     cfHistAvgPrep:'avg prep time', cfHistTopDrinks:'Top drinks',
-    cfHistLoading:'Loading…'
+    cfHistLoading:'Loading…',
+    staffViajeros:'guests', staffSenior:'Senior', staffComedor:'Floor', staffApoyo:'Support', staffNext:'Next'
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'O detalhe, à mão.',
@@ -772,7 +791,8 @@ const UI = {
     cfHistEmpty:'Sem pedidos registrados neste dia',
     cfHistTickets:'tickets', cfHistTicket:'ticket',
     cfHistAvgPrep:'preparação média', cfHistTopDrinks:'Mais pedidas',
-    cfHistLoading:'Carregando…'
+    cfHistLoading:'Carregando…',
+    staffViajeros:'hóspedes', staffSenior:'Senior', staffComedor:'Salão', staffApoyo:'Apoio', staffNext:'Próximo'
   }
 };
 function t(k){ return UI[currentLang][k] || UI.es[k]; }
@@ -1000,6 +1020,8 @@ function setLang(lang, el) {
   if (cafeBtn) cafeBtn.textContent = t('tabCafe');
   const mn = document.getElementById('momentos-notice-text');
   if (mn) mn.textContent = t('momentNotice');
+  // Re-render staffing labels in the new language
+  if (typeof staffingRender === 'function') staffingRender();
   if (prevDish && currentTab === 'menus') {
     selectDish(prevDish);
     if (prevSubWine) openWineFromDish(prevSubWine);
@@ -2419,6 +2441,100 @@ function cfInitFirebase(){
   return cf_fbDb;
 }
 
+// ── Shift roster panel ──────────────────────────────────────────────────────
+// Pulls from /staffing/{YYYY-MM} once per session, then re-evaluates the
+// visible state every minute. The data is operational (changes monthly) so
+// it lives entirely in Firebase, never in the HTML. Update via Firebase
+// Console: paste a new {day: {viajeros, geo_senior_*, geos_*, apoyo_*}}
+// object under /staffing/{nextMonthKey}.
+const STAFFING_PATH       = 'staffing';
+const STAFFING_AM_START   = 6 * 60 + 30;   // 06:30 in minutes since midnight
+const STAFFING_AM_END     = 15 * 60;       // 15:00 — handoff
+const STAFFING_PM_START   = 15 * 60;       // 15:00
+const STAFFING_PM_END     = 23 * 60 + 30;  // 23:30
+let STAFFING_DATA         = null;          // { dayKey: { ...dayData } }
+let STAFFING_MONTH_KEY    = null;          // "YYYY-MM" currently loaded
+
+function staffingMonthKey(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  return `${y}-${m}`;
+}
+function staffingActiveShift(d){
+  const mins = d.getHours()*60 + d.getMinutes();
+  if (mins >= STAFFING_AM_START && mins < STAFFING_AM_END) return 'am';
+  if (mins >= STAFFING_PM_START && mins < STAFFING_PM_END) return 'pm';
+  return null;
+}
+function staffingNextShift(d){
+  const mins = d.getHours()*60 + d.getMinutes();
+  // Before 06:30 → AM is next. After 23:30 → AM (tomorrow) is next.
+  if (mins < STAFFING_AM_START || mins >= STAFFING_PM_END) return 'am';
+  // Between AM end and PM start (won't happen here since they touch at 15:00)
+  return 'pm';
+}
+function staffingFirstName(full){
+  return (full || '').trim().split(/\s+/)[0] || '';
+}
+
+async function staffingFetch(){
+  const monthKey = staffingMonthKey(new Date());
+  STAFFING_MONTH_KEY = monthKey;
+  try {
+    const url = `${CF_FIREBASE_CONFIG.databaseURL}/${STAFFING_PATH}/${monthKey}.json`;
+    const resp = await fetch(url);
+    STAFFING_DATA = (await resp.json()) || {};
+  } catch(e){
+    STAFFING_DATA = {};
+  }
+  staffingRender();
+}
+
+function staffingRender(){
+  const panel = document.getElementById('staffing-panel');
+  if (!panel) return;
+  if (!STAFFING_DATA){ panel.innerHTML = ''; return; }
+  const now = new Date();
+  const day = String(now.getDate());
+  const dayData = STAFFING_DATA[day];
+  if (!dayData){ panel.innerHTML = ''; return; }
+  const shift = staffingActiveShift(now);
+  if (!shift){
+    // Off-hours: render a single faint line indicating the next shift.
+    const next = staffingNextShift(now);
+    panel.innerHTML = `<div class="staffing-off">${t('staffNext')} · ${next.toUpperCase()}</div>`;
+    return;
+  }
+  const senior = (dayData[`geo_senior_${shift}`] || []).map(staffingFirstName).filter(Boolean);
+  const geos   = (dayData[`geos_${shift}`]       || []).map(staffingFirstName).filter(Boolean);
+  const apoyo  = (dayData[`apoyo_${shift}`]      || []).map(staffingFirstName).filter(Boolean);
+  let html = `
+    <div class="staffing-head">
+      <span class="staffing-shift">${shift.toUpperCase()}</span>
+      <span class="staffing-viajeros">${dayData.viajeros ?? '—'} ${t('staffViajeros')}</span>
+    </div>`;
+  if (senior.length) html += `<div class="staffing-row"><span class="staffing-label">${t('staffSenior')}</span><span class="staffing-names">${senior.join(' · ')}</span></div>`;
+  if (geos.length)   html += `<div class="staffing-row"><span class="staffing-label">${t('staffComedor')}</span><span class="staffing-names">${geos.join(' · ')}</span></div>`;
+  if (apoyo.length)  html += `<div class="staffing-row"><span class="staffing-label">${t('staffApoyo')}</span><span class="staffing-names">${apoyo.join(' · ')}</span></div>`;
+  panel.innerHTML = html;
+}
+
+// Re-evaluate every 60s (catches shift transitions and date changes).
+// Also re-evaluate when the tab regains focus, since browsers throttle
+// background timers — staff coming back to the app at 15:05 should see PM.
+setInterval(()=>{
+  staffingRender();
+  const newKey = staffingMonthKey(new Date());
+  if (newKey !== STAFFING_MONTH_KEY) staffingFetch();
+}, 60000);
+document.addEventListener('visibilitychange', ()=>{
+  if (document.visibilityState === 'visible'){
+    const newKey = staffingMonthKey(new Date());
+    if (newKey !== STAFFING_MONTH_KEY) staffingFetch();
+    else staffingRender();
+  }
+});
+
 // ── History helpers ──────────────────────────────────────────────────────────
 // Date bucket key in local time: 'YYYY-MM-DD'. The "Hoy/Ayer" boundary is
 // always device-local — a ticket completed at 23:59 belongs to that day,
@@ -3395,7 +3511,10 @@ function cfMarkDone(id){
   setTimeout(()=>cf_optimisticallyDone.delete(id), 5000);
 }
 
-
+// Boot the shift roster panel. Fires async; the panel will render itself
+// as soon as the fetch resolves. Until then, the empty container collapses
+// (its bottom border stays as the visual divider).
+staffingFetch();
 </script>
 </body>
 </html>
