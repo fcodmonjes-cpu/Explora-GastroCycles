@@ -66,6 +66,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .tab { padding: 6px 14px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; }
 .tab:hover { background: var(--bg-secondary); }
 .tab.active { background: var(--wine-red); color: white; border-color: var(--wine-red); font-weight: 500; }
+/* Wine sub-tab that opens a different VIEW (general pairings), not a wine
+   filter. A subtle gold halo signals "this isn't a category — it's another
+   kind of content". Visible at all times so the distinction is obvious. */
+.tab.tab-pairings { border-color: rgba(202,138,4,0.42); color: var(--gold); box-shadow: 0 0 8px rgba(202,138,4,0.18); }
+.tab.tab-pairings:hover { background: rgba(202,138,4,0.08); }
+.tab.tab-pairings.active { background: var(--wine-red); border-color: var(--wine-red); color: #fff; box-shadow: 0 0 10px rgba(202,138,4,0.32); }
 
 .search-bar { position: relative; margin-bottom: 1.25rem; }
 /* Font-size must be ≥ 16px to prevent iOS Safari from auto-zooming when the
@@ -463,12 +469,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <div class="main-tabs">
     <button class="tab active" onclick="setTab('menus',this)">Menús por día</button>
-    <button class="tab" onclick="setTab('vinos',this)">Fichas de vino</button>
-    <button class="tab" onclick="setTab('guiones',this)">Guiones de venta</button>
+    <button class="tab" onclick="setTab('vinos',this)">Vinos</button>
     <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
     <button class="tab" onclick="setTab('mocktails',this)">Mocktails</button>
-    <button class="tab" onclick="setTab('momentos',this)"><span class="tab-sparkle">✦</span><span id="tab-momentos-label">Momentos</span></button>
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
+    <button class="tab" onclick="setTab('momentos',this)"><span class="tab-sparkle">✦</span><span id="tab-momentos-label">Momentos</span></button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -489,7 +494,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <!-- VINOS TAB -->
   <div id="tab-vinos" class="hidden">
-    <div class="search-bar">
+    <div class="search-bar" id="wine-search-bar">
       <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
       <input type="text" placeholder="Buscar vino o cepa..." id="wine-search" oninput="renderWines()">
     </div>
@@ -500,13 +505,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="tab" onclick="setWineFilter('rosado',this)">Rosado</button>
       <button class="tab" onclick="setWineFilter('tinto',this)">Tintos</button>
       <button class="tab" onclick="setWineFilter('dulce',this)">Dulce</button>
+      <button class="tab tab-pairings" onclick="setWineFilter('maridajes',this)">Maridajes generales</button>
     </div>
     <div class="wine-grid" id="wine-grid"></div>
-  </div>
-
-  <!-- GUIONES TAB -->
-  <div id="tab-guiones" class="hidden">
-    <div id="guiones-content"></div>
+    <div id="guiones-content" style="display:none"></div>
   </div>
 
   <!-- COCKTAILS TAB -->
@@ -641,7 +643,8 @@ let currentLang = 'es';
 const UI = {
   es: {
     appTitle:'Explora Atacama — Vinos & Menús', appSubtitle:'Guía de servicio: maridajes, alérgenos y fichas de vino',
-    tabMenus:'Menús por día', tabWines:'Fichas de vino', tabGuiones:'Guiones de venta', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos', tabCafe:'Café',
+    tabMenus:'Menús por día', tabWines:'Vinos', tabGuiones:'Maridajes generales', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos', tabCafe:'Café',
+    wineFilterPairings:'Maridajes generales',
     momentAllDay:'Todo el día', momentPreDinner:'Pre Dinner · Aperitivos', momentAfterDinner:'After Dinner', momentNotice:'Próximamente · Esta carta aún no está disponible en el bar',
     ctMethod:'Método', ctGlass:'Vaso', ctIce:'Hielo', ctIngredients:'Ingredientes', ctGarnish:'Garnish', ctSearch:'Buscar cocktail...',
     searchDish:'Buscar plato...', searchWine:'Buscar vino o cepa...',
@@ -671,7 +674,8 @@ const UI = {
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Service guide: pairings, allergens and wine sheets',
-    tabMenus:'Menus by day', tabWines:'Wine sheets', tabGuiones:'Sales scripts', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos', tabCafe:'Coffee',
+    tabMenus:'Menus by day', tabWines:'Wines', tabGuiones:'General pairings', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos', tabCafe:'Coffee',
+    wineFilterPairings:'General pairings',
     momentAllDay:'All Day', momentPreDinner:'Before Dinner · Aperitifs', momentAfterDinner:'After Dinner', momentNotice:'Coming Soon · This menu is not yet available at the bar',
     ctMethod:'Method', ctGlass:'Glass', ctIce:'Ice', ctIngredients:'Ingredients', ctGarnish:'Garnish', ctSearch:'Search cocktail...',
     searchDish:'Search dish...', searchWine:'Search wine or grape...',
@@ -701,7 +705,8 @@ const UI = {
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Guia de serviço: harmonizações, alérgenos e fichas de vinho',
-    tabMenus:'Menus por dia', tabWines:'Fichas de vinho', tabGuiones:'Roteiros de venda', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos', tabCafe:'Café',
+    tabMenus:'Menus por dia', tabWines:'Vinhos', tabGuiones:'Harmonizações gerais', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos', tabCafe:'Café',
+    wineFilterPairings:'Harmonizações gerais',
     momentAllDay:'Todo o dia', momentPreDinner:'Antes do Jantar · Aperitivos', momentAfterDinner:'Após o Jantar', momentNotice:'Em breve · Este cardápio ainda não está disponível no bar',
     ctMethod:'Método', ctGlass:'Copo', ctIce:'Gelo', ctIngredients:'Ingredientes', ctGarnish:'Decoração', ctSearch:'Buscar cocktail...',
     searchDish:'Buscar prato...', searchWine:'Buscar vinho ou uva...',
@@ -915,12 +920,13 @@ function setLang(lang, el) {
   // update static UI
   document.getElementById('app-title').textContent = t('appTitle');
   document.getElementById('app-subtitle').textContent = t('appSubtitle');
+  // Order: Menús · Vinos · Cocktails · Mocktails · Café · Momentos
   const mainTabs = document.querySelectorAll('.main-tabs .tab');
   if (mainTabs[0]) mainTabs[0].textContent = t('tabMenus');
   if (mainTabs[1]) mainTabs[1].textContent = t('tabWines');
-  if (mainTabs[2]) mainTabs[2].textContent = t('tabGuiones');
-  if (mainTabs[3]) mainTabs[3].textContent = t('tabCocktails');
-  if (mainTabs[4]) mainTabs[4].textContent = t('tabMocktails');
+  if (mainTabs[2]) mainTabs[2].textContent = t('tabCocktails');
+  if (mainTabs[3]) mainTabs[3].textContent = t('tabMocktails');
+  // mainTabs[4] is Café (handled below by id), mainTabs[5] is Momentos (label span below)
   const momentosLabel = document.getElementById('tab-momentos-label');
   if (momentosLabel) momentosLabel.textContent = t('tabMomentos');
   const csearch = document.getElementById('cocktail-search');
@@ -934,7 +940,7 @@ function setLang(lang, el) {
   if (dayBtns[0]) dayBtns[0].textContent = t('allDays');
   for (let i=1;i<dayBtns.length;i++) dayBtns[i].textContent = 'D'+i;
   const wfTabs = document.querySelectorAll('.wine-filter-tabs .tab');
-  const wfKeys = ['all','sparkling','whites','rose','reds','sweet'];
+  const wfKeys = ['all','sparkling','whites','rose','reds','sweet','wineFilterPairings'];
   wfTabs.forEach((b,i) => { if(wfKeys[i]) b.textContent = t(wfKeys[i]); });
   // re-render content — preserve open panels across language switches
   const prevDish = selectedDish;
@@ -942,7 +948,7 @@ function setLang(lang, el) {
   const prevSubWine = document.getElementById('dish-wine-sub-panel')?.dataset?.wid || null;
   selectedDish = null; selectedWine = null;
   renderDishes(); renderWines();
-  if (currentTab === 'guiones') renderGuiones();
+  if (currentTab === 'vinos' && wineFilter === 'maridajes') renderGuiones();
   if (currentTab === 'cocktails') renderCocktails();
   if (currentTab === 'mocktails') renderMocktails();
   if (currentTab === 'momentos') renderMomentos();
@@ -962,8 +968,7 @@ function setTab(tab, el) {
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  ['menus','vinos','guiones','cocktails','mocktails','momentos','cafe'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
-  if (tab === 'guiones') renderGuiones();
+  ['menus','vinos','cocktails','mocktails','momentos','cafe'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'cocktails') renderCocktails();
   if (tab === 'mocktails') renderMocktails();
   if (tab === 'momentos') renderMomentos();
@@ -983,7 +988,22 @@ function setWineFilter(f, el) {
   document.querySelectorAll('.wine-filter-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
   selectedWine = null;
-  renderWines();
+  const grid    = document.getElementById('wine-grid');
+  const search  = document.getElementById('wine-search-bar');
+  const guiones = document.getElementById('guiones-content');
+  if (f === 'maridajes'){
+    // Switch to the "general pairings" view inside the Wines tab — wine
+    // filter row stays visible, but the search and grid are replaced by
+    // the pairing scripts. Search isn't useful for narrative content.
+    if (grid)    grid.style.display = 'none';
+    if (search)  search.style.display = 'none';
+    if (guiones){ guiones.style.display = ''; renderGuiones(); }
+  } else {
+    if (grid)    grid.style.display = '';
+    if (search)  search.style.display = '';
+    if (guiones) guiones.style.display = 'none';
+    renderWines();
+  }
 }
 
 function getWine(id) { return WINES.find(w => w.id === id); }
@@ -1193,9 +1213,22 @@ function renderGuiones() {
 }
 
 function openWineFromGuion(wid) {
-  document.querySelectorAll('.main-tabs .tab').forEach((t,i) => t.classList.toggle('active', i===1));
-  ['menus','vinos','guiones'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t!=='vinos'));
+  // Vinos is already the active main tab when pairings are visible — but
+  // the user might be on a different filter; reset to 'todos' so the wine
+  // grid is visible (where selectWine will reveal the chosen wine).
+  document.querySelectorAll('.main-tabs .tab').forEach((tb,i) => tb.classList.toggle('active', i===1));
+  ['menus','vinos','cocktails','mocktails','momentos','cafe'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t!=='vinos'));
   currentTab = 'vinos';
+  wineFilter = 'todos';
+  const filterTabs = document.querySelectorAll('.wine-filter-tabs .tab');
+  filterTabs.forEach((tb,i) => tb.classList.toggle('active', i === 0));
+  const grid    = document.getElementById('wine-grid');
+  const search  = document.getElementById('wine-search-bar');
+  const guiones = document.getElementById('guiones-content');
+  if (grid)    grid.style.display = '';
+  if (search)  search.style.display = '';
+  if (guiones) guiones.style.display = 'none';
+  renderWines();
   selectWine(wid);
 }
 
