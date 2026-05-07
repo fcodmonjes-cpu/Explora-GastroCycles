@@ -2757,6 +2757,10 @@ function dessertsOpenForm(){
   set('d-fruta',  Array.isArray(d.fruta) ? d.fruta.join(', ') : (d.fruta || ''));
   set('d-ninos',  d.ninos);
   dessertsRefreshFormLabels();
+  // Always re-enable the save button when the form opens — protects against
+  // it being left disabled from a previous submit cycle.
+  const saveBtn = document.getElementById('d-save');
+  if (saveBtn) saveBtn.disabled = false;
   form.hidden = false;
   // Hide the strip while the form is open to avoid the "+ button" sitting on top
   const strip = document.getElementById('desserts-strip');
@@ -2798,6 +2802,7 @@ async function dessertsSubmitForm(){
   try {
     await fetch(url, { method:'PUT', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
     DESSERTS_DATA = payload;
+    if (saveBtn) saveBtn.disabled = false; // re-enable on success too — next open finds it ready
     dessertsCloseForm();
   } catch(e){
     console.error('[desserts]', e);
