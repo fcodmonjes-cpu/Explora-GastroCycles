@@ -211,9 +211,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cocktail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
 .cocktail-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; animation: panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; transition: border-color .25s ease, box-shadow .25s ease; }
 /* Mocktails: distinctive green halo so the no-alcohol cards read as a
-   different family at a glance, without needing a separate section header. */
+   different family at a glance. */
 .cocktail-card.cocktail-mocktail { border-color: rgba(120,200,140,0.42); box-shadow: 0 0 12px rgba(120,200,140,0.18); }
 .cocktail-card.cocktail-mocktail:hover { box-shadow: 0 0 16px rgba(120,200,140,0.28); }
+/* Section dividers ("—— Mocktails ——" / "—— Cocktails ——") that flank the
+   two card groups inside the Cocktails tab. The mocktails one carries a
+   soft green tint to echo the card halos. */
+.cocktail-section-divider { display:flex; align-items:center; gap:12px; margin:0 0 0.9rem; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:var(--text-tertiary); }
+.cocktail-section-divider span { flex:0 0 auto; }
+.cocktail-section-divider::before, .cocktail-section-divider::after { content:''; flex:1; height:0.5px; background:var(--border); }
+.cocktail-grid + .cocktail-section-divider { margin-top:1.6rem; }
+.cocktail-section-divider.mocktails { color:rgba(150,220,170,0.78); }
+.cocktail-section-divider.mocktails::before, .cocktail-section-divider.mocktails::after { background:rgba(120,200,140,0.38); }
 .cocktail-name { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
 .cocktail-method { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.75rem; font-style: italic; }
 .cocktail-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
@@ -530,14 +539,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div id="guiones-content" style="display:none"></div>
   </div>
 
-  <!-- COCKTAILS TAB — now also hosts Mocktails (interleaved with green halo) and Momentos (toggleable section) -->
+  <!-- COCKTAILS TAB — now also hosts Mocktails (with green halo) and Momentos (toggleable section above the search) -->
   <div id="tab-cocktails" class="hidden">
-    <div class="search-bar" id="cocktail-search-bar" style="margin-bottom:1rem;">
-      <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
-      <input type="text" id="cocktail-search" placeholder="Buscar cocktail..." oninput="renderCocktails()">
-    </div>
-
-    <!-- Momentos sub-tab: full-width, cobweb animated, light-red halo. Click toggles. -->
+    <!-- Momentos sub-tab: full-width, cobweb animated, light-red halo. Sits ABOVE
+         the search bar so it isn't mistaken for a header of the cocktails listing. -->
     <button class="momentos-banner" id="momentos-banner" onclick="toggleMomentosSection()">
       <span class="momentos-banner-cobweb cobweb-left" aria-hidden="true"></span>
       <span class="momentos-banner-cobweb cobweb-right" aria-hidden="true"></span>
@@ -547,7 +552,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       </span>
     </button>
 
-    <!-- Default view: mocktails (green halo) + cocktails interleaved -->
+    <div class="search-bar" id="cocktail-search-bar" style="margin-bottom:1rem;">
+      <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+      <input type="text" id="cocktail-search" placeholder="Buscar cocktail..." oninput="renderCocktails()">
+    </div>
+
+    <!-- Default view: mocktails (green halo) + cocktails, each with its own labelled divider -->
     <div id="cocktails-content"></div>
 
     <!-- Toggled view: Momentos (hidden until banner is tapped) -->
@@ -1699,10 +1709,10 @@ function buildDrinkCard(c, lang, ui, isMocktail) {
     </div>`;
 }
 
-// Cocktails view: renders mocktails first (with green halo class) then
-// alcoholic cocktails. Search filters across both lists. Mocktails and
-// cocktails share one CSS grid — the green border on mocktails is the
-// only signal needed to read them as a separate family.
+// Cocktails view: mocktails first (green-haloed cards) then alcoholic
+// cocktails. Each group sits below its own labelled divider so the two
+// families read as distinct sections at a glance. Search filters across
+// both — empty groups (no matches) drop their divider as well.
 function renderCocktails() {
   const lang = currentLang;
   const ui = UI[lang];
@@ -1716,13 +1726,16 @@ function renderCocktails() {
   };
   const mList = MOCKTAILS.filter(matches);
   const cList = COCKTAILS.filter(matches);
-  const html = (mList.length || cList.length)
-    ? `<div class="cocktail-grid">${
-        mList.map(c => buildDrinkCard(c, lang, ui, true)).join('')
-      }${
-        cList.map(c => buildDrinkCard(c, lang, ui, false)).join('')
-      }</div>`
-    : `<p class="empty-state">${ui.noDishes}</p>`;
+  let html = '';
+  if (mList.length){
+    html += `<div class="cocktail-section-divider mocktails"><span>Mocktails</span></div>`;
+    html += `<div class="cocktail-grid">${mList.map(c => buildDrinkCard(c, lang, ui, true)).join('')}</div>`;
+  }
+  if (cList.length){
+    html += `<div class="cocktail-section-divider"><span>Cocktails</span></div>`;
+    html += `<div class="cocktail-grid">${cList.map(c => buildDrinkCard(c, lang, ui, false)).join('')}</div>`;
+  }
+  if (!html) html = `<p class="empty-state">${ui.noDishes}</p>`;
   document.getElementById('cocktails-content').innerHTML = html;
 }
 
