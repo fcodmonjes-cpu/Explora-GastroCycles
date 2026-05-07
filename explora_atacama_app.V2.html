@@ -209,7 +209,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 /* Cocktails */
 .cocktail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-.cocktail-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; animation: panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
+.cocktail-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; animation: panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; transition: border-color .25s ease, box-shadow .25s ease; }
+/* Mocktails: distinctive green halo so the no-alcohol cards read as a
+   different family at a glance, without needing a separate section header. */
+.cocktail-card.cocktail-mocktail { border-color: rgba(120,200,140,0.42); box-shadow: 0 0 12px rgba(120,200,140,0.18); }
+.cocktail-card.cocktail-mocktail:hover { box-shadow: 0 0 16px rgba(120,200,140,0.28); }
 .cocktail-name { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
 .cocktail-method { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.75rem; font-style: italic; }
 .cocktail-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
@@ -227,6 +231,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .empty-state { font-size: 13px; color: var(--text-tertiary); padding: 2rem 0; text-align: center; }
 
 .momentos-notice { display:flex; align-items:center; gap:10px; background: rgba(202,138,4,0.15); border: 0.5px solid rgba(202,138,4,0.4); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 1.5rem; font-size: 13px; color: #fcd34d; animation: notice-glow 3.2s ease-in-out infinite; }
+/* Momentos sub-tab inside Cocktails: full-width banner the same width as the
+   search bar, with a light-red halo and subtle cobweb decorations in both
+   top corners. Clicking toggles the Momentos view. The cobwebs gently
+   breathe via opacity to evoke "abandoned / coming soon" without being
+   distracting. */
+.momentos-banner { position:relative; display:block; width:100%; padding:14px 18px; margin:0 0 1.25rem; background:var(--surface); border:0.5px solid rgba(255,150,150,0.4); border-radius:var(--radius-md); box-shadow:0 0 14px rgba(255,150,150,0.18); color:rgba(255,200,200,0.85); font-family:inherit; cursor:pointer; overflow:hidden; transition:all .2s ease; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; box-sizing:border-box; }
+.momentos-banner:hover { background:rgba(255,150,150,0.05); border-color:rgba(255,150,150,0.6); box-shadow:0 0 18px rgba(255,150,150,0.28); }
+.momentos-banner.active { background:rgba(255,150,150,0.08); border-color:rgba(255,150,150,0.75); box-shadow:0 0 22px rgba(255,150,150,0.34); color:rgba(255,220,220,0.96); }
+.momentos-banner-text { position:relative; z-index:1; display:block; text-align:center; line-height:1.2; }
+.momentos-banner-label { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:18px; letter-spacing:0.05em; display:block; }
+.momentos-banner-sub { display:block; margin-top:4px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,200,200,0.55); }
+.momentos-banner.active .momentos-banner-sub { color:rgba(255,220,220,0.7); }
+.momentos-banner-cobweb { position:absolute; top:-2px; width:62px; height:62px; pointer-events:none; background-repeat:no-repeat; background-size:contain; opacity:0.55; animation:cobweb-breathe 4.5s ease-in-out infinite; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><g stroke='%23ffb0b0' stroke-width='0.6' fill='none' opacity='0.9'><line x1='0' y1='0' x2='56' y2='0'/><line x1='0' y1='0' x2='52' y2='18'/><line x1='0' y1='0' x2='42' y2='36'/><line x1='0' y1='0' x2='22' y2='50'/><line x1='0' y1='0' x2='0' y2='56'/><path d='M 12 0 Q 12 12 0 12'/><path d='M 24 0 Q 24 24 0 24'/><path d='M 38 0 Q 38 38 0 38'/></g></svg>"); }
+.momentos-banner-cobweb.cobweb-left  { left:-2px; }
+.momentos-banner-cobweb.cobweb-right { right:-2px; transform:scaleX(-1); }
+@keyframes cobweb-breathe { 0%,100%{ opacity:0.4; transform:translateY(0) } 50%{ opacity:0.7; transform:translateY(0.5px) } }
+.momentos-banner.active .momentos-banner-cobweb.cobweb-right { transform:scaleX(-1) translateY(0.5px); }
 .momentos-group { margin-bottom: 2rem; }
 .momentos-group-label { font-size: 12px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; padding-bottom: 6px; border-bottom: 0.5px solid var(--border); }
 /* ── COFFEE MODULE ──────────────────────────────────────────────────────── */
@@ -468,19 +489,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   </div>
 
   <div class="main-tabs">
-    <button class="tab active" onclick="setTab('menus',this)">Menús por día</button>
+    <button class="tab active" onclick="setTab('menus',this)">Menú</button>
     <button class="tab" onclick="setTab('vinos',this)">Vinos</button>
     <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
-    <button class="tab" onclick="setTab('mocktails',this)">Mocktails</button>
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
-    <button class="tab" onclick="setTab('momentos',this)"><span class="tab-sparkle">✦</span><span id="tab-momentos-label">Momentos</span></button>
   </div>
 
   <!-- MENÚS TAB -->
   <div id="tab-menus">
     <div class="search-bar">
       <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
-      <input type="text" placeholder="Buscar plato..." id="dish-search" oninput="renderDishes()">
+      <input type="text" placeholder="Buscar plato o ingrediente..." id="dish-search" oninput="renderDishes()">
     </div>
     <div class="day-selector">
       <button class="day-btn active" onclick="setDay('all',this)">Todos los días</button>
@@ -511,31 +530,39 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div id="guiones-content" style="display:none"></div>
   </div>
 
-  <!-- COCKTAILS TAB -->
+  <!-- COCKTAILS TAB — now also hosts Mocktails (interleaved with green halo) and Momentos (toggleable section) -->
   <div id="tab-cocktails" class="hidden">
-    <div class="search-bar" style="margin-bottom:1.25rem;">
+    <div class="search-bar" id="cocktail-search-bar" style="margin-bottom:1rem;">
       <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
       <input type="text" id="cocktail-search" placeholder="Buscar cocktail..." oninput="renderCocktails()">
     </div>
+
+    <!-- Momentos sub-tab: full-width, cobweb animated, light-red halo. Click toggles. -->
+    <button class="momentos-banner" id="momentos-banner" onclick="toggleMomentosSection()">
+      <span class="momentos-banner-cobweb cobweb-left" aria-hidden="true"></span>
+      <span class="momentos-banner-cobweb cobweb-right" aria-hidden="true"></span>
+      <span class="momentos-banner-text">
+        <span class="momentos-banner-label" id="momentos-banner-label">Momentos</span>
+        <span class="momentos-banner-sub" id="momentos-banner-sub">Nueva carta por implementar</span>
+      </span>
+    </button>
+
+    <!-- Default view: mocktails (green halo) + cocktails interleaved -->
     <div id="cocktails-content"></div>
+
+    <!-- Toggled view: Momentos (hidden until banner is tapped) -->
+    <div id="momentos-section" style="display:none">
+      <div class="momentos-notice">
+        <span>⚠</span>
+        <span id="momentos-notice-text">Próximamente · Esta carta aún no está disponible en el bar</span>
+      </div>
+      <div id="momentos-content"></div>
+    </div>
   </div>
 
-  <!-- MOCKTAILS TAB -->
-  <div id="tab-mocktails" class="hidden">
-    <div id="mocktails-content"></div>
-  </div>
-
-  <!-- MOMENTOS TAB -->
+  <!-- CAFÉ TAB -->
   <div id="tab-cafe" class="hidden">
     <div class="coffee-module" id="coffee-module-root"></div>
-  </div>
-
-  <div id="tab-momentos" class="hidden">
-    <div class="momentos-notice">
-      <span>⚠</span>
-      <span id="momentos-notice-text">Próximamente · Esta carta aún no está disponible en el bar</span>
-    </div>
-    <div id="momentos-content"></div>
   </div>
 
 <footer style="margin-top:3rem;padding:1.25rem 0 0.5rem;border-top:0.5px solid var(--border);text-align:center;">
@@ -642,12 +669,13 @@ let currentLang = 'es';
 // ── UI STRINGS ──────────────────────────────────────────────────────────────
 const UI = {
   es: {
-    appTitle:'Explora Atacama — Vinos & Menús', appSubtitle:'Guía de servicio: maridajes, alérgenos y fichas de vino',
-    tabMenus:'Menús por día', tabWines:'Vinos', tabGuiones:'Maridajes generales', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos', tabCafe:'Café',
+    appTitle:'Explora Atacama — Vinos & Menús', appSubtitle:'Cada plato, sabido antes de la mesa.',
+    tabMenus:'Menú', tabWines:'Vinos', tabGuiones:'Maridajes generales', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
     wineFilterPairings:'Maridajes generales',
     momentAllDay:'Todo el día', momentPreDinner:'Pre Dinner · Aperitivos', momentAfterDinner:'After Dinner', momentNotice:'Próximamente · Esta carta aún no está disponible en el bar',
+    momentosBannerSub:'Nueva carta por implementar',
     ctMethod:'Método', ctGlass:'Vaso', ctIce:'Hielo', ctIngredients:'Ingredientes', ctGarnish:'Garnish', ctSearch:'Buscar cocktail...',
-    searchDish:'Buscar plato...', searchWine:'Buscar vino o cepa...',
+    searchDish:'Buscar plato o ingrediente...', searchWine:'Buscar vino o cepa...',
     allDays:'Todos los días', day:'Día', lunch:'Almuerzo', dinner:'Cena', lunchDinner:'Almuerzo y Cena',
     starter:'Entrada', main:'Plato principal', dessert:'Postre',
     allergens:'Alérgenos', pairings:'Maridajes sugeridos',
@@ -673,12 +701,13 @@ const UI = {
     cfHistLoading:'Cargando…'
   },
   en: {
-    appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Service guide: pairings, allergens and wine sheets',
-    tabMenus:'Menus by day', tabWines:'Wines', tabGuiones:'General pairings', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos', tabCafe:'Coffee',
+    appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Each dish, known before the table.',
+    tabMenus:'Menu', tabWines:'Wines', tabGuiones:'General pairings', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Coffee',
     wineFilterPairings:'General pairings',
     momentAllDay:'All Day', momentPreDinner:'Before Dinner · Aperitifs', momentAfterDinner:'After Dinner', momentNotice:'Coming Soon · This menu is not yet available at the bar',
+    momentosBannerSub:'New menu, to be implemented',
     ctMethod:'Method', ctGlass:'Glass', ctIce:'Ice', ctIngredients:'Ingredients', ctGarnish:'Garnish', ctSearch:'Search cocktail...',
-    searchDish:'Search dish...', searchWine:'Search wine or grape...',
+    searchDish:'Search dish or ingredient...', searchWine:'Search wine or grape...',
     allDays:'All days', day:'Day', lunch:'Lunch', dinner:'Dinner', lunchDinner:'Lunch & Dinner',
     starter:'Starter', main:'Main course', dessert:'Dessert',
     allergens:'Allergens', pairings:'Suggested pairings',
@@ -704,12 +733,13 @@ const UI = {
     cfHistLoading:'Loading…'
   },
   pt: {
-    appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Guia de serviço: harmonizações, alérgenos e fichas de vinho',
-    tabMenus:'Menus por dia', tabWines:'Vinhos', tabGuiones:'Harmonizações gerais', tabCocktails:'Cocktails', tabMocktails:'Mocktails', tabMomentos:'Momentos', tabCafe:'Café',
+    appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Cada prato, sabido antes da mesa.',
+    tabMenus:'Menu', tabWines:'Vinhos', tabGuiones:'Harmonizações gerais', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
     wineFilterPairings:'Harmonizações gerais',
     momentAllDay:'Todo o dia', momentPreDinner:'Antes do Jantar · Aperitivos', momentAfterDinner:'Após o Jantar', momentNotice:'Em breve · Este cardápio ainda não está disponível no bar',
+    momentosBannerSub:'Nova carta a implementar',
     ctMethod:'Método', ctGlass:'Copo', ctIce:'Gelo', ctIngredients:'Ingredientes', ctGarnish:'Decoração', ctSearch:'Buscar cocktail...',
-    searchDish:'Buscar prato...', searchWine:'Buscar vinho ou uva...',
+    searchDish:'Buscar prato ou ingrediente...', searchWine:'Buscar vinho ou uva...',
     allDays:'Todos os dias', day:'Dia', lunch:'Almoço', dinner:'Jantar', lunchDinner:'Almoço e Jantar',
     starter:'Entrada', main:'Prato principal', dessert:'Sobremesa',
     allergens:'Alérgenos', pairings:'Harmonizações sugeridas',
@@ -920,15 +950,17 @@ function setLang(lang, el) {
   // update static UI
   document.getElementById('app-title').textContent = t('appTitle');
   document.getElementById('app-subtitle').textContent = t('appSubtitle');
-  // Order: Menús · Vinos · Cocktails · Mocktails · Café · Momentos
+  // Order: Menú · Vinos · Cocktails · Café (Momentos lives inside Cocktails as a sub-tab)
   const mainTabs = document.querySelectorAll('.main-tabs .tab');
   if (mainTabs[0]) mainTabs[0].textContent = t('tabMenus');
   if (mainTabs[1]) mainTabs[1].textContent = t('tabWines');
   if (mainTabs[2]) mainTabs[2].textContent = t('tabCocktails');
-  if (mainTabs[3]) mainTabs[3].textContent = t('tabMocktails');
-  // mainTabs[4] is Café (handled below by id), mainTabs[5] is Momentos (label span below)
-  const momentosLabel = document.getElementById('tab-momentos-label');
-  if (momentosLabel) momentosLabel.textContent = t('tabMomentos');
+  // mainTabs[3] is Café (handled below by id)
+  // Momentos banner inside Cocktails
+  const mLbl = document.getElementById('momentos-banner-label');
+  if (mLbl) mLbl.textContent = t('tabMomentos');
+  const mSub = document.getElementById('momentos-banner-sub');
+  if (mSub) mSub.textContent = t('momentosBannerSub');
   const csearch = document.getElementById('cocktail-search');
   if (csearch) csearch.placeholder = t('ctSearch');
 
@@ -949,9 +981,10 @@ function setLang(lang, el) {
   selectedDish = null; selectedWine = null;
   renderDishes(); renderWines();
   if (currentTab === 'vinos' && wineFilter === 'maridajes') renderGuiones();
-  if (currentTab === 'cocktails') renderCocktails();
-  if (currentTab === 'mocktails') renderMocktails();
-  if (currentTab === 'momentos') renderMomentos();
+  if (currentTab === 'cocktails'){
+    renderCocktails();
+    if (cocktailsShowingMomentos) renderMomentos();
+  }
   if (currentTab === 'cafe') renderCafeTab();
   const cafeBtn = document.getElementById('tab-btn-cafe');
   if (cafeBtn) cafeBtn.textContent = t('tabCafe');
@@ -968,10 +1001,11 @@ function setTab(tab, el) {
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  ['menus','vinos','cocktails','mocktails','momentos','cafe'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
-  if (tab === 'cocktails') renderCocktails();
-  if (tab === 'mocktails') renderMocktails();
-  if (tab === 'momentos') renderMomentos();
+  ['menus','vinos','cocktails','cafe'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  if (tab === 'cocktails'){
+    renderCocktails();
+    if (cocktailsShowingMomentos) renderMomentos();
+  }
   if (tab === 'cafe') renderCafeTab();
 }
 
@@ -1217,7 +1251,7 @@ function openWineFromGuion(wid) {
   // the user might be on a different filter; reset to 'todos' so the wine
   // grid is visible (where selectWine will reveal the chosen wine).
   document.querySelectorAll('.main-tabs .tab').forEach((tb,i) => tb.classList.toggle('active', i===1));
-  ['menus','vinos','cocktails','mocktails','momentos','cafe'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t!=='vinos'));
+  ['menus','vinos','cocktails','cafe'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t!=='vinos'));
   currentTab = 'vinos';
   wineFilter = 'todos';
   const filterTabs = document.querySelectorAll('.wine-filter-tabs .tab');
@@ -1643,10 +1677,10 @@ const MOMENTOS = [
   }
 ];
 
-function buildDrinkCard(c, lang, ui) {
+function buildDrinkCard(c, lang, ui, isMocktail) {
   const tr = v => typeof v === 'object' ? v[lang] : v;
   return `
-    <div class="cocktail-card">
+    <div class="cocktail-card${isMocktail ? ' cocktail-mocktail' : ''}">
       <div class="cocktail-name">${c.name}</div>
       <div class="cocktail-method">${c.method[lang]}</div>
       <div class="cocktail-meta-row">
@@ -1665,26 +1699,45 @@ function buildDrinkCard(c, lang, ui) {
     </div>`;
 }
 
+// Cocktails view: renders mocktails first (with green halo class) then
+// alcoholic cocktails. Search filters across both lists. Mocktails and
+// cocktails share one CSS grid — the green border on mocktails is the
+// only signal needed to read them as a separate family.
 function renderCocktails() {
   const lang = currentLang;
   const ui = UI[lang];
   const q = (document.getElementById('cocktail-search')?.value || '').toLowerCase();
   const tr = v => typeof v === 'object' ? (v[lang] || v.es || '') : (v || '');
-  const list = q ? COCKTAILS.filter(c => {
+  const matches = c => {
+    if (!q) return true;
     const ingText = c.ingredients.map(([n]) => tr(n)).join(' ');
     const haystack = [c.name, tr(c.garnish), tr(c.method), tr(c.glass), ingText].join(' ').toLowerCase();
     return haystack.includes(q);
-  }) : COCKTAILS;
-  document.getElementById('cocktails-content').innerHTML =
-    list.length ? `<div class="cocktail-grid">${list.map(c => buildDrinkCard(c, lang, ui)).join('')}</div>`
-                : `<p class="empty-state">${ui.noDishes}</p>`;
+  };
+  const mList = MOCKTAILS.filter(matches);
+  const cList = COCKTAILS.filter(matches);
+  const html = (mList.length || cList.length)
+    ? `<div class="cocktail-grid">${
+        mList.map(c => buildDrinkCard(c, lang, ui, true)).join('')
+      }${
+        cList.map(c => buildDrinkCard(c, lang, ui, false)).join('')
+      }</div>`
+    : `<p class="empty-state">${ui.noDishes}</p>`;
+  document.getElementById('cocktails-content').innerHTML = html;
 }
 
-function renderMocktails() {
-  const lang = currentLang;
-  const ui = UI[lang];
-  document.getElementById('mocktails-content').innerHTML =
-    `<div class="cocktail-grid">${MOCKTAILS.map(c => buildDrinkCard(c, lang, ui)).join('')}</div>`;
+// Toggle between the cocktails+mocktails listing and the Momentos
+// "coming soon" sub-view. Banner stays in the DOM as the back-button.
+let cocktailsShowingMomentos = false;
+function toggleMomentosSection(){
+  cocktailsShowingMomentos = !cocktailsShowingMomentos;
+  const banner = document.getElementById('momentos-banner');
+  const list   = document.getElementById('cocktails-content');
+  const mom    = document.getElementById('momentos-section');
+  if (banner) banner.classList.toggle('active', cocktailsShowingMomentos);
+  if (list)   list.style.display = cocktailsShowingMomentos ? 'none' : '';
+  if (mom)    mom.style.display  = cocktailsShowingMomentos ? '' : 'none';
+  if (cocktailsShowingMomentos) renderMomentos();
 }
 
 function renderMomentos() {
