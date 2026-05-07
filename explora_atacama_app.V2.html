@@ -57,10 +57,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .header { padding: 1rem 0 1.5rem; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between; }
 .header-text h1 { font-size: 20px; font-weight: 500; color: var(--text); }
 .header-text p { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
-/* Staffing panel — sits between header and tabs. Always renders the bottom
-   divider line so it inherits the role the header's border-bottom used to
-   play. Content varies: active shift, off-hours hint, or empty (data missing). */
-.staffing-panel { margin: 0 0 1.5rem; padding: 0 0 0.9rem; border-bottom: 0.5px solid var(--border); font-family: 'Courier Prime','Courier New',monospace; }
+/* Ops strip wrapper — owns the divider line so its children (staffing panel,
+   desserts strip) can each be empty without losing the visual separator. */
+.ops-strip { margin: 0 0 1.5rem; padding: 0 0 0.9rem; border-bottom: 0.5px solid var(--border); }
+
+/* Staffing panel — child of .ops-strip. No own border; relies on wrapper. */
+.staffing-panel { margin: 0 0 0.7rem; padding: 0; font-family: 'Courier Prime','Courier New',monospace; }
+.staffing-panel:empty { margin: 0; }
 .staffing-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.7rem; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; }
 .staffing-shift { color: var(--gold); font-weight: 500; }
 .staffing-viajeros { color: var(--text-tertiary); }
@@ -68,8 +71,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .staffing-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); }
 .staffing-names { font-family: inherit; font-size: 12px; color: var(--text-secondary); line-height: 1.45; }
 .staffing-off { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-tertiary); opacity: 0.55; padding: 4px 0; }
-/* When panel has no rendered content it collapses to just the divider */
-.staffing-panel:empty { padding: 0; }
+
+/* Desserts strip — single horizontal row with H/S/F/N codes, sits right
+   above the tabs. Empty state shows a discreet add-button instead. */
+.desserts-strip { font-family: 'Courier Prime','Courier New',monospace; font-size: 11px; letter-spacing: 0.06em; color: var(--text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-height: 22px; }
+.desserts-strip:empty { display: none; }
+.desserts-item { display: inline-flex; gap: 6px; align-items: baseline; white-space: nowrap; }
+.desserts-item-label { color: var(--gold); font-weight: 500; letter-spacing: 0.1em; }
+.desserts-item-value { color: var(--text-secondary); letter-spacing: 0; font-family: inherit; }
+.desserts-edit-btn { margin-left: auto; background: transparent; border: 0.5px solid var(--border); color: var(--text-tertiary); padding: 2px 8px; border-radius: var(--radius-md); font-size: 12px; line-height: 1.2; cursor: pointer; transition: color .15s, border-color .15s; touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent; }
+.desserts-edit-btn:hover { color: var(--gold); border-color: rgba(202,138,4,0.3); }
+.desserts-empty-btn { background: transparent; border: 0.5px dashed var(--border-md); color: var(--text-tertiary); font-family: 'Courier Prime','Courier New',monospace; font-size: 11px; letter-spacing: 0.08em; padding: 5px 14px; border-radius: var(--radius-md); cursor: pointer; transition: all .15s; touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent; }
+.desserts-empty-btn:hover { color: var(--gold); border-color: rgba(202,138,4,0.32); }
+
+/* Desserts inline edit form — appears below the strip when ✎ is tapped. */
+.desserts-form { margin-top: 12px; padding: 12px 14px; background: rgba(202,138,4,0.04); border: 0.5px solid rgba(202,138,4,0.18); border-radius: var(--radius-md); animation: panelIn 0.22s cubic-bezier(0.34,1.1,0.64,1) both; }
+.desserts-form[hidden] { display: none; }
+.desserts-form-row { margin-bottom: 10px; }
+.desserts-form-label { display: block; font-family: 'Courier Prime','Courier New',monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 4px; }
+.desserts-form-input { width: 100%; background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius-md); color: var(--text); font-size: 16px; padding: 7px 12px; outline: none; font-family: inherit; box-sizing: border-box; }
+.desserts-form-input:focus { border-color: var(--gold); }
+.desserts-form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+.desserts-form-btn { padding: 7px 14px; border-radius: var(--radius-md); font-size: 12px; cursor: pointer; border: 0.5px solid var(--border-md); background: transparent; color: var(--text-secondary); transition: all .15s; touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent; }
+.desserts-form-btn:hover { color: var(--text); }
+.desserts-form-btn.primary { background: var(--wine-red); border-color: var(--wine-red); color: white; }
+.desserts-form-btn.primary:hover { opacity: 0.85; }
 .lang-toggle { display: flex; gap: 4px; flex-shrink: 0; }
 .lang-btn { padding: 4px 9px; border-radius: 6px; border: 0.5px solid var(--border-md); font-size: 11px; font-weight: 500; cursor: pointer; background: transparent; color: var(--text-tertiary); letter-spacing: 0.04em; transition: all 0.15s; }
 .lang-btn:hover { background: var(--bg-secondary); color: var(--text-secondary); }
@@ -510,9 +536,38 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
   </div>
 
-  <!-- Shift roster panel — populated from /staffing/{YYYY-MM}/{day} on Firebase.
-       Always renders the bottom divider line; content varies by current shift. -->
-  <div class="staffing-panel" id="staffing-panel"></div>
+  <!-- Operational header zone: shift roster + service desserts. The wrapper
+       owns the bottom divider so either child can be empty without losing
+       the visual separator before the tabs. -->
+  <div class="ops-strip">
+    <!-- Shift roster — populated from /staffing/{YYYY-MM}/{day} on Firebase. -->
+    <div class="staffing-panel" id="staffing-panel"></div>
+    <!-- Service desserts — populated from /desserts/{YYYY-MM-DD}, freshness 4h. -->
+    <div class="desserts-strip" id="desserts-strip"></div>
+    <!-- Inline edit form for desserts; toggled by dessertsOpenForm()/CloseForm(). -->
+    <div class="desserts-form" id="desserts-form" hidden>
+      <div class="desserts-form-row">
+        <span class="desserts-form-label" id="d-label-helado">Helado</span>
+        <input class="desserts-form-input" id="d-helado" type="text" autocomplete="off">
+      </div>
+      <div class="desserts-form-row">
+        <span class="desserts-form-label" id="d-label-sorbet">Sorbet</span>
+        <input class="desserts-form-input" id="d-sorbet" type="text" autocomplete="off">
+      </div>
+      <div class="desserts-form-row">
+        <span class="desserts-form-label" id="d-label-fruta">Frutas (coma)</span>
+        <input class="desserts-form-input" id="d-fruta" type="text" autocomplete="off">
+      </div>
+      <div class="desserts-form-row">
+        <span class="desserts-form-label" id="d-label-ninos">Niños</span>
+        <input class="desserts-form-input" id="d-ninos" type="text" autocomplete="off">
+      </div>
+      <div class="desserts-form-actions">
+        <button class="desserts-form-btn"         id="d-cancel" onclick="dessertsCloseForm()">Cancelar</button>
+        <button class="desserts-form-btn primary" id="d-save"   onclick="dessertsSubmitForm()">Guardar</button>
+      </div>
+    </div>
+  </div>
 
   <div class="main-tabs">
     <button class="tab active" onclick="setTab('menus',this)">Menú</button>
@@ -693,17 +748,52 @@ let selectedDish = null;
 let selectedWine = null;
 let currentLang = 'es';
 
-// ── Shift roster state (declared early to avoid TDZ when setLang fires
-// staffingRender on first boot — the rest of the staffing module lives
-// later in the script, but its state must be reachable from the moment
-// any code path touches it). ────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// STATE TOP — module-level let/const declarations
+// ════════════════════════════════════════════════════════════════════════════
+// HARD RULE, not a suggestion. JS let/const are hoisted but stay in TDZ
+// (Temporal Dead Zone) until their declaration line is reached during
+// execution. If any code path — boot setLang, hook registry, render
+// callback — touches a module's state before that line runs, JS throws
+// ReferenceError, halts the rest of the script, and leaves every
+// subsequent let/const in TDZ for the page's lifetime. We learned this
+// the hard way (commit 10ab8e0 → a08f731).
+//
+// New modules MUST declare their let/const here, alongside the existing
+// blocks. Function declarations and listeners can live elsewhere — they
+// hoist correctly. State doesn't.
+// ────────────────────────────────────────────────────────────────────────────
+
+// --- i18n hook registry --------------------------------------------------
+// Modules that need to re-render labels on language change push their
+// render fn here. setLang iterates and fires each one inside try/catch so
+// a single broken module can't take down the rest. See setLang's tail.
+const __i18nHooks = [];
+function onI18nChange(fn){ __i18nHooks.push(fn); }
+
+// --- Shift roster state --------------------------------------------------
+// Module: staffing — see fn definitions further down for details.
 const STAFFING_PATH       = 'staffing';
 const STAFFING_AM_START   = 6 * 60 + 30;   // 06:30 in minutes since midnight
 const STAFFING_AM_END     = 15 * 60;       // 15:00 — handoff
 const STAFFING_PM_START   = 15 * 60;       // 15:00
 const STAFFING_PM_END     = 23 * 60 + 30;  // 23:30
-let STAFFING_DATA         = null;          // { dayKey: { ...dayData } }
-let STAFFING_MONTH_KEY    = null;          // "YYYY-MM" currently loaded
+let STAFFING_DATA         = null;
+let STAFFING_MONTH_KEY    = null;
+
+// --- Daily desserts state ------------------------------------------------
+// Module: desserts — service-changing items (helado/sorbet/fruta/niños)
+// stored at /desserts/{YYYY-MM-DD}. Freshness 4h; stale entries auto-purge.
+const DESSERTS_PATH         = 'desserts';
+const DESSERTS_FRESHNESS_MS = 4 * 60 * 60 * 1000; // 4 hours
+let DESSERTS_DATA           = null;   // { helado, sorbet, fruta[], ninos, enteredAt }
+let DESSERTS_DATE_KEY       = null;   // 'YYYY-MM-DD' currently loaded
+let DESSERTS_FORM_OPEN      = false;
+
+// ════════════════════════════════════════════════════════════════════════════
+// END STATE TOP
+// ════════════════════════════════════════════════════════════════════════════
+
 
 // ── UI STRINGS ──────────────────────────────────────────────────────────────
 const UI = {
@@ -738,7 +828,10 @@ const UI = {
     cfHistTickets:'tickets', cfHistTicket:'ticket',
     cfHistAvgPrep:'preparación promedio', cfHistTopDrinks:'Más pedidas',
     cfHistLoading:'Cargando…',
-    staffViajeros:'viajeros', staffSenior:'Senior', staffComedor:'Comedor', staffApoyo:'Apoyo', staffNext:'Próximo'
+    staffViajeros:'viajeros', staffSenior:'Senior', staffComedor:'Comedor', staffApoyo:'Apoyo', staffNext:'Próximo',
+    dessertsAddBtn:'Postres del servicio', dessertsEditBtn:'Editar postres',
+    dessertsLabelHelado:'Helado', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Frutas (coma)', dessertsLabelNinos:'Niños',
+    dessertsSave:'Guardar', dessertsCancel:'Cancelar'
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'The detail, at hand.',
@@ -771,7 +864,10 @@ const UI = {
     cfHistTickets:'tickets', cfHistTicket:'ticket',
     cfHistAvgPrep:'avg prep time', cfHistTopDrinks:'Top drinks',
     cfHistLoading:'Loading…',
-    staffViajeros:'guests', staffSenior:'Senior', staffComedor:'Floor', staffApoyo:'Support', staffNext:'Next'
+    staffViajeros:'guests', staffSenior:'Senior', staffComedor:'Floor', staffApoyo:'Support', staffNext:'Next',
+    dessertsAddBtn:'Service desserts', dessertsEditBtn:'Edit desserts',
+    dessertsLabelHelado:'Ice cream', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Fruits (comma)', dessertsLabelNinos:'Kids',
+    dessertsSave:'Save', dessertsCancel:'Cancel'
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'O detalhe, à mão.',
@@ -804,7 +900,10 @@ const UI = {
     cfHistTickets:'tickets', cfHistTicket:'ticket',
     cfHistAvgPrep:'preparação média', cfHistTopDrinks:'Mais pedidas',
     cfHistLoading:'Carregando…',
-    staffViajeros:'hóspedes', staffSenior:'Senior', staffComedor:'Salão', staffApoyo:'Apoio', staffNext:'Próximo'
+    staffViajeros:'hóspedes', staffSenior:'Senior', staffComedor:'Salão', staffApoyo:'Apoio', staffNext:'Próximo',
+    dessertsAddBtn:'Sobremesas do serviço', dessertsEditBtn:'Editar sobremesas',
+    dessertsLabelHelado:'Sorvete', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Frutas (vírgula)', dessertsLabelNinos:'Crianças',
+    dessertsSave:'Salvar', dessertsCancel:'Cancelar'
   }
 };
 function t(k){ return UI[currentLang][k] || UI.es[k]; }
@@ -1032,8 +1131,10 @@ function setLang(lang, el) {
   if (cafeBtn) cafeBtn.textContent = t('tabCafe');
   const mn = document.getElementById('momentos-notice-text');
   if (mn) mn.textContent = t('momentNotice');
-  // Re-render staffing labels in the new language
-  if (typeof staffingRender === 'function') staffingRender();
+  // Fire i18n hooks — modules that need to re-render their labels in the
+  // new language register via onI18nChange(). Each call is guarded so a
+  // single broken module can't halt setLang for the rest.
+  __i18nHooks.forEach(fn => { try { fn(); } catch(e){ console.warn('[i18n hook]', e); } });
   if (prevDish && currentTab === 'menus') {
     selectDish(prevDish);
     if (prevSubWine) openWineFromDish(prevSubWine);
@@ -2543,6 +2644,191 @@ document.addEventListener('visibilitychange', ()=>{
     else staffingRender();
   }
 });
+// Register staffing for i18n updates so its labels (Senior/Comedor/Apoyo,
+// viajeros, Próximo) re-render when the user changes language. Using the
+// hook registry instead of a direct setLang call decouples the modules
+// from setLang and prevents TDZ if state ever drifts again.
+onI18nChange(staffingRender);
+
+// ── Daily desserts module ────────────────────────────────────────────────
+// Path:    /desserts/{YYYY-MM-DD}
+// Shape:   { helado, sorbet, fruta[], ninos, enteredAt }
+// Lifecycle:
+//   • Anyone can enter via the inline form at any time
+//   • Entry is "fresh" for DESSERTS_FRESHNESS_MS (4h) from enteredAt
+//   • Stale entries are auto-DELETED from Firebase on next read by any
+//     client (eventually-consistent purge — no Cloud Function needed)
+//   • Single entry per day; dinner overwrites lunch once lunch is stale
+// State (DESSERTS_PATH, DESSERTS_FRESHNESS_MS, DESSERTS_DATA,
+// DESSERTS_DATE_KEY, DESSERTS_FORM_OPEN) lives in STATE TOP.
+
+function dessertsDateKey(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const da = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${da}`;
+}
+function dessertsIsStale(data){
+  if (!data || !data.enteredAt) return true;
+  return (Date.now() - data.enteredAt) > DESSERTS_FRESHNESS_MS;
+}
+
+async function dessertsFetch(){
+  const key = dessertsDateKey(new Date());
+  DESSERTS_DATE_KEY = key;
+  const url = `${CF_FIREBASE_CONFIG.databaseURL}/${DESSERTS_PATH}/${key}.json`;
+  try {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (data && dessertsIsStale(data)){
+      // Stale — delete server-side (eventually-consistent purge), treat as missing
+      fetch(url, { method: 'DELETE' }).catch(()=>{});
+      DESSERTS_DATA = null;
+    } else {
+      DESSERTS_DATA = data || null;
+    }
+  } catch(e){
+    DESSERTS_DATA = null;
+  }
+  dessertsRender();
+}
+
+function dessertsRender(){
+  const strip = document.getElementById('desserts-strip');
+  const form  = document.getElementById('desserts-form');
+  if (!strip) return;
+  // If form is open, just refresh its labels and leave the strip alone
+  if (DESSERTS_FORM_OPEN){
+    dessertsRefreshFormLabels();
+    return;
+  }
+  // Empty / stale state → discreet add button
+  if (!DESSERTS_DATA || dessertsIsStale(DESSERTS_DATA)){
+    strip.innerHTML = `<button class="desserts-empty-btn" onclick="dessertsOpenForm()">+ ${t('dessertsAddBtn')}</button>`;
+    if (form) form.hidden = true;
+    return;
+  }
+  const d = DESSERTS_DATA;
+  const items = [];
+  if (d.helado) items.push({ l:'H', v:d.helado });
+  if (d.sorbet) items.push({ l:'S', v:d.sorbet });
+  if (d.fruta){
+    const list = Array.isArray(d.fruta) ? d.fruta.filter(Boolean) : [d.fruta];
+    if (list.length) items.push({ l:'F', v:list.join(', ') });
+  }
+  if (d.ninos) items.push({ l:'N', v:d.ninos });
+  if (!items.length){
+    // Document exists but has no values — treat as empty
+    strip.innerHTML = `<button class="desserts-empty-btn" onclick="dessertsOpenForm()">+ ${t('dessertsAddBtn')}</button>`;
+    return;
+  }
+  strip.innerHTML =
+    items.map(it => `<span class="desserts-item"><span class="desserts-item-label">${it.l}</span>·<span class="desserts-item-value">${it.v}</span></span>`).join('') +
+    `<button class="desserts-edit-btn" onclick="dessertsOpenForm()" aria-label="${t('dessertsEditBtn')}">✎</button>`;
+  if (form) form.hidden = true;
+}
+
+function dessertsRefreshFormLabels(){
+  const map = {
+    'd-label-helado': 'dessertsLabelHelado',
+    'd-label-sorbet': 'dessertsLabelSorbet',
+    'd-label-fruta':  'dessertsLabelFruta',
+    'd-label-ninos':  'dessertsLabelNinos'
+  };
+  Object.entries(map).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  });
+  const save   = document.getElementById('d-save');
+  const cancel = document.getElementById('d-cancel');
+  if (save)   save.textContent   = t('dessertsSave');
+  if (cancel) cancel.textContent = t('dessertsCancel');
+}
+
+function dessertsOpenForm(){
+  DESSERTS_FORM_OPEN = true;
+  const form = document.getElementById('desserts-form');
+  if (!form) return;
+  // Pre-populate inputs with current fresh data (if any) so editing is incremental
+  const d = (DESSERTS_DATA && !dessertsIsStale(DESSERTS_DATA)) ? DESSERTS_DATA : {};
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+  set('d-helado', d.helado);
+  set('d-sorbet', d.sorbet);
+  set('d-fruta',  Array.isArray(d.fruta) ? d.fruta.join(', ') : (d.fruta || ''));
+  set('d-ninos',  d.ninos);
+  dessertsRefreshFormLabels();
+  form.hidden = false;
+  // Hide the strip while the form is open to avoid the "+ button" sitting on top
+  const strip = document.getElementById('desserts-strip');
+  if (strip) strip.innerHTML = '';
+}
+
+function dessertsCloseForm(){
+  DESSERTS_FORM_OPEN = false;
+  const form = document.getElementById('desserts-form');
+  if (form) form.hidden = true;
+  dessertsRender();
+}
+
+async function dessertsSubmitForm(){
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  const helado = val('d-helado');
+  const sorbet = val('d-sorbet');
+  const ninos  = val('d-ninos');
+  const fruta  = val('d-fruta').split(',').map(s=>s.trim()).filter(Boolean);
+  // If the user clears everything, treat as a delete
+  if (!helado && !sorbet && !ninos && !fruta.length){
+    const key = dessertsDateKey(new Date());
+    const url = `${CF_FIREBASE_CONFIG.databaseURL}/${DESSERTS_PATH}/${key}.json`;
+    fetch(url, { method:'DELETE' }).catch(()=>{});
+    DESSERTS_DATA = null;
+    dessertsCloseForm();
+    return;
+  }
+  const payload = { enteredAt: Date.now() };
+  if (helado)        payload.helado = helado;
+  if (sorbet)        payload.sorbet = sorbet;
+  if (fruta.length)  payload.fruta  = fruta;
+  if (ninos)         payload.ninos  = ninos;
+  const key = dessertsDateKey(new Date());
+  const url = `${CF_FIREBASE_CONFIG.databaseURL}/${DESSERTS_PATH}/${key}.json`;
+  // Disable the save button while writing
+  const saveBtn = document.getElementById('d-save');
+  if (saveBtn) saveBtn.disabled = true;
+  try {
+    await fetch(url, { method:'PUT', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+    DESSERTS_DATA = payload;
+    dessertsCloseForm();
+  } catch(e){
+    console.error('[desserts]', e);
+    if (saveBtn) saveBtn.disabled = false;
+  }
+}
+
+// Tick: every 60s, freshness check + render. If we have data that just went
+// stale, the next fetch deletes it server-side. If we have nothing or it's
+// stale already, re-fetch in case another device just entered new data.
+setInterval(()=>{
+  if (!DESSERTS_DATA || dessertsIsStale(DESSERTS_DATA)){
+    dessertsFetch();
+  } else {
+    // Fresh data — re-render is essentially a no-op but keeps the freshness
+    // boundary aligned to the real wall clock
+    dessertsRender();
+  }
+}, 60000);
+document.addEventListener('visibilitychange', ()=>{
+  if (document.visibilityState === 'visible'){
+    // Refetch whenever the user comes back to the tab, so edits made
+    // elsewhere propagate as soon as the staff returns to the page
+    const newKey = dessertsDateKey(new Date());
+    if (newKey !== DESSERTS_DATE_KEY || !DESSERTS_DATA || dessertsIsStale(DESSERTS_DATA)){
+      dessertsFetch();
+    }
+  }
+});
+
+onI18nChange(dessertsRender);
 
 // ── History helpers ──────────────────────────────────────────────────────────
 // Date bucket key in local time: 'YYYY-MM-DD'. The "Hoy/Ayer" boundary is
@@ -3520,10 +3806,12 @@ function cfMarkDone(id){
   setTimeout(()=>cf_optimisticallyDone.delete(id), 5000);
 }
 
-// Boot the shift roster panel. Fires async; the panel will render itself
-// as soon as the fetch resolves. Until then, the empty container collapses
-// (its bottom border stays as the visual divider).
+// Boot the shift roster panel and the desserts strip. Both fire async;
+// each panel renders itself as soon as its fetch resolves. Until then,
+// the empty containers collapse (the .ops-strip wrapper's bottom border
+// stays as the visual divider).
 staffingFetch();
+dessertsFetch();
 </script>
 </body>
 </html>
