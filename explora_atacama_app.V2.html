@@ -296,6 +296,34 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-barista-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:8px; }
 .cf-barista-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); }
 .cf-clear-btn { font-size:11px; color:var(--text-tertiary); background:none; border:0.5px solid var(--border); border-radius:var(--radius-md); padding:5px 10px; cursor:pointer; }
+/* Barista subview tabs (Cola / Historial) */
+.cf-bs-tabs { display:flex; gap:4px; }
+.cf-bs-tab { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); background:transparent; border:0.5px solid transparent; border-radius:var(--radius-md); padding:5px 11px; cursor:pointer; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cf-bs-tab:hover { color:var(--text-secondary); border-color:var(--border); }
+.cf-bs-tab.active { color:var(--gold); border-color:rgba(202,138,4,0.4); background:rgba(202,138,4,0.08); }
+/* History view */
+.cf-history-nav { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
+.cf-hist-arrow { background:transparent; border:0.5px solid var(--border-md); border-radius:var(--radius-md); width:36px; height:32px; color:var(--text-secondary); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cf-hist-arrow:hover:not(:disabled) { background:var(--bg-secondary); color:var(--text); border-color:var(--gold); }
+.cf-hist-arrow:disabled { opacity:0.3; cursor:default; }
+.cf-hist-date-label { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:18px; color:var(--gold); flex:1; text-align:center; text-transform:capitalize; }
+.cf-hist-stats { background:rgba(202,138,4,0.06); border:0.5px solid rgba(202,138,4,0.22); border-radius:var(--radius-md); padding:10px 12px; margin-bottom:14px; font-size:12px; color:var(--text-secondary); line-height:1.55; }
+.cf-hist-stats-line { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+.cf-hist-stats-line strong { color:var(--gold); font-weight:500; font-family:'Courier Prime','Courier New',monospace; }
+.cf-hist-stats-top { margin-top:5px; padding-top:5px; border-top:0.5px solid rgba(202,138,4,0.18); font-size:11px; color:var(--text-tertiary); }
+.cf-hist-stats-top strong { color:var(--text-secondary); font-weight:500; }
+.cf-hist-row { border:0.5px solid var(--border); border-radius:var(--radius-md); background:var(--surface); padding:10px 12px; margin-bottom:6px; }
+.cf-hist-head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:5px; }
+.cf-hist-time { font-family:'Courier Prime','Courier New',monospace; font-size:13px; font-weight:500; color:var(--gold); }
+.cf-hist-table { font-size:13px; color:var(--text); }
+.cf-hist-count { font-size:11px; color:var(--text-tertiary); }
+.cf-hist-prep { margin-left:auto; font-family:'Courier Prime','Courier New',monospace; font-size:12px; color:var(--text-secondary); }
+.cf-hist-item { display:flex; gap:8px; padding:3px 0; font-size:12px; color:var(--text-secondary); }
+.cf-hist-item-qty { color:#9ec9ff; font-family:'Courier Prime','Courier New',monospace; min-width:26px; }
+.cf-hist-item-mods { color:var(--text-tertiary); font-size:11px; }
+.cf-hist-item-special { color:var(--gold); font-style:italic; font-size:11px; }
+.cf-hist-empty { text-align:center; color:var(--text-tertiary); font-size:12px; padding:2.5rem 1rem; font-family:'Courier Prime','Courier New',monospace; letter-spacing:0.08em; }
+.cf-hist-loading { text-align:center; color:var(--text-tertiary); font-size:11px; padding:1.5rem 1rem; opacity:0.6; }
 .cf-exit-btn { font-size:11px; color:var(--text-tertiary); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; }
 .cf-queue-empty { text-align:center; color:var(--text-tertiary); font-size:12px; padding:3rem 1rem; font-family:'Courier Prime','Courier New',monospace; letter-spacing:0.1em; text-transform:uppercase; }
 .cf-order-card {
@@ -630,10 +658,16 @@ const UI = {
     cfWaiterTitle:'Nueva Orden', cfWaiterSub:'Selecciona bebida · anota el pedido especial',
     cfSelectDrink:'Bebida', cfTableLabel:'Mesa (opcional)', cfTablePlaceholder:'Mesa', cfSpecialRequest:'Petición especial (opcional)', cfSpecialPlaceholder:'Ej: sin azúcar, leche de avena…',
     cfSubmitOrder:'Enviar orden al barista', cfConfirm:'✓ Orden enviada',
-    cfBaristaTitle:'Cola de pedidos', cfQueueEmpty:'Sin pedidos pendientes', cfMarkDone:'Listo ✓', cfClearDone:'Limpiar completados', cfExit:'Salir',
+    cfBaristaTitle:'Cola de pedidos', cfQueueEmpty:'Sin pedidos pendientes', cfMarkDone:'Listo ✓', cfExit:'Salir',
     cfMilkType:'Tipo de leche', cfMilkEntera:'Entera', cfMilkSinLactosa:'Sin lactosa', cfMilkVegetal:'Vegetal', cfMilkVegetalSpec:'Especificar (avena, almendra…)',
     cfShotType:'Carga', cfShotSimple:'Simple', cfShotDoble:'Doble',
-    cfAddToOrder:'+ Agregar al pedido', cfCartTitle:'Tu pedido', cfCartDrink:'bebida', cfCartDrinks:'bebidas', cfBuilderTitle:'Agregar bebida'
+    cfAddToOrder:'+ Agregar al pedido', cfCartTitle:'Tu pedido', cfCartDrink:'bebida', cfCartDrinks:'bebidas', cfBuilderTitle:'Agregar bebida',
+    cfQueueTab:'Cola', cfHistoryTab:'Historial',
+    cfHistToday:'Hoy', cfHistYesterday:'Ayer',
+    cfHistEmpty:'Sin pedidos registrados este día',
+    cfHistTickets:'tickets', cfHistTicket:'ticket',
+    cfHistAvgPrep:'preparación promedio', cfHistTopDrinks:'Más pedidas',
+    cfHistLoading:'Cargando…'
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'Service guide: pairings, allergens and wine sheets',
@@ -654,10 +688,16 @@ const UI = {
     cfWaiterTitle:'New Order', cfWaiterSub:'Select drink · note special request',
     cfSelectDrink:'Drink', cfTableLabel:'Table (optional)', cfTablePlaceholder:'Table', cfSpecialRequest:'Special request (optional)', cfSpecialPlaceholder:'e.g. no sugar, oat milk…',
     cfSubmitOrder:'Send order to barista', cfConfirm:'✓ Order sent',
-    cfBaristaTitle:'Order queue', cfQueueEmpty:'No pending orders', cfMarkDone:'Done ✓', cfClearDone:'Clear completed', cfExit:'Exit',
+    cfBaristaTitle:'Order queue', cfQueueEmpty:'No pending orders', cfMarkDone:'Done ✓', cfExit:'Exit',
     cfMilkType:'Milk type', cfMilkEntera:'Whole', cfMilkSinLactosa:'Lactose-free', cfMilkVegetal:'Plant-based', cfMilkVegetalSpec:'Specify (oat, almond…)',
     cfShotType:'Shot', cfShotSimple:'Single', cfShotDoble:'Double',
-    cfAddToOrder:'+ Add to order', cfCartTitle:'Your order', cfCartDrink:'drink', cfCartDrinks:'drinks', cfBuilderTitle:'Add drink'
+    cfAddToOrder:'+ Add to order', cfCartTitle:'Your order', cfCartDrink:'drink', cfCartDrinks:'drinks', cfBuilderTitle:'Add drink',
+    cfQueueTab:'Queue', cfHistoryTab:'History',
+    cfHistToday:'Today', cfHistYesterday:'Yesterday',
+    cfHistEmpty:'No orders recorded for this day',
+    cfHistTickets:'tickets', cfHistTicket:'ticket',
+    cfHistAvgPrep:'avg prep time', cfHistTopDrinks:'Top drinks',
+    cfHistLoading:'Loading…'
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'Guia de serviço: harmonizações, alérgenos e fichas de vinho',
@@ -678,10 +718,16 @@ const UI = {
     cfWaiterTitle:'Novo Pedido', cfWaiterSub:'Selecione a bebida · anote o pedido especial',
     cfSelectDrink:'Bebida', cfTableLabel:'Mesa (opcional)', cfTablePlaceholder:'Mesa', cfSpecialRequest:'Pedido especial (opcional)', cfSpecialPlaceholder:'Ex: sem açúcar, leite de aveia…',
     cfSubmitOrder:'Enviar pedido ao barista', cfConfirm:'✓ Pedido enviado',
-    cfBaristaTitle:'Fila de pedidos', cfQueueEmpty:'Sem pedidos pendentes', cfMarkDone:'Pronto ✓', cfClearDone:'Limpar concluídos', cfExit:'Sair',
+    cfBaristaTitle:'Fila de pedidos', cfQueueEmpty:'Sem pedidos pendentes', cfMarkDone:'Pronto ✓', cfExit:'Sair',
     cfMilkType:'Tipo de leite', cfMilkEntera:'Integral', cfMilkSinLactosa:'Sem lactose', cfMilkVegetal:'Vegetal', cfMilkVegetalSpec:'Especificar (aveia, amêndoa…)',
     cfShotType:'Carga', cfShotSimple:'Simples', cfShotDoble:'Duplo',
-    cfAddToOrder:'+ Adicionar ao pedido', cfCartTitle:'Seu pedido', cfCartDrink:'bebida', cfCartDrinks:'bebidas', cfBuilderTitle:'Adicionar bebida'
+    cfAddToOrder:'+ Adicionar ao pedido', cfCartTitle:'Seu pedido', cfCartDrink:'bebida', cfCartDrinks:'bebidas', cfBuilderTitle:'Adicionar bebida',
+    cfQueueTab:'Fila', cfHistoryTab:'Histórico',
+    cfHistToday:'Hoje', cfHistYesterday:'Ontem',
+    cfHistEmpty:'Sem pedidos registrados neste dia',
+    cfHistTickets:'tickets', cfHistTicket:'ticket',
+    cfHistAvgPrep:'preparação média', cfHistTopDrinks:'Mais pedidas',
+    cfHistLoading:'Carregando…'
   }
 };
 function t(k){ return UI[currentLang][k] || UI.es[k]; }
@@ -2254,12 +2300,115 @@ let cf_elapsedInterval = null;
 let cf_pollInterval    = null; // polling fallback — re-reads Firebase every 2 s via REST
 let cf_lastQueueHash   = '';   // fingerprint of last rendered queue — prevents unnecessary re-renders
 const cf_optimisticallyDone = new Set(); // ids the barista just tapped Listo on, awaiting server confirmation
+// History (audit log) state
+const CF_HISTORY_PATH = 'orders_history';   // /orders_history/{YYYY-MM-DD}/{firebaseKey}
+const CF_HISTORY_RETENTION_DAYS = 30;       // days to keep before auto-purge
+let cf_baristaSubMode = 'queue';            // 'queue' | 'history'
+let cf_historyDate    = null;               // 'YYYY-MM-DD' currently displayed
+let cf_historyData    = [];                 // entries loaded for cf_historyDate, sorted newest-first
 
 function cfInitFirebase(){
   if (cf_fbApp) return cf_fbDb;
   cf_fbApp = firebase.initializeApp(CF_FIREBASE_CONFIG);
   cf_fbDb  = firebase.database();
   return cf_fbDb;
+}
+
+// ── History helpers ──────────────────────────────────────────────────────────
+// Date bucket key in local time: 'YYYY-MM-DD'. The "Hoy/Ayer" boundary is
+// always device-local — a ticket completed at 23:59 belongs to that day,
+// one completed at 00:01 belongs to the next.
+function cfGetDateKey(ts){
+  const d = new Date(ts);
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const da = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${da}`;
+}
+function cfShiftDateKey(dateKey, deltaDays){
+  const [y,m,d] = dateKey.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  dt.setDate(dt.getDate() + deltaDays);
+  return cfGetDateKey(dt.getTime());
+}
+// Friendly label for the date selector. "Hoy / Ayer" for the two most recent
+// days, weekday + day-month otherwise.
+function cfFormatDateLabel(dateKey){
+  const todayKey = cfGetDateKey(Date.now());
+  const yesterdayKey = cfShiftDateKey(todayKey, -1);
+  if (dateKey === todayKey)    return `${t('cfHistToday')} · ${cfFormatDayMonth(dateKey)}`;
+  if (dateKey === yesterdayKey) return `${t('cfHistYesterday')} · ${cfFormatDayMonth(dateKey)}`;
+  const [y,m,d] = dateKey.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  const locale = currentLang === 'en' ? 'en-US' : currentLang === 'pt' ? 'pt-BR' : 'es-ES';
+  const wday = dt.toLocaleDateString(locale, { weekday: 'short' }).replace('.','');
+  return `${wday} · ${cfFormatDayMonth(dateKey)}`;
+}
+function cfFormatDayMonth(dateKey){
+  const [y,m,d] = dateKey.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  const locale = currentLang === 'en' ? 'en-US' : currentLang === 'pt' ? 'pt-BR' : 'es-ES';
+  return dt.toLocaleDateString(locale, { day:'numeric', month:'short' }).replace('.','');
+}
+// "0:42" / "12:08" — minutes:seconds from milliseconds
+function cfFormatDuration(ms){
+  if (!ms || ms < 0) ms = 0;
+  const totalSec = Math.round(ms/1000);
+  const m = Math.floor(totalSec/60);
+  const s = totalSec % 60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+// Wall-clock time like "14:36" for a timestamp in local time.
+function cfFormatWallTime(ts){
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// One-shot: any legacy 'done' orders still living in /orders (from before the
+// move-on-done flow existed) are migrated into the history bucket so they
+// don't sit there forever. Idempotent — if there are none, this is a no-op.
+function cfMigrateLegacyDoneOrders(){
+  const db = cfInitFirebase();
+  db.ref(CF_ORDERS_PATH).once('value').then(snap=>{
+    const updates = {};
+    let any = false;
+    snap.forEach(child=>{
+      const o = child.val();
+      if (o && o.status === 'done'){
+        any = true;
+        const completedAt = Date.now();
+        const submittedAt = o.timestamp || completedAt;
+        const dateKey = cfGetDateKey(completedAt);
+        const archived = { ...o, completedAt, prepMs: Math.max(0, completedAt - submittedAt) };
+        delete archived.status;
+        updates[`/${CF_ORDERS_PATH}/${child.key}`] = null;
+        updates[`/${CF_HISTORY_PATH}/${dateKey}/${child.key}`] = archived;
+      }
+    });
+    if (any) db.ref().update(updates);
+  }).catch(()=>{});
+}
+
+// Auto-purge: delete /orders_history buckets older than retention window.
+// Runs whenever a barista enters the service mode. Eventually consistent —
+// good enough since the app sees daily traffic.
+function cfPurgeOldHistory(){
+  const db = cfInitFirebase();
+  const cutoffKey = cfShiftDateKey(cfGetDateKey(Date.now()), -CF_HISTORY_RETENTION_DAYS);
+  // Shallow read of bucket keys only, not their contents — cheap.
+  db.ref(CF_HISTORY_PATH).once('value').then(snap=>{
+    const updates = {};
+    let any = false;
+    snap.forEach(bucket=>{
+      const dateKey = bucket.key;
+      // String comparison works because YYYY-MM-DD is lexicographically sortable.
+      if (dateKey < cutoffKey){
+        any = true;
+        updates[`/${CF_HISTORY_PATH}/${dateKey}`] = null;
+      }
+    });
+    if (any) db.ref().update(updates);
+  }).catch(()=>{});
 }
 
 // ── Gate (PIN screen) ────────────────────────────────────────────────────────
@@ -2657,17 +2806,40 @@ function cfSubmitOrder(){
 function cfRenderBaristaView(){
   cf_lastQueueHash = ''; // force full render on first load
   cf_optimisticallyDone.clear();
+  cf_baristaSubMode = 'queue';
+  cf_historyDate = cfGetDateKey(Date.now());
+  cf_historyData = [];
   const panel = document.getElementById('cf-panel-service');
   if (!panel) return;
+  // Both subviews live in the DOM at once; visibility is toggled. This way
+  // the live queue's diff-render keeps working in the background even when
+  // the barista is browsing history, so switching tabs back is instant.
   panel.innerHTML = `
     <div class="cf-barista-header">
-      <div class="cf-barista-title">${t('cfBaristaTitle')}</div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <button class="cf-clear-btn" onclick="cfClearDoneOrders()">${t('cfClearDone')}</button>
-        <button class="cf-exit-btn" onclick="cfExitServiceMode()">${t('cfExit')}</button>
+      <div class="cf-bs-tabs">
+        <button class="cf-bs-tab active" id="cf-bs-tab-queue"   onclick="cfSwitchBaristaSub('queue')">${t('cfQueueTab')}</button>
+        <button class="cf-bs-tab"        id="cf-bs-tab-history" onclick="cfSwitchBaristaSub('history')">${t('cfHistoryTab')}</button>
       </div>
+      <button class="cf-exit-btn" onclick="cfExitServiceMode()">${t('cfExit')}</button>
     </div>
-    <div id="cf-queue-list"><p class="cf-queue-empty">${t('cfQueueEmpty')}</p></div>`;
+    <!-- Queue subview -->
+    <div id="cf-bs-queue">
+      <div id="cf-queue-list"><p class="cf-queue-empty">${t('cfQueueEmpty')}</p></div>
+    </div>
+    <!-- History subview (hidden until tapped) -->
+    <div id="cf-bs-history" style="display:none">
+      <div class="cf-history-nav">
+        <button class="cf-hist-arrow" id="cf-hist-prev" onclick="cfHistoryStepDate(-1)">‹</button>
+        <div class="cf-hist-date-label" id="cf-hist-date-label">${cfFormatDateLabel(cf_historyDate)}</div>
+        <button class="cf-hist-arrow" id="cf-hist-next" onclick="cfHistoryStepDate(1)">›</button>
+      </div>
+      <div id="cf-hist-stats"></div>
+      <div id="cf-hist-list"><p class="cf-hist-loading">${t('cfHistLoading')}</p></div>
+    </div>`;
+
+  // Best-effort housekeeping on entry (idempotent, async).
+  cfMigrateLegacyDoneOrders();
+  cfPurgeOldHistory();
 
   // Detach any existing listener before subscribing
   if (cf_baristaRef && cf_baristaFn){ cf_baristaRef.off('value',cf_baristaFn); }
@@ -2908,6 +3080,155 @@ function cfTickElapsed(){
   });
 }
 
+// ── History subview ──────────────────────────────────────────────────────────
+function cfSwitchBaristaSub(which){
+  if (cf_baristaSubMode === which) return;
+  cf_baristaSubMode = which;
+  document.getElementById('cf-bs-tab-queue')  ?.classList.toggle('active', which === 'queue');
+  document.getElementById('cf-bs-tab-history')?.classList.toggle('active', which === 'history');
+  const qv = document.getElementById('cf-bs-queue');
+  const hv = document.getElementById('cf-bs-history');
+  if (qv) qv.style.display = which === 'queue'   ? '' : 'none';
+  if (hv) hv.style.display = which === 'history' ? '' : 'none';
+  if (which === 'history') cfFetchHistoryForDate(cf_historyDate);
+}
+
+function cfHistoryStepDate(delta){
+  const todayKey = cfGetDateKey(Date.now());
+  const oldestKey = cfShiftDateKey(todayKey, -CF_HISTORY_RETENTION_DAYS);
+  const next = cfShiftDateKey(cf_historyDate, delta);
+  // Clamp: can't go forward past today, can't go back past retention window.
+  if (delta > 0 && next > todayKey)  return;
+  if (delta < 0 && next < oldestKey) return;
+  cf_historyDate = next;
+  cfFetchHistoryForDate(cf_historyDate);
+}
+
+// Fetch via REST so we always read fresh server data — bypasses any SDK
+// cache that might still hold a stale snapshot from the live /orders listener.
+function cfFetchHistoryForDate(dateKey){
+  const label = document.getElementById('cf-hist-date-label');
+  if (label) label.textContent = cfFormatDateLabel(dateKey);
+  // Disable / enable arrows based on bounds
+  const todayKey  = cfGetDateKey(Date.now());
+  const oldestKey = cfShiftDateKey(todayKey, -CF_HISTORY_RETENTION_DAYS);
+  const prevBtn = document.getElementById('cf-hist-prev');
+  const nextBtn = document.getElementById('cf-hist-next');
+  if (prevBtn) prevBtn.disabled = (cfShiftDateKey(dateKey,-1) < oldestKey);
+  if (nextBtn) nextBtn.disabled = (dateKey >= todayKey);
+
+  const list = document.getElementById('cf-hist-list');
+  if (list) list.innerHTML = `<p class="cf-hist-loading">${t('cfHistLoading')}</p>`;
+  const stats = document.getElementById('cf-hist-stats');
+  if (stats) stats.innerHTML = '';
+
+  const url = `${CF_FIREBASE_CONFIG.databaseURL}/${CF_HISTORY_PATH}/${dateKey}.json`;
+  fetch(url).then(r=>r.json()).then(data=>{
+    // Guard against stale fetches landing after the user already moved on
+    if (cf_historyDate !== dateKey || cf_baristaSubMode !== 'history') return;
+    const entries = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
+    // Newest-first: most recently completed at the top
+    entries.sort((a,b)=>(b.completedAt||0)-(a.completedAt||0));
+    cf_historyData = entries;
+    cfRenderHistoryList();
+    cfRenderHistoryStats();
+  }).catch(()=>{
+    if (list) list.innerHTML = `<p class="cf-hist-empty">${t('cfHistEmpty')}</p>`;
+  });
+}
+
+function cfRenderHistoryList(){
+  const list = document.getElementById('cf-hist-list');
+  if (!list) return;
+  if (!cf_historyData.length){
+    list.innerHTML = `<p class="cf-hist-empty">${t('cfHistEmpty')}</p>`;
+    return;
+  }
+  // Same modifier formatter used in queue cards, kept in sync visually.
+  const fmtMods = it => {
+    const parts = [];
+    if (it.shotType) parts.push(it.shotType === 'doble' ? t('cfShotDoble').toLowerCase() : t('cfShotSimple').toLowerCase());
+    if (it.milkType){
+      const milkLabel = it.milkType === 'entera'      ? t('cfMilkEntera').toLowerCase()
+                      : it.milkType === 'sin-lactosa' ? t('cfMilkSinLactosa').toLowerCase()
+                      : it.milkType === 'vegetal'     ? t('cfMilkVegetal').toLowerCase()
+                      : it.milkType;
+      parts.push(it.milkSpec ? `${milkLabel} — ${it.milkSpec}` : milkLabel);
+    }
+    return parts.join(' · ');
+  };
+  list.innerHTML = cf_historyData.map(o=>{
+    const items = (o.items && o.items.length) ? o.items : [{
+      drink: o.drink, drinkIdx: o.drinkIdx,
+      milkType: o.milkType, milkSpec: o.milkSpec,
+      shotType: o.shotType, special: o.special, qty: 1
+    }];
+    const totalQty = items.reduce((s,it)=>s+(it.qty||1),0);
+    const itemsHtml = items.map(it=>{
+      const mods = fmtMods(it);
+      return `
+        <div class="cf-hist-item">
+          <div class="cf-hist-item-qty">${it.qty || 1}×</div>
+          <div style="flex:1;min-width:0">
+            <div>${it.drink || '?'}</div>
+            ${mods ? `<div class="cf-hist-item-mods">${mods}</div>` : ''}
+            ${it.special ? `<div class="cf-hist-item-special">⚑ ${it.special}</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+    const tableLabel = o.table ? `Mesa ${o.table}` : `${totalQty} ${totalQty === 1 ? t('cfCartDrink') : t('cfCartDrinks')}`;
+    const drinkCount = `${totalQty} ${totalQty === 1 ? t('cfCartDrink') : t('cfCartDrinks')}`;
+    return `
+      <div class="cf-hist-row">
+        <div class="cf-hist-head">
+          <div class="cf-hist-time">${cfFormatWallTime(o.completedAt || 0)}</div>
+          <div class="cf-hist-table">${tableLabel}</div>
+          ${o.table ? `<div class="cf-hist-count">· ${drinkCount}</div>` : ''}
+          <div class="cf-hist-prep">⏱ ${cfFormatDuration(o.prepMs)}</div>
+        </div>
+        ${itemsHtml}
+      </div>`;
+  }).join('');
+}
+
+function cfRenderHistoryStats(){
+  const stats = document.getElementById('cf-hist-stats');
+  if (!stats) return;
+  if (!cf_historyData.length){ stats.innerHTML = ''; return; }
+  let totalDrinks = 0;
+  let totalPrepMs = 0;
+  let prepSamples = 0;
+  const drinkCounts = new Map();
+  cf_historyData.forEach(o=>{
+    const items = (o.items && o.items.length) ? o.items : [{
+      drink: o.drink, qty: 1
+    }];
+    items.forEach(it=>{
+      const q = it.qty || 1;
+      totalDrinks += q;
+      const name = it.drink || '?';
+      drinkCounts.set(name, (drinkCounts.get(name) || 0) + q);
+    });
+    if (o.prepMs && o.prepMs > 0){
+      totalPrepMs += o.prepMs;
+      prepSamples++;
+    }
+  });
+  const avgMs = prepSamples ? totalPrepMs / prepSamples : 0;
+  const top = [...drinkCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const ticketWord = cf_historyData.length === 1 ? t('cfHistTicket') : t('cfHistTickets');
+  const drinkWord  = totalDrinks === 1 ? t('cfCartDrink') : t('cfCartDrinks');
+  stats.innerHTML = `
+    <div class="cf-hist-stats">
+      <div class="cf-hist-stats-line">
+        <span><strong>${cf_historyData.length}</strong> ${ticketWord}</span>
+        <span><strong>${totalDrinks}</strong> ${drinkWord}</span>
+        <span>${t('cfHistAvgPrep')}: <strong>${cfFormatDuration(avgMs)}</strong></span>
+      </div>
+      ${top.length ? `<div class="cf-hist-stats-top">${t('cfHistTopDrinks')}: ${top.map(([n,c])=>`<strong>${n}</strong> ${c}`).join(' · ')}</div>` : ''}
+    </div>`;
+}
+
 function cfMarkDone(id){
   // Optimistic UI: animate the card out IMMEDIATELY, without waiting for the
   // WebSocket listener to fire. If the WebSocket has a hiccup the listener
@@ -2926,28 +3247,49 @@ function cfMarkDone(id){
     }, 360);
   }
 
-  // Fire the actual write. If it fails (network, rules, etc.) revive the card.
-  const writeRef = cfInitFirebase().ref(CF_ORDERS_PATH+'/'+id);
-  const writePromise = writeRef.update({status:'done'});
-  if (writePromise && writePromise.catch){
-    writePromise.catch(()=>{
-      cf_optimisticallyDone.delete(id);
-      const stillThere = document.getElementById('cf-ocard-'+id);
-      if (stillThere && stillThere.classList.contains('cf-card-leaving')){
-        stillThere.classList.remove('cf-card-leaving');
-        stillThere.style.maxHeight = '';
+  // Move the order atomically: read it from /orders, copy to history bucket
+  // (with completedAt + prepMs), and delete the live entry — all in one
+  // multi-path update so the database is never in a half-state. If anything
+  // fails, revive the card visually.
+  const db = cfInitFirebase();
+  db.ref(CF_ORDERS_PATH+'/'+id).once('value').then(snap=>{
+    const order = snap.val();
+    if (!order){ cf_optimisticallyDone.delete(id); return; } // already moved/removed
+    const completedAt = Date.now();
+    const submittedAt = order.timestamp || completedAt;
+    const dateKey = cfGetDateKey(completedAt);
+    const archived = {
+      ...order,
+      completedAt,
+      prepMs: Math.max(0, completedAt - submittedAt)
+    };
+    delete archived.status; // status field only meaningful in live queue
+    const updates = {};
+    updates[`/${CF_ORDERS_PATH}/${id}`] = null;
+    updates[`/${CF_HISTORY_PATH}/${dateKey}/${id}`] = archived;
+    return db.ref().update(updates).then(()=>{
+      // If the barista is currently looking at history for this date, splice
+      // the new entry in immediately so they see their own action without
+      // having to switch tabs.
+      if (cf_baristaSubMode === 'history' && cf_historyDate === dateKey){
+        cf_historyData.unshift({ id, ...archived });
+        cfRenderHistoryList();
+        cfRenderHistoryStats();
       }
     });
-  }
+  }).catch(()=>{
+    cf_optimisticallyDone.delete(id);
+    const stillThere = document.getElementById('cf-ocard-'+id);
+    if (stillThere && stillThere.classList.contains('cf-card-leaving')){
+      stillThere.classList.remove('cf-card-leaving');
+      stillThere.style.maxHeight = '';
+    }
+  });
   // Safety: clear the optimistic flag after enough time for the listener to
   // catch up. After this, normal Phase 0 revival rules apply again.
   setTimeout(()=>cf_optimisticallyDone.delete(id), 5000);
 }
 
-function cfClearDoneOrders(){
-  cfInitFirebase().ref(CF_ORDERS_PATH).orderByChild('status').equalTo('done')
-    .once('value', snap=>snap.forEach(c=>c.ref.remove()));
-}
 
 </script>
 </body>
