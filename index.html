@@ -96,6 +96,133 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .desserts-form-btn:hover { color: var(--text); }
 .desserts-form-btn.primary { background: var(--wine-red); border-color: var(--wine-red); color: white; }
 .desserts-form-btn.primary:hover { opacity: 0.85; }
+
+/* ── Comandera module ────────────────────────────────────────────────────── */
+.cmd-root { font-family: 'Courier Prime','Courier New',monospace; }
+.cmd-gate { text-align:center; padding:2rem 1rem; }
+.cmd-gate-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:24px; color:var(--gold); margin-bottom:6px; }
+.cmd-gate-sub { font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:1.5rem; }
+.cmd-pin-display { font-family:'Courier Prime','Courier New',monospace; font-size:28px; letter-spacing:0.3em; color:var(--gold); min-height:42px; display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+.cmd-pin-error { font-size:11px; color:#e55; min-height:16px; margin-top:8px; }
+.cmd-numpad { max-width:232px; margin:0 auto; }
+.cmd-numpad-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.cmd-numpad-key { padding:14px 6px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text); font-size:18px; cursor:pointer; font-family:inherit; transition:background .12s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cmd-numpad-key:hover { background:var(--bg-secondary); }
+.cmd-numpad-key:active { transform:scale(0.95); }
+.cmd-numpad-key.cmd-nk-del { color:var(--text-tertiary); font-size:15px; }
+
+/* Home view — list of open mesas */
+.cmd-home-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:1rem; }
+.cmd-home-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); }
+.cmd-exit-btn { background:transparent; border:none; color:var(--text-tertiary); font-size:11px; text-decoration:underline; cursor:pointer; padding:0; }
+.cmd-mesa-card { display:flex; gap:14px; align-items:center; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:8px; cursor:pointer; transition:border-color .15s, background .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cmd-mesa-card:hover { background:var(--bg-secondary); border-color:var(--gold); }
+.cmd-mesa-num { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:24px; color:var(--gold); min-width:40px; text-align:center; }
+.cmd-mesa-info { flex:1; min-width:0; font-family:'Courier Prime','Courier New',monospace; }
+.cmd-mesa-meta { font-size:11px; color:var(--text-tertiary); letter-spacing:0.08em; text-transform:uppercase; }
+.cmd-mesa-summary { font-size:12px; color:var(--text-secondary); margin-top:2px; line-height:1.35; }
+.cmd-mesa-elapsed { font-size:13px; color:var(--gold); font-family:'Courier Prime','Courier New',monospace; }
+.cmd-mesa-elapsed.warn { color:#e07b3a; }
+.cmd-mesa-elapsed.urgent { color:#e55; animation:cfurgentpulse 1.8s ease infinite; }
+.cmd-empty-state { text-align:center; color:var(--text-tertiary); font-size:11px; padding:2.5rem 1rem; letter-spacing:0.1em; text-transform:uppercase; font-family:'Courier Prime','Courier New',monospace; }
+
+/* New-mesa form */
+.cmd-new-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:22px; color:var(--gold); text-align:center; margin-bottom:18px; }
+.cmd-new-section { margin-bottom:18px; }
+.cmd-new-label { display:block; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:7px; text-align:center; }
+.cmd-new-mesa-display { font-family:'Courier Prime','Courier New',monospace; font-size:28px; letter-spacing:0.2em; color:var(--gold); min-height:42px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+.cmd-new-mesa-display.empty { color:var(--text-tertiary); font-size:13px; letter-spacing:0.1em; }
+.cmd-diners-stepper { display:flex; align-items:center; justify-content:center; gap:14px; }
+.cmd-stepper-btn { width:38px; height:38px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text); font-size:18px; cursor:pointer; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cmd-stepper-btn:active { transform:scale(0.94); }
+.cmd-stepper-val { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:32px; color:var(--gold); min-width:50px; text-align:center; }
+.cmd-form-actions { display:flex; gap:8px; justify-content:space-between; margin-top:10px; }
+.cmd-btn { padding:9px 16px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:transparent; color:var(--text-secondary); font-size:12px; cursor:pointer; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; font-family:inherit; }
+.cmd-btn:hover { color:var(--text); }
+.cmd-btn:disabled { opacity:0.35; cursor:default; }
+.cmd-btn.primary { background:var(--wine-red); border-color:var(--wine-red); color:white; }
+.cmd-btn.primary:hover { opacity:0.88; }
+
+/* Active mesa view */
+.cmd-active-header { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:1rem; }
+.cmd-active-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); }
+.cmd-active-sub { font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); margin-top:2px; }
+.cmd-active-controls { display:flex; gap:10px; align-items:center; }
+.cmd-timer-btn { background:transparent; border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:5px 10px; font-family:'Courier Prime','Courier New',monospace; font-size:13px; color:var(--gold); cursor:pointer; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; line-height:1.2; }
+.cmd-timer-btn:hover { background:rgba(202,138,4,0.08); }
+.cmd-timer-btn.warn { color:#e07b3a; border-color:rgba(224,123,58,0.45); }
+.cmd-timer-btn.urgent { color:#e55; border-color:rgba(229,85,85,0.5); animation:cfurgentpulse 1.8s ease infinite; }
+
+/* Diner selector */
+.cmd-diner-label { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:6px; }
+.cmd-diner-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:1rem; padding-bottom:0.85rem; border-bottom:0.5px solid var(--border); }
+.cmd-diner-btn { width:42px; height:42px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-family:'Courier Prime','Courier New',monospace; font-size:15px; font-weight:500; cursor:pointer; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.cmd-diner-btn:hover { border-color:rgba(78,160,255,0.5); }
+.cmd-diner-btn.active { background:rgba(78,160,255,0.18); color:#9ec9ff; border-color:#4ea0ff; box-shadow:0 0 0 1px rgba(78,160,255,0.55), 0 0 12px rgba(78,160,255,0.32); }
+.cmd-diner-btn.cmd-diner-add { color:var(--text-tertiary); font-size:18px; }
+
+/* Adding-to indicator */
+.cmd-adding-to { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; }
+.cmd-adding-to strong { color:#9ec9ff; font-weight:500; }
+
+/* Category tabs */
+.cmd-cats { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:0.85rem; }
+.cmd-cat-btn { background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:7px 12px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cmd-cat-btn:hover { color:var(--text-secondary); }
+.cmd-cat-btn.active { background:var(--wine-red); border-color:var(--wine-red); color:white; }
+
+/* Item catalog */
+.cmd-cat-panel { background:rgba(255,255,255,0.015); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:8px 10px; margin-bottom:1rem; max-height:46vh; overflow-y:auto; }
+.cmd-cat-group { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); padding:8px 4px 4px; border-top:0.5px solid var(--border); }
+.cmd-cat-group:first-child { border-top:none; padding-top:2px; }
+.cmd-item-btn { display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left; padding:9px 6px; border-radius:6px; background:transparent; border:none; color:var(--text); font-size:13px; font-family:inherit; cursor:pointer; transition:background .12s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; line-height:1.3; }
+.cmd-item-btn:hover { background:rgba(202,138,4,0.06); }
+.cmd-item-btn:active { background:rgba(202,138,4,0.14); }
+.cmd-item-name { flex:1; min-width:0; }
+.cmd-item-allergen { font-size:14px; color:#e07b3a; cursor:help; flex-shrink:0; }
+.cmd-item-allergen-tip { font-size:10px; color:#e07b3a; opacity:0.75; }
+
+/* Custom item inline form */
+.cmd-custom-form { padding:10px 12px; background:rgba(202,138,4,0.04); border:0.5px solid rgba(202,138,4,0.2); border-radius:var(--radius-md); margin-bottom:1rem; animation:panelIn 0.22s cubic-bezier(0.34,1.1,0.64,1) both; }
+.cmd-custom-row { margin-bottom:8px; }
+.cmd-custom-input { width:100%; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--text); font-size:16px; padding:7px 12px; outline:none; font-family:inherit; box-sizing:border-box; }
+.cmd-custom-input:focus { border-color:var(--gold); }
+
+/* Diner-specific summary block (active diner) */
+.cmd-diner-summary { padding-top:0.85rem; border-top:0.5px solid var(--border); margin-bottom:0.85rem; }
+.cmd-summary-head { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:7px; }
+.cmd-summary-empty { font-size:11px; color:var(--text-tertiary); font-style:italic; padding:4px 0; }
+.cmd-line { display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-top:0.5px solid rgba(255,255,255,0.04); }
+.cmd-line:first-child { border-top:none; }
+.cmd-line-qty { color:#9ec9ff; font-family:'Courier Prime','Courier New',monospace; font-size:12px; min-width:24px; flex-shrink:0; padding-top:1px; }
+.cmd-line-body { flex:1; min-width:0; font-size:13px; color:var(--text); line-height:1.35; font-family:inherit; }
+.cmd-line-name { display:inline; }
+.cmd-line-warn { color:#e07b3a; margin-left:4px; }
+.cmd-line-note { display:block; font-size:11px; color:var(--gold); font-style:italic; margin-top:2px; font-family:'Courier Prime','Courier New',monospace; }
+.cmd-line-cat { display:block; font-size:10px; color:var(--text-tertiary); letter-spacing:0.08em; text-transform:uppercase; margin-top:2px; }
+.cmd-line-actions { display:flex; gap:4px; flex-shrink:0; }
+.cmd-line-btn { width:26px; height:26px; border-radius:5px; border:0.5px solid var(--border-md); background:transparent; color:var(--text-tertiary); font-size:12px; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cmd-line-btn:hover { color:var(--gold); }
+.cmd-line-btn.cmd-rm:hover { color:#d68a8a; border-color:rgba(214,138,138,0.32); }
+
+/* Footer actions */
+.cmd-footer-actions { display:flex; gap:8px; align-items:center; margin-top:1rem; padding-top:0.9rem; border-top:0.5px solid var(--border); }
+.cmd-footer-actions .cmd-btn { flex:1; }
+
+/* Note-edit & timer-reset & full-view modal */
+.cmd-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.62); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); z-index:1000; display:flex; align-items:flex-end; justify-content:center; padding:0; animation:cmdFade 0.22s ease both; }
+@keyframes cmdFade { from{opacity:0} to{opacity:1} }
+.cmd-modal-panel { background:var(--bg-primary,#1a1a1a); border-top:0.5px solid var(--border); border-radius:var(--radius-lg) var(--radius-lg) 0 0; max-height:88vh; width:100%; max-width:560px; overflow-y:auto; padding:1.25rem; animation:cmdSlideUp 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
+@keyframes cmdSlideUp { from{transform:translateY(20px); opacity:0.7} to{transform:translateY(0); opacity:1} }
+.cmd-modal-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); margin-bottom:14px; }
+.cmd-modal-input { width:100%; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--text); font-size:16px; padding:9px 12px; outline:none; font-family:inherit; box-sizing:border-box; resize:vertical; min-height:60px; }
+.cmd-modal-input:focus { border-color:var(--gold); }
+.cmd-modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+
+/* Full-view: per-diner sections */
+.cmd-full-diner { margin-bottom:1.1rem; padding-bottom:0.85rem; border-bottom:0.5px solid var(--border); }
+.cmd-full-diner:last-of-type { border-bottom:none; }
+.cmd-full-diner-head { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#9ec9ff; margin-bottom:7px; }
 .lang-toggle { display: flex; gap: 4px; flex-shrink: 0; }
 .lang-btn { padding: 4px 9px; border-radius: 6px; border: 0.5px solid var(--border-md); font-size: 11px; font-weight: 500; cursor: pointer; background: transparent; color: var(--text-tertiary); letter-spacing: 0.04em; transition: all 0.15s; }
 .lang-btn:hover { background: var(--bg-secondary); color: var(--text-secondary); }
@@ -574,6 +701,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <button class="tab" onclick="setTab('vinos',this)">Vinos</button>
     <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
+    <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">Comandera</button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -645,6 +773,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <!-- CAFÉ TAB -->
   <div id="tab-cafe" class="hidden">
     <div class="coffee-module" id="coffee-module-root"></div>
+  </div>
+
+  <!-- COMANDERA TAB — gated order pad. Renders entirely from JS. -->
+  <div id="tab-comandera" class="hidden">
+    <div class="cmd-root" id="cmd-root"></div>
   </div>
 
 <footer style="margin-top:3rem;padding:1.25rem 0 0.5rem;border-top:0.5px solid var(--border);text-align:center;">
@@ -790,6 +923,30 @@ let DESSERTS_DATA           = null;   // { helado, sorbet, fruta[], ninos, enter
 let DESSERTS_DATE_KEY       = null;   // 'YYYY-MM-DD' currently loaded
 let DESSERTS_FORM_OPEN      = false;
 
+// --- Comandera module state ----------------------------------------------
+// Module: comanda — table-by-table order pad. Path /comandas/{YYYY-MM-DD}/
+// {auto-id} where each auto-id is one comanda (mesa+sitting). See module
+// block for shape and lifecycle. PIN gate at first tap on the tab.
+const COMANDA_PATH          = 'comandas';
+const COMANDA_PIN_CODE      = '666';
+const COMANDA_AUTOCLOSE_MS  = 12 * 60 * 60 * 1000;  // open >12h → auto-close
+const COMANDA_PURGE_DAYS    = 30;                    // closed >30d → purge
+let COMANDA_AUTHED          = false;
+let COMANDA_VIEW            = 'gate';   // 'gate' | 'home' | 'new' | 'active'
+let COMANDA_PIN_BUFFER      = '';
+let COMANDA_LIST            = [];       // open mesas, for home view
+let COMANDA_ACTIVE_ID       = null;
+let COMANDA_ACTIVE_DATA     = null;
+let COMANDA_ACTIVE_DINER    = 1;
+let COMANDA_ACTIVE_CATEGORY = 'dishes';
+let COMANDA_NEW_MESA_BUF    = '';
+let COMANDA_NEW_DINERS      = 2;
+let COMANDA_NOTE_EDIT_ID    = null;     // item id whose note dialog is open
+let COMANDA_FULL_OPEN       = false;    // "ver comanda completa" modal
+let COMANDA_TIMER_INTERVAL  = null;
+let COMANDA_POLL_INTERVAL   = null;
+let COMANDA_CUSTOM_OPEN     = false;
+
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
 // ════════════════════════════════════════════════════════════════════════════
@@ -831,7 +988,30 @@ const UI = {
     staffViajeros:'viajeros', staffSenior:'Senior', staffComedor:'Comedor', staffApoyo:'Apoyo', staffNext:'Próximo',
     dessertsAddBtn:'Postres del servicio', dessertsEditBtn:'Editar postres',
     dessertsLabelHelado:'Helado', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Frutas (coma)', dessertsLabelNinos:'Niños',
-    dessertsSave:'Guardar', dessertsCancel:'Cancelar'
+    dessertsSave:'Guardar', dessertsCancel:'Cancelar',
+    tabComandera:'Comandera',
+    cmdPinTitle:'Comandera', cmdPinSub:'Código de mesero', cmdPinError:'Código incorrecto',
+    cmdHomeTitle:'Mesas activas', cmdHomeEmpty:'No hay mesas abiertas',
+    cmdNewMesaBtn:'+ Nueva mesa',
+    cmdNewMesaTitle:'Abrir comanda', cmdMesaNumLabel:'N° de mesa', cmdDinersLabel:'Comensales',
+    cmdContinue:'Continuar →', cmdBack:'← Volver',
+    cmdMesaPrefix:'Mesa', cmdComensales:'comensales', cmdComensal:'comensal',
+    cmdAddingTo:'Agregando a',
+    cmdSourceDishes:'Platos', cmdSourceWines:'Vinos', cmdSourceCocktails:'Cocktails', cmdSourceCustom:'Otro',
+    cmdInComanda:'Esta persona', cmdNoOrders:'sin pedidos aún',
+    cmdViewFull:'Ver comanda completa', cmdCloseMesa:'Cerrar mesa',
+    cmdCloseMesaConfirm:'¿Cerrar la comanda? Quedará en histórico.',
+    cmdAllergens:'Alérgenos',
+    cmdNoteOpen:'⚐', cmdNoteTitle:'Nota para',
+    cmdNotePlaceholder:'Punto medio · sin cebolla · alérgico al maní…',
+    cmdNoteSave:'Guardar', cmdNoteCancel:'Cancelar',
+    cmdItemRemove:'Quitar',
+    cmdCustomTitle:'Producto especial',
+    cmdCustomNamePh:'Nombre del producto', cmdCustomCatPh:'Categoría (jugo, gaseosa…)',
+    cmdCustomAdd:'Agregar', cmdCustomCancel:'Cancelar',
+    cmdTimerStart:'Iniciar', cmdTimerReset:'Reiniciar', cmdTimerCancel:'Cancelar',
+    cmdFullViewTitle:'Comanda completa',
+    cmdServiceUnit:'D' /* short for cycle day */
   },
   en: {
     appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'The detail, at hand.',
@@ -867,7 +1047,30 @@ const UI = {
     staffViajeros:'guests', staffSenior:'Senior', staffComedor:'Floor', staffApoyo:'Support', staffNext:'Next',
     dessertsAddBtn:'Service desserts', dessertsEditBtn:'Edit desserts',
     dessertsLabelHelado:'Ice cream', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Fruits (comma)', dessertsLabelNinos:'Kids',
-    dessertsSave:'Save', dessertsCancel:'Cancel'
+    dessertsSave:'Save', dessertsCancel:'Cancel',
+    tabComandera:'Order pad',
+    cmdPinTitle:'Order pad', cmdPinSub:'Server access code', cmdPinError:'Wrong code',
+    cmdHomeTitle:'Active tables', cmdHomeEmpty:'No tables open',
+    cmdNewMesaBtn:'+ New table',
+    cmdNewMesaTitle:'Open table', cmdMesaNumLabel:'Table #', cmdDinersLabel:'Guests',
+    cmdContinue:'Continue →', cmdBack:'← Back',
+    cmdMesaPrefix:'Table', cmdComensales:'guests', cmdComensal:'guest',
+    cmdAddingTo:'Adding to',
+    cmdSourceDishes:'Dishes', cmdSourceWines:'Wines', cmdSourceCocktails:'Cocktails', cmdSourceCustom:'Other',
+    cmdInComanda:'This guest', cmdNoOrders:'no orders yet',
+    cmdViewFull:'View full ticket', cmdCloseMesa:'Close table',
+    cmdCloseMesaConfirm:'Close this ticket? It will move to history.',
+    cmdAllergens:'Allergens',
+    cmdNoteOpen:'⚐', cmdNoteTitle:'Note for',
+    cmdNotePlaceholder:'Medium · no onion · peanut allergy…',
+    cmdNoteSave:'Save', cmdNoteCancel:'Cancel',
+    cmdItemRemove:'Remove',
+    cmdCustomTitle:'Special item',
+    cmdCustomNamePh:'Item name', cmdCustomCatPh:'Category (juice, soda…)',
+    cmdCustomAdd:'Add', cmdCustomCancel:'Cancel',
+    cmdTimerStart:'Start', cmdTimerReset:'Reset', cmdTimerCancel:'Cancel',
+    cmdFullViewTitle:'Full ticket',
+    cmdServiceUnit:'D'
   },
   pt: {
     appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'O detalhe, à mão.',
@@ -903,7 +1106,30 @@ const UI = {
     staffViajeros:'hóspedes', staffSenior:'Senior', staffComedor:'Salão', staffApoyo:'Apoio', staffNext:'Próximo',
     dessertsAddBtn:'Sobremesas do serviço', dessertsEditBtn:'Editar sobremesas',
     dessertsLabelHelado:'Sorvete', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Frutas (vírgula)', dessertsLabelNinos:'Crianças',
-    dessertsSave:'Salvar', dessertsCancel:'Cancelar'
+    dessertsSave:'Salvar', dessertsCancel:'Cancelar',
+    tabComandera:'Comanda',
+    cmdPinTitle:'Comanda', cmdPinSub:'Código do garçom', cmdPinError:'Código incorreto',
+    cmdHomeTitle:'Mesas ativas', cmdHomeEmpty:'Sem mesas abertas',
+    cmdNewMesaBtn:'+ Nova mesa',
+    cmdNewMesaTitle:'Abrir comanda', cmdMesaNumLabel:'N° de mesa', cmdDinersLabel:'Hóspedes',
+    cmdContinue:'Continuar →', cmdBack:'← Voltar',
+    cmdMesaPrefix:'Mesa', cmdComensales:'hóspedes', cmdComensal:'hóspede',
+    cmdAddingTo:'Adicionando a',
+    cmdSourceDishes:'Pratos', cmdSourceWines:'Vinhos', cmdSourceCocktails:'Cocktails', cmdSourceCustom:'Outro',
+    cmdInComanda:'Esta pessoa', cmdNoOrders:'sem pedidos ainda',
+    cmdViewFull:'Ver comanda completa', cmdCloseMesa:'Fechar mesa',
+    cmdCloseMesaConfirm:'Fechar a comanda? Vai para o histórico.',
+    cmdAllergens:'Alérgenos',
+    cmdNoteOpen:'⚐', cmdNoteTitle:'Nota para',
+    cmdNotePlaceholder:'Ao ponto · sem cebola · alergia a amendoim…',
+    cmdNoteSave:'Salvar', cmdNoteCancel:'Cancelar',
+    cmdItemRemove:'Remover',
+    cmdCustomTitle:'Produto especial',
+    cmdCustomNamePh:'Nome do produto', cmdCustomCatPh:'Categoria (suco, refrigerante…)',
+    cmdCustomAdd:'Adicionar', cmdCustomCancel:'Cancelar',
+    cmdTimerStart:'Iniciar', cmdTimerReset:'Reiniciar', cmdTimerCancel:'Cancelar',
+    cmdFullViewTitle:'Comanda completa',
+    cmdServiceUnit:'D'
   }
 };
 function t(k){ return UI[currentLang][k] || UI.es[k]; }
@@ -1127,8 +1353,11 @@ function setLang(lang, el) {
     if (cocktailsShowingMomentos) renderMomentos();
   }
   if (currentTab === 'cafe') renderCafeTab();
+  if (currentTab === 'comandera' && typeof comandaRender === 'function') comandaRender();
   const cafeBtn = document.getElementById('tab-btn-cafe');
   if (cafeBtn) cafeBtn.textContent = t('tabCafe');
+  const cmdBtn = document.getElementById('tab-btn-comandera');
+  if (cmdBtn) cmdBtn.textContent = t('tabComandera');
   const mn = document.getElementById('momentos-notice-text');
   if (mn) mn.textContent = t('momentNotice');
   // Fire i18n hooks — modules that need to re-render their labels in the
@@ -1146,12 +1375,13 @@ function setTab(tab, el) {
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  ['menus','vinos','cocktails','cafe'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  ['menus','vinos','cocktails','cafe','comandera'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'cocktails'){
     renderCocktails();
     if (cocktailsShowingMomentos) renderMomentos();
   }
   if (tab === 'cafe') renderCafeTab();
+  if (tab === 'comandera') comandaEnter();
 }
 
 function setDay(day, el) {
@@ -1396,7 +1626,7 @@ function openWineFromGuion(wid) {
   // the user might be on a different filter; reset to 'todos' so the wine
   // grid is visible (where selectWine will reveal the chosen wine).
   document.querySelectorAll('.main-tabs .tab').forEach((tb,i) => tb.classList.toggle('active', i===1));
-  ['menus','vinos','cocktails','cafe'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t!=='vinos'));
+  ['menus','vinos','cocktails','cafe','comandera'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t!=='vinos'));
   currentTab = 'vinos';
   wineFilter = 'todos';
   const filterTabs = document.querySelectorAll('.wine-filter-tabs .tab');
@@ -1478,7 +1708,8 @@ document.addEventListener('keydown', function(e) {
   // or barista view). Language swipe is disabled there to avoid accidental
   // language toggles while typing on the numpad or interacting with cards.
   function inServiceMode(){
-    return currentTab === 'cafe' && cf_activeInnerTab === 'service';
+    return (currentTab === 'cafe' && cf_activeInnerTab === 'service')
+        || currentTab === 'comandera';
   }
 
   document.addEventListener('touchstart', function(e) {
@@ -3817,6 +4048,729 @@ function cfMarkDone(id){
 // stays as the visual divider).
 staffingFetch();
 dessertsFetch();
+
+// ── Comandera module ────────────────────────────────────────────────────
+// PIN-gated order pad. Path: /comandas/{YYYY-MM-DD}/{auto-id}
+// Shape:
+//   { mesa, diners, openedAt, closedAt, timerStartedAt, items[] }
+// Item shape:
+//   { id, dinerN, source, sourceId, name, allergens[], qty, notes,
+//     addedAt, status }   ← 'status' is 'open' for now; future kitchen/bar
+//   integration uses 'sent','served','cancelled'
+// Lifecycle:
+//   • Waiter taps the tab → PIN gate (666) → home view (open mesas)
+//   • Tap "+ Nueva mesa" → enter table # + diner count → opens comanda
+//   • Active view: tap diner # to switch focus, tap items to add
+//   • Each item gets optional notes; tap ⚐ to edit
+//   • "Cerrar mesa" sets closedAt; mesa moves to history
+//   • Open mesas idle >12h auto-close; closed mesas >30d auto-purge
+// State (COMANDA_*) is at STATE TOP. Functions below; hook registered
+// at the very end.
+
+// --- Catalog source registry (the "Source Resolvers" architecture) ----
+// Adding a new product family later (juices, empanadas) is two lines:
+//   1. Add the data array (e.g., const JUICES = [...])
+//   2. Push an entry here with a resolver
+const COMANDA_SOURCES = [
+  {
+    key: 'dishes', labelKey: 'cmdSourceDishes', icon: '🍽',
+    items: () => {
+      // Resolve today's cycle day (D1-D4) using the same anchor logic
+      // as the existing day-highlighter, then return today's dishes.
+      const anchor = new Date(2026, 3, 14); // 2026-04-14 = Día 4
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const diff = Math.round((today - anchor) / 86400000);
+      const cycleDay = String(((diff + 3) % 4 + 4) % 4 + 1);
+      return DISHES.filter(d => d.day === cycleDay).map(d => ({
+        sourceId: d.id, name: d.name,
+        group: d.course, allergens: d.allergens || []
+      }));
+    }
+  },
+  {
+    key: 'wines', labelKey: 'cmdSourceWines', icon: '🍷',
+    items: () => WINES.map(w => ({
+      sourceId: w.id, name: w.name,
+      group: (function(){
+        const ti = (w.type || '').toLowerCase();
+        const map = { espumante:'lbl_espumante', blanco:'lbl_blanco', rosado:'lbl_rosado', tinto:'lbl_tinto', dulce:'lbl_dulce' };
+        return map[ti] ? t(map[ti]) : (w.type || '—');
+      })(),
+      allergens: []
+    }))
+  },
+  {
+    key: 'cocktails', labelKey: 'cmdSourceCocktails', icon: '🍸',
+    items: () => [
+      ...MOCKTAILS.map(c => ({ sourceId: c.name, name: c.name, group: 'Mocktails', allergens: [] })),
+      ...COCKTAILS.map(c => ({ sourceId: c.name, name: c.name, group: 'Cocktails', allergens: [] }))
+    ]
+  },
+  {
+    key: 'custom', labelKey: 'cmdSourceCustom', icon: '✎',
+    items: 'custom'  // sentinel: the renderer shows a free-text form
+  }
+];
+
+// --- Helpers ---------------------------------------------------------------
+function comandaDateKey(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const da = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${da}`;
+}
+function comandaUid(){ return 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+function comandaFmtMs(ms){
+  if (!ms || ms < 0) ms = 0;
+  const total = Math.floor(ms/1000);
+  const m = Math.floor(total/60);
+  const s = total % 60;
+  return `${m}m ${String(s).padStart(2,'0')}s`;
+}
+function comandaFmtMsCompact(ms){
+  if (!ms || ms < 0) ms = 0;
+  const m = Math.floor(ms/60000);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m/60);
+  const rem = m % 60;
+  return `${h}h ${rem}m`;
+}
+function comandaTimerClass(ms){
+  const min = Math.floor(ms/60000);
+  if (min >= 25) return 'urgent';
+  if (min >= 15) return 'warn';
+  return '';
+}
+
+// --- Tab entry & gate ------------------------------------------------------
+function comandaEnter(){
+  if (!COMANDA_AUTHED){
+    COMANDA_VIEW = 'gate';
+    COMANDA_PIN_BUFFER = '';
+    comandaRender();
+    return;
+  }
+  // Preserve active view across tab switches — if the waiter was mid-edit
+  // on a mesa and bounced to Menú/Vinos to check something, return them
+  // exactly where they left off rather than resetting to home.
+  if (COMANDA_VIEW === 'active' && COMANDA_ACTIVE_ID){
+    comandaRender();
+    return;
+  }
+  COMANDA_VIEW = 'home';
+  comandaFetchOpenMesas();
+  comandaRender();
+}
+function comandaPinPress(key){
+  if (key === 'del')      COMANDA_PIN_BUFFER = COMANDA_PIN_BUFFER.slice(0,-1);
+  else if (key === 'ok')  return comandaSubmitPin();
+  else if (COMANDA_PIN_BUFFER.length < 3) COMANDA_PIN_BUFFER += key;
+  // Auto-submit at 3 digits
+  if (COMANDA_PIN_BUFFER.length === 3){
+    setTimeout(()=>comandaSubmitPin(), 320);
+  }
+  comandaRender();
+}
+function comandaSubmitPin(){
+  if (COMANDA_PIN_BUFFER === COMANDA_PIN_CODE){
+    COMANDA_AUTHED = true;
+    COMANDA_PIN_BUFFER = '';
+    COMANDA_VIEW = 'home';
+    comandaAutoCloseStale();
+    comandaPurgeOldDays();
+    comandaFetchOpenMesas();
+  } else {
+    COMANDA_PIN_BUFFER = '';
+    const err = document.getElementById('cmd-pin-error');
+    if (err){ err.textContent = t('cmdPinError'); setTimeout(()=>{ if (err) err.textContent=''; }, 2000); }
+  }
+  comandaRender();
+}
+
+// --- Firebase REST helpers -------------------------------------------------
+function comandaFireUrl(suffix){
+  return CF_FIREBASE_CONFIG.databaseURL + '/' + COMANDA_PATH + (suffix ? '/' + suffix : '') + '.json';
+}
+
+// --- Home view (list of open mesas) ---------------------------------------
+async function comandaFetchOpenMesas(){
+  try {
+    const url = comandaFireUrl(comandaDateKey());
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const list = [];
+    if (data){
+      Object.entries(data).forEach(([id, c]) => {
+        if (c && !c.closedAt) list.push({ id, ...c });
+      });
+    }
+    list.sort((a,b)=>(b.openedAt||0)-(a.openedAt||0));
+    COMANDA_LIST = list;
+  } catch(e){
+    COMANDA_LIST = [];
+  }
+  if (COMANDA_VIEW === 'home') comandaRender();
+}
+
+// --- New-mesa form --------------------------------------------------------
+function comandaShowNewMesa(){
+  COMANDA_NEW_MESA_BUF = '';
+  COMANDA_NEW_DINERS = 2;
+  COMANDA_VIEW = 'new';
+  comandaRender();
+}
+function comandaNewMesaPress(key){
+  if (key === 'del')      COMANDA_NEW_MESA_BUF = COMANDA_NEW_MESA_BUF.slice(0,-1);
+  else if (key === 'clr') COMANDA_NEW_MESA_BUF = '';
+  else if (COMANDA_NEW_MESA_BUF.length < 4) COMANDA_NEW_MESA_BUF += key;
+  comandaRender();
+}
+function comandaNewMesaDinerStep(delta){
+  COMANDA_NEW_DINERS = Math.max(1, Math.min(20, COMANDA_NEW_DINERS + delta));
+  comandaRender();
+}
+async function comandaCreateMesa(){
+  if (!COMANDA_NEW_MESA_BUF) return;
+  const payload = {
+    mesa: COMANDA_NEW_MESA_BUF,
+    diners: COMANDA_NEW_DINERS,
+    openedAt: Date.now(),
+    closedAt: null,
+    timerStartedAt: null,
+    items: []
+  };
+  try {
+    const resp = await fetch(comandaFireUrl(comandaDateKey()), {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const out = await resp.json();
+    const id = out && out.name;
+    if (!id) throw new Error('no id from firebase');
+    COMANDA_ACTIVE_ID = id;
+    COMANDA_ACTIVE_DATA = { id, ...payload };
+    COMANDA_ACTIVE_DINER = 1;
+    COMANDA_ACTIVE_CATEGORY = 'dishes';
+    COMANDA_VIEW = 'active';
+    comandaStartTimerInterval();
+    comandaStartPolling();
+    comandaRender();
+  } catch(e){ console.error('[comanda]', e); }
+}
+
+// --- Open existing mesa ----------------------------------------------------
+async function comandaOpenMesa(id){
+  try {
+    const resp = await fetch(comandaFireUrl(comandaDateKey() + '/' + id));
+    const data = await resp.json();
+    if (!data){ comandaFetchOpenMesas(); return; }
+    COMANDA_ACTIVE_ID = id;
+    COMANDA_ACTIVE_DATA = { id, ...data, items: data.items || [] };
+    COMANDA_ACTIVE_DINER = 1;
+    COMANDA_ACTIVE_CATEGORY = 'dishes';
+    COMANDA_VIEW = 'active';
+    comandaStartTimerInterval();
+    comandaStartPolling();
+    comandaRender();
+  } catch(e){ console.error('[comanda]', e); }
+}
+
+// --- Active view actions ---------------------------------------------------
+function comandaSetDiner(n){
+  COMANDA_ACTIVE_DINER = n;
+  comandaRender();
+}
+function comandaAddDiner(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  COMANDA_ACTIVE_DATA.diners = (COMANDA_ACTIVE_DATA.diners || 1) + 1;
+  comandaPersist({ diners: COMANDA_ACTIVE_DATA.diners });
+  comandaRender();
+}
+function comandaSetCategory(key){
+  COMANDA_ACTIVE_CATEGORY = key;
+  COMANDA_CUSTOM_OPEN = (key === 'custom');
+  comandaRender();
+}
+async function comandaAddItem(source, sourceId, name, allergens){
+  if (!COMANDA_ACTIVE_DATA) return;
+  const item = {
+    id: comandaUid(),
+    dinerN: COMANDA_ACTIVE_DINER,
+    source, sourceId: sourceId || null,
+    name, allergens: allergens || [],
+    qty: 1, notes: '',
+    addedAt: Date.now(),
+    status: 'open'
+  };
+  COMANDA_ACTIVE_DATA.items = COMANDA_ACTIVE_DATA.items || [];
+  COMANDA_ACTIVE_DATA.items.push(item);
+  await comandaPersist({ items: COMANDA_ACTIVE_DATA.items });
+  comandaRender();
+}
+async function comandaRemoveItem(itemId){
+  if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
+  COMANDA_ACTIVE_DATA.items = COMANDA_ACTIVE_DATA.items.filter(it => it.id !== itemId);
+  await comandaPersist({ items: COMANDA_ACTIVE_DATA.items });
+  comandaRender();
+}
+async function comandaUpdateNote(itemId, note){
+  if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
+  COMANDA_ACTIVE_DATA.items = COMANDA_ACTIVE_DATA.items.map(it =>
+    it.id === itemId ? { ...it, notes: note } : it
+  );
+  await comandaPersist({ items: COMANDA_ACTIVE_DATA.items });
+}
+async function comandaPersist(patch){
+  if (!COMANDA_ACTIVE_ID) return;
+  try {
+    await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID), {
+      method: 'PATCH',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(patch)
+    });
+  } catch(e){ console.error('[comanda persist]', e); }
+}
+async function comandaCloseMesa(){
+  if (!COMANDA_ACTIVE_ID) return;
+  if (!confirm(t('cmdCloseMesaConfirm'))) return;
+  await comandaPersist({ closedAt: Date.now() });
+  comandaStopTimerInterval();
+  comandaStopPolling();
+  COMANDA_ACTIVE_ID = null;
+  COMANDA_ACTIVE_DATA = null;
+  COMANDA_VIEW = 'home';
+  comandaFetchOpenMesas();
+  comandaRender();
+}
+function comandaBackToHome(){
+  comandaStopTimerInterval();
+  comandaStopPolling();
+  COMANDA_ACTIVE_ID = null;
+  COMANDA_ACTIVE_DATA = null;
+  COMANDA_VIEW = 'home';
+  comandaFetchOpenMesas();
+  comandaRender();
+}
+
+// --- Note editor (modal-ish) ----------------------------------------------
+function comandaOpenNote(itemId){
+  COMANDA_NOTE_EDIT_ID = itemId;
+  comandaRender();
+  setTimeout(()=>{ const ta = document.getElementById('cmd-note-input'); if (ta) ta.focus(); }, 50);
+}
+function comandaCloseNote(){
+  COMANDA_NOTE_EDIT_ID = null;
+  comandaRender();
+}
+async function comandaSaveNote(){
+  const ta = document.getElementById('cmd-note-input');
+  const note = ta ? ta.value.trim() : '';
+  const id = COMANDA_NOTE_EDIT_ID;
+  if (id) await comandaUpdateNote(id, note);
+  COMANDA_NOTE_EDIT_ID = null;
+  comandaRender();
+}
+
+// --- Custom item form -----------------------------------------------------
+async function comandaAddCustomItem(){
+  const nameEl = document.getElementById('cmd-custom-name');
+  const catEl  = document.getElementById('cmd-custom-cat');
+  const name = nameEl ? nameEl.value.trim() : '';
+  const cat  = catEl  ? catEl.value.trim()  : '';
+  if (!name) return;
+  await comandaAddItem('custom', null, name + (cat ? ` · ${cat}` : ''), []);
+  if (nameEl) nameEl.value = '';
+  if (catEl)  catEl.value  = '';
+  // Stay in custom category — user can add another quickly
+}
+
+// --- Full-view modal -------------------------------------------------------
+function comandaShowFullView(){ COMANDA_FULL_OPEN = true;  comandaRender(); }
+function comandaHideFullView(){ COMANDA_FULL_OPEN = false; comandaRender(); }
+
+// --- Timer ----------------------------------------------------------------
+function comandaStartTimerInterval(){
+  comandaStopTimerInterval();
+  COMANDA_TIMER_INTERVAL = setInterval(()=>{
+    // Just refresh the timer display chip (minimal DOM work)
+    const chip = document.getElementById('cmd-timer-btn');
+    if (!chip || !COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.timerStartedAt) return;
+    const ms = Date.now() - COMANDA_ACTIVE_DATA.timerStartedAt;
+    chip.textContent = '⏱ ' + comandaFmtMsCompact(ms);
+    chip.classList.remove('warn','urgent');
+    const cls = comandaTimerClass(ms);
+    if (cls) chip.classList.add(cls);
+  }, 30000); // 30s tick is plenty for a minute-resolution display
+}
+function comandaStopTimerInterval(){
+  if (COMANDA_TIMER_INTERVAL){ clearInterval(COMANDA_TIMER_INTERVAL); COMANDA_TIMER_INTERVAL = null; }
+}
+async function comandaTimerToggle(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  if (!COMANDA_ACTIVE_DATA.timerStartedAt){
+    // Start
+    COMANDA_ACTIVE_DATA.timerStartedAt = Date.now();
+    await comandaPersist({ timerStartedAt: COMANDA_ACTIVE_DATA.timerStartedAt });
+    comandaRender();
+  } else {
+    // Already running — confirm reset
+    if (confirm(t('cmdTimerReset') + '?')){
+      COMANDA_ACTIVE_DATA.timerStartedAt = Date.now();
+      await comandaPersist({ timerStartedAt: COMANDA_ACTIVE_DATA.timerStartedAt });
+      comandaRender();
+    }
+  }
+}
+
+// --- Polling for cross-device sync ---------------------------------------
+function comandaStartPolling(){
+  comandaStopPolling();
+  COMANDA_POLL_INTERVAL = setInterval(async ()=>{
+    if (currentTab !== 'comandera' || !COMANDA_ACTIVE_ID) return;
+    try {
+      const resp = await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID));
+      const data = await resp.json();
+      if (!data) return;
+      // Merge server data — preserves view state, just refreshes items/diners/timer
+      COMANDA_ACTIVE_DATA = { id: COMANDA_ACTIVE_ID, ...data, items: data.items || [] };
+      // Skip render if a note dialog or full view is open (user is interacting)
+      if (COMANDA_NOTE_EDIT_ID || COMANDA_FULL_OPEN) return;
+      comandaRender();
+    } catch(e){}
+  }, 8000);
+}
+function comandaStopPolling(){
+  if (COMANDA_POLL_INTERVAL){ clearInterval(COMANDA_POLL_INTERVAL); COMANDA_POLL_INTERVAL = null; }
+}
+
+// --- Auto-close stale + auto-purge old days ------------------------------
+async function comandaAutoCloseStale(){
+  try {
+    const url = comandaFireUrl(comandaDateKey());
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (!data) return;
+    const updates = {};
+    const now = Date.now();
+    Object.entries(data).forEach(([id, c]) => {
+      if (c && !c.closedAt && c.openedAt && (now - c.openedAt) > COMANDA_AUTOCLOSE_MS){
+        updates[id + '/closedAt'] = now;
+      }
+    });
+    if (Object.keys(updates).length){
+      await fetch(url, { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(updates) });
+    }
+  } catch(e){}
+}
+async function comandaPurgeOldDays(){
+  try {
+    const root = comandaFireUrl();
+    const resp = await fetch(root + '?shallow=true');
+    const data = await resp.json();
+    if (!data) return;
+    const todayKey = comandaDateKey();
+    const cutoff = (function(){
+      const d = new Date();
+      d.setDate(d.getDate() - COMANDA_PURGE_DAYS);
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const da = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${da}`;
+    })();
+    const updates = {};
+    Object.keys(data).forEach(key => {
+      if (key < cutoff) updates[key] = null;
+    });
+    if (Object.keys(updates).length){
+      await fetch(root, { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(updates) });
+    }
+  } catch(e){}
+}
+
+// --- RENDER ---------------------------------------------------------------
+function comandaRender(){
+  const root = document.getElementById('cmd-root');
+  if (!root) return;
+  if (!COMANDA_AUTHED) return comandaRenderGate(root);
+  switch (COMANDA_VIEW){
+    case 'home':   return comandaRenderHome(root);
+    case 'new':    return comandaRenderNew(root);
+    case 'active': return comandaRenderActive(root);
+    default:       return comandaRenderGate(root);
+  }
+}
+
+function comandaRenderGate(root){
+  const dots = COMANDA_PIN_BUFFER ? COMANDA_PIN_BUFFER.replace(/./g,'●') : '· · ·';
+  root.innerHTML = `
+    <div class="cmd-gate">
+      <div class="cmd-gate-title">${t('cmdPinTitle')}</div>
+      <div class="cmd-gate-sub">${t('cmdPinSub')}</div>
+      <div class="cmd-pin-display" id="cmd-pin-display">${dots}</div>
+      <div class="cmd-numpad">
+        <div class="cmd-numpad-grid">
+          ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="cmd-numpad-key" onclick="comandaPinPress('${n}')">${n}</button>`).join('')}
+          <button class="cmd-numpad-key cmd-nk-del" onclick="comandaPinPress('del')">⌫</button>
+          <button class="cmd-numpad-key" onclick="comandaPinPress('0')">0</button>
+          <button class="cmd-numpad-key" onclick="comandaPinPress('ok')">→</button>
+        </div>
+      </div>
+      <div class="cmd-pin-error" id="cmd-pin-error"></div>
+    </div>`;
+}
+
+function comandaRenderHome(root){
+  const list = COMANDA_LIST;
+  const cards = list.length
+    ? list.map(c => {
+        const elapsedMs = Date.now() - (c.openedAt || Date.now());
+        const cls = comandaTimerClass(elapsedMs);
+        const summary = (c.items && c.items.length)
+          ? `${c.items.length} ítem${c.items.length>1?'s':''}`
+          : (t('cmdNoOrders') || '—');
+        return `
+          <div class="cmd-mesa-card" onclick="comandaOpenMesa('${c.id}')">
+            <div class="cmd-mesa-num">${c.mesa}</div>
+            <div class="cmd-mesa-info">
+              <div class="cmd-mesa-meta">${c.diners} ${c.diners === 1 ? t('cmdComensal') : t('cmdComensales')}</div>
+              <div class="cmd-mesa-summary">${summary}</div>
+            </div>
+            <div class="cmd-mesa-elapsed ${cls}">${comandaFmtMsCompact(elapsedMs)}</div>
+          </div>`;
+      }).join('')
+    : `<div class="cmd-empty-state">${t('cmdHomeEmpty')}</div>`;
+  root.innerHTML = `
+    <div class="cmd-home-header">
+      <div class="cmd-home-title">${t('cmdHomeTitle')}</div>
+      <button class="cmd-exit-btn" onclick="comandaLogout()">${t('cfExit')}</button>
+    </div>
+    ${cards}
+    <button class="cmd-btn primary" style="width:100%;margin-top:1rem" onclick="comandaShowNewMesa()">${t('cmdNewMesaBtn')}</button>`;
+}
+
+function comandaLogout(){
+  COMANDA_AUTHED = false;
+  COMANDA_VIEW = 'gate';
+  COMANDA_PIN_BUFFER = '';
+  comandaRender();
+}
+
+function comandaRenderNew(root){
+  const buf = COMANDA_NEW_MESA_BUF;
+  const dispMesa = buf || t('cmdMesaNumLabel');
+  const dispClass = buf ? '' : 'empty';
+  root.innerHTML = `
+    <div class="cmd-new-title">${t('cmdNewMesaTitle')}</div>
+    <div class="cmd-new-section">
+      <span class="cmd-new-label">${t('cmdMesaNumLabel')}</span>
+      <div class="cmd-new-mesa-display ${dispClass}">${dispMesa}</div>
+      <div class="cmd-numpad" style="max-width:240px;margin:0 auto">
+        <div class="cmd-numpad-grid">
+          ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="cmd-numpad-key" onclick="comandaNewMesaPress('${n}')">${n}</button>`).join('')}
+          <button class="cmd-numpad-key cmd-nk-del" onclick="comandaNewMesaPress('del')">⌫</button>
+          <button class="cmd-numpad-key" onclick="comandaNewMesaPress('0')">0</button>
+          <button class="cmd-numpad-key cmd-nk-del" onclick="comandaNewMesaPress('clr')">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="cmd-new-section">
+      <span class="cmd-new-label">${t('cmdDinersLabel')}</span>
+      <div class="cmd-diners-stepper">
+        <button class="cmd-stepper-btn" onclick="comandaNewMesaDinerStep(-1)">−</button>
+        <div class="cmd-stepper-val">${COMANDA_NEW_DINERS}</div>
+        <button class="cmd-stepper-btn" onclick="comandaNewMesaDinerStep(1)">+</button>
+      </div>
+    </div>
+    <div class="cmd-form-actions">
+      <button class="cmd-btn" onclick="comandaBackToHome()">${t('cmdBack')}</button>
+      <button class="cmd-btn primary" onclick="comandaCreateMesa()" ${buf?'':'disabled'}>${t('cmdContinue')}</button>
+    </div>`;
+}
+
+function comandaRenderActive(root){
+  const c = COMANDA_ACTIVE_DATA;
+  if (!c){ COMANDA_VIEW = 'home'; comandaRender(); return; }
+  const items = c.items || [];
+  const diners = c.diners || 1;
+
+  // Header timer chip
+  const tmsAt = c.timerStartedAt;
+  let timerChip;
+  if (tmsAt){
+    const ms = Date.now() - tmsAt;
+    const cls = comandaTimerClass(ms);
+    timerChip = `<button class="cmd-timer-btn ${cls}" id="cmd-timer-btn" onclick="comandaTimerToggle()">⏱ ${comandaFmtMsCompact(ms)}</button>`;
+  } else {
+    timerChip = `<button class="cmd-timer-btn" id="cmd-timer-btn" onclick="comandaTimerToggle()" title="${t('cmdTimerStart')}">⏱</button>`;
+  }
+
+  // Diner buttons
+  const dinerBtns = [];
+  for (let n = 1; n <= diners; n++){
+    const cls = (n === COMANDA_ACTIVE_DINER) ? 'active' : '';
+    dinerBtns.push(`<button class="cmd-diner-btn ${cls}" onclick="comandaSetDiner(${n})">${n}</button>`);
+  }
+  dinerBtns.push(`<button class="cmd-diner-btn cmd-diner-add" onclick="comandaAddDiner()" title="+">+</button>`);
+
+  // Category buttons
+  const catBtns = COMANDA_SOURCES.map(src => {
+    const cls = (src.key === COMANDA_ACTIVE_CATEGORY) ? 'active' : '';
+    return `<button class="cmd-cat-btn ${cls}" onclick="comandaSetCategory('${src.key}')">${src.icon} ${t(src.labelKey)}</button>`;
+  }).join('');
+
+  // Catalog panel content
+  const activeSrc = COMANDA_SOURCES.find(s => s.key === COMANDA_ACTIVE_CATEGORY);
+  let catalogHtml = '';
+  if (activeSrc){
+    if (activeSrc.items === 'custom'){
+      catalogHtml = `
+        <div class="cmd-custom-form">
+          <div class="cmd-custom-row">
+            <input class="cmd-custom-input" id="cmd-custom-name" type="text" placeholder="${t('cmdCustomNamePh')}" autocomplete="off">
+          </div>
+          <div class="cmd-custom-row">
+            <input class="cmd-custom-input" id="cmd-custom-cat" type="text" placeholder="${t('cmdCustomCatPh')}" autocomplete="off">
+          </div>
+          <div class="cmd-form-actions" style="justify-content:flex-end">
+            <button class="cmd-btn primary" onclick="comandaAddCustomItem()">${t('cmdCustomAdd')}</button>
+          </div>
+        </div>`;
+    } else {
+      try {
+        const list = activeSrc.items() || [];
+        // Group by .group
+        const groups = {};
+        list.forEach(it => {
+          const g = it.group || '—';
+          if (!groups[g]) groups[g] = [];
+          groups[g].push(it);
+        });
+        const groupHtml = Object.entries(groups).map(([gName, gItems]) => {
+          const itemsHtml = gItems.map(it => {
+            // Escape single quotes for the inline JS literal, double quotes for the
+            // HTML attribute so unusual product names ("L'Aviador", `\"Reserva\"`) don't break
+            const safeName = String(it.name||'').replace(/'/g,'\\\'').replace(/"/g,'&quot;');
+            const allergens = (it.allergens||[]).filter(Boolean);
+            const allergenAttr = allergens.length ? `title="${t('cmdAllergens')}: ${allergens.join(', ').replace(/"/g,'&quot;')}"` : '';
+            const warn = allergens.length ? `<span class="cmd-item-allergen" ${allergenAttr}>⚠</span>` : '';
+            const allergensJson = JSON.stringify(allergens).replace(/"/g,'&quot;');
+            return `<button class="cmd-item-btn" onclick="comandaAddItem('${activeSrc.key}', ${it.sourceId?`'${it.sourceId}'`:'null'}, '${safeName}', ${allergens.length?`JSON.parse(this.dataset.al)`:'[]'})" data-al="${allergensJson}"><span class="cmd-item-name">${it.name}</span>${warn}</button>`;
+          }).join('');
+          return `<div class="cmd-cat-group">${gName}</div>${itemsHtml}`;
+        }).join('');
+        catalogHtml = `<div class="cmd-cat-panel">${groupHtml || `<div class="cmd-empty-state">—</div>`}</div>`;
+      } catch(e){
+        console.error('[comanda catalog]', e);
+        catalogHtml = `<div class="cmd-empty-state">—</div>`;
+      }
+    }
+  }
+
+  // Active diner's items
+  const dinerItems = items.filter(it => it.dinerN === COMANDA_ACTIVE_DINER);
+  const dinerSummary = dinerItems.length
+    ? dinerItems.map(it => {
+        const allergens = (it.allergens||[]).filter(Boolean);
+        const warn = allergens.length ? `<span class="cmd-line-warn" title="${t('cmdAllergens')}: ${allergens.join(', ')}">⚠</span>` : '';
+        return `
+          <div class="cmd-line">
+            <div class="cmd-line-qty">${it.qty || 1}×</div>
+            <div class="cmd-line-body">
+              <span class="cmd-line-name">${it.name}</span>${warn}
+              ${it.notes ? `<span class="cmd-line-note">⚐ ${it.notes}</span>` : ''}
+            </div>
+            <div class="cmd-line-actions">
+              <button class="cmd-line-btn" onclick="comandaOpenNote('${it.id}')" title="${t('cmdNoteOpen')}">⚐</button>
+              <button class="cmd-line-btn cmd-rm" onclick="comandaRemoveItem('${it.id}')" title="${t('cmdItemRemove')}">✕</button>
+            </div>
+          </div>`;
+      }).join('')
+    : `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
+
+  root.innerHTML = `
+    <div class="cmd-active-header">
+      <div>
+        <div class="cmd-active-title">${t('cmdMesaPrefix')} ${c.mesa}</div>
+        <div class="cmd-active-sub">${diners} ${diners===1?t('cmdComensal'):t('cmdComensales')}</div>
+      </div>
+      <div class="cmd-active-controls">
+        ${timerChip}
+        <button class="cmd-exit-btn" onclick="comandaBackToHome()">${t('cfExit')}</button>
+      </div>
+    </div>
+
+    <div class="cmd-diner-label">${t('cmdAddingTo')} <strong>#${COMANDA_ACTIVE_DINER}</strong></div>
+    <div class="cmd-diner-row">${dinerBtns.join('')}</div>
+
+    <div class="cmd-cats">${catBtns}</div>
+
+    ${catalogHtml}
+
+    <div class="cmd-diner-summary">
+      <div class="cmd-summary-head">${t('cmdInComanda')} · #${COMANDA_ACTIVE_DINER}</div>
+      ${dinerSummary}
+    </div>
+
+    <div class="cmd-footer-actions">
+      <button class="cmd-btn" onclick="comandaShowFullView()">${t('cmdViewFull')}</button>
+      <button class="cmd-btn primary" onclick="comandaCloseMesa()">${t('cmdCloseMesa')}</button>
+    </div>
+
+    ${COMANDA_NOTE_EDIT_ID ? comandaRenderNoteModal() : ''}
+    ${COMANDA_FULL_OPEN ? comandaRenderFullModal() : ''}`;
+}
+
+function comandaRenderNoteModal(){
+  const item = (COMANDA_ACTIVE_DATA && COMANDA_ACTIVE_DATA.items || []).find(it => it.id === COMANDA_NOTE_EDIT_ID);
+  if (!item) return '';
+  const safeNote = (item.notes || '').replace(/</g,'&lt;');
+  return `
+    <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaCloseNote()">
+      <div class="cmd-modal-panel">
+        <div class="cmd-modal-title">${t('cmdNoteTitle')} ${item.name}</div>
+        <textarea class="cmd-modal-input" id="cmd-note-input" rows="3" placeholder="${t('cmdNotePlaceholder')}">${safeNote}</textarea>
+        <div class="cmd-modal-actions">
+          <button class="cmd-btn" onclick="comandaCloseNote()">${t('cmdNoteCancel')}</button>
+          <button class="cmd-btn primary" onclick="comandaSaveNote()">${t('cmdNoteSave')}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function comandaRenderFullModal(){
+  const c = COMANDA_ACTIVE_DATA;
+  if (!c) return '';
+  const items = c.items || [];
+  const diners = c.diners || 1;
+  const sections = [];
+  for (let n = 1; n <= diners; n++){
+    const its = items.filter(it => it.dinerN === n);
+    const lines = its.length
+      ? its.map(it => {
+          const a = (it.allergens||[]).filter(Boolean);
+          const warn = a.length ? `<span class="cmd-line-warn" title="${a.join(', ')}">⚠</span>` : '';
+          return `<div class="cmd-line"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${warn}${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
+        }).join('')
+      : `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
+    sections.push(`<div class="cmd-full-diner"><div class="cmd-full-diner-head">#${n}</div>${lines}</div>`);
+  }
+  return `
+    <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaHideFullView()">
+      <div class="cmd-modal-panel">
+        <div class="cmd-modal-title">${t('cmdFullViewTitle')} · ${t('cmdMesaPrefix')} ${c.mesa}</div>
+        ${sections.join('')}
+        <div class="cmd-modal-actions">
+          <button class="cmd-btn primary" onclick="comandaHideFullView()">OK</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// Register for i18n updates so labels swap on language change
+onI18nChange(() => { if (currentTab === 'comandera') comandaRender(); });
 </script>
 </body>
 </html>
