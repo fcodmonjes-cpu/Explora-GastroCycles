@@ -98,7 +98,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .desserts-form-btn.primary:hover { opacity: 0.85; }
 
 /* ── Comandera module ────────────────────────────────────────────────────── */
-.cmd-root { font-family: 'Courier Prime','Courier New',monospace; }
+.cmd-root {
+  font-family: 'Courier Prime','Courier New',monospace;
+  /* Disable text selection across the whole order-pad view. Long-press
+     on iOS / Android otherwise pops the native selection menu before
+     our drag-to-reorder long-press handler can capture the gesture,
+     producing false-positive "grabs" of text instead of items. Inputs
+     and textareas re-enable selection below so typing notes still works. */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.cmd-root input,
+.cmd-root textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
 .cmd-gate { text-align:center; padding:2rem 1rem; }
 .cmd-gate-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:24px; color:var(--gold); margin-bottom:6px; }
 .cmd-gate-sub { font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:1.5rem; }
