@@ -144,6 +144,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-mesa-elapsed { font-size:13px; color:var(--gold); font-family:'Courier Prime','Courier New',monospace; }
 .cmd-mesa-elapsed.warn { color:#e07b3a; }
 .cmd-mesa-elapsed.urgent { color:#e55; animation:cfurgentpulse 1.8s ease infinite; }
+/* History section — closed mesas of today, listed below the active ones */
+.cmd-history-section { margin-top:1.75rem; padding-top:1.1rem; border-top:0.5px solid var(--border); }
+.cmd-history-title { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:0.85rem; }
+.cmd-mesa-card-closed { opacity:0.6; transition:opacity .15s, border-color .15s, background .15s; }
+.cmd-mesa-card-closed:hover { opacity:1; }
+.cmd-mesa-card-closed .cmd-mesa-num { color:var(--text-tertiary); }
+.cmd-mesa-card-closed .cmd-mesa-elapsed { color:var(--text-tertiary); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; }
 .cmd-empty-state { text-align:center; color:var(--text-tertiary); font-size:11px; padding:2.5rem 1rem; letter-spacing:0.1em; text-transform:uppercase; font-family:'Courier Prime','Courier New',monospace; }
 
 /* New-mesa form */
@@ -977,6 +984,8 @@ let COMANDA_AUTHED          = false;
 let COMANDA_VIEW            = 'gate';   // 'gate' | 'home' | 'new' | 'active'
 let COMANDA_PIN_BUFFER      = '';
 let COMANDA_LIST            = [];       // open mesas, for home view
+let COMANDA_HISTORY_LIST    = [];       // closed mesas of today, for home view
+let COMANDA_HIST_VIEW_DATA  = null;     // closed mesa currently viewed in modal
 let COMANDA_ACTIVE_ID       = null;
 let COMANDA_ACTIVE_DATA     = null;
 let COMANDA_ACTIVE_DINER    = 1;
@@ -1043,6 +1052,8 @@ const UI = {
     cmdInComanda:'Esta persona', cmdNoOrders:'sin pedidos aún',
     cmdMesasBtn:'← Mesas',
     cmdViewFull:'Ver comanda completa', cmdCloseMesa:'Cerrar mesa',
+    cmdHistoryTitle:'Historial de hoy', cmdHistoryEmpty:'Sin mesas cerradas hoy',
+    cmdReopen:'Reabrir mesa', cmdClosedAgo:'cerrada hace', cmdLasted:'duró',
     cmdCloseMesaConfirm:'¿Cerrar la comanda? Quedará en histórico.',
     cmdAllergens:'Alérgenos',
     cmdNoteOpen:'⚐', cmdNoteTitle:'Nota para',
@@ -1103,6 +1114,8 @@ const UI = {
     cmdInComanda:'This guest', cmdNoOrders:'no orders yet',
     cmdMesasBtn:'← Tables',
     cmdViewFull:'View full ticket', cmdCloseMesa:'Close table',
+    cmdHistoryTitle:"Today's history", cmdHistoryEmpty:'No tables closed today',
+    cmdReopen:'Reopen table', cmdClosedAgo:'closed', cmdLasted:'lasted',
     cmdCloseMesaConfirm:'Close this ticket? It will move to history.',
     cmdAllergens:'Allergens',
     cmdNoteOpen:'⚐', cmdNoteTitle:'Note for',
@@ -1163,6 +1176,8 @@ const UI = {
     cmdInComanda:'Esta pessoa', cmdNoOrders:'sem pedidos ainda',
     cmdMesasBtn:'← Mesas',
     cmdViewFull:'Ver comanda completa', cmdCloseMesa:'Fechar mesa',
+    cmdHistoryTitle:'Histórico de hoje', cmdHistoryEmpty:'Sem mesas fechadas hoje',
+    cmdReopen:'Reabrir mesa', cmdClosedAgo:'fechada há', cmdLasted:'durou',
     cmdCloseMesaConfirm:'Fechar a comanda? Vai para o histórico.',
     cmdAllergens:'Alérgenos',
     cmdNoteOpen:'⚐', cmdNoteTitle:'Nota para',
@@ -4252,20 +4267,29 @@ function comandaFireUrl(suffix){
 
 // --- Home view (list of open mesas) ---------------------------------------
 async function comandaFetchOpenMesas(){
+  // Fetches today's full set and partitions into open + closed lists.
+  // Both populate the home view; closed ones live in the History section
+  // below "Mesas activas" and are tappable for read-only review or reopen.
   try {
     const url = comandaFireUrl(comandaDateKey());
     const resp = await fetch(url);
     const data = await resp.json();
-    const list = [];
+    const open = [];
+    const closed = [];
     if (data){
       Object.entries(data).forEach(([id, c]) => {
-        if (c && !c.closedAt) list.push({ id, ...c });
+        if (!c) return;
+        if (c.closedAt) closed.push({ id, ...c });
+        else            open.push({ id, ...c });
       });
     }
-    list.sort((a,b)=>(b.openedAt||0)-(a.openedAt||0));
-    COMANDA_LIST = list;
+    open.sort((a,b)=>(b.openedAt||0)-(a.openedAt||0));
+    closed.sort((a,b)=>(b.closedAt||0)-(a.closedAt||0));
+    COMANDA_LIST         = open;
+    COMANDA_HISTORY_LIST = closed;
   } catch(e){
     COMANDA_LIST = [];
+    COMANDA_HISTORY_LIST = [];
   }
   if (COMANDA_VIEW === 'home') comandaRender();
 }
@@ -4436,7 +4460,8 @@ async function comandaPersist(patch){
 }
 async function comandaCloseMesa(){
   if (!COMANDA_ACTIVE_ID) return;
-  if (!confirm(t('cmdCloseMesaConfirm'))) return;
+  // No confirmation popup — speed wins. Recovery is via the History
+  // section in the home view: tap the closed mesa → "Reabrir mesa".
   await comandaPersist({ closedAt: Date.now() });
   comandaStopTimerInterval();
   comandaStopPolling();
@@ -4491,6 +4516,32 @@ async function comandaAddCustomItem(){
 // --- Full-view modal -------------------------------------------------------
 function comandaShowFullView(){ COMANDA_FULL_OPEN = true;  comandaRender(); }
 function comandaHideFullView(){ COMANDA_FULL_OPEN = false; comandaRender(); }
+
+// --- History modal (tap a closed mesa to review or reopen) ----------------
+function comandaShowHistoryItem(id){
+  const c = COMANDA_HISTORY_LIST.find(x => x.id === id);
+  if (!c) return;
+  COMANDA_HIST_VIEW_DATA = c;
+  comandaRender();
+}
+function comandaHideHistoryItem(){
+  COMANDA_HIST_VIEW_DATA = null;
+  comandaRender();
+}
+async function comandaReopenMesa(id){
+  // PATCH closedAt:null deletes the field — Firebase doesn't store nulls.
+  // The mesa is then "open" again and reappears in the active list.
+  try {
+    await fetch(comandaFireUrl(comandaDateKey() + '/' + id), {
+      method: 'PATCH',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ closedAt: null })
+    });
+  } catch(e){ console.error('[comanda reopen]', e); return; }
+  COMANDA_HIST_VIEW_DATA = null;
+  await comandaFetchOpenMesas();
+  comandaRender();
+}
 
 // --- Timer ----------------------------------------------------------------
 function comandaStartTimerInterval(){
@@ -4624,14 +4675,15 @@ function comandaRenderGate(root){
 }
 
 function comandaRenderHome(root){
-  const list = COMANDA_LIST;
-  const cards = list.length
-    ? list.map(c => {
+  const open = COMANDA_LIST;
+  const closed = COMANDA_HISTORY_LIST;
+
+  const activeCards = open.length
+    ? open.map(c => {
         const elapsedMs = Date.now() - (c.openedAt || Date.now());
         const cls = comandaTimerClass(elapsedMs);
-        const summary = (c.items && c.items.length)
-          ? `${c.items.length} ítem${c.items.length>1?'s':''}`
-          : (t('cmdNoOrders') || '—');
+        const itemCount = (c.items || []).length;
+        const summary = itemCount ? `${itemCount} ítem${itemCount>1?'s':''}` : (t('cmdNoOrders') || '—');
         return `
           <div class="cmd-mesa-card" onclick="comandaOpenMesa('${c.id}')">
             <div class="cmd-mesa-num">${c.mesa}</div>
@@ -4643,13 +4695,70 @@ function comandaRenderHome(root){
           </div>`;
       }).join('')
     : `<div class="cmd-empty-state">${t('cmdHomeEmpty')}</div>`;
+
+  const historyCards = closed.map(c => {
+    const closedAgo = comandaFmtMsCompact(Date.now() - (c.closedAt || Date.now()));
+    const itemCount = (c.items || []).length;
+    return `
+      <div class="cmd-mesa-card cmd-mesa-card-closed" onclick="comandaShowHistoryItem('${c.id}')">
+        <div class="cmd-mesa-num">${c.mesa}</div>
+        <div class="cmd-mesa-info">
+          <div class="cmd-mesa-meta">${c.diners} ${c.diners === 1 ? t('cmdComensal') : t('cmdComensales')} · ${itemCount} ítem${itemCount===1?'':'s'}</div>
+          <div class="cmd-mesa-summary">${t('cmdClosedAgo')} ${closedAgo}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const historySection = closed.length
+    ? `<div class="cmd-history-section"><div class="cmd-history-title">${t('cmdHistoryTitle')}</div>${historyCards}</div>`
+    : '';
+
   root.innerHTML = `
     <div class="cmd-home-header">
       <div class="cmd-home-title">${t('cmdHomeTitle')}</div>
       <button class="cmd-exit-btn" onclick="comandaLogout()">${t('cfExit')}</button>
     </div>
-    ${cards}
-    <button class="cmd-btn primary" style="width:100%;margin-top:1rem" onclick="comandaShowNewMesa()">${t('cmdNewMesaBtn')}</button>`;
+    ${activeCards}
+    <button class="cmd-btn primary" style="width:100%;margin-top:1rem" onclick="comandaShowNewMesa()">${t('cmdNewMesaBtn')}</button>
+    ${historySection}
+    ${COMANDA_HIST_VIEW_DATA ? comandaRenderHistoryModal() : ''}`;
+}
+
+function comandaRenderHistoryModal(){
+  const c = COMANDA_HIST_VIEW_DATA;
+  if (!c) return '';
+  const items = c.items || [];
+  const diners = c.diners || 1;
+  const sections = [];
+  for (let n = 1; n <= diners; n++){
+    const its = items.filter(it => it.dinerN === n);
+    let lines = '';
+    if (its.length){
+      let prevGroup = null;
+      lines = its.map(it => {
+        const grp = comandaGroupOf(it);
+        const showDivider = (grp && grp !== prevGroup);
+        prevGroup = grp;
+        const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
+        return `${div}<div class="cmd-line"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
+      }).join('');
+    } else {
+      lines = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
+    }
+    sections.push(`<div class="cmd-full-diner"><div class="cmd-full-diner-head">#${n}</div>${lines}</div>`);
+  }
+  const lasted = (c.closedAt && c.openedAt) ? comandaFmtMsCompact(c.closedAt - c.openedAt) : '—';
+  return `
+    <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaHideHistoryItem()">
+      <div class="cmd-modal-panel">
+        <div class="cmd-modal-title">${t('cmdMesaPrefix')} ${c.mesa} · ${t('cmdLasted')} ${lasted}</div>
+        ${sections.join('')}
+        <div class="cmd-modal-actions">
+          <button class="cmd-btn" onclick="comandaReopenMesa('${c.id}')">${t('cmdReopen')}</button>
+          <button class="cmd-btn primary" onclick="comandaHideHistoryItem()">OK</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function comandaLogout(){
