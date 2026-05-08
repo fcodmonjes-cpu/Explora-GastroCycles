@@ -4208,6 +4208,18 @@ function comandaFmtMsCompact(ms){
   const rem = m % 60;
   return `${h}h ${rem}m`;
 }
+// Stopwatch format M:SS or H:MM:SS — used by the active-mesa timer chip
+// where second-level resolution makes the running counter feel alive.
+function comandaFmtTimer(ms){
+  if (!ms || ms < 0) ms = 0;
+  const totalSec = Math.floor(ms/1000);
+  const h = Math.floor(totalSec/3600);
+  const m = Math.floor((totalSec % 3600)/60);
+  const s = totalSec % 60;
+  const pad = n => String(n).padStart(2,'0');
+  if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
+  return `${m}:${pad(s)}`;
+}
 function comandaTimerClass(ms){
   const min = Math.floor(ms/60000);
   if (min >= 25) return 'urgent';
@@ -4252,6 +4264,9 @@ function comandaSubmitPin(){
     comandaAutoCloseStale();
     comandaPurgeOldDays();
     comandaFetchOpenMesas();
+    // Start the 1s tick now that we're authed — both home and active
+    // views need it. Stops only on explicit logout.
+    comandaStartTimerInterval();
   } else {
     COMANDA_PIN_BUFFER = '';
     const err = document.getElementById('cmd-pin-error');
@@ -4394,7 +4409,7 @@ function comandaGroupRank(group){
   return 12;
 }
 
-async function comandaAddItem(source, sourceId, name, allergens, group){
+function comandaAddItem(source, sourceId, name, allergens, group){
   if (!COMANDA_ACTIVE_DATA) return;
   const item = {
     id: comandaUid(),
@@ -4414,7 +4429,6 @@ async function comandaAddItem(source, sourceId, name, allergens, group){
   // even if the waiter added Postre before Entrada. Drag overrides this.
   const newRank = comandaGroupRank(comandaGroupOf(item));
   let insertAt = items.length;
-  // Find the last item of same diner with rank ≤ newRank → insert after it
   let foundAfter = -1;
   for (let i = items.length - 1; i >= 0; i--){
     if (items[i].dinerN !== dinerN) continue;
@@ -4426,44 +4440,67 @@ async function comandaAddItem(source, sourceId, name, allergens, group){
   if (foundAfter >= 0){
     insertAt = foundAfter + 1;
   } else {
-    // No earlier-or-equal item for this diner → insert before first item of this diner
     for (let i = 0; i < items.length; i++){
       if (items[i].dinerN === dinerN){ insertAt = i; break; }
     }
   }
   items.splice(insertAt, 0, item);
-  await comandaPersist({ items });
+  // Optimistic UI: render IMMEDIATELY so the tap feels instant. The
+  // network write happens fire-and-forget; the queue in comandaPersist
+  // serialises and coalesces rapid taps so out-of-order PATCHes can't
+  // lose data.
   comandaRender();
+  comandaPersist({ items });
 }
-async function comandaRemoveItem(itemId){
+function comandaRemoveItem(itemId){
   if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
   COMANDA_ACTIVE_DATA.items = COMANDA_ACTIVE_DATA.items.filter(it => it.id !== itemId);
-  await comandaPersist({ items: COMANDA_ACTIVE_DATA.items });
-  comandaRender();
+  comandaRender();                               // immediate
+  comandaPersist({ items: COMANDA_ACTIVE_DATA.items }); // background
 }
-async function comandaUpdateNote(itemId, note){
+function comandaUpdateNote(itemId, note){
   if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
   COMANDA_ACTIVE_DATA.items = COMANDA_ACTIVE_DATA.items.map(it =>
     it.id === itemId ? { ...it, notes: note } : it
   );
-  await comandaPersist({ items: COMANDA_ACTIVE_DATA.items });
+  comandaPersist({ items: COMANDA_ACTIVE_DATA.items });
 }
-async function comandaPersist(patch){
-  if (!COMANDA_ACTIVE_ID) return;
-  try {
-    await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID), {
-      method: 'PATCH',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify(patch)
-    });
-  } catch(e){ console.error('[comanda persist]', e); }
+// Write queue — coalesces rapid taps into the minimum number of network
+// round-trips. Each comandaPersist() merges its patch fields into a pending
+// payload and (if no write is in flight) starts a loop that drains the
+// pending payload until empty. Because every items-PATCH carries the FULL
+// items array, only the latest pending state needs to actually hit the
+// server — earlier intermediate states get coalesced away. Net effect:
+// rapid tap → instant render → single network call.
+let _CMD_WRITE_PENDING  = null;
+let _CMD_WRITE_INFLIGHT = false;
+function comandaPersist(patch){
+  if (!COMANDA_ACTIVE_ID) return Promise.resolve();
+  _CMD_WRITE_PENDING = Object.assign(_CMD_WRITE_PENDING || {}, patch);
+  if (_CMD_WRITE_INFLIGHT) return Promise.resolve();
+  return _comandaPersistDrain();
 }
-async function comandaCloseMesa(){
+async function _comandaPersistDrain(){
+  _CMD_WRITE_INFLIGHT = true;
+  while (_CMD_WRITE_PENDING && COMANDA_ACTIVE_ID){
+    const toSend = _CMD_WRITE_PENDING;
+    _CMD_WRITE_PENDING = null;
+    try {
+      await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID), {
+        method: 'PATCH',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(toSend)
+      });
+    } catch(e){ console.error('[comanda persist]', e); }
+  }
+  _CMD_WRITE_INFLIGHT = false;
+}
+function comandaCloseMesa(){
   if (!COMANDA_ACTIVE_ID) return;
   // No confirmation popup — speed wins. Recovery is via the History
   // section in the home view: tap the closed mesa → "Reabrir mesa".
-  await comandaPersist({ closedAt: Date.now() });
-  comandaStopTimerInterval();
+  // Tick stays running; only stops on explicit logout.
+  comandaPersist({ closedAt: Date.now() });
   comandaStopPolling();
   COMANDA_ACTIVE_ID = null;
   COMANDA_ACTIVE_DATA = null;
@@ -4472,7 +4509,6 @@ async function comandaCloseMesa(){
   comandaRender();
 }
 function comandaBackToHome(){
-  comandaStopTimerInterval();
   comandaStopPolling();
   COMANDA_ACTIVE_ID = null;
   COMANDA_ACTIVE_DATA = null;
@@ -4491,26 +4527,25 @@ function comandaCloseNote(){
   COMANDA_NOTE_EDIT_ID = null;
   comandaRender();
 }
-async function comandaSaveNote(){
+function comandaSaveNote(){
   const ta = document.getElementById('cmd-note-input');
   const note = ta ? ta.value.trim() : '';
   const id = COMANDA_NOTE_EDIT_ID;
-  if (id) await comandaUpdateNote(id, note);
+  if (id) comandaUpdateNote(id, note);
   COMANDA_NOTE_EDIT_ID = null;
   comandaRender();
 }
 
 // --- Custom item form -----------------------------------------------------
-async function comandaAddCustomItem(){
+function comandaAddCustomItem(){
   const nameEl = document.getElementById('cmd-custom-name');
   const catEl  = document.getElementById('cmd-custom-cat');
   const name = nameEl ? nameEl.value.trim() : '';
   const cat  = catEl  ? catEl.value.trim()  : '';
   if (!name) return;
-  await comandaAddItem('custom', null, name + (cat ? ` · ${cat}` : ''), [], 'Otros');
+  comandaAddItem('custom', null, name + (cat ? ` · ${cat}` : ''), [], 'Otros');
   if (nameEl) nameEl.value = '';
   if (catEl)  catEl.value  = '';
-  // Stay in custom category — user can add another quickly
 }
 
 // --- Full-view modal -------------------------------------------------------
@@ -4543,19 +4578,30 @@ async function comandaReopenMesa(id){
   comandaRender();
 }
 
-// --- Timer ----------------------------------------------------------------
+// --- Tick ----------------------------------------------------------------
+// Single 1-second interval drives second-level updates on the active timer
+// chip and a slower full re-render on the home view (every 30 ticks). All
+// other views are no-ops, so the overhead is negligible.
+let COMANDA_TICK_COUNT = 0;
 function comandaStartTimerInterval(){
   comandaStopTimerInterval();
   COMANDA_TIMER_INTERVAL = setInterval(()=>{
-    // Just refresh the timer display chip (minimal DOM work)
-    const chip = document.getElementById('cmd-timer-btn');
-    if (!chip || !COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.timerStartedAt) return;
-    const ms = Date.now() - COMANDA_ACTIVE_DATA.timerStartedAt;
-    chip.textContent = '⏱ ' + comandaFmtMsCompact(ms);
-    chip.classList.remove('warn','urgent');
-    const cls = comandaTimerClass(ms);
-    if (cls) chip.classList.add(cls);
-  }, 30000); // 30s tick is plenty for a minute-resolution display
+    if (currentTab !== 'comandera' || !COMANDA_AUTHED) return;
+    COMANDA_TICK_COUNT++;
+    if (COMANDA_VIEW === 'active'){
+      // Single-element update — cheap. Only when the timer is running.
+      const chip = document.getElementById('cmd-timer-btn');
+      if (!chip || !COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.timerStartedAt) return;
+      const ms = Date.now() - COMANDA_ACTIVE_DATA.timerStartedAt;
+      chip.textContent = '⏱ ' + comandaFmtTimer(ms);
+      chip.classList.remove('warn','urgent');
+      const cls = comandaTimerClass(ms);
+      if (cls) chip.classList.add(cls);
+    } else if (COMANDA_VIEW === 'home' && COMANDA_TICK_COUNT % 30 === 0){
+      // Home cards display minute-resolution elapsed times; rebuild every 30s.
+      comandaRender();
+    }
+  }, 1000);
 }
 function comandaStopTimerInterval(){
   if (COMANDA_TIMER_INTERVAL){ clearInterval(COMANDA_TIMER_INTERVAL); COMANDA_TIMER_INTERVAL = null; }
@@ -4582,14 +4628,18 @@ function comandaStartPolling(){
   comandaStopPolling();
   COMANDA_POLL_INTERVAL = setInterval(async ()=>{
     if (currentTab !== 'comandera' || !COMANDA_ACTIVE_ID) return;
+    // Skip while we have unsent or in-flight writes — server still has the
+    // OLD state, so refetching would clobber the user's just-made change.
+    // The next tick after the queue drains will pick up the fresh state.
+    if (_CMD_WRITE_PENDING || _CMD_WRITE_INFLIGHT) return;
+    // Skip while user is actively interacting (note dialog, full-view modal,
+    // or mid-drag) — re-rendering would yank their gesture.
+    if (COMANDA_NOTE_EDIT_ID || COMANDA_FULL_OPEN || (typeof CMD_DRAG !== 'undefined' && CMD_DRAG)) return;
     try {
       const resp = await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID));
       const data = await resp.json();
       if (!data) return;
-      // Merge server data — preserves view state, just refreshes items/diners/timer
       COMANDA_ACTIVE_DATA = { id: COMANDA_ACTIVE_ID, ...data, items: data.items || [] };
-      // Skip render if a note dialog or full view is open (user is interacting)
-      if (COMANDA_NOTE_EDIT_ID || COMANDA_FULL_OPEN) return;
       comandaRender();
     } catch(e){}
   }, 8000);
@@ -4765,6 +4815,8 @@ function comandaLogout(){
   COMANDA_AUTHED = false;
   COMANDA_VIEW = 'gate';
   COMANDA_PIN_BUFFER = '';
+  comandaStopTimerInterval();
+  comandaStopPolling();
   comandaRender();
 }
 
@@ -4806,13 +4858,14 @@ function comandaRenderActive(root){
   const items = c.items || [];
   const diners = c.diners || 1;
 
-  // Header timer chip
+  // Header timer chip — second-resolution stopwatch when running.
+  // The 1s tick in comandaStartTimerInterval refreshes the text in place.
   const tmsAt = c.timerStartedAt;
   let timerChip;
   if (tmsAt){
     const ms = Date.now() - tmsAt;
     const cls = comandaTimerClass(ms);
-    timerChip = `<button class="cmd-timer-btn ${cls}" id="cmd-timer-btn" onclick="comandaTimerToggle()">⏱ ${comandaFmtMsCompact(ms)}</button>`;
+    timerChip = `<button class="cmd-timer-btn ${cls}" id="cmd-timer-btn" onclick="comandaTimerToggle()">⏱ ${comandaFmtTimer(ms)}</button>`;
   } else {
     timerChip = `<button class="cmd-timer-btn" id="cmd-timer-btn" onclick="comandaTimerToggle()" title="${t('cmdTimerStart')}">⏱</button>`;
   }
