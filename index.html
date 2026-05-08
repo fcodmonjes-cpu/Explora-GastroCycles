@@ -223,6 +223,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-full-diner { margin-bottom:1.1rem; padding-bottom:0.85rem; border-bottom:0.5px solid var(--border); }
 .cmd-full-diner:last-of-type { border-bottom:none; }
 .cmd-full-diner-head { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#9ec9ff; margin-bottom:7px; }
+
+/* "Mesas" back button — replaces the small "Salir" link with a more
+   discoverable styled button on the active mesa header. */
+.cmd-mesas-btn { background:var(--surface); border:0.5px solid var(--border-md); color:var(--text-secondary); border-radius:var(--radius-md); padding:5px 11px; font-size:11px; letter-spacing:0.06em; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cmd-mesas-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+/* Course / service-time divider inside the diner summary list. Thin gold
+   line + tiny caption with the course name. Caption uses the captured
+   `group` field (Entrada / Plato principal / Postre / Bebidas / Otros). */
+.cmd-course-divider { display:flex; align-items:center; gap:10px; margin:10px 0 6px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(202,138,4,0.72); }
+.cmd-course-divider::before, .cmd-course-divider::after { content:''; flex:1; height:0.5px; background:rgba(202,138,4,0.32); }
+.cmd-course-divider span { flex:0 0 auto; }
+.cmd-course-divider:first-child { margin-top:0; }
+
+/* Drag-to-reorder visuals. The grip handle is the leftmost cell of the
+   line; only it triggers drag (the rest of the row stays tappable for the
+   ⚐ note and ✕ remove buttons). */
+.cmd-line { transition: transform .18s cubic-bezier(0.34,1.1,0.64,1), background .15s; touch-action: pan-y; }
+.cmd-line-grip { display:flex; align-items:center; justify-content:center; width:24px; flex-shrink:0; color:var(--text-tertiary); cursor:grab; user-select:none; -webkit-tap-highlight-color:transparent; font-size:14px; line-height:1; padding:6px 2px; touch-action:none; opacity:0.55; transition:opacity .15s, color .15s; }
+.cmd-line-grip:hover { opacity:1; color:var(--gold); }
+.cmd-line-dragging { background:rgba(202,138,4,0.12); border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.4); transform:scale(1.01); z-index:5; position:relative; transition:none; }
+.cmd-line-dragging .cmd-line-grip { color:var(--gold); opacity:1; cursor:grabbing; }
 .lang-toggle { display: flex; gap: 4px; flex-shrink: 0; }
 .lang-btn { padding: 4px 9px; border-radius: 6px; border: 0.5px solid var(--border-md); font-size: 11px; font-weight: 500; cursor: pointer; background: transparent; color: var(--text-tertiary); letter-spacing: 0.04em; transition: all 0.15s; }
 .lang-btn:hover { background: var(--bg-secondary); color: var(--text-secondary); }
@@ -999,6 +1021,7 @@ const UI = {
     cmdAddingTo:'Agregando a',
     cmdSourceDishes:'Platos', cmdSourceWines:'Vinos', cmdSourceCocktails:'Cocktails', cmdSourceCustom:'Otro',
     cmdInComanda:'Esta persona', cmdNoOrders:'sin pedidos aún',
+    cmdMesasBtn:'← Mesas',
     cmdViewFull:'Ver comanda completa', cmdCloseMesa:'Cerrar mesa',
     cmdCloseMesaConfirm:'¿Cerrar la comanda? Quedará en histórico.',
     cmdAllergens:'Alérgenos',
@@ -1058,6 +1081,7 @@ const UI = {
     cmdAddingTo:'Adding to',
     cmdSourceDishes:'Dishes', cmdSourceWines:'Wines', cmdSourceCocktails:'Cocktails', cmdSourceCustom:'Other',
     cmdInComanda:'This guest', cmdNoOrders:'no orders yet',
+    cmdMesasBtn:'← Tables',
     cmdViewFull:'View full ticket', cmdCloseMesa:'Close table',
     cmdCloseMesaConfirm:'Close this ticket? It will move to history.',
     cmdAllergens:'Allergens',
@@ -1117,6 +1141,7 @@ const UI = {
     cmdAddingTo:'Adicionando a',
     cmdSourceDishes:'Pratos', cmdSourceWines:'Vinhos', cmdSourceCocktails:'Cocktails', cmdSourceCustom:'Outro',
     cmdInComanda:'Esta pessoa', cmdNoOrders:'sem pedidos ainda',
+    cmdMesasBtn:'← Mesas',
     cmdViewFull:'Ver comanda completa', cmdCloseMesa:'Fechar mesa',
     cmdCloseMesaConfirm:'Fechar a comanda? Vai para o histórico.',
     cmdAllergens:'Alérgenos',
@@ -4076,13 +4101,24 @@ const COMANDA_SOURCES = [
     key: 'dishes', labelKey: 'cmdSourceDishes', icon: '🍽',
     items: () => {
       // Resolve today's cycle day (D1-D4) using the same anchor logic
-      // as the existing day-highlighter, then return today's dishes.
+      // as the existing day-highlighter, then return today's dishes
+      // filtered by the active service window (lunch / dinner).
       const anchor = new Date(2026, 3, 14); // 2026-04-14 = Día 4
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const diff = Math.round((today - anchor) / 86400000);
       const cycleDay = String(((diff + 3) % 4 + 4) % 4 + 1);
-      return DISHES.filter(d => d.day === cycleDay).map(d => ({
+      const minOfDay = now.getHours() * 60 + now.getMinutes();
+      // Lunch: 11:30 – 17:59 · Dinner: 18:00 – 00:59 (post-midnight)
+      const isLunch  = minOfDay >= (11*60+30) && minOfDay < (18*60);
+      const isDinner = (minOfDay >= 18*60) || (minOfDay < 60);
+      return DISHES.filter(d => {
+        if (d.day !== cycleDay) return false;
+        const svc = d.service || '';
+        if (isLunch)  return svc === 'Almuerzo' || svc === 'Almuerzo y Cena';
+        if (isDinner) return svc === 'Cena'     || svc === 'Almuerzo y Cena';
+        return false; // outside service hours: empty list, the catalog shows "—"
+      }).map(d => ({
         sourceId: d.id, name: d.name,
         group: d.course, allergens: d.allergens || []
       }));
@@ -4294,20 +4330,65 @@ function comandaSetCategory(key){
   COMANDA_CUSTOM_OPEN = (key === 'custom');
   comandaRender();
 }
-async function comandaAddItem(source, sourceId, name, allergens){
+// Service order ranks — used both for auto-inserting new items into the
+// right position within a diner's list and for drawing the course
+// dividers. Items whose group is unknown rank last (raw drinks etc.).
+const COMANDA_SERVICE_ORDER = ['Entrada','Plato principal','Postre'];
+function comandaGroupOf(it){
+  if (!it) return '';
+  if (it.source === 'dishes') return it.group || '';
+  if (it.source === 'wines')  return 'Vinos';
+  if (it.source === 'cocktails' || it.source === 'mocktails') return 'Bebidas';
+  return 'Otros';
+}
+function comandaGroupRank(group){
+  const idx = COMANDA_SERVICE_ORDER.indexOf(group);
+  if (idx >= 0) return idx;
+  // Drinks and others come after dishes
+  if (group === 'Vinos')   return 10;
+  if (group === 'Bebidas') return 11;
+  return 12;
+}
+
+async function comandaAddItem(source, sourceId, name, allergens, group){
   if (!COMANDA_ACTIVE_DATA) return;
   const item = {
     id: comandaUid(),
     dinerN: COMANDA_ACTIVE_DINER,
     source, sourceId: sourceId || null,
     name, allergens: allergens || [],
+    group: group || null,
     qty: 1, notes: '',
     addedAt: Date.now(),
     status: 'open'
   };
+  const dinerN = COMANDA_ACTIVE_DINER;
   COMANDA_ACTIVE_DATA.items = COMANDA_ACTIVE_DATA.items || [];
-  COMANDA_ACTIVE_DATA.items.push(item);
-  await comandaPersist({ items: COMANDA_ACTIVE_DATA.items });
+  const items = COMANDA_ACTIVE_DATA.items;
+
+  // Auto-insert by service rank — new dish lands at the end of its course
+  // even if the waiter added Postre before Entrada. Drag overrides this.
+  const newRank = comandaGroupRank(comandaGroupOf(item));
+  let insertAt = items.length;
+  // Find the last item of same diner with rank ≤ newRank → insert after it
+  let foundAfter = -1;
+  for (let i = items.length - 1; i >= 0; i--){
+    if (items[i].dinerN !== dinerN) continue;
+    if (comandaGroupRank(comandaGroupOf(items[i])) <= newRank){
+      foundAfter = i;
+      break;
+    }
+  }
+  if (foundAfter >= 0){
+    insertAt = foundAfter + 1;
+  } else {
+    // No earlier-or-equal item for this diner → insert before first item of this diner
+    for (let i = 0; i < items.length; i++){
+      if (items[i].dinerN === dinerN){ insertAt = i; break; }
+    }
+  }
+  items.splice(insertAt, 0, item);
+  await comandaPersist({ items });
   comandaRender();
 }
 async function comandaRemoveItem(itemId){
@@ -4381,7 +4462,7 @@ async function comandaAddCustomItem(){
   const name = nameEl ? nameEl.value.trim() : '';
   const cat  = catEl  ? catEl.value.trim()  : '';
   if (!name) return;
-  await comandaAddItem('custom', null, name + (cat ? ` · ${cat}` : ''), []);
+  await comandaAddItem('custom', null, name + (cat ? ` · ${cat}` : ''), [], 'Otros');
   if (nameEl) nameEl.value = '';
   if (catEl)  catEl.value  = '';
   // Stay in custom category — user can add another quickly
@@ -4653,11 +4734,10 @@ function comandaRenderActive(root){
             // Escape single quotes for the inline JS literal, double quotes for the
             // HTML attribute so unusual product names ("L'Aviador", `\"Reserva\"`) don't break
             const safeName = String(it.name||'').replace(/'/g,'\\\'').replace(/"/g,'&quot;');
-            const allergens = (it.allergens||[]).filter(Boolean);
-            const allergenAttr = allergens.length ? `title="${t('cmdAllergens')}: ${allergens.join(', ').replace(/"/g,'&quot;')}"` : '';
-            const warn = allergens.length ? `<span class="cmd-item-allergen" ${allergenAttr}>⚠</span>` : '';
-            const allergensJson = JSON.stringify(allergens).replace(/"/g,'&quot;');
-            return `<button class="cmd-item-btn" onclick="comandaAddItem('${activeSrc.key}', ${it.sourceId?`'${it.sourceId}'`:'null'}, '${safeName}', ${allergens.length?`JSON.parse(this.dataset.al)`:'[]'})" data-al="${allergensJson}"><span class="cmd-item-name">${it.name}</span>${warn}</button>`;
+            const safeGroup = String(it.group||'').replace(/'/g,'\\\'').replace(/"/g,'&quot;');
+            // Allergens preserved in data model for future use, but not rendered.
+            const allergensJson = JSON.stringify(it.allergens||[]).replace(/"/g,'&quot;');
+            return `<button class="cmd-item-btn" onclick="comandaAddItem('${activeSrc.key}', ${it.sourceId?`'${it.sourceId}'`:'null'}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${allergensJson}"><span class="cmd-item-name">${it.name}</span></button>`;
           }).join('');
           return `<div class="cmd-cat-group">${gName}</div>${itemsHtml}`;
         }).join('');
@@ -4669,26 +4749,41 @@ function comandaRenderActive(root){
     }
   }
 
-  // Active diner's items
+  // Active diner's items, in array order. Insert a course/service-time
+  // divider whenever the consecutive items belong to different groups.
+  // Each line carries a grip handle that triggers touch-drag-to-reorder.
   const dinerItems = items.filter(it => it.dinerN === COMANDA_ACTIVE_DINER);
-  const dinerSummary = dinerItems.length
-    ? dinerItems.map(it => {
-        const allergens = (it.allergens||[]).filter(Boolean);
-        const warn = allergens.length ? `<span class="cmd-line-warn" title="${t('cmdAllergens')}: ${allergens.join(', ')}">⚠</span>` : '';
-        return `
-          <div class="cmd-line">
-            <div class="cmd-line-qty">${it.qty || 1}×</div>
-            <div class="cmd-line-body">
-              <span class="cmd-line-name">${it.name}</span>${warn}
-              ${it.notes ? `<span class="cmd-line-note">⚐ ${it.notes}</span>` : ''}
-            </div>
-            <div class="cmd-line-actions">
-              <button class="cmd-line-btn" onclick="comandaOpenNote('${it.id}')" title="${t('cmdNoteOpen')}">⚐</button>
-              <button class="cmd-line-btn cmd-rm" onclick="comandaRemoveItem('${it.id}')" title="${t('cmdItemRemove')}">✕</button>
-            </div>
-          </div>`;
-      }).join('')
-    : `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
+  let dinerSummary = '';
+  if (dinerItems.length){
+    let prevGroup = null;
+    dinerSummary = dinerItems.map(it => {
+      const grp = comandaGroupOf(it);
+      const showDivider = (grp && grp !== prevGroup);
+      prevGroup = grp;
+      const dividerHtml = showDivider
+        ? `<div class="cmd-course-divider"><span>${grp}</span></div>`
+        : '';
+      return `${dividerHtml}
+        <div class="cmd-line" data-item-id="${it.id}"
+             ontouchstart="cmdDragStart(event, '${it.id}')"
+             ontouchmove="cmdDragMove(event)"
+             ontouchend="cmdDragEnd(event)"
+             ontouchcancel="cmdDragEnd(event)">
+          <div class="cmd-line-grip" aria-label="reorder">⋮⋮</div>
+          <div class="cmd-line-qty">${it.qty || 1}×</div>
+          <div class="cmd-line-body">
+            <span class="cmd-line-name">${it.name}</span>
+            ${it.notes ? `<span class="cmd-line-note">⚐ ${it.notes}</span>` : ''}
+          </div>
+          <div class="cmd-line-actions">
+            <button class="cmd-line-btn" onclick="comandaOpenNote('${it.id}')" title="${t('cmdNoteOpen')}">⚐</button>
+            <button class="cmd-line-btn cmd-rm" onclick="comandaRemoveItem('${it.id}')" title="${t('cmdItemRemove')}">✕</button>
+          </div>
+        </div>`;
+    }).join('');
+  } else {
+    dinerSummary = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
+  }
 
   root.innerHTML = `
     <div class="cmd-active-header">
@@ -4698,7 +4793,7 @@ function comandaRenderActive(root){
       </div>
       <div class="cmd-active-controls">
         ${timerChip}
-        <button class="cmd-exit-btn" onclick="comandaBackToHome()">${t('cfExit')}</button>
+        <button class="cmd-mesas-btn" onclick="comandaBackToHome()">${t('cmdMesasBtn')}</button>
       </div>
     </div>
 
@@ -4748,13 +4843,19 @@ function comandaRenderFullModal(){
   const sections = [];
   for (let n = 1; n <= diners; n++){
     const its = items.filter(it => it.dinerN === n);
-    const lines = its.length
-      ? its.map(it => {
-          const a = (it.allergens||[]).filter(Boolean);
-          const warn = a.length ? `<span class="cmd-line-warn" title="${a.join(', ')}">⚠</span>` : '';
-          return `<div class="cmd-line"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${warn}${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
-        }).join('')
-      : `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
+    let lines = '';
+    if (its.length){
+      let prevGroup = null;
+      lines = its.map(it => {
+        const grp = comandaGroupOf(it);
+        const showDivider = (grp && grp !== prevGroup);
+        prevGroup = grp;
+        const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
+        return `${div}<div class="cmd-line"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
+      }).join('');
+    } else {
+      lines = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
+    }
     sections.push(`<div class="cmd-full-diner"><div class="cmd-full-diner-head">#${n}</div>${lines}</div>`);
   }
   return `
@@ -4767,6 +4868,126 @@ function comandaRenderFullModal(){
         </div>
       </div>
     </div>`;
+}
+
+// ── Drag-to-reorder (touch) ─────────────────────────────────────────────
+// Long-press (~280ms) on the ⋮⋮ grip lifts the row; finger moves it; on
+// release the items array is reordered to match the visible DOM. The grip
+// is the only zone with touch-action:none, so taps on ⚐/✕ buttons elsewhere
+// in the row keep working normally.
+let CMD_DRAG = null;
+
+function cmdDragReset(){
+  if (!CMD_DRAG) return;
+  if (CMD_DRAG.longPressTimer) clearTimeout(CMD_DRAG.longPressTimer);
+  if (CMD_DRAG.el && CMD_DRAG.active){
+    CMD_DRAG.el.classList.remove('cmd-line-dragging');
+    CMD_DRAG.el.style.transform = '';
+  }
+  CMD_DRAG = null;
+}
+
+function cmdDragStart(e, itemId){
+  // Only fire if the touch landed on the grip handle itself.
+  const tgt = e.target;
+  if (!tgt || !tgt.classList || !tgt.classList.contains('cmd-line-grip')) return;
+  if (e.touches.length !== 1) return;
+  const touch = e.touches[0];
+  // Find the .cmd-line ancestor (the row)
+  let el = tgt;
+  while (el && !(el.classList && el.classList.contains('cmd-line'))) el = el.parentNode;
+  if (!el) return;
+  CMD_DRAG = {
+    itemId, el,
+    active: false,
+    startY: touch.clientY,
+    lastY: touch.clientY,
+    longPressTimer: setTimeout(()=>{
+      if (!CMD_DRAG) return;
+      CMD_DRAG.active = true;
+      CMD_DRAG.startY = CMD_DRAG.lastY; // start from current finger position
+      CMD_DRAG.el.classList.add('cmd-line-dragging');
+      if (navigator.vibrate) try { navigator.vibrate(30); } catch(e){}
+    }, 280)
+  };
+}
+
+function cmdDragMove(e){
+  if (!CMD_DRAG || e.touches.length !== 1) return;
+  const touch = e.touches[0];
+  CMD_DRAG.lastY = touch.clientY;
+
+  if (!CMD_DRAG.active){
+    // Cancel long-press if user moved before the timer fired (treats as scroll)
+    if (Math.abs(touch.clientY - CMD_DRAG.startY) > 8){
+      cmdDragReset();
+    }
+    return;
+  }
+
+  // Active drag — prevent page scroll while reordering
+  e.preventDefault();
+  const dy = touch.clientY - CMD_DRAG.startY;
+  CMD_DRAG.el.style.transform = `translateY(${dy}px)`;
+
+  // Detect swap with the closest non-dragging .cmd-line sibling
+  const dragRect = CMD_DRAG.el.getBoundingClientRect();
+  const dragMid  = dragRect.top + dragRect.height / 2;
+  const parent   = CMD_DRAG.el.parentNode;
+  const siblings = [...parent.children].filter(s => s.classList && s.classList.contains('cmd-line') && s !== CMD_DRAG.el);
+  for (const sib of siblings){
+    const r = sib.getBoundingClientRect();
+    const m = r.top + r.height / 2;
+    if (Math.abs(dragMid - m) < r.height * 0.55){
+      // Swap DOM positions, then re-anchor startY so element stays under finger
+      const oldRect = CMD_DRAG.el.getBoundingClientRect();
+      const dragIdx = [...parent.children].indexOf(CMD_DRAG.el);
+      const sibIdx  = [...parent.children].indexOf(sib);
+      if (sibIdx < dragIdx) parent.insertBefore(CMD_DRAG.el, sib);
+      else                  parent.insertBefore(CMD_DRAG.el, sib.nextSibling);
+      const newRect = CMD_DRAG.el.getBoundingClientRect();
+      CMD_DRAG.startY += (newRect.top - oldRect.top);
+      CMD_DRAG.el.style.transform = `translateY(${touch.clientY - CMD_DRAG.startY}px)`;
+      break;
+    }
+  }
+}
+
+function cmdDragEnd(e){
+  if (!CMD_DRAG) return;
+  const wasActive = CMD_DRAG.active;
+  if (CMD_DRAG.longPressTimer) clearTimeout(CMD_DRAG.longPressTimer);
+  if (wasActive){
+    CMD_DRAG.el.classList.remove('cmd-line-dragging');
+    CMD_DRAG.el.style.transform = '';
+    cmdDragCommit();
+  }
+  CMD_DRAG = null;
+}
+
+function cmdDragCommit(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  // Read the new order of the active diner's items from the DOM
+  const visibleEls = document.querySelectorAll('.cmd-line[data-item-id]');
+  const newOrder = [...visibleEls].map(el => el.dataset.itemId);
+  const itemsById = {};
+  (COMANDA_ACTIVE_DATA.items || []).forEach(it => { itemsById[it.id] = it; });
+
+  // Rebuild items array: same other-diner items in their original spots,
+  // active-diner items pulled in the new order. Walk the original array;
+  // every time we encounter an active-diner slot, replace with the next
+  // id from newOrder. This preserves the relative positions of items
+  // belonging to other diners.
+  let newIdx = 0;
+  const rebuilt = (COMANDA_ACTIVE_DATA.items || []).map(it => {
+    if (it.dinerN !== COMANDA_ACTIVE_DINER) return it;
+    const replacement = itemsById[newOrder[newIdx++]];
+    return replacement || it;
+  });
+  COMANDA_ACTIVE_DATA.items = rebuilt;
+  comandaPersist({ items: rebuilt });
+  // Re-render so course dividers reflect the new order
+  comandaRender();
 }
 
 // Register for i18n updates so labels swap on language change
