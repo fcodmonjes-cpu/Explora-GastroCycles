@@ -65,7 +65,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .staffing-panel { margin: 0 0 0.7rem; padding: 0; font-family: 'Courier Prime','Courier New',monospace; }
 .staffing-panel:empty { margin: 0; }
 .staffing-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.7rem; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; }
-.staffing-shift { color: var(--gold); font-weight: 500; }
+/* Subtle opacity pulse — signals "live data, syncing in real time" without
+   being distracting. ~900ms cycle picks up the eye in peripheral vision. */
+.staffing-shift { color: var(--gold); font-weight: 500; animation: staffShiftPulse 900ms ease-in-out infinite; }
+@keyframes staffShiftPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 .staffing-viajeros { color: var(--text-tertiary); }
 .staffing-row { display:grid; grid-template-columns: 78px 1fr; gap:14px; align-items:baseline; margin-bottom:3px; }
 .staffing-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); }
@@ -698,7 +701,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="app">
   <div class="header">
     <div class="header-text">
-      <h1 id="app-title">Explora Atacama — Vinos &amp; Menús</h1>
+      <h1 id="app-title">The ATA Handbook</h1>
       <p id="app-subtitle">El detalle, a mano.</p>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
@@ -750,7 +753,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <button class="tab" onclick="setTab('vinos',this)">Vinos</button>
     <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
-    <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">Comandera</button>
+    <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">E-Check</button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -1006,7 +1009,7 @@ let COMANDA_CUSTOM_OPEN     = false;
 // ── UI STRINGS ──────────────────────────────────────────────────────────────
 const UI = {
   es: {
-    appTitle:'Explora Atacama — Vinos & Menús', appSubtitle:'El detalle, a mano.',
+    appTitle:'The ATA Handbook', appSubtitle:'El detalle, a mano.',
     tabMenus:'Menú', tabWines:'Vinos', tabGuiones:'Maridajes generales', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
     wineFilterPairings:'Maridajes generales',
     momentAllDay:'Todo el día', momentPreDinner:'Pre Dinner · Aperitivos', momentAfterDinner:'After Dinner', momentNotice:'Próximamente · Esta carta aún no está disponible en el bar',
@@ -1040,7 +1043,7 @@ const UI = {
     dessertsAddBtn:'Postres del servicio', dessertsEditBtn:'Editar postres',
     dessertsLabelHelado:'Helado', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Frutas (coma)', dessertsLabelNinos:'Niños',
     dessertsSave:'Guardar', dessertsCancel:'Cancelar',
-    tabComandera:'Comandera',
+    tabComandera:'E-Check',
     cmdPinTitle:'Comandera', cmdPinSub:'Código de mesero', cmdPinError:'Código incorrecto',
     cmdHomeTitle:'Mesas activas', cmdHomeEmpty:'No hay mesas abiertas',
     cmdNewMesaBtn:'+ Nueva mesa',
@@ -1068,7 +1071,7 @@ const UI = {
     cmdServiceUnit:'D' /* short for cycle day */
   },
   en: {
-    appTitle:'Explora Atacama — Wines & Menus', appSubtitle:'The detail, at hand.',
+    appTitle:'The ATA Handbook', appSubtitle:'The detail, at hand.',
     tabMenus:'Menu', tabWines:'Wines', tabGuiones:'General pairings', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Coffee',
     wineFilterPairings:'General pairings',
     momentAllDay:'All Day', momentPreDinner:'Before Dinner · Aperitifs', momentAfterDinner:'After Dinner', momentNotice:'Coming Soon · This menu is not yet available at the bar',
@@ -1102,7 +1105,7 @@ const UI = {
     dessertsAddBtn:'Service desserts', dessertsEditBtn:'Edit desserts',
     dessertsLabelHelado:'Ice cream', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Fruits (comma)', dessertsLabelNinos:'Kids',
     dessertsSave:'Save', dessertsCancel:'Cancel',
-    tabComandera:'Order pad',
+    tabComandera:'E-Check',
     cmdPinTitle:'Order pad', cmdPinSub:'Server access code', cmdPinError:'Wrong code',
     cmdHomeTitle:'Active tables', cmdHomeEmpty:'No tables open',
     cmdNewMesaBtn:'+ New table',
@@ -1130,7 +1133,7 @@ const UI = {
     cmdServiceUnit:'D'
   },
   pt: {
-    appTitle:'Explora Atacama — Vinhos & Menus', appSubtitle:'O detalhe, à mão.',
+    appTitle:'The ATA Handbook', appSubtitle:'O detalhe, à mão.',
     tabMenus:'Menu', tabWines:'Vinhos', tabGuiones:'Harmonizações gerais', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
     wineFilterPairings:'Harmonizações gerais',
     momentAllDay:'Todo o dia', momentPreDinner:'Antes do Jantar · Aperitivos', momentAfterDinner:'Após o Jantar', momentNotice:'Em breve · Este cardápio ainda não está disponível no bar',
@@ -1164,7 +1167,7 @@ const UI = {
     dessertsAddBtn:'Sobremesas do serviço', dessertsEditBtn:'Editar sobremesas',
     dessertsLabelHelado:'Sorvete', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Frutas (vírgula)', dessertsLabelNinos:'Crianças',
     dessertsSave:'Salvar', dessertsCancel:'Cancelar',
-    tabComandera:'Comanda',
+    tabComandera:'E-Check',
     cmdPinTitle:'Comanda', cmdPinSub:'Código do garçom', cmdPinError:'Código incorreto',
     cmdHomeTitle:'Mesas ativas', cmdHomeEmpty:'Sem mesas abertas',
     cmdNewMesaBtn:'+ Nova mesa',
@@ -2211,7 +2214,7 @@ const COFFEE_DATA = {
 es:{
   roasteryTag:'Lavazza Intenso · Servicio Espresso · Explora Atacama',
   titlePre:'El Manual del', titleEm:'Café',
-  subtitle:'Referencia de Entrenamiento · Servicio F&B',
+  subtitle:'',
   tabs:['Bebidas','Base Espresso','Leche & Textura','Temporizador'],
   tabKeys:['drinks','base','milk','timer'],
   methodLabel:'Método', milkLabel:'Notas de leche', serviceLabel:'Nota de servicio',
@@ -2347,7 +2350,7 @@ es:{
 en:{
   roasteryTag:'Lavazza Intenso · Espresso Service · Explora Atacama',
   titlePre:'The Coffee', titleEm:'Manual',
-  subtitle:'Staff Training Reference · F&B Service',
+  subtitle:'',
   tabs:['Drinks','Espresso Base','Milk & Texture','Shot Timer'],
   tabKeys:['drinks','base','milk','timer'],
   methodLabel:'Method', milkLabel:'Milk notes', serviceLabel:'Service note',
@@ -2483,7 +2486,7 @@ en:{
 pt:{
   roasteryTag:'Lavazza Intenso · Serviço Espresso · Explora Atacama',
   titlePre:'O Manual do', titleEm:'Café',
-  subtitle:'Referência de Treinamento · Serviço F&B',
+  subtitle:'',
   tabs:['Bebidas','Base Espresso','Leite & Textura','Cronômetro'],
   tabKeys:['drinks','base','milk','timer'],
   methodLabel:'Método', milkLabel:'Notas de leite', serviceLabel:'Nota de serviço',
@@ -2661,7 +2664,7 @@ function renderCafeTab(){
     <div class="coffee-header">
       <p class="coffee-roastery-tag">${d.roasteryTag}</p>
       <h1 class="coffee-title">${d.titlePre} <em>${d.titleEm}</em></h1>
-      <p class="coffee-subtitle">${d.subtitle}</p>
+      ${d.subtitle ? `<p class="coffee-subtitle">${d.subtitle}</p>` : ''}
     </div>
     <div class="cf-tabs">
       ${d.tabs.map((tab,i)=>`<button class="cf-tab-btn${cf_activeInnerTab===d.tabKeys[i]?' active':''}" onclick="cfSetInnerTab('${d.tabKeys[i]}',this)">${tab}</button>`).join('')}
@@ -2696,10 +2699,22 @@ function cfRenderDrinks(){
   const d = getCoffeeData();
   const list = document.getElementById('cf-drink-list');
   if (!list) return;
+  // Replace the prior poetic tagline with a compact operational summary
+  // built from the first two `params` of each drink. Universal across all
+  // drinks because the data shape is consistent (params is always an
+  // array of {l,v,u}). Format: "{value} {unit} · {value} {unit}".
+  const operSummary = (dr) => {
+    if (!dr.params || !dr.params.length) return '';
+    return dr.params.slice(0, 2).map(p => {
+      const v = (p.v || '').trim();
+      const u = (p.u || '').trim();
+      return [v, u].filter(Boolean).join(' ');
+    }).filter(Boolean).join(' · ');
+  };
   list.innerHTML = d.drinks.map((dr,i)=>`
     <div class="cf-drink-card" id="cf-drink-${i}">
       <div class="cf-drink-header" onclick="cfToggleDrink(${i})">
-        <div><div class="cf-drink-name">${dr.name}</div><div class="cf-drink-tagline">${dr.tagline}</div></div>
+        <div><div class="cf-drink-name">${dr.name}</div><div class="cf-drink-tagline">${operSummary(dr)}</div></div>
         <div class="cf-drink-toggle">▾</div>
       </div>
       <div class="cf-drink-body">
