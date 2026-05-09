@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Explora Atacama — Vinos & Menús</title>
+<title>The ATA Handbook</title>
+<!-- Cormorant Garamond — referenced throughout the app as the elegant serif
+     family, finally loaded from Google Fonts so italic actually renders
+     as italic instead of falling back to Palatino. Subset to the four
+     weights/styles the app actually uses; preconnect for fast TLS handshake. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,700&display=swap" rel="stylesheet">
 <!-- Vercel Analytics -->
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
@@ -55,7 +62,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .app { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem; }
 
 .header { padding: 1rem 0 1.5rem; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between; }
-.header-text h1 { font-size: 20px; font-weight: 500; color: var(--text); }
+/* Brand title — italic Cormorant Garamond. Bigger than before so the
+   serif italic gets the room it needs to feel composed rather than cramped. */
+.header-text h1 { font-family: 'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style: italic; font-weight: 500; font-size: 28px; line-height: 1.15; color: var(--text); letter-spacing: 0.005em; }
+/* "ATA" highlight — burnt sienna / desert clay tone (Valle de la Muerte
+   at last light). Slightly bolder weight + a hair more tracking so the
+   three letters anchor the title visually. */
+.ata-emphasis { font-family: 'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style: italic; font-weight: 700; color: #c75c2a; letter-spacing: 0.04em; }
 .header-text p { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
 /* Ops strip wrapper — owns the divider line so its children (staffing panel,
    desserts strip) can each be empty without losing the visual separator. */
@@ -701,7 +714,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="app">
   <div class="header">
     <div class="header-text">
-      <h1 id="app-title">The ATA Handbook</h1>
+      <h1 id="app-title">The <em class="ata-emphasis">ATA</em> Handbook</h1>
       <p id="app-subtitle">El detalle, a mano.</p>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
@@ -1009,7 +1022,7 @@ let COMANDA_CUSTOM_OPEN     = false;
 // ── UI STRINGS ──────────────────────────────────────────────────────────────
 const UI = {
   es: {
-    appTitle:'The ATA Handbook', appSubtitle:'El detalle, a mano.',
+    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'El detalle, a mano.',
     tabMenus:'Menú', tabWines:'Vinos', tabGuiones:'Maridajes generales', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
     wineFilterPairings:'Maridajes generales',
     momentAllDay:'Todo el día', momentPreDinner:'Pre Dinner · Aperitivos', momentAfterDinner:'After Dinner', momentNotice:'Próximamente · Esta carta aún no está disponible en el bar',
@@ -1071,7 +1084,7 @@ const UI = {
     cmdServiceUnit:'D' /* short for cycle day */
   },
   en: {
-    appTitle:'The ATA Handbook', appSubtitle:'The detail, at hand.',
+    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'The detail, at hand.',
     tabMenus:'Menu', tabWines:'Wines', tabGuiones:'General pairings', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Coffee',
     wineFilterPairings:'General pairings',
     momentAllDay:'All Day', momentPreDinner:'Before Dinner · Aperitifs', momentAfterDinner:'After Dinner', momentNotice:'Coming Soon · This menu is not yet available at the bar',
@@ -1133,7 +1146,7 @@ const UI = {
     cmdServiceUnit:'D'
   },
   pt: {
-    appTitle:'The ATA Handbook', appSubtitle:'O detalhe, à mão.',
+    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'O detalhe, à mão.',
     tabMenus:'Menu', tabWines:'Vinhos', tabGuiones:'Harmonizações gerais', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
     wineFilterPairings:'Harmonizações gerais',
     momentAllDay:'Todo o dia', momentPreDinner:'Antes do Jantar · Aperitivos', momentAfterDinner:'Após o Jantar', momentNotice:'Em breve · Este cardápio ainda não está disponível no bar',
@@ -1378,7 +1391,9 @@ function setLang(lang, el) {
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   // update static UI
-  document.getElementById('app-title').textContent = t('appTitle');
+  // innerHTML (not textContent) — the title carries the <em class="ata-emphasis">
+  // span that paints "ATA" in desert sienna. Static text → safe to set as HTML.
+  document.getElementById('app-title').innerHTML = t('appTitle');
   document.getElementById('app-subtitle').textContent = t('appSubtitle');
   // Order: Menú · Vinos · Cocktails · Café (Momentos lives inside Cocktails as a sub-tab)
   const mainTabs = document.querySelectorAll('.main-tabs .tab');
