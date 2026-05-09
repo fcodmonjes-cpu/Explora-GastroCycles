@@ -66,8 +66,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .staffing-panel:empty { margin: 0; }
 .staffing-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.7rem; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; }
 /* Subtle opacity pulse — signals "live data, syncing in real time" without
-   being distracting. ~900ms cycle picks up the eye in peripheral vision. */
-.staffing-shift { color: var(--gold); font-weight: 500; animation: staffShiftPulse 900ms ease-in-out infinite; }
+   being distracting. ~1800ms cycle (slower, calmer breathing rhythm). */
+.staffing-shift { color: var(--gold); font-weight: 500; animation: staffShiftPulse 1800ms ease-in-out infinite; }
 @keyframes staffShiftPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 .staffing-viajeros { color: var(--text-tertiary); }
 .staffing-row { display:grid; grid-template-columns: 78px 1fr; gap:14px; align-items:baseline; margin-bottom:3px; }
