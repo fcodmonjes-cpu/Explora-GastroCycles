@@ -1018,6 +1018,13 @@ let COMANDA_FULL_OPEN       = false;    // "ver comanda completa" modal
 let COMANDA_TIMER_INTERVAL  = null;
 let COMANDA_POLL_INTERVAL   = null;
 let COMANDA_CUSTOM_OPEN     = false;
+// Timestamp of the most recent touch / click / keystroke inside the Comandera.
+// The polling loop skips its re-render if anything has happened within the
+// last few seconds — otherwise an 8-second sync would yank the on-screen
+// keyboard, wipe a half-typed product name, or cancel a mid-flight tap on
+// a dish/wine in the catalog. Updated by document-level listeners installed
+// at the bottom of the comanda module.
+let COMANDA_LAST_INTERACTION = 0;
 
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
@@ -4579,8 +4586,21 @@ function comandaAddCustomItem(){
   const cat  = catEl  ? catEl.value.trim()  : '';
   if (!name) return;
   comandaAddItem('custom', null, name + (cat ? ` · ${cat}` : ''), [], 'Otros');
-  if (nameEl) nameEl.value = '';
-  if (catEl)  catEl.value  = '';
+  // comandaAddItem already called comandaRender — the old inputs are gone.
+  // Grab the freshly-rendered name input and refocus so the waiter can
+  // type the next custom product without tapping the field again.
+  const fresh = document.getElementById('cmd-custom-name');
+  if (fresh) fresh.focus();
+}
+
+// Returns true if the currently focused element is an <input> or <textarea>
+// living inside the comandera root. Used by the polling loop to avoid
+// destroying the on-screen keyboard / typed text during a sync tick.
+function comandaHasActiveInput(){
+  const el = document.activeElement;
+  if (!el) return false;
+  if (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA') return false;
+  return !!(el.closest && el.closest('#cmd-root'));
 }
 
 // --- Full-view modal -------------------------------------------------------
@@ -4665,16 +4685,28 @@ function comandaStartPolling(){
     if (currentTab !== 'comandera' || !COMANDA_ACTIVE_ID) return;
     // Skip while we have unsent or in-flight writes — server still has the
     // OLD state, so refetching would clobber the user's just-made change.
-    // The next tick after the queue drains will pick up the fresh state.
     if (_CMD_WRITE_PENDING || _CMD_WRITE_INFLIGHT) return;
     // Skip while user is actively interacting (note dialog, full-view modal,
     // or mid-drag) — re-rendering would yank their gesture.
     if (COMANDA_NOTE_EDIT_ID || COMANDA_FULL_OPEN || (typeof CMD_DRAG !== 'undefined' && CMD_DRAG)) return;
+    // Skip if an input/textarea inside the comandera has focus right now —
+    // a full re-render would destroy the input, the keyboard would disappear
+    // and any typed text would be lost.
+    if (comandaHasActiveInput()) return;
+    // Skip if the user has touched / tapped / typed anywhere inside the
+    // comandera in the last 2.5s — there's likely a gesture in progress
+    // (a dish about to be tapped, a button press still propagating) that
+    // a re-render would break. After 2.5s of stillness, sync resumes.
+    if (Date.now() - COMANDA_LAST_INTERACTION < 2500) return;
     try {
       const resp = await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID));
       const data = await resp.json();
       if (!data) return;
       COMANDA_ACTIVE_DATA = { id: COMANDA_ACTIVE_ID, ...data, items: data.items || [] };
+      // One more check before render — the user may have started typing
+      // during the await window.
+      if (comandaHasActiveInput()) return;
+      if (Date.now() - COMANDA_LAST_INTERACTION < 2500) return;
       comandaRender();
     } catch(e){}
   }, 8000);
@@ -5209,6 +5241,17 @@ function cmdDragCommit(){
 
 // Register for i18n updates so labels swap on language change
 onI18nChange(() => { if (currentTab === 'comandera') comandaRender(); });
+
+// Track interaction inside the Comandera so the polling loop can decide
+// whether it's safe to re-render. Each event resets a timestamp; the
+// polling loop refuses to render until 2.5s have passed without input.
+// Passive + capture so we catch every event without interfering with
+// existing handlers. Cheap — a single Date.now() assignment per event.
+['touchstart','touchend','click','keydown','input','pointerdown'].forEach(evt => {
+  document.addEventListener(evt, () => {
+    if (currentTab === 'comandera') COMANDA_LAST_INTERACTION = Date.now();
+  }, { passive: true, capture: true });
+});
 </script>
 </body>
 </html>
