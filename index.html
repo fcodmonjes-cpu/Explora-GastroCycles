@@ -267,6 +267,110 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-full-diner:last-of-type { border-bottom:none; }
 .cmd-full-diner-head { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#9ec9ff; margin-bottom:7px; }
 
+/* ── Rol module (weekly shift schedule) ──────────────────────────────── */
+.rol-root {
+  font-family: 'Cormorant Garamond','Palatino Linotype',Georgia,serif;
+  -webkit-user-select: none; -moz-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+.rol-root input, .rol-root textarea, .rol-root select {
+  -webkit-user-select: text; -moz-user-select: text; user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* Gate (PIN) — reusa el tono del Comandera */
+.rol-gate { text-align:center; padding:2rem 1rem; }
+.rol-gate-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:24px; color:var(--gold); margin-bottom:6px; }
+.rol-gate-sub { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:1.5rem; }
+.rol-pin-display { font-family:'Courier Prime','Courier New',monospace; font-size:28px; letter-spacing:0.3em; color:var(--gold); min-height:42px; display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+.rol-pin-error { font-size:11px; color:#e55; min-height:16px; margin-top:8px; }
+.rol-numpad { max-width:232px; margin:0 auto; }
+.rol-numpad-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.rol-numpad-key { padding:14px 6px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text); font-size:18px; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; transition:background .12s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.rol-numpad-key:hover { background:var(--bg-secondary); }
+.rol-numpad-key:active { transform:scale(0.95); }
+.rol-numpad-key.rol-nk-del { color:var(--text-tertiary); font-size:15px; }
+
+/* Header del home view */
+.rol-header { margin-bottom: 1.4rem; padding-bottom: 0.85rem; border-bottom: 0.5px solid var(--border); display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.rol-header-text .eyebrow { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--gold); margin-bottom:4px; }
+.rol-header h1.rol-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:30px; line-height:1.0; color:var(--text); letter-spacing:-0.01em; }
+.rol-header h1.rol-title em { color:var(--gold); font-weight:600; }
+.rol-header .rol-subtitle { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:13px; color:var(--text-tertiary); margin-top:5px; }
+.rol-exit-btn { background:var(--surface); border:0.5px solid var(--border-md); color:var(--text-secondary); border-radius:var(--radius-md); padding:5px 11px; font-size:11px; letter-spacing:0.06em; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; transition:all .15s; touch-action:manipulation; }
+.rol-exit-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+/* Person selector */
+.rol-selector { margin-bottom: 1.4rem; }
+.rol-selector label { display:block; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:6px; }
+.rol-selector select { width:100%; padding:11px 14px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:17px; color:var(--text); background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5L6 6.5L11 1.5' stroke='%23caa86c' stroke-width='1.2' fill='none'/></svg>"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; cursor:pointer; }
+.rol-selector select:focus { outline:none; border-color:var(--gold); }
+
+/* Week nav */
+.rol-week-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.9rem; }
+.rol-week-nav button { background:none; border:0.5px solid transparent; cursor:pointer; padding:5px 10px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; color:var(--text-secondary); text-transform:uppercase; border-radius:var(--radius-md); transition:color .15s, border-color .15s; touch-action:manipulation; }
+.rol-week-nav button:hover:not(:disabled) { color:var(--gold); border-color:rgba(202,138,4,0.3); }
+.rol-week-nav button:disabled { opacity:0.3; cursor:not-allowed; }
+.rol-week-label { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-tertiary); }
+
+/* Day cards */
+.rol-days { display:flex; flex-direction:column; gap:10px; }
+.rol-day { position:relative; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:18px 18px 18px 70px; animation: panelIn 0.3s ease both; }
+.rol-day::before { content:''; position:absolute; top:18px; left:18px; bottom:18px; width:0.5px; background:var(--border); }
+.rol-day-num { position:absolute; top:18px; left:18px; width:38px; text-align:right; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-weight:400; font-size:32px; line-height:1; color:var(--text); }
+.rol-day-dow { position:absolute; top:54px; left:18px; width:38px; text-align:right; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--text-tertiary); }
+.rol-day.today { background: linear-gradient(135deg, rgba(202,138,4,0.08) 0%, var(--surface) 100%); border-color:var(--gold); box-shadow: 0 0 0 0.5px rgba(202,138,4,0.3), 0 12px 28px -16px rgba(202,138,4,0.22); }
+.rol-day.today::before { background:rgba(202,138,4,0.3); }
+.rol-day.today .rol-day-num { color:var(--gold); }
+.rol-day.today .rol-day-dow { color:var(--gold); opacity:0.85; }
+.rol-day.today .rol-turno-codigo { color:var(--gold); }
+.rol-day.libre { background:transparent; border-style:dashed; }
+.rol-turno-codigo { font-family:'Courier Prime','Courier New',monospace; font-weight:500; font-size:13px; letter-spacing:0.04em; color:var(--gold); margin-bottom:2px; }
+.rol-turno-detalle { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-secondary); margin-bottom:10px; }
+.rol-day-libre-txt { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:15px; color:var(--text-tertiary); opacity:0.6; }
+.rol-ocupacion { position:absolute; top:18px; right:18px; text-align:right; }
+.rol-ocupacion .num { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-weight:500; font-size:21px; line-height:1; color:var(--text); }
+.rol-day.today .rol-ocupacion .num { color:var(--gold); }
+.rol-ocupacion .label { font-family:'Courier Prime','Courier New',monospace; font-size:8px; letter-spacing:0.16em; text-transform:uppercase; color:var(--text-tertiary); margin-top:2px; }
+
+/* Compañeros pills */
+.rol-compa-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:8px; }
+.rol-compa-grid.single { grid-template-columns:1fr; }
+.rol-col-titulo { font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:6px; }
+.rol-day.today .rol-col-titulo { color:rgba(202,138,4,0.7); }
+.rol-pill-grupo { display:flex; flex-wrap:wrap; gap:4px; }
+.rol-pill { display:inline-block; padding:3px 9px; background:rgba(255,255,255,0.03); border:0.5px solid var(--border); border-radius:100px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:12px; color:var(--text); white-space:nowrap; }
+.rol-pill.senior { background:var(--gold); color:#15110d; border-color:var(--gold); font-weight:500; }
+.rol-pill.apoyo { background:transparent; color:var(--text-tertiary); font-style:italic; }
+
+/* Search section */
+.rol-search-section { margin-top:2rem; padding-top:1.4rem; border-top:0.5px solid var(--border); }
+.rol-search-section h2 { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:22px; color:var(--text); margin-bottom:5px; }
+.rol-search-section p { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:13px; color:var(--text-tertiary); margin-bottom:14px; }
+.rol-search-input { width:100%; padding:11px 14px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:16px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--text); outline:none; box-sizing:border-box; }
+.rol-search-input:focus { border-color:var(--gold); }
+.rol-search-input::placeholder { color:var(--text-tertiary); opacity:0.6; font-style:italic; }
+.rol-search-results { margin-top:16px; }
+.rol-search-results:empty { display:none; }
+.rol-search-person { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:17px; margin-bottom:10px; color:var(--text); }
+.rol-search-month { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; font-family:'Courier Prime','Courier New',monospace; }
+.rol-search-cell { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border:0.5px solid var(--border); border-radius:4px; background:var(--surface); font-size:9px; padding:2px; }
+.rol-search-cell .d { font-size:10px; color:var(--text-tertiary); opacity:0.6; }
+.rol-search-cell .t { font-weight:500; color:var(--gold); margin-top:2px; }
+.rol-search-cell.off { background:transparent; border-style:dashed; }
+.rol-search-cell.off .t { color:var(--text-tertiary); opacity:0.35; }
+
+.rol-status { text-align:center; padding:2rem 1rem; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; color:var(--text-tertiary); }
+
+@media (max-width: 480px) {
+  .rol-day { padding:16px 16px 16px 62px; }
+  .rol-day-num { font-size:28px; width:32px; }
+  .rol-day::before { left:16px; }
+  .rol-day-dow { top:48px; left:16px; }
+  .rol-day-num + .rol-day-dow { /* keep alignment */ }
+  .rol-compa-grid { grid-template-columns:1fr; gap:10px; }
+}
+
 /* "Mesas" back button — replaces the small "Salir" link with a more
    discoverable styled button on the active mesa header. */
 .cmd-mesas-btn { background:var(--surface); border:0.5px solid var(--border-md); color:var(--text-secondary); border-radius:var(--radius-md); padding:5px 11px; font-size:11px; letter-spacing:0.06em; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
@@ -776,6 +880,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
     <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">E-Check</button>
+    <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol">Rol</button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -852,6 +957,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <!-- COMANDERA TAB — gated order pad. Renders entirely from JS. -->
   <div id="tab-comandera" class="hidden">
     <div class="cmd-root" id="cmd-root"></div>
+  </div>
+
+  <!-- ROL TAB — gated weekly shift reader. Renders entirely from JS. -->
+  <div id="tab-rol" class="hidden">
+    <div class="rol-root" id="rol-root"></div>
   </div>
 
 <footer style="margin-top:3rem;padding:1.25rem 0 0.5rem;border-top:0.5px solid var(--border);text-align:center;">
@@ -1030,6 +1140,26 @@ let COMANDA_CUSTOM_OPEN     = false;
 // at the bottom of the comanda module.
 let COMANDA_LAST_INTERACTION = 0;
 
+// --- Rol (turnos) module state -------------------------------------------
+// Module: rol — weekly shift schedule reader gated by PIN. Pulls
+// /roster/{YYYY-MM} (per-person daily codes) and /staffing/{YYYY-MM}
+// (per-day team composition) from Firebase. Read-only; writes only via
+// the external Python script that the kitchen uses to sync the Excel
+// from SharePoint into Firebase.
+const ROL_ROSTER_PATH   = 'roster';
+const ROL_STAFFING_PATH = 'staffing';
+const ROL_PIN_CODE      = '2098';
+let ROL_AUTHED         = false;
+let ROL_VIEW           = 'gate';      // 'gate' | 'home'
+let ROL_PIN_BUFFER     = '';
+let ROL_MONTH_KEY      = null;        // 'YYYY-MM' currently loaded
+let ROL_ROSTER         = {};          // { personaName: { dayN: turnoCode } }
+let ROL_STAFFING       = {};          // { dayN: { geo_senior_am, geos_am, … } }
+let ROL_PERSONA        = (typeof localStorage !== 'undefined' && localStorage.getItem('rol.persona')) || '';
+let ROL_WEEK_START_DAY = 0;           // 0 = "compute from today on first render"
+let ROL_SEARCH_QUERY   = '';
+let ROL_LOAD_ERROR     = false;
+
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
 // ════════════════════════════════════════════════════════════════════════════
@@ -1072,6 +1202,22 @@ const UI = {
     dessertsAddBtn:'Postres del servicio', dessertsEditBtn:'Editar postres',
     dessertsLabelHelado:'Helado', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Frutas (coma)', dessertsLabelNinos:'Niños',
     dessertsSave:'Guardar', dessertsCancel:'Cancelar',
+    tabRol:'Rol',
+    rolPinTitle:'Rol', rolPinSub:'Código de acceso', rolPinError:'Código incorrecto',
+    rolSubtitle:'Tu semana en el salón',
+    rolSelectLabel:'Selecciona tu nombre', rolSelectPlaceholder:'— escoge —',
+    rolPrevWeek:'← Semana anterior', rolNextWeek:'Siguiente semana →',
+    rolDayOff:'Día libre', rolNoSelection:'Selecciona tu nombre arriba',
+    rolViajeros:'viajeros',
+    rolComedorAm:'Comedor AM', rolComedorPm:'Comedor PM',
+    rolSearchTitle:'Buscar a alguien',
+    rolSearchDesc:'¿Qué días trabaja una persona y en qué turnos?',
+    rolSearchPlaceholder:'Empieza a escribir un nombre…',
+    rolSearchNoResults:'Sin resultados',
+    rolWeekOutsideMonth:'Esta semana cae fuera del mes cargado.',
+    rolLoadError:'No se pudo cargar los datos. Verifica tu conexión.',
+    rolEmptyMonth:'Aún no hay roster cargado para este mes.',
+    rolLogout:'Salir',
     tabComandera:'E-Check',
     cmdPinTitle:'Comandera', cmdPinSub:'Código de mesero', cmdPinError:'Código incorrecto',
     cmdHomeTitle:'Mesas activas', cmdHomeEmpty:'No hay mesas abiertas',
@@ -1134,6 +1280,22 @@ const UI = {
     dessertsAddBtn:'Service desserts', dessertsEditBtn:'Edit desserts',
     dessertsLabelHelado:'Ice cream', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Fruits (comma)', dessertsLabelNinos:'Kids',
     dessertsSave:'Save', dessertsCancel:'Cancel',
+    tabRol:'Rol',
+    rolPinTitle:'Rol', rolPinSub:'Access code', rolPinError:'Wrong code',
+    rolSubtitle:'Your week on the floor',
+    rolSelectLabel:'Select your name', rolSelectPlaceholder:'— choose —',
+    rolPrevWeek:'← Previous week', rolNextWeek:'Next week →',
+    rolDayOff:'Day off', rolNoSelection:'Select your name above',
+    rolViajeros:'guests',
+    rolComedorAm:'Floor AM', rolComedorPm:'Floor PM',
+    rolSearchTitle:'Find someone',
+    rolSearchDesc:'What days do they work, and which shifts?',
+    rolSearchPlaceholder:'Start typing a name…',
+    rolSearchNoResults:'No results',
+    rolWeekOutsideMonth:'This week is outside the loaded month.',
+    rolLoadError:'Could not load data. Check your connection.',
+    rolEmptyMonth:'No roster loaded yet for this month.',
+    rolLogout:'Exit',
     tabComandera:'E-Check',
     cmdPinTitle:'Order pad', cmdPinSub:'Server access code', cmdPinError:'Wrong code',
     cmdHomeTitle:'Active tables', cmdHomeEmpty:'No tables open',
@@ -1196,6 +1358,22 @@ const UI = {
     dessertsAddBtn:'Sobremesas do serviço', dessertsEditBtn:'Editar sobremesas',
     dessertsLabelHelado:'Sorvete', dessertsLabelSorbet:'Sorbet', dessertsLabelFruta:'Frutas (vírgula)', dessertsLabelNinos:'Crianças',
     dessertsSave:'Salvar', dessertsCancel:'Cancelar',
+    tabRol:'Rol',
+    rolPinTitle:'Rol', rolPinSub:'Código de acesso', rolPinError:'Código incorreto',
+    rolSubtitle:'Sua semana no salão',
+    rolSelectLabel:'Selecione seu nome', rolSelectPlaceholder:'— escolha —',
+    rolPrevWeek:'← Semana anterior', rolNextWeek:'Próxima semana →',
+    rolDayOff:'Dia livre', rolNoSelection:'Selecione seu nome acima',
+    rolViajeros:'hóspedes',
+    rolComedorAm:'Salão AM', rolComedorPm:'Salão PM',
+    rolSearchTitle:'Buscar alguém',
+    rolSearchDesc:'Que dias trabalha uma pessoa e em quais turnos?',
+    rolSearchPlaceholder:'Comece a digitar um nome…',
+    rolSearchNoResults:'Sem resultados',
+    rolWeekOutsideMonth:'Esta semana está fora do mês carregado.',
+    rolLoadError:'Não foi possível carregar os dados. Verifique sua conexão.',
+    rolEmptyMonth:'Ainda não há rol carregado para este mês.',
+    rolLogout:'Sair',
     tabComandera:'E-Check',
     cmdPinTitle:'Comanda', cmdPinSub:'Código do garçom', cmdPinError:'Código incorreto',
     cmdHomeTitle:'Mesas ativas', cmdHomeEmpty:'Sem mesas abertas',
@@ -1452,6 +1630,8 @@ function setLang(lang, el) {
   if (cafeBtn) cafeBtn.textContent = t('tabCafe');
   const cmdBtn = document.getElementById('tab-btn-comandera');
   if (cmdBtn) cmdBtn.textContent = t('tabComandera');
+  const rolBtn = document.getElementById('tab-btn-rol');
+  if (rolBtn) rolBtn.textContent = t('tabRol');
   const mn = document.getElementById('momentos-notice-text');
   if (mn) mn.textContent = t('momentNotice');
   // Fire i18n hooks — modules that need to re-render their labels in the
@@ -1469,13 +1649,14 @@ function setTab(tab, el) {
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  ['menus','vinos','cocktails','cafe','comandera'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  ['menus','vinos','cocktails','cafe','comandera','rol'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'cocktails'){
     renderCocktails();
     if (cocktailsShowingMomentos) renderMomentos();
   }
   if (tab === 'cafe') renderCafeTab();
   if (tab === 'comandera') comandaEnter();
+  if (tab === 'rol') rolEnter();
 }
 
 function setDay(day, el) {
@@ -1720,7 +1901,7 @@ function openWineFromGuion(wid) {
   // the user might be on a different filter; reset to 'todos' so the wine
   // grid is visible (where selectWine will reveal the chosen wine).
   document.querySelectorAll('.main-tabs .tab').forEach((tb,i) => tb.classList.toggle('active', i===1));
-  ['menus','vinos','cocktails','cafe','comandera'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t!=='vinos'));
+  ['menus','vinos','cocktails','cafe','comandera','rol'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t!=='vinos'));
   currentTab = 'vinos';
   wineFilter = 'todos';
   const filterTabs = document.querySelectorAll('.wine-filter-tabs .tab');
@@ -1803,7 +1984,8 @@ document.addEventListener('keydown', function(e) {
   // language toggles while typing on the numpad or interacting with cards.
   function inServiceMode(){
     return (currentTab === 'cafe' && cf_activeInnerTab === 'service')
-        || currentTab === 'comandera';
+        || currentTab === 'comandera'
+        || currentTab === 'rol';
   }
 
   document.addEventListener('touchstart', function(e) {
@@ -5245,6 +5427,361 @@ function cmdDragCommit(){
 
 // Register for i18n updates so labels swap on language change
 onI18nChange(() => { if (currentTab === 'comandera') comandaRender(); });
+
+
+// ── Rol module (weekly shift schedule reader) ───────────────────────────
+// PIN-gated viewer for the monthly roster. Pulls from
+// /roster/{YYYY-MM}  → { personName: { dayN: turnoCode } }
+// /staffing/{YYYY-MM}→ { dayN: { geo_senior_am, geos_am, … } }
+// Read-only on the client; writes only via the external Python script
+// that syncs the Excel from SharePoint into Firebase. PIN: 2098.
+
+const ROL_HORARIOS = {
+  "CAM":  { h:"06:30–15:00", areaKey:"rolComedorAm" },
+  "CAMC": { h:"07:30–15:00", areaKey:"rolComedorAm" },
+  "CPM":  { h:"15:00–23:30", areaKey:"rolComedorPm" },
+  "CPMC": { h:"16:30–23:00", areaKey:"rolComedorPm" },
+  "CDOB": { h:"07:00–23:30", area:"Comedor doble" },
+  "RAM":  { h:"07:00–15:30", area:"Recepción AM" },
+  "RAMC": { h:"08:00–15:30", area:"Recepción AM" },
+  "RPM":  { h:"15:00–23:30", area:"Recepción PM" },
+  "RPMC": { h:"16:00–22:30", area:"Recepción PM" },
+  "RINT": { h:"12:00–20:30", area:"Recepción intermedio" },
+  "RNOC": { h:"23:00–07:00", area:"Recepción nocturno" },
+  "RSAL": { h:"salida noct", area:"Recepción" },
+  "RDOB": { h:"07:00–23:30", area:"Recepción doble" },
+  "BAM":  { h:"08:00–16:30", area:"Bar AM" },
+  "BAMC": { h:"08:00–16:30", area:"Bar AM" },
+  "BPIS": { h:"11:30–20:00", area:"Bar piscina" },
+  "BPM":  { h:"15:00–23:30", area:"Bar PM" },
+  "BPMC": { h:"16:30–23:00", area:"Bar PM" },
+  "BDOB": { h:"08:00–23:30", area:"Bar doble" },
+  "DOB":  { h:"todo el día", area:"Doble" },
+  "cena": { h:"tarde",       area:"Cena" },
+};
+const ROL_DOW = ["DO","LU","MA","MI","JU","VI","SA"];
+const ROL_MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+function rolMonthKey(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  return `${y}-${m}`;
+}
+
+function rolEnter(){
+  if (!ROL_AUTHED){
+    ROL_VIEW = 'gate';
+    ROL_PIN_BUFFER = '';
+    rolRender();
+    return;
+  }
+  // If authed but no data yet, fetch
+  const wanted = rolMonthKey(new Date());
+  if (ROL_MONTH_KEY !== wanted){
+    ROL_MONTH_KEY = wanted;
+    rolFetchData();
+  }
+  ROL_VIEW = 'home';
+  rolRender();
+}
+
+function rolPinPress(key){
+  if (key === 'del')      ROL_PIN_BUFFER = ROL_PIN_BUFFER.slice(0,-1);
+  else if (key === 'ok')  return rolSubmitPin();
+  else if (ROL_PIN_BUFFER.length < 4) ROL_PIN_BUFFER += key;
+  if (ROL_PIN_BUFFER.length === 4) setTimeout(()=>rolSubmitPin(), 320);
+  rolRender();
+}
+
+function rolSubmitPin(){
+  if (ROL_PIN_BUFFER === ROL_PIN_CODE){
+    ROL_AUTHED = true;
+    ROL_PIN_BUFFER = '';
+    ROL_VIEW = 'home';
+    ROL_MONTH_KEY = rolMonthKey(new Date());
+    ROL_WEEK_START_DAY = 0; // marker: compute from today on first render
+    rolFetchData();
+  } else {
+    ROL_PIN_BUFFER = '';
+    const err = document.getElementById('rol-pin-error');
+    if (err){ err.textContent = t('rolPinError'); setTimeout(()=>{ if (err) err.textContent=''; }, 2000); }
+  }
+  rolRender();
+}
+
+function rolLogout(){
+  ROL_AUTHED = false;
+  ROL_VIEW = 'gate';
+  ROL_PIN_BUFFER = '';
+  rolRender();
+}
+
+async function rolFetchData(){
+  ROL_LOAD_ERROR = false;
+  const key = ROL_MONTH_KEY;
+  try {
+    const base = CF_FIREBASE_CONFIG.databaseURL;
+    const [rosterResp, staffingResp] = await Promise.all([
+      fetch(`${base}/${ROL_ROSTER_PATH}/${key}.json`),
+      fetch(`${base}/${ROL_STAFFING_PATH}/${key}.json`)
+    ]);
+    const rosterData   = await rosterResp.json();
+    const staffingData = await staffingResp.json();
+    ROL_ROSTER   = rosterData   || {};
+    ROL_STAFFING = staffingData || {};
+  } catch(e){
+    ROL_LOAD_ERROR = true;
+    ROL_ROSTER = {};
+    ROL_STAFFING = {};
+  }
+  if (currentTab === 'rol' && ROL_VIEW === 'home') rolRender();
+}
+
+function rolGetWeekStart(){
+  if (ROL_WEEK_START_DAY > 0) return ROL_WEEK_START_DAY;
+  const hoy = new Date();
+  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
+  const dayInMonth = (hoy.getFullYear() === y && hoy.getMonth()+1 === m) ? hoy.getDate() : 1;
+  const d = new Date(y, m-1, dayInMonth);
+  const dow = d.getDay();
+  const diff = dow === 0 ? -6 : 1 - dow;
+  d.setDate(d.getDate() + diff);
+  return d.getDate();
+}
+
+function rolStepWeek(delta){
+  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
+  const diasEnMes = new Date(y, m, 0).getDate();
+  const next = Math.max(1, Math.min(diasEnMes, (ROL_WEEK_START_DAY || rolGetWeekStart()) + delta));
+  ROL_WEEK_START_DAY = next;
+  rolRender();
+}
+
+function rolSetPersona(name){
+  ROL_PERSONA = name || '';
+  try { localStorage.setItem('rol.persona', ROL_PERSONA); } catch(e){}
+  rolRender();
+}
+
+function rolSearch(query){
+  ROL_SEARCH_QUERY = (query || '').trim().toLowerCase();
+  const results = document.getElementById('rol-search-results');
+  if (!results) return;
+  if (ROL_SEARCH_QUERY.length < 2){
+    results.innerHTML = '';
+    return;
+  }
+  const nombres = Object.keys(ROL_ROSTER)
+    .filter(n => n.toLowerCase().includes(ROL_SEARCH_QUERY))
+    .sort((a,b)=>a.localeCompare(b,'es'))
+    .slice(0,3);
+  if (!nombres.length){
+    results.innerHTML = `<div class="rol-search-person" style="opacity:0.5">${t('rolSearchNoResults')}</div>`;
+    return;
+  }
+  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
+  const diasEnMes = new Date(y, m, 0).getDate();
+  let html = '';
+  nombres.forEach(nombre => {
+    const days = ROL_ROSTER[nombre] || {};
+    let cells = '';
+    for (let dd = 1; dd <= diasEnMes; dd++){
+      const turno = days[dd];
+      if (turno){
+        cells += `<div class="rol-search-cell"><div class="d">${dd}</div><div class="t">${turno}</div></div>`;
+      } else {
+        cells += `<div class="rol-search-cell off"><div class="d">${dd}</div><div class="t">L</div></div>`;
+      }
+    }
+    html += `<div style="margin-bottom:18px"><div class="rol-search-person">${nombre}</div><div class="rol-search-month">${cells}</div></div>`;
+  });
+  results.innerHTML = html;
+}
+
+function rolRender(){
+  const root = document.getElementById('rol-root');
+  if (!root) return;
+  if (!ROL_AUTHED) return rolRenderGate(root);
+  rolRenderHome(root);
+}
+
+function rolRenderGate(root){
+  const dots = ROL_PIN_BUFFER ? ROL_PIN_BUFFER.replace(/./g,'●') : '· · · ·';
+  root.innerHTML = `
+    <div class="rol-gate">
+      <div class="rol-gate-title">${t('rolPinTitle')}</div>
+      <div class="rol-gate-sub">${t('rolPinSub')}</div>
+      <div class="rol-pin-display" id="rol-pin-display">${dots}</div>
+      <div class="rol-numpad">
+        <div class="rol-numpad-grid">
+          ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="rol-numpad-key" onclick="rolPinPress('${n}')">${n}</button>`).join('')}
+          <button class="rol-numpad-key rol-nk-del" onclick="rolPinPress('del')">⌫</button>
+          <button class="rol-numpad-key" onclick="rolPinPress('0')">0</button>
+          <button class="rol-numpad-key" onclick="rolPinPress('ok')">→</button>
+        </div>
+      </div>
+      <div class="rol-pin-error" id="rol-pin-error"></div>
+    </div>`;
+}
+
+function rolHorarioText(code){
+  const info = ROL_HORARIOS[code] || ROL_HORARIOS[(code||'').toUpperCase()];
+  if (!info) return { h: '—', area: code || '' };
+  const area = info.areaKey ? t(info.areaKey) : (info.area || '');
+  return { h: info.h, area };
+}
+
+function rolRenderHome(root){
+  if (ROL_LOAD_ERROR){
+    root.innerHTML = `<div class="rol-status">${t('rolLoadError')}</div>`;
+    return;
+  }
+  if (!Object.keys(ROL_ROSTER).length && !Object.keys(ROL_STAFFING).length){
+    root.innerHTML = `
+      <div class="rol-header">
+        <div class="rol-header-text">
+          <div class="eyebrow">${ROL_MONTH_KEY || ''}</div>
+          <h1 class="rol-title">${t('rolPinTitle')}</h1>
+        </div>
+        <button class="rol-exit-btn" onclick="rolLogout()">${t('rolLogout')}</button>
+      </div>
+      <div class="rol-status">${t('rolEmptyMonth')}</div>`;
+    return;
+  }
+
+  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
+  const diasEnMes = new Date(y, m, 0).getDate();
+  const weekStart = rolGetWeekStart();
+  if (ROL_WEEK_START_DAY === 0) ROL_WEEK_START_DAY = weekStart;
+
+  const dias = [];
+  for (let i = 0; i < 7; i++){
+    const dia = (ROL_WEEK_START_DAY || weekStart) + i;
+    if (dia >= 1 && dia <= diasEnMes) dias.push(dia);
+  }
+
+  const hoy = new Date();
+  const esHoy = dia => hoy.getFullYear() === y && hoy.getMonth()+1 === m && hoy.getDate() === dia;
+
+  // Person selector
+  const nombres = Object.keys(ROL_ROSTER).sort((a,b)=>a.localeCompare(b,'es'));
+  const options = [`<option value="">${t('rolSelectPlaceholder')}</option>`]
+    .concat(nombres.map(n => `<option value="${n}"${n===ROL_PERSONA?' selected':''}>${n}</option>`))
+    .join('');
+
+  // Days
+  const daysHtml = dias.length
+    ? dias.map(dia => rolRenderDay(dia, esHoy(dia), y, m)).join('')
+    : `<div class="rol-status">${t('rolWeekOutsideMonth')}</div>`;
+
+  const primer = dias[0], ultimo = dias[dias.length-1];
+  const weekLabel = dias.length ? `${primer} – ${ultimo} de ${ROL_MESES[m-1]}` : '—';
+  const prevDisabled = (ROL_WEEK_START_DAY || weekStart) <= 1;
+  const nextDisabled = ((ROL_WEEK_START_DAY || weekStart) + 7) > diasEnMes;
+
+  root.innerHTML = `
+    <div class="rol-header">
+      <div class="rol-header-text">
+        <div class="eyebrow">${ROL_MESES[m-1]} ${y}</div>
+        <h1 class="rol-title">Rol <em>de la semana</em></h1>
+        <div class="rol-subtitle">${t('rolSubtitle')}</div>
+      </div>
+      <button class="rol-exit-btn" onclick="rolLogout()">${t('rolLogout')}</button>
+    </div>
+
+    <div class="rol-selector">
+      <label>${t('rolSelectLabel')}</label>
+      <select onchange="rolSetPersona(this.value)">${options}</select>
+    </div>
+
+    <div class="rol-week-nav">
+      <button onclick="rolStepWeek(-7)" ${prevDisabled?'disabled':''}>${t('rolPrevWeek')}</button>
+      <span class="rol-week-label">${weekLabel}</span>
+      <button onclick="rolStepWeek(7)" ${nextDisabled?'disabled':''}>${t('rolNextWeek')}</button>
+    </div>
+
+    <div class="rol-days">${daysHtml}</div>
+
+    <div class="rol-search-section">
+      <h2>${t('rolSearchTitle')}</h2>
+      <p>${t('rolSearchDesc')}</p>
+      <input type="text" class="rol-search-input" id="rol-search-input" placeholder="${t('rolSearchPlaceholder')}" oninput="rolSearch(this.value)" value="${ROL_SEARCH_QUERY||''}">
+      <div class="rol-search-results" id="rol-search-results"></div>
+    </div>`;
+
+  // Restore search results if there's an active query
+  if (ROL_SEARCH_QUERY) rolSearch(ROL_SEARCH_QUERY);
+}
+
+function rolRenderDay(dia, esHoy, year, month){
+  const fecha = new Date(year, month-1, dia);
+  const dowLabel = ROL_DOW[fecha.getDay()];
+  const turno = ROL_PERSONA ? (ROL_ROSTER[ROL_PERSONA]?.[dia] || null) : null;
+  const staffingDia = ROL_STAFFING[dia] || {};
+  const todayCls = esHoy ? ' today' : '';
+  const viajeros = staffingDia.viajeros
+    ? `<div class="rol-ocupacion"><div class="num">${staffingDia.viajeros}</div><div class="label">${t('rolViajeros')}</div></div>`
+    : '';
+
+  // Sin persona seleccionada
+  if (!ROL_PERSONA){
+    return `<article class="rol-day libre${todayCls}">
+      <div class="rol-day-num">${dia}</div>
+      <div class="rol-day-dow">${dowLabel}</div>
+      ${viajeros}
+      <div class="rol-day-libre-txt">${t('rolNoSelection')}</div>
+    </article>`;
+  }
+
+  // Día libre para esta persona
+  if (!turno){
+    return `<article class="rol-day libre${todayCls}">
+      <div class="rol-day-num">${dia}</div>
+      <div class="rol-day-dow">${dowLabel}</div>
+      ${viajeros}
+      <div class="rol-day-libre-txt">${t('rolDayOff')}</div>
+    </article>`;
+  }
+
+  // Tiene turno
+  const info = rolHorarioText(turno);
+  const esComedor = turno.startsWith('C') || turno === 'DOB';
+  const esAM = turno === 'CAM' || turno === 'CAMC' || turno === 'DOB' || turno === 'CDOB';
+  const esPM = turno === 'CPM' || turno === 'CPMC' || turno === 'DOB' || turno === 'CDOB';
+
+  let compaHTML = '';
+  if (esComedor){
+    const franjas = [];
+    if (esAM) franjas.push({ key:'am', titulo: t('rolComedorAm') });
+    if (esPM) franjas.push({ key:'pm', titulo: t('rolComedorPm') });
+    const blocks = franjas.map(f => {
+      const seniors = staffingDia[`geo_senior_${f.key}`] || [];
+      const geos    = staffingDia[`geos_${f.key}`]       || [];
+      const apoyos  = staffingDia[`apoyo_${f.key}`]      || [];
+      const pills = [];
+      seniors.forEach(n => pills.push(`<span class="rol-pill senior">${n}</span>`));
+      geos.filter(n => n !== ROL_PERSONA).forEach(n => pills.push(`<span class="rol-pill">${n}</span>`));
+      apoyos.filter(n => n !== ROL_PERSONA).forEach(n => pills.push(`<span class="rol-pill apoyo">${n}</span>`));
+      return `<div>
+        <div class="rol-col-titulo">${f.titulo}</div>
+        <div class="rol-pill-grupo">${pills.length ? pills.join('') : '<span class="rol-day-libre-txt" style="font-size:12px">—</span>'}</div>
+      </div>`;
+    }).join('');
+    compaHTML = `<div class="rol-compa-grid${franjas.length===1?' single':''}">${blocks}</div>`;
+  }
+
+  return `<article class="rol-day${todayCls}">
+    <div class="rol-day-num">${dia}</div>
+    <div class="rol-day-dow">${dowLabel}</div>
+    ${viajeros}
+    <div class="rol-turno-codigo">${turno}</div>
+    <div class="rol-turno-detalle">${info.area} · ${info.h}</div>
+    ${compaHTML}
+  </article>`;
+}
+
+// Register for i18n updates — re-render in active language when user switches
+onI18nChange(() => { if (currentTab === 'rol') rolRender(); });
 
 // Track interaction inside the Comandera so the polling loop can decide
 // whether it's safe to re-render. Each event resets a timestamp; the
