@@ -3118,13 +3118,61 @@ function staffingFirstName(full){
   return (full || '').trim().split(/\s+/)[0] || '';
 }
 
+// ── Mojibake repair (UTF-8 double-encoded as Latin-1, then re-UTF-8'd) ──
+// The Python script that syncs the SharePoint Excel to Firebase has an
+// encoding bug: original "á" (UTF-8 c3 a1) gets read as Latin-1 ("Ã¡"),
+// then re-encoded as UTF-8 (c3 83 c2 a1). When JS fetches that, it sees
+// "Ã¡" instead of "á". Same for é/í/ó/ú/ñ/ü across every accented name
+// (Sofía, Nicolás, Sebastián, Diana Cortés, etc.). Until the Python
+// script is patched, we repair on the client.
+function fixMojibake(s){
+  if (!s || typeof s !== 'string') return s;
+  // Quick filter: the pattern is always "Ã" (U+00C3) followed by another high byte.
+  if (!/Ã[-ÿ]/.test(s)) return s;
+  try {
+    // Treat each JS char as if it were a Latin-1 byte, then decode as UTF-8.
+    const bytes = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) {
+      const code = s.charCodeAt(i);
+      if (code > 0xff) return s; // not a pure Latin-1 reinterpretation, abort
+      bytes[i] = code;
+    }
+    const decoded = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+    // Replacement chars (U+FFFD) mean the bytes weren't valid UTF-8 → abort
+    return decoded.indexOf('�') >= 0 ? s : decoded;
+  } catch(e){
+    return s;
+  }
+}
+
+// Fix all name strings inside a staffing-day record (geo_senior_*, geos_*, apoyo_*).
+// Structure unchanged, just clean strings inside the arrays.
+function normalizeStaffingDay(day){
+  if (!day || typeof day !== 'object') return day;
+  const fixed = {};
+  for (const field of Object.keys(day)){
+    const val = day[field];
+    if (Array.isArray(val)) fixed[field] = val.map(fixMojibake);
+    else fixed[field] = val;
+  }
+  return fixed;
+}
+function normalizeStaffingMonth(raw){
+  if (!raw) return raw;
+  const isArray = Array.isArray(raw);
+  const result = isArray ? [] : {};
+  for (const k of Object.keys(raw)) result[k] = normalizeStaffingDay(raw[k]);
+  return result;
+}
+
 async function staffingFetch(){
   const monthKey = staffingMonthKey(new Date());
   STAFFING_MONTH_KEY = monthKey;
   try {
     const url = `${CF_FIREBASE_CONFIG.databaseURL}/${STAFFING_PATH}/${monthKey}.json`;
     const resp = await fetch(url);
-    STAFFING_DATA = (await resp.json()) || {};
+    const raw = await resp.json();
+    STAFFING_DATA = raw ? normalizeStaffingMonth(raw) : {};
   } catch(e){
     STAFFING_DATA = {};
   }
@@ -5541,11 +5589,17 @@ async function rolFetchData(){
     const rosterData   = await rosterResp.json();
     const staffingData = await staffingResp.json();
     const metaData     = await metaResp.json();
-    ROL_ROSTER   = rosterData   || {};
-    ROL_STAFFING = staffingData || {};
-    // Meta is best-effort — if /meta isn't readable yet, the chip just
-    // won't render. The response may be {error: "Permission denied"} or
-    // the actual object; check for the timestamp field defensively.
+    ROL_ROSTER   = rolNormalizeRoster(rosterData   || {});
+    ROL_STAFFING = normalizeStaffingMonth(staffingData || {}) || {};
+    // If the previously-selected persona was a mojibake variant, remap to
+    // the canonical name now that the roster is normalized.
+    if (ROL_PERSONA && !ROL_ROSTER[ROL_PERSONA]){
+      const fixedPersona = fixMojibake(ROL_PERSONA);
+      if (fixedPersona !== ROL_PERSONA && ROL_ROSTER[fixedPersona]){
+        ROL_PERSONA = fixedPersona;
+        try { localStorage.setItem('rol.persona', ROL_PERSONA); } catch(e){}
+      }
+    }
     ROL_LAST_UPDATE = (metaData && typeof metaData === 'object' && metaData.timestamp_iso) || null;
   } catch(e){
     ROL_LOAD_ERROR = true;
@@ -5554,6 +5608,51 @@ async function rolFetchData(){
     ROL_LAST_UPDATE = null;
   }
   if (currentTab === 'rol' && ROL_VIEW === 'home') rolRender();
+}
+
+// Repair + dedupe the roster:
+//   1. Fix mojibake in each person's name (key).
+//   2. Group by accent-stripped lowercase normalized name.
+//   3. For each group, pick the variant with the most assigned days as
+//      the canonical entry; tie-broken by preferring the version with
+//      more accent marks (the typographically-correct Spanish form).
+//   4. Merge day data from all variants, chosen variant winning on
+//      conflicts. So "Sofia Puentes" (2 días) + "Sofía Puentes" (20 días,
+//      formerly mojibake) → single "Sofía Puentes" entry with 20 días.
+function rolNormalizeRoster(raw){
+  if (!raw || typeof raw !== 'object') return {};
+  const stripKey = s => s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+  const countDays = d => Array.isArray(d) ? d.filter(Boolean).length
+                       : (d && typeof d === 'object' ? Object.values(d).filter(Boolean).length : 0);
+  const groups = {};
+  for (const origName of Object.keys(raw)){
+    const fixed = fixMojibake(origName);
+    const k = stripKey(fixed);
+    (groups[k] = groups[k] || []).push({ name: fixed, days: raw[origName] });
+  }
+  const out = {};
+  for (const variants of Object.values(groups)){
+    variants.sort((a, b) => {
+      const ca = countDays(a.days), cb = countDays(b.days);
+      if (cb !== ca) return cb - ca;
+      const aa = (a.name.match(/[áéíóúñü]/gi) || []).length;
+      const ab = (b.name.match(/[áéíóúñü]/gi) || []).length;
+      return ab - aa;
+    });
+    const chosen = variants[0];
+    // Merge days from least-data → most-data so chosen wins on conflicts
+    const merged = {};
+    for (let i = variants.length - 1; i >= 0; i--){
+      const d = variants[i].days;
+      if (Array.isArray(d)){
+        d.forEach((v, idx) => { if (v) merged[idx] = v; });
+      } else if (d && typeof d === 'object'){
+        Object.assign(merged, d);
+      }
+    }
+    out[chosen.name] = merged;
+  }
+  return out;
 }
 
 // Format the last-update timestamp as a relative string.
