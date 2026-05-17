@@ -297,6 +297,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .rol-header h1.rol-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:30px; line-height:1.0; color:var(--text); letter-spacing:-0.01em; }
 .rol-header h1.rol-title em { color:var(--gold); font-weight:600; }
 .rol-header .rol-subtitle { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:13px; color:var(--text-tertiary); margin-top:5px; }
+.rol-last-update { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); opacity:0.65; margin-top:8px; }
 .rol-exit-btn { background:var(--surface); border:0.5px solid var(--border-md); color:var(--text-secondary); border-radius:var(--radius-md); padding:5px 11px; font-size:11px; letter-spacing:0.06em; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; transition:all .15s; touch-action:manipulation; }
 .rol-exit-btn:hover { border-color:var(--gold); color:var(--gold); }
 
@@ -1148,6 +1149,7 @@ let COMANDA_LAST_INTERACTION = 0;
 // from SharePoint into Firebase.
 const ROL_ROSTER_PATH   = 'roster';
 const ROL_STAFFING_PATH = 'staffing';
+const ROL_META_PATH     = 'meta/last_update';
 const ROL_PIN_CODE      = '2098';
 let ROL_AUTHED         = false;
 let ROL_VIEW           = 'gate';      // 'gate' | 'home'
@@ -1159,6 +1161,7 @@ let ROL_PERSONA        = (typeof localStorage !== 'undefined' && localStorage.ge
 let ROL_WEEK_START_DAY = 0;           // 0 = "compute from today on first render"
 let ROL_SEARCH_QUERY   = '';
 let ROL_LOAD_ERROR     = false;
+let ROL_LAST_UPDATE    = null;        // ISO timestamp from /meta/last_update
 
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
@@ -1218,6 +1221,9 @@ const UI = {
     rolLoadError:'No se pudo cargar los datos. Verifica tu conexión.',
     rolEmptyMonth:'Aún no hay roster cargado para este mes.',
     rolLogout:'Salir',
+    rolUpdatedMinutes:'actualizado hace minutos',
+    rolUpdatedHours:'actualizado hace {n} h',
+    rolUpdatedOn:'actualizado el {date}',
     tabComandera:'E-Check',
     cmdPinTitle:'Comandera', cmdPinSub:'Código de mesero', cmdPinError:'Código incorrecto',
     cmdHomeTitle:'Mesas activas', cmdHomeEmpty:'No hay mesas abiertas',
@@ -1296,6 +1302,9 @@ const UI = {
     rolLoadError:'Could not load data. Check your connection.',
     rolEmptyMonth:'No roster loaded yet for this month.',
     rolLogout:'Exit',
+    rolUpdatedMinutes:'updated minutes ago',
+    rolUpdatedHours:'updated {n} h ago',
+    rolUpdatedOn:'updated on {date}',
     tabComandera:'E-Check',
     cmdPinTitle:'Order pad', cmdPinSub:'Server access code', cmdPinError:'Wrong code',
     cmdHomeTitle:'Active tables', cmdHomeEmpty:'No tables open',
@@ -1374,6 +1383,9 @@ const UI = {
     rolLoadError:'Não foi possível carregar os dados. Verifique sua conexão.',
     rolEmptyMonth:'Ainda não há rol carregado para este mês.',
     rolLogout:'Sair',
+    rolUpdatedMinutes:'atualizado há minutos',
+    rolUpdatedHours:'atualizado há {n} h',
+    rolUpdatedOn:'atualizado em {date}',
     tabComandera:'E-Check',
     cmdPinTitle:'Comanda', cmdPinSub:'Código do garçom', cmdPinError:'Código incorreto',
     cmdHomeTitle:'Mesas ativas', cmdHomeEmpty:'Sem mesas abertas',
@@ -5521,20 +5533,45 @@ async function rolFetchData(){
   const key = ROL_MONTH_KEY;
   try {
     const base = CF_FIREBASE_CONFIG.databaseURL;
-    const [rosterResp, staffingResp] = await Promise.all([
+    const [rosterResp, staffingResp, metaResp] = await Promise.all([
       fetch(`${base}/${ROL_ROSTER_PATH}/${key}.json`),
-      fetch(`${base}/${ROL_STAFFING_PATH}/${key}.json`)
+      fetch(`${base}/${ROL_STAFFING_PATH}/${key}.json`),
+      fetch(`${base}/${ROL_META_PATH}.json`)
     ]);
     const rosterData   = await rosterResp.json();
     const staffingData = await staffingResp.json();
+    const metaData     = await metaResp.json();
     ROL_ROSTER   = rosterData   || {};
     ROL_STAFFING = staffingData || {};
+    // Meta is best-effort — if /meta isn't readable yet, the chip just
+    // won't render. The response may be {error: "Permission denied"} or
+    // the actual object; check for the timestamp field defensively.
+    ROL_LAST_UPDATE = (metaData && typeof metaData === 'object' && metaData.timestamp_iso) || null;
   } catch(e){
     ROL_LOAD_ERROR = true;
     ROL_ROSTER = {};
     ROL_STAFFING = {};
+    ROL_LAST_UPDATE = null;
   }
   if (currentTab === 'rol' && ROL_VIEW === 'home') rolRender();
+}
+
+// Format the last-update timestamp as a relative string.
+//   < 1h  → "actualizado hace minutos"
+//   < 24h → "actualizado hace 3 h"
+//   ≥ 24h → "actualizado el 12-05-2026" (locale-aware)
+// Returns '' if the timestamp is missing or invalid — caller hides the chip.
+function rolFormatLastUpdate(iso){
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return '';
+  const diffMs  = Date.now() - date.getTime();
+  if (diffMs < 0) return ''; // future timestamp, suspicious
+  const diffHrs = Math.floor(diffMs / 3600000);
+  if (diffHrs < 1) return t('rolUpdatedMinutes');
+  if (diffHrs < 24) return t('rolUpdatedHours').replace('{n}', diffHrs);
+  const locale = currentLang === 'en' ? 'en-GB' : currentLang === 'pt' ? 'pt-BR' : 'es-CL';
+  return t('rolUpdatedOn').replace('{date}', date.toLocaleDateString(locale));
 }
 
 function rolGetWeekStart(){
@@ -5679,12 +5716,15 @@ function rolRenderHome(root){
   const prevDisabled = (ROL_WEEK_START_DAY || weekStart) <= 1;
   const nextDisabled = ((ROL_WEEK_START_DAY || weekStart) + 7) > diasEnMes;
 
+  const updatedTxt = rolFormatLastUpdate(ROL_LAST_UPDATE);
+  const updatedChip = updatedTxt ? `<div class="rol-last-update">${updatedTxt}</div>` : '';
   root.innerHTML = `
     <div class="rol-header">
       <div class="rol-header-text">
         <div class="eyebrow">${ROL_MESES[m-1]} ${y}</div>
         <h1 class="rol-title">Rol <em>de la semana</em></h1>
         <div class="rol-subtitle">${t('rolSubtitle')}</div>
+        ${updatedChip}
       </div>
       <button class="rol-exit-btn" onclick="rolLogout()">${t('rolLogout')}</button>
     </div>
