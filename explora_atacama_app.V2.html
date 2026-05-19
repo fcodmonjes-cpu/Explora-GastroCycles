@@ -315,7 +315,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .rol-week-label { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-tertiary); }
 
 /* Day cards */
-.rol-days { display:flex; flex-direction:column; gap:10px; }
+.rol-days { display:flex; flex-direction:column; gap:10px; will-change:transform; touch-action:pan-y; }
+.rol-days.rol-snapping { transition: transform 0.22s cubic-bezier(0.25,0.46,0.45,0.94); }
 .rol-day { position:relative; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:18px 18px 18px 70px; animation: panelIn 0.3s ease both; }
 .rol-day::before { content:''; position:absolute; top:18px; left:18px; bottom:18px; width:0.5px; background:var(--border); }
 .rol-day-num { position:absolute; top:18px; left:18px; width:38px; text-align:right; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-weight:400; font-size:32px; line-height:1; color:var(--text); }
@@ -1162,6 +1163,7 @@ let ROL_WEEK_START_DAY = 0;           // 0 = "compute from today on first render
 let ROL_SEARCH_QUERY   = '';
 let ROL_LOAD_ERROR     = false;
 let ROL_LAST_UPDATE    = null;        // ISO timestamp from /meta/last_update
+let ROL_SWIPE          = null;        // active touch-drag state for week swipe
 
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
@@ -5918,6 +5920,77 @@ function rolRenderDay(dia, esHoy, year, month){
     ${compaHTML}
   </article>`;
 }
+
+// ── Swipe-to-change-week ──────────────────────────────────────────────
+// Horizontal drag anywhere over the Rol home view (except on inputs /
+// selects / buttons) navigates the week. Vertical motion still scrolls
+// normally — the gesture is classified after a short warm-up and only
+// commits to "swipe" if the movement is decisively horizontal.
+function rolTouchStart(e){
+  if (currentTab !== 'rol' || ROL_VIEW !== 'home') return;
+  if (e.touches.length !== 1) return;
+  // Don't hijack touches that started on interactive widgets
+  const tgt = e.target;
+  if (tgt && tgt.closest && tgt.closest('input, textarea, select, button, [role="button"]')) return;
+  ROL_SWIPE = {
+    startX: e.touches[0].clientX,
+    startY: e.touches[0].clientY,
+    lastDx: 0,
+    tracking: false,
+    aborted: false
+  };
+  // Cancel any in-flight snap animation so the new drag starts cleanly
+  const daysEl = document.querySelector('#rol-root .rol-days');
+  if (daysEl){
+    daysEl.classList.remove('rol-snapping');
+    daysEl.style.transform = '';
+  }
+}
+function rolTouchMove(e){
+  if (!ROL_SWIPE || ROL_SWIPE.aborted) return;
+  if (e.touches.length !== 1) return;
+  const dx = e.touches[0].clientX - ROL_SWIPE.startX;
+  const dy = e.touches[0].clientY - ROL_SWIPE.startY;
+  if (!ROL_SWIPE.tracking){
+    // Warm-up: don't classify until motion is clearly above threshold
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+    // Vertical movement wins → user is scrolling, let the page handle it
+    if (Math.abs(dy) >= Math.abs(dx) * 0.6){
+      ROL_SWIPE.aborted = true;
+      return;
+    }
+    ROL_SWIPE.tracking = true;
+  }
+  // Active horizontal drag — translate the days list and prevent page scroll
+  if (e.cancelable) e.preventDefault();
+  ROL_SWIPE.lastDx = dx;
+  const daysEl = document.querySelector('#rol-root .rol-days');
+  if (daysEl) daysEl.style.transform = `translateX(${Math.round(dx * 0.5)}px)`;
+}
+function rolTouchEnd(){
+  if (!ROL_SWIPE) return;
+  const daysEl = document.querySelector('#rol-root .rol-days');
+  const wasTracking = ROL_SWIPE.tracking && !ROL_SWIPE.aborted;
+  const dx = ROL_SWIPE.lastDx;
+  ROL_SWIPE = null;
+
+  // Always snap the visual position back to zero
+  if (daysEl){
+    daysEl.classList.add('rol-snapping');
+    daysEl.style.transform = '';
+    setTimeout(()=>{ if (daysEl) daysEl.classList.remove('rol-snapping'); }, 240);
+  }
+
+  // Commit the week change if the swipe was decisive (≥ 60 px)
+  if (wasTracking && Math.abs(dx) >= 60){
+    // Swipe LEFT (dx negative) → next week. Swipe RIGHT → previous week.
+    rolStepWeek(dx < 0 ? 7 : -7);
+  }
+}
+document.addEventListener('touchstart', rolTouchStart, { passive: true });
+document.addEventListener('touchmove',  rolTouchMove,  { passive: false });
+document.addEventListener('touchend',   rolTouchEnd,   { passive: true });
+document.addEventListener('touchcancel',rolTouchEnd,   { passive: true });
 
 // Register for i18n updates — re-render in active language when user switches
 onI18nChange(() => { if (currentTab === 'rol') rolRender(); });
