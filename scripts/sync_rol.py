@@ -40,10 +40,14 @@ MES_VARIANTS = {
     12: ["DICIEMBRE",  "DIC"],
 }
 
-# Solo turnos de COMEDOR — bar y recepción se excluyen de la vista principal.
+# Códigos de turno de COMEDOR — los únicos que aparecen en el staffing panel.
+# Bar (BAM/BPM) y recepción (RAM/RPM) se excluyen de las listas am/pm.
 COMEDOR_AM  = {"CAM", "CAMC"}
 COMEDOR_PM  = {"CPM", "CPMC"}
-COMEDOR_DOB = {"CDOB"}   # doble: aparece en AM y PM
+COMEDOR_DOB = {"CDOB"}   # doble turno → aparece en AM y PM
+
+# Códigos que significan "no trabajando" — se omiten del roster.
+NOT_WORKING = {"L", "LA", "LIC", "V", "CU", "F", "x", ""}
 
 # Roles que cuentan como "senior" en el comedor.
 SENIOR_ROLES = {"GEO SENIOR", "SUP COMEDOR", "JEFE HOSP"}
@@ -104,32 +108,29 @@ def clean_name(raw):
     return ALIASES.get(name, name)
 
 
-def comedor_shifts(code):
+def comedor_franjas(code):
     """
-    Devuelve lista de franjas ['am'], ['pm'], ['am','pm'] o [] según el código.
-    Solo códigos de COMEDOR — bar/recepción devuelven [].
+    Retorna las franjas de comedor del código: [], ['am'], ['pm'], o ['am','pm'].
+    Solo códigos CAM/CAMC/CPM/CPMC/CDOB — bar y recepción devuelven [].
     """
-    if code is None:
+    if not code:
         return []
     s = str(code).strip().upper()
-    if s in COMEDOR_AM:
-        return ["am"]
-    if s in COMEDOR_PM:
-        return ["pm"]
-    if s in COMEDOR_DOB:
-        return ["am", "pm"]
+    if s in COMEDOR_AM:  return ["am"]
+    if s in COMEDOR_PM:  return ["pm"]
+    if s in COMEDOR_DOB: return ["am", "pm"]
     return []
 
 
-def apoyo_shifts(code):
+def apoyo_franjas(code):
     """
     Clasifica los códigos informales de la sección de Apoyos.
-    Ignora bar/recepción; solo devuelve ['am'], ['pm'] o ['am','pm'].
+    Ignora bar/recepción. Retorna [], ['am'], ['pm'] o ['am','pm'].
     """
     if not code:
         return []
     s = str(code).strip().lower().replace(" ", "").replace("/", "")
-    if s in {"bpm", "bam", "bpis", "rpm", "bpmc", "bamc", "bpmapoyo", "bpisbpm", "rnoc", "rsal"}:
+    if s in {"bpm", "bam", "bpis", "rpm", "rsal", "rnoc", "bpmc", "bamc", "bpmapoyo", "bpisbpm"}:
         return []
     if s.startswith("cam") or s == "almbpm":
         return ["am"]
@@ -140,17 +141,22 @@ def apoyo_shifts(code):
     return []
 
 
+def is_working(code):
+    """True si el código representa un turno real (no libre/vacaciones/etc.)."""
+    if not code:
+        return False
+    return str(code).strip().upper() not in NOT_WORKING
+
+
 def find_sheets(wb, month: int):
     """
     Devuelve (ws_principal, ws_apoyos).
-    ws_principal: hoja con datos GEO/GEO SENIOR (prefiere v2).
-    ws_apoyos:    hoja con sección de apoyos (prefiere base sin v2, ya que v2 no la tiene).
-    Ambas pueden ser la misma si solo hay una hoja del mes.
+    Principal: v2 preferida para GEO/GEO SENIOR (datos más actualizados).
+    Apoyos:    hoja base preferida (la sección de apoyos solo existe ahí).
     """
     mes_names = MES_VARIANTS[month]
     ws_principal = ws_apoyos = None
 
-    # Principal: v2 preferida
     for mes in mes_names:
         for candidate in (f"{mes} v2", mes):
             if candidate in wb.sheetnames:
@@ -159,25 +165,23 @@ def find_sheets(wb, month: int):
         if ws_principal:
             break
 
-    # Apoyos: hoja base preferida (sin v2) porque la sección de apoyos solo está ahí
     for mes in mes_names:
         if mes in wb.sheetnames:
             ws_apoyos = wb[mes]
             break
     if ws_apoyos is None:
-        ws_apoyos = ws_principal  # fallback: misma hoja
+        ws_apoyos = ws_principal
 
     if ws_principal is None:
         raise ValueError(
             f"No se encontró hoja para mes {month}. "
             f"Hojas disponibles: {wb.sheetnames}"
         )
-
     return ws_principal, ws_apoyos
 
 
 def get_day_cols(rows):
-    """Detecta la fila DIA y retorna (dia_idx, day_cols dict)."""
+    """Detecta la fila DIA y retorna (dia_idx, day_cols {day_int: col_idx})."""
     dia_idx = next(
         (i for i, r in enumerate(rows) if len(r) > 9 and r[9] == "DIA"),
         None,
@@ -196,8 +200,12 @@ def get_day_cols(rows):
 def parse_excel(xlsx_bytes, month: int):
     """
     Retorna (staffing_dict, roster_dict) listos para Firebase.
-    staffing: { "1": {viajeros, geo_senior_am, geo_senior_pm, geos_am, geos_pm, apoyo_am, apoyo_pm}, ... }
-    roster:   { "Nombre": {role, days}, ... }
+
+    staffing: { "1": { viajeros, geo_senior_am, geo_senior_pm,
+                        geos_am, geos_pm, apoyo_am, apoyo_pm }, ... }
+
+    roster:   { "Nombre": { "1": "CAM", "5": "CPM", ... } }
+              (solo días trabajados, valor = código de turno del Excel)
     """
     wb = openpyxl.load_workbook(xlsx_bytes, read_only=True, data_only=True)
     ws_main, ws_apoyo = find_sheets(wb, month)
@@ -215,7 +223,7 @@ def parse_excel(xlsx_bytes, month: int):
         if isinstance(occ_row[col], (int, float))
     }
 
-    # Personas GEO: solo filas con SENIOR_ROLES o 'GEO', filtradas a COMEDOR
+    # Personas GEO: filas con SENIOR_ROLES o 'GEO'
     people = []
     for row in rows_main[dia_idx + 3:]:
         role_cell = row[8] if len(row) > 8 else None
@@ -224,42 +232,65 @@ def parse_excel(xlsx_bytes, month: int):
         name = clean_name(row[9] if len(row) > 9 else None)
         if not name:
             continue
-        shifts = {}
+
+        comedor = {}   # day → ['am'/'pm'...]  para staffing arrays
+        codes   = {}   # day → código raw      para roster
+
         for day, col in day_cols.items():
             code = row[col] if col < len(row) else None
-            shifts[day] = comedor_shifts(code)  # [] si no es comedor
-        people.append({"name": name, "is_senior": role_cell in SENIOR_ROLES, "shifts": shifts})
+            franjas = comedor_franjas(code)
+            if franjas:
+                comedor[day] = franjas
+            if is_working(code):
+                codes[str(day)] = str(code).strip().upper()
+
+        people.append({
+            "name":      name,
+            "is_senior": role_cell in SENIOR_ROLES,
+            "comedor":   comedor,
+            "codes":     codes,
+        })
+
         if DEBUG:
-            sample = [f"{d}:{''.join(shifts[d]) or '-'}" for d in sorted(shifts)[:7]]
+            sample = [f"{d}:{','.join(comedor.get(d,[])) or codes.get(str(d),'-')}"
+                      for d in sorted(day_cols)[:7]]
             print(f"  {'SENIOR' if role_cell in SENIOR_ROLES else 'GEO':6s} {name}: {' '.join(sample)}...")
 
     print(f"[sync-rol] {len(people)} personas en sección GEO")
-
-    # Nombres ya cubiertos como GEO — no deben aparecer también como apoyo
     geo_names = {p["name"] for p in people}
 
     # ── Sección Apoyos ────────────────────────────────────────────────────────
-    rows_apoyo = list(ws_apoyo.iter_rows(values_only=True)) if ws_apoyo is not ws_main else rows_main
+    rows_apoyo = (list(ws_apoyo.iter_rows(values_only=True))
+                  if ws_apoyo is not ws_main else rows_main)
     _, day_cols_ap = get_day_cols(rows_apoyo)
 
-    apoyos = []   # {name, shifts: {day: ['am'/'pm'/...]}}
+    apoyos = []
     for row in rows_apoyo:
-        # Apoyos tienen col8=None y col9=nombre con códigos de texto en días
         if (row[8] if len(row) > 8 else None) is not None:
             continue
         name = clean_name(row[9] if len(row) > 9 else None)
         if not name or name in geo_names:
             continue
-        # Distinguir filas de persona (códigos texto) vs filas de estadísticas (números)
+        # Solo filas de persona: algún día tiene valor de texto (no número)
         day_vals = [row[col] if col < len(row) else None for col in day_cols_ap.values()]
         if not any(isinstance(v, str) and v.strip() for v in day_vals):
             continue
-        shifts_ap = {day: apoyo_shifts(row[col] if col < len(row) else None)
-                     for day, col in day_cols_ap.items()}
-        if any(shifts_ap.values()):
-            apoyos.append({"name": name, "shifts": shifts_ap})
+
+        franjas_ap = {}  # day → ['am'/'pm'...]
+        codes_ap   = {}  # day → código raw
+        for day, col in day_cols_ap.items():
+            code = row[col] if col < len(row) else None
+            fr = apoyo_franjas(code)
+            if fr:
+                franjas_ap[day] = fr
+            if code and str(code).strip() and str(code).strip().lower() not in NOT_WORKING:
+                codes_ap[str(day)] = str(code).strip().upper()
+
+        if any(franjas_ap.values()):
+            apoyos.append({"name": name, "franjas": franjas_ap, "codes": codes_ap})
             if DEBUG:
-                sample = [f"{d}:{''.join(shifts_ap[d]) or '-'}" for d in sorted(shifts_ap)[:7]]
+                sample = [f"{d}:{''.join(franjas_ap.get(d,[])) or '-'}"
+                          for d in sorted(day_cols_ap)[:7]]
                 print(f"  APOYO  {name}: {' '.join(sample)}...")
 
     print(f"[sync-rol] {len(apoyos)} personas en sección Apoyos")
@@ -277,28 +308,23 @@ def parse_excel(xlsx_bytes, month: int):
             "apoyo_pm":      [],
         }
         for p in people:
-            for franja in p["shifts"].get(day, []):
-                if p["is_senior"]:
-                    entry[f"geo_senior_{franja}"].append(p["name"])
-                else:
-                    entry[f"geos_{franja}"].append(p["name"])
+            for franja in p["comedor"].get(day, []):
+                key = f"geo_senior_{franja}" if p["is_senior"] else f"geos_{franja}"
+                entry[key].append(p["name"])
         for ap in apoyos:
-            for franja in ap["shifts"].get(day, []):
+            for franja in ap["franjas"].get(day, []):
                 entry[f"apoyo_{franja}"].append(ap["name"])
         staffing[str(day)] = entry
 
-    # ── Construir roster ──────────────────────────────────────────────────────
+    # ── Construir roster  ─────────────────────────────────────────────────────
+    # Formato que la app espera: { "NombrePersona": { "1": "CAM", "5": "CPM" } }
     roster = {}
     for p in people:
-        working_days = sorted(day for day, s in p["shifts"].items() if s)
-        roster[p["name"]] = {
-            "role": "geo_senior" if p["is_senior"] else "geo",
-            "days": working_days,
-        }
+        if p["codes"]:
+            roster[p["name"]] = p["codes"]
     for ap in apoyos:
-        working_days = sorted(day for day, s in ap["shifts"].items() if s)
-        if working_days:
-            roster[ap["name"]] = {"role": "apoyo", "days": working_days}
+        if ap["codes"]:
+            roster[ap["name"]] = ap["codes"]
 
     return staffing, roster
 
@@ -318,10 +344,12 @@ def main():
 
     if DEBUG:
         import pprint
-        print("\n--- staffing dia 19 ---")
-        pprint.pprint(staffing.get("19"))
-        print("\n--- roster (primeras 5) ---")
-        pprint.pprint(dict(list(roster.items())[:5]))
+        print(f"\n--- staffing dia {today.day} ---")
+        pprint.pprint(staffing.get(str(today.day)))
+        print("\n--- roster Bruno ---")
+        pprint.pprint(roster.get("Bruno"))
+        print(f"\n--- roster Francisco Urrutia ---")
+        pprint.pprint(roster.get("Francisco Urrutia"))
         print("\n[sync-rol] Modo debug — Firebase no modificado.")
         return
 
@@ -334,9 +362,16 @@ def main():
     fb_put(token, f"roster/{month_str}", roster)
     print(f"[sync-rol] OK /roster/{month_str}")
 
-    ts = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-    fb_put(token, "meta/last_update", ts)
-    print(f"[sync-rol] OK /meta/last_update -> {ts}")
+    # meta/last_update como objeto con timestamp_iso (formato que espera la app)
+    now_utc = datetime.datetime.utcnow()
+    fb_put(token, "meta/last_update", {
+        "timestamp_iso":   now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "timestamp_local": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "timestamp_ms":    int(now_utc.timestamp() * 1000),
+        "mes":             month_str,
+        "tipo":            "sync automatico",
+    })
+    print(f"[sync-rol] OK /meta/last_update")
     print("[sync-rol] Listo.")
 
 
