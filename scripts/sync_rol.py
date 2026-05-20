@@ -10,7 +10,7 @@ Modo debug (no escribe en Firebase, imprime estructura):
   FIREBASE_KEY=$(cat firebase-key.json) SHAREPOINT_URL=<url> python scripts/sync_rol.py --debug
 """
 
-import json, os, io, sys, re, datetime, requests
+import json, os, io, sys, re, datetime, unicodedata, requests
 import openpyxl
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request as GoogleAuthRequest
@@ -40,13 +40,12 @@ MES_VARIANTS = {
     12: ["DICIEMBRE",  "DIC"],
 }
 
-# Códigos de turno de COMEDOR — los únicos que aparecen en el staffing panel.
-# Bar (BAM/BPM) y recepción (RAM/RPM) se excluyen de las listas am/pm.
+# Códigos de COMEDOR — los únicos que aparecen en staffing am/pm.
 COMEDOR_AM  = {"CAM", "CAMC"}
 COMEDOR_PM  = {"CPM", "CPMC"}
-COMEDOR_DOB = {"CDOB"}   # doble turno → aparece en AM y PM
+COMEDOR_DOB = {"CDOB"}
 
-# Códigos que significan "no trabajando" — se omiten del roster.
+# Códigos que significan "no trabajando".
 NOT_WORKING = {"L", "LA", "LIC", "V", "CU", "F", "x", ""}
 
 # Roles que cuentan como "senior" en el comedor.
@@ -96,7 +95,7 @@ def download_excel():
     return io.BytesIO(r.content)
 
 
-# ── Parseo ────────────────────────────────────────────────────────────────────
+# ── Utilidades de nombres ─────────────────────────────────────────────────────
 
 def clean_name(raw):
     """Quita sufijos (TDP)/(VAL)/etc., aplica aliases y normaliza espacios."""
@@ -108,11 +107,15 @@ def clean_name(raw):
     return ALIASES.get(name, name)
 
 
+def norm_key(name):
+    """Nombre sin tildes en minúscula — para deduplicar variantes del mismo nombre."""
+    return unicodedata.normalize("NFD", name).encode("ascii", "ignore").decode().lower().strip()
+
+
+# ── Clasificación de códigos ──────────────────────────────────────────────────
+
 def comedor_franjas(code):
-    """
-    Retorna las franjas de comedor del código: [], ['am'], ['pm'], o ['am','pm'].
-    Solo códigos CAM/CAMC/CPM/CPMC/CDOB — bar y recepción devuelven [].
-    """
+    """[], ['am'], ['pm'], o ['am','pm'] según el código de turno."""
     if not code:
         return []
     s = str(code).strip().upper()
@@ -123,14 +126,12 @@ def comedor_franjas(code):
 
 
 def apoyo_franjas(code):
-    """
-    Clasifica los códigos informales de la sección de Apoyos.
-    Ignora bar/recepción. Retorna [], ['am'], ['pm'] o ['am','pm'].
-    """
+    """Clasifica códigos informales de la sección Apoyos. Ignora bar/recepción."""
     if not code:
         return []
     s = str(code).strip().lower().replace(" ", "").replace("/", "")
-    if s in {"bpm", "bam", "bpis", "rpm", "rsal", "rnoc", "bpmc", "bamc", "bpmapoyo", "bpisbpm"}:
+    if s in {"bpm", "bam", "bpis", "rpm", "rsal", "rnoc",
+             "bpmc", "bamc", "bpmapoyo", "bpisbpm"}:
         return []
     if s.startswith("cam") or s == "almbpm":
         return ["am"]
@@ -142,42 +143,28 @@ def apoyo_franjas(code):
 
 
 def is_working(code):
-    """True si el código representa un turno real (no libre/vacaciones/etc.)."""
     if not code:
         return False
     return str(code).strip().upper() not in NOT_WORKING
 
 
-def find_sheets(wb, month: int):
-    """
-    Devuelve (ws_principal, ws_apoyos).
-    Principal: v2 preferida para GEO/GEO SENIOR (datos más actualizados).
-    Apoyos:    hoja base preferida (la sección de apoyos solo existe ahí).
-    """
-    mes_names = MES_VARIANTS[month]
-    ws_principal = ws_apoyos = None
+# ── Búsqueda de hoja ──────────────────────────────────────────────────────────
 
-    for mes in mes_names:
-        for candidate in (f"{mes} v2", mes):
+def find_sheet(wb, month: int):
+    """
+    Devuelve la hoja del mes. Prefiere el nombre base (MAY, JUNIO) sobre v2,
+    porque la hoja base contiene la sección de Apoyos y los viajeros correctos.
+    Cae en v2 solo si no existe la base.
+    """
+    for mes in MES_VARIANTS[month]:
+        for candidate in (mes, f"{mes} v2"):
             if candidate in wb.sheetnames:
-                ws_principal = wb[candidate]
-                break
-        if ws_principal:
-            break
-
-    for mes in mes_names:
-        if mes in wb.sheetnames:
-            ws_apoyos = wb[mes]
-            break
-    if ws_apoyos is None:
-        ws_apoyos = ws_principal
-
-    if ws_principal is None:
-        raise ValueError(
-            f"No se encontró hoja para mes {month}. "
-            f"Hojas disponibles: {wb.sheetnames}"
-        )
-    return ws_principal, ws_apoyos
+                print(f"[sync-rol] Usando hoja: {candidate}")
+                return wb[candidate]
+    raise ValueError(
+        f"No se encontró hoja para mes {month}. "
+        f"Hojas disponibles: {wb.sheetnames}"
+    )
 
 
 def get_day_cols(rows):
@@ -188,44 +175,42 @@ def get_day_cols(rows):
     )
     if dia_idx is None:
         raise ValueError("No se encontró fila 'DIA' en la hoja")
-    dia_row = rows[dia_idx]
     day_cols = {
         int(v): ci
-        for ci, v in enumerate(dia_row)
+        for ci, v in enumerate(rows[dia_idx])
         if isinstance(v, (int, float)) and 1 <= v <= 31
     }
     return dia_idx, day_cols
 
 
+# ── Parseo principal ──────────────────────────────────────────────────────────
+
 def parse_excel(xlsx_bytes, month: int):
     """
-    Retorna (staffing_dict, roster_dict) listos para Firebase.
+    Retorna (staffing_dict, roster_dict).
 
     staffing: { "1": { viajeros, geo_senior_am, geo_senior_pm,
                         geos_am, geos_pm, apoyo_am, apoyo_pm }, ... }
 
     roster:   { "Nombre": { "1": "CAM", "5": "CPM", ... } }
-              (solo días trabajados, valor = código de turno del Excel)
     """
-    wb = openpyxl.load_workbook(xlsx_bytes, read_only=True, data_only=True)
-    ws_main, ws_apoyo = find_sheets(wb, month)
-    print(f"[sync-rol] GEOs: {ws_main.title} | Apoyos: {ws_apoyo.title}")
+    wb   = openpyxl.load_workbook(xlsx_bytes, read_only=True, data_only=True)
+    ws   = find_sheet(wb, month)
+    rows = list(ws.iter_rows(values_only=True))
 
-    # ── Sección GEO / GEO SENIOR ──────────────────────────────────────────────
-    rows_main = list(ws_main.iter_rows(values_only=True))
-    dia_idx, day_cols = get_day_cols(rows_main)
+    dia_idx, day_cols = get_day_cols(rows)
 
     # Viajeros (fila DIA + 2)
-    occ_row = rows_main[dia_idx + 2]
+    occ_row = rows[dia_idx + 2]
     viajeros = {
         day: int(occ_row[col])
         for day, col in day_cols.items()
         if isinstance(occ_row[col], (int, float))
     }
 
-    # Personas GEO: filas con SENIOR_ROLES o 'GEO'
-    people = []
-    for row in rows_main[dia_idx + 3:]:
+    # ── Sección GEO / GEO SENIOR (col8 = rol explícito) ──────────────────────
+    people = []   # lista de dicts: name, is_senior, comedor, codes
+    for row in rows[dia_idx + 3:]:
         role_cell = row[8] if len(row) > 8 else None
         if role_cell not in (*SENIOR_ROLES, "GEO"):
             continue
@@ -233,52 +218,46 @@ def parse_excel(xlsx_bytes, month: int):
         if not name:
             continue
 
-        comedor = {}   # day → ['am'/'pm'...]  para staffing arrays
-        codes   = {}   # day → código raw      para roster
-
+        comedor = {}
+        codes   = {}
         for day, col in day_cols.items():
             code = row[col] if col < len(row) else None
-            franjas = comedor_franjas(code)
-            if franjas:
-                comedor[day] = franjas
+            fr = comedor_franjas(code)
+            if fr:
+                comedor[day] = fr
             if is_working(code):
                 codes[str(day)] = str(code).strip().upper()
 
         people.append({
             "name":      name,
+            "norm":      norm_key(name),
             "is_senior": role_cell in SENIOR_ROLES,
             "comedor":   comedor,
             "codes":     codes,
         })
-
         if DEBUG:
-            sample = [f"{d}:{','.join(comedor.get(d,[])) or codes.get(str(d),'-')}"
-                      for d in sorted(day_cols)[:7]]
-            print(f"  {'SENIOR' if role_cell in SENIOR_ROLES else 'GEO':6s} {name}: {' '.join(sample)}...")
+            s = [f"{d}:{','.join(comedor.get(d,[])) or codes.get(str(d),'-')}"
+                 for d in sorted(day_cols)[:7]]
+            print(f"  {'SENIOR' if role_cell in SENIOR_ROLES else 'GEO':6s} {name}: {' '.join(s)}...")
 
-    print(f"[sync-rol] {len(people)} personas en sección GEO")
-    geo_names = {p["name"] for p in people}
+    print(f"[sync-rol] {len(people)} personas GEO")
 
-    # ── Sección Apoyos ────────────────────────────────────────────────────────
-    rows_apoyo = (list(ws_apoyo.iter_rows(values_only=True))
-                  if ws_apoyo is not ws_main else rows_main)
-    _, day_cols_ap = get_day_cols(rows_apoyo)
-
+    # ── Sección Apoyos (col8 = None, col9 = nombre, días con códigos texto) ──
     apoyos = []
-    for row in rows_apoyo:
+    for row in rows:
         if (row[8] if len(row) > 8 else None) is not None:
             continue
         name = clean_name(row[9] if len(row) > 9 else None)
-        if not name or name in geo_names:
+        if not name:
             continue
-        # Solo filas de persona: algún día tiene valor de texto (no número)
-        day_vals = [row[col] if col < len(row) else None for col in day_cols_ap.values()]
+        # Fila de persona si algún día tiene string (no número/None)
+        day_vals = [row[col] if col < len(row) else None for col in day_cols.values()]
         if not any(isinstance(v, str) and v.strip() for v in day_vals):
             continue
 
-        franjas_ap = {}  # day → ['am'/'pm'...]
-        codes_ap   = {}  # day → código raw
-        for day, col in day_cols_ap.items():
+        franjas_ap = {}
+        codes_ap   = {}
+        for day, col in day_cols.items():
             code = row[col] if col < len(row) else None
             fr = apoyo_franjas(code)
             if fr:
@@ -287,15 +266,23 @@ def parse_excel(xlsx_bytes, month: int):
                 codes_ap[str(day)] = str(code).strip().upper()
 
         if any(franjas_ap.values()):
-            apoyos.append({"name": name, "franjas": franjas_ap, "codes": codes_ap})
+            apoyos.append({
+                "name":   name,
+                "norm":   norm_key(name),
+                "franjas": franjas_ap,
+                "codes":   codes_ap,
+            })
             if DEBUG:
-                sample = [f"{d}:{''.join(franjas_ap.get(d,[])) or '-'}"
-                          for d in sorted(day_cols_ap)[:7]]
-                print(f"  APOYO  {name}: {' '.join(sample)}...")
+                s = [f"{d}:{''.join(franjas_ap.get(d,[])) or '-'}"
+                     for d in sorted(day_cols)[:7]]
+                print(f"  APOYO  {name}: {' '.join(s)}...")
 
-    print(f"[sync-rol] {len(apoyos)} personas en sección Apoyos")
+    print(f"[sync-rol] {len(apoyos)} personas Apoyos")
 
     # ── Construir staffing ────────────────────────────────────────────────────
+    # Deduplicación por franja y por nombre normalizado:
+    # se añade a "apoyo" solo si esa persona no aparece ya en geos_/geo_senior_
+    # de esa misma franja (evita duplicados de GEOs que también están en apoyos).
     staffing = {}
     for day in sorted(day_cols):
         entry = {
@@ -307,23 +294,32 @@ def parse_excel(xlsx_bytes, month: int):
             "apoyo_am":      [],
             "apoyo_pm":      [],
         }
+        seen_am = set()
+        seen_pm = set()
+
         for p in people:
             for franja in p["comedor"].get(day, []):
                 key = f"geo_senior_{franja}" if p["is_senior"] else f"geos_{franja}"
                 entry[key].append(p["name"])
+                (seen_am if franja == "am" else seen_pm).add(p["norm"])
+
         for ap in apoyos:
             for franja in ap["franjas"].get(day, []):
-                entry[f"apoyo_{franja}"].append(ap["name"])
+                seen = seen_am if franja == "am" else seen_pm
+                if ap["norm"] not in seen:
+                    entry[f"apoyo_{franja}"].append(ap["name"])
+                    seen.add(ap["norm"])
+
         staffing[str(day)] = entry
 
-    # ── Construir roster  ─────────────────────────────────────────────────────
-    # Formato que la app espera: { "NombrePersona": { "1": "CAM", "5": "CPM" } }
-    roster = {}
-    for p in people:
-        if p["codes"]:
-            roster[p["name"]] = p["codes"]
+    # ── Construir roster ──────────────────────────────────────────────────────
+    # Formato que espera la app: { "Nombre": { "1": "CAM", "5": "CPM" } }
+    # Los GEO usan sus códigos formales. Los apoyos puros usan sus códigos
+    # de la sección de apoyos. Si coincide el nombre (normalizado), gana el GEO.
+    geo_norms = {p["norm"]: p["name"] for p in people}
+    roster = {p["name"]: p["codes"] for p in people if p["codes"]}
     for ap in apoyos:
-        if ap["codes"]:
+        if ap["norm"] not in geo_norms and ap["codes"]:
             roster[ap["name"]] = ap["codes"]
 
     return staffing, roster
@@ -348,8 +344,8 @@ def main():
         pprint.pprint(staffing.get(str(today.day)))
         print("\n--- roster Bruno ---")
         pprint.pprint(roster.get("Bruno"))
-        print(f"\n--- roster Francisco Urrutia ---")
-        pprint.pprint(roster.get("Francisco Urrutia"))
+        print("\n--- roster Bryan Rincon ---")
+        pprint.pprint(roster.get("Bryan Rincon"))
         print("\n[sync-rol] Modo debug — Firebase no modificado.")
         return
 
@@ -362,7 +358,6 @@ def main():
     fb_put(token, f"roster/{month_str}", roster)
     print(f"[sync-rol] OK /roster/{month_str}")
 
-    # meta/last_update como objeto con timestamp_iso (formato que espera la app)
     now_utc = datetime.datetime.utcnow()
     fb_put(token, "meta/last_update", {
         "timestamp_iso":   now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
