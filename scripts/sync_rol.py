@@ -14,9 +14,10 @@ import openpyxl
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request as GoogleAuthRequest
 
-SHAREPOINT_URL = (
+SHAREPOINT_URL = os.environ.get(
+    "SHAREPOINT_URL",
     "https://exploracl-my.sharepoint.com/:x:/g/personal/bbossi_explora_com"
-    "/IQBxeZ0oOIr8SYHBGrClVczaAc7hNdnV5UndiKHyOemr9ck?download=1"
+    "/IQBxeZ0oOIr8SYHBGrClVczaAc7hNdnV5UndiKHyOemr9ck?download=1",
 )
 DB_URL = "https://explora-cafe-orders-default-rtdb.firebaseio.com"
 DEBUG  = "--debug" in sys.argv

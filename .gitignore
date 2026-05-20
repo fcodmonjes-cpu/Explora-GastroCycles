@@ -1,0 +1,15 @@
+# Secrets y archivos sensibles — nunca commitear
+firebase-rules.json
+*.key.json
+*-key.json
+.env
+.env.*
+
+# Archivos de trabajo locales
+*.seed.json
+*.xlsx
+*.pdf
+*.m4a
+*.png
+*.svg
+!Explora.png
