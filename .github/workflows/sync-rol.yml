@@ -22,3 +22,4 @@ jobs:
         run: python scripts/sync_rol.py
         env:
           FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
+          SHAREPOINT_URL: ${{ secrets.SHAREPOINT_URL }}
