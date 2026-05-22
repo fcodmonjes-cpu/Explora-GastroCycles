@@ -44,7 +44,7 @@ que es operacional (turnos, postres, pedidos, comandas).
 |---|---|---|
 | Renderizado | HTML + CSS + JS vanilla | Cero build step. Editar = desplegar. Cualquier persona puede leer el código. |
 | Datos en vivo | Firebase Realtime Database (compat SDK 10.12) | WebSocket para tiempo real + REST para fetches puntuales. Reglas abiertas en prototipo, fáciles de lockear con auth para producción. |
-| Hosting | GitHub Pages (`master:main`) | Free, automático, ramas master ↔ main sincronizadas. |
+| Hosting | Vercel (auto-deploy por branch) | `main` → `gastrocycles.vercel.app` (producción). `staging` → URL fija para QA desde iPhone. `feature/*` y `fix/*` → preview por commit. Ver sección 12. |
 | Tipografía | Cormorant Garamond (italic 500/700) + Courier Prime monospace | Cargadas vía Google Fonts. Family declarada en CSS desde el inicio; sólo recientemente se cargó la real. |
 | Telemetría | Vercel Analytics (`/_vercel/insights/script.js`) | Pageviews ligeros, sin más. |
 
@@ -400,32 +400,45 @@ Hay decisiones conscientes de prototipo. Listarlas explícitas:
 - **No hay tests.** El programa se valida con uso real y commits
   reversibles. Para un solo desarrollador iterando rápido, el costo
   de tests automatizados todavía supera el beneficio.
-- **Sin pipeline de CI.** GitHub Pages despliega automáticamente
-  desde `main`. Cualquier push se ve en producción ~30s después.
-  Decisión: máxima velocidad de iteración.
+- **CI implícito vía Vercel.** No hay GitHub Actions de build/test.
+  Vercel despliega cada push automáticamente — `main` a producción,
+  `staging` a una URL fija para QA por iPhone, `feature/*` a previews
+  efímeras. La separación de branches (sección 12) cubre la mayor parte
+  de lo que harían tests automatizados en otro proyecto: el owner valida
+  visualmente antes de aprobar el merge a `main`.
 
 ---
 
 ## 10. Anatomía del archivo
 
-`explora_atacama_app.V2.html` (también copiado como `index.html`) tiene
-~3900 líneas. Mapa de regiones aproximadas:
+`index.html` es **el único archivo** de la app (~6900 líneas tras el
+módulo Checklist). Antes existía un duplicado `explora_atacama_app.V2.html`
+como fuente de verdad mientras `index.html` quedaba como copia desplegada
+— esa convención fue retirada el 2026-05-22 cuando la arquitectura de
+branches (sección 12) reemplazó la necesidad de mantener dos versiones
+locales en paralelo. Las "versiones paralelas" ahora viven en branches
+de Git, no en archivos.
+
+Mapa de regiones aproximadas (los rangos cambian a medida que crece;
+úsalos como pista de búsqueda, no como verdad):
 
 | Región | Aprox. líneas | Contenido |
 |---|---|---|
 | `<head>` | 1-15 | Title, fonts, Vercel analytics, Firebase SDK |
-| CSS | 15-700 | Variables, layout, tipografía, animaciones, todos los módulos |
-| HTML (body) | 700-1000 | Header, tabs, containers de cada vista |
-| `<script>` STATE TOP | 1000-1100 | Todas las let/const accesibles desde boot |
-| Diccionario `UI` | 1100-1300 | ES/EN/PT strings |
-| Data estática | 1300-1900 | DISHES, WINES, COCKTAILS, MOCKTAILS, MOMENTOS, GUIONES |
-| Navegación | 1900-2200 | setTab, setLang, openWineFromGuion |
-| Render principal | 2200-2400 | renderDishes, renderWines, renderCocktails, etc. |
-| Módulo Café | 2400-3400 | COFFEE_DATA + manual + modo servicio (waiter+barista+history) |
-| Módulo Staffing | 3400-3500 | Fetch + render del roster |
-| Módulo Desserts | 3500-3600 | Strip + form de postres |
-| Módulo Comandera | 3600-3900 | Gate + home + new + active + drag + history |
-| Boot | 3900+ | setLang(currentLang) + fetches iniciales |
+| CSS | 15-820 | Variables, layout, tipografía, animaciones, todos los módulos |
+| HTML (body) | 820-985 | Header, tabs, containers de cada vista |
+| `<script>` STATE TOP | 985-1170 | Todas las let/const accesibles desde boot |
+| Diccionario `UI` | 1170-1610 | ES/EN/PT strings |
+| Data estática | 1610-2400 | DISHES, WINES, COCKTAILS, MOCKTAILS, MOMENTOS, GUIONES |
+| Navegación | 2200-2400 | setTab, setLang, openWineFromGuion |
+| Render principal | 2400-2700 | renderDishes, renderWines, renderCocktails, etc. |
+| Módulo Café | 2700-3700 | COFFEE_DATA + manual + modo servicio (waiter+barista+history) |
+| Módulo Staffing | 3700-3800 | Fetch + render del roster |
+| Módulo Desserts | 3800-3900 | Strip + form de postres |
+| Módulo Comandera | 3900-4200 | Gate + home + new + active + drag + history |
+| Módulo Rol | 5500-6260 | PIN gate + lectura semanal del roster |
+| Módulo Checklist | 6260-6940 | Sub-secciones + fases + carry-over + edit mode supervisor |
+| Boot | dispersos | setLang(currentLang) + fetches iniciales |
 
 Los módulos están agrupados, no entrelazados. Si vas a tocar el café,
 todo lo del café está junto. Si vas a tocar la comandera, todo lo de
@@ -453,6 +466,92 @@ como un cuaderno cuidado, no como software corporativo.
 TOP, i18n hooks, optimistic UI y polling skip-on-interaction nacieron
 de bugs reales. Cada una previene una clase de problema. Documentarlas
 cuesta menos que el bug que viene después.
+
+---
+
+## 12. Workflow del repo
+
+El programa se itera sobre un repo público en GitHub
+(`fcodmonjes-cpu/Explora-GastroCycles`). La arquitectura de branches
+separa **lo que está en uso**, **lo que está en revisión** y **lo que
+está en exploración** — y cada una tiene su URL de Vercel distinta.
+
+### Branches
+
+| Branch | Rol | URL de Vercel |
+|---|---|---|
+| `main` | Producción. Lo que el staff del lodge usa en turno. | `gastrocycles.vercel.app` |
+| `staging` | Cola de revisión. Lo que el owner mira desde iPhone antes de aprobar. | `gastrocycles-git-staging-<scope>.vercel.app` — **URL fija**, no cambia con cada commit |
+| `feature/<nombre>` | Trabajo en curso de un feature nuevo. Iteraciones hasta que está listo para revisión. | Preview por commit, URL específica generada por Vercel |
+| `fix/<nombre>` | Igual que feature, pero para correcciones puntuales. | Igual. |
+| `master` | Legacy en sync con `main`. **No se usa** para trabajo nuevo. | — |
+
+### Reglas
+
+1. **Nunca commit ni push directo a `main`.** Solo recibe merges desde `staging`, y solo cuando el owner aprueba explícitamente. Un commit equivocado a main rompe la operación de un servicio en vivo.
+2. **Trabajo nuevo siempre arranca en `feature/*` o `fix/*`.** Si voy a tocar cualquier cosa que no sea trivial, creo un branch.
+3. **`staging` es el escenario de QA.** Cuando un feature está listo para que el owner lo vea desde iPhone, se mergea ahí — preferentemente fast-forward para mantener el historial lineal.
+4. **El merge a `main` lo gatilla el owner.** Señales claras: "apruebo", "súbelo a producción", "mergea a main". Ambigüedad → preguntar.
+
+### Flujo de una sesión de trabajo
+
+**Al arrancar:**
+
+1. `git status --short --branch` — confirmar dónde estoy. Si quedó algo a medias del día anterior, está acá.
+2. Si estoy en `main` por error: salir antes de tocar nada. Crear/cambiar al branch correcto.
+3. Releer las secciones de este archivo que toquen el área que voy a modificar.
+
+**Trabajando:**
+
+- Editar `index.html` directamente (no hay archivo paralelo desde 2026-05-22).
+- Probar localmente con `py -m http.server 3000` y `http://localhost:3000/index.html`.
+- Para módulos que tocan Firebase, considerar monkey-patch del `fetch` durante el desarrollo para no contaminar la base de producción con datos de prueba.
+
+**Al cerrar:**
+
+| Estado | Acción |
+|---|---|
+| Listo para revisión | Commit en `feature/*` → push → merge a `staging` (fast-forward) → push staging. Reportar URL fija de staging al owner. |
+| Incompleto pero quiero guardar | Commit en `feature/*` → push. Queda como WIP visible en el preview de Vercel, no toca staging. |
+| Experimental o destructivo | Puede quedar uncommitted en working tree, o en un commit local sin push. |
+
+### Hand-off entre sesiones
+
+El estado del trabajo vive en **branches + commits**. Las decisiones de
+diseño viven en **este archivo**. Las memorias persistentes del
+asistente (`~/.claude/projects/.../memory/`) cubren preferencias del
+owner y convenciones operacionales que no encajan en docs del repo.
+
+Cuando el owner pida "retomemos lo de X":
+
+1. `git log feature/X --oneline` — entender el camino recorrido.
+2. `git diff main feature/X -- index.html` — ver el delta acumulado.
+3. Abrir la URL del preview de Vercel para validar visualmente sin levantar local.
+
+### Convenciones de código y contenido
+
+- **Idioma de trabajo con el owner:** español.
+- **Trilingüe (ES/EN/PT):** cualquier string visible al usuario debe existir en los 3 idiomas del diccionario `UI`. Si falta un idioma para un módulo nuevo, consultar al owner antes de traducir automáticamente.
+- **Comentarios:** en español, salvo cuando se refieran a APIs/términos técnicos universales.
+- **Paleta y tipografías:** Cormorant Garamond + Courier Prime, dark amber. No introducir colores nuevos sin avisar.
+- **Convención de PINs:** 555 (mesero), 666 (E-Check), 999 (barista), 2098 (Rol), 9876 (supervisor Checklist). Nuevos PINs deben ir aquí cuando se agreguen.
+
+### Lo que NO se hace
+
+- No commitear a `main` sin aprobación.
+- No introducir dependencias (npm, build tools, frameworks) sin discutirlo.
+- No cambiar paleta o tipografías sin aviso.
+- No traducir automáticamente — preguntar si falta un idioma.
+- No borrar contenido del ATA Handbook sin confirmar.
+- No commitear secretos (tokens, credenciales) ni dejarlos en plain text en `.git/config`. Si se necesita autenticar, usar Windows Credential Manager.
+
+### Excepciones válidas
+
+Hotfix urgente (algo roto en plena hora de servicio): el flujo ideal
+sigue siendo `fix/<nombre>` → staging → main, pero el owner puede
+acelerar y pedir push directo a `main` si la urgencia lo amerita.
+**Es la única excepción válida**, y siempre por solicitud explícita
+del owner.
 
 ---
 
