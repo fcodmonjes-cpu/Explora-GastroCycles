@@ -818,6 +818,40 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-btn-primary { background:rgba(192,125,42,0.85); color:#fff; } .cf-btn-primary:hover { background:rgba(192,125,42,1); }
 .cf-btn-ghost { background:none; border:0.5px solid var(--border); color:var(--text-secondary); } .cf-btn-ghost:hover { border-color:rgba(192,125,42,0.4); color:#c07d2a; }
 
+/* ── Checklist & Protocolos: feature button above the main tabs row ───── */
+/* Sits between the ops-strip (staffing + desserts) and .main-tabs. Reads as
+   the operational entry-point for the GEO team — distinct enough from the
+   reference tabs (menu, wines, cocktails…) that it doesn't get lost in the
+   row, but coherent with the program's palette (gold accent, monospace) so
+   it doesn't feel pasted in. */
+.checklist-feature-btn {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; box-sizing:border-box;
+  margin:0 0 14px; padding:13px 18px;
+  background:linear-gradient(180deg, rgba(192,125,42,0.14), rgba(192,125,42,0.07));
+  border:0.5px solid rgba(192,125,42,0.45);
+  border-radius:10px;
+  font-family:'Courier Prime','Courier New',monospace;
+  font-size:12px; letter-spacing:0.14em; text-transform:uppercase;
+  color:#d6904a;
+  cursor:pointer;
+  transition:background .18s, border-color .18s, color .18s, transform .12s;
+}
+.checklist-feature-btn:hover {
+  background:linear-gradient(180deg, rgba(192,125,42,0.22), rgba(192,125,42,0.12));
+  border-color:rgba(192,125,42,0.7);
+  color:#e5a05a;
+}
+.checklist-feature-btn:active { transform:translateY(1px); }
+.checklist-feature-btn.active {
+  background:linear-gradient(180deg, rgba(192,125,42,0.32), rgba(192,125,42,0.18));
+  border-color:#c07d2a;
+  color:#f3b572;
+  box-shadow:0 0 0 1px rgba(192,125,42,0.25) inset;
+}
+.checklist-feature-icon { font-size:14px; opacity:0.85; line-height:1; }
+.checklist-feature-label { font-weight:500; }
+
 /* ── Checklist module ────────────────────────────────────────────────── */
 .chk-root { padding:8px 0 24px; }
 .chk-section-tabs { display:flex; gap:4px; margin-bottom:1rem; border-bottom:0.5px solid var(--border); padding-bottom:8px; flex-wrap:wrap; }
@@ -978,6 +1012,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
   </div>
 
+  <!-- Checklist & Protocolos: lives above the main tabs row, as a destacado.
+       It is still wired via setTab('checklist'), but visually separated so it
+       reads as the operational entry-point for the GEO team rather than just
+       another reference tab. -->
+  <button class="checklist-feature-btn" id="tab-btn-checklist" onclick="setTab('checklist',this)">
+    <span class="checklist-feature-icon" aria-hidden="true">◇</span>
+    <span class="checklist-feature-label">Checklist &amp; Protocolos</span>
+  </button>
+
   <div class="main-tabs">
     <button class="tab active" onclick="setTab('menus',this)">Menú</button>
     <button class="tab" onclick="setTab('vinos',this)">Vinos</button>
@@ -985,7 +1028,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
     <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">E-Check</button>
     <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol">Rol</button>
-    <button class="tab" onclick="setTab('checklist',this)" id="tab-btn-checklist">Checklist</button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -1450,7 +1492,7 @@ const UI = {
     cmdFullViewTitle:'Comanda completa',
     cmdServiceUnit:'D', /* short for cycle day */
     // Checklist module
-    tabChecklist:'Checklist',
+    tabChecklist:'Checklist & Protocolos',
     chkSectionPasillo:'Pasillo', chkSectionMontaje:'Montaje', chkSectionRepaso:'Repaso',
     chkSectionComingTag:'próx.',
     chkPhaseDesayuno:'Post-Desayuno', chkPhaseAlmuerzo:'Post-Almuerzo', chkPhaseCena:'Post-Cena',
@@ -1561,7 +1603,7 @@ const UI = {
     cmdFullViewTitle:'Full ticket',
     cmdServiceUnit:'D',
     // Checklist module
-    tabChecklist:'Checklist',
+    tabChecklist:'Checklist & Protocols',
     chkSectionPasillo:'Hallway', chkSectionMontaje:'Setup', chkSectionRepaso:'Final pass',
     chkSectionComingTag:'soon',
     chkPhaseDesayuno:'After Breakfast', chkPhaseAlmuerzo:'After Lunch', chkPhaseCena:'After Dinner',
@@ -1672,7 +1714,7 @@ const UI = {
     cmdFullViewTitle:'Comanda completa',
     cmdServiceUnit:'D',
     // Checklist module
-    tabChecklist:'Checklist',
+    tabChecklist:'Checklist & Protocolos',
     chkSectionPasillo:'Corredor', chkSectionMontaje:'Montagem', chkSectionRepaso:'Revisão',
     chkSectionComingTag:'em breve',
     chkPhaseDesayuno:'Pós-Café', chkPhaseAlmuerzo:'Pós-Almoço', chkPhaseCena:'Pós-Jantar',
@@ -1933,8 +1975,11 @@ function setLang(lang, el) {
   if (cmdBtn) cmdBtn.textContent = t('tabComandera');
   const rolBtn = document.getElementById('tab-btn-rol');
   if (rolBtn) rolBtn.textContent = t('tabRol');
-  const chkBtn = document.getElementById('tab-btn-checklist');
-  if (chkBtn) chkBtn.textContent = t('tabChecklist');
+  // The Checklist button has internal structure (icon + label spans), so we
+  // can't just overwrite its textContent — that would drop the icon. Update
+  // the .checklist-feature-label span instead.
+  const chkBtnLabel = document.querySelector('#tab-btn-checklist .checklist-feature-label');
+  if (chkBtnLabel) chkBtnLabel.textContent = t('tabChecklist');
   const mn = document.getElementById('momentos-notice-text');
   if (mn) mn.textContent = t('momentNotice');
   // Fire i18n hooks — modules that need to re-render their labels in the
@@ -1951,7 +1996,12 @@ function setLang(lang, el) {
 function setTab(tab, el) {
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
-  if (el) el.classList.add('active');
+  // The Checklist & Protocolos button lives outside .main-tabs (see HTML
+  // comment near tab-btn-checklist), so its active state must be managed
+  // explicitly here instead of by the selector above.
+  const chkBtn = document.getElementById('tab-btn-checklist');
+  if (chkBtn) chkBtn.classList.toggle('active', tab === 'checklist');
+  if (el && el !== chkBtn) el.classList.add('active');
   ['menus','vinos','cocktails','cafe','comandera','rol','checklist'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'cocktails'){
     renderCocktails();
