@@ -817,6 +817,108 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-btn { border-radius:8px; padding:10px 20px; font-family:'Courier Prime','Courier New',monospace; font-size:12px; letter-spacing:0.06em; cursor:pointer; border:none; transition:all .15s; }
 .cf-btn-primary { background:rgba(192,125,42,0.85); color:#fff; } .cf-btn-primary:hover { background:rgba(192,125,42,1); }
 .cf-btn-ghost { background:none; border:0.5px solid var(--border); color:var(--text-secondary); } .cf-btn-ghost:hover { border-color:rgba(192,125,42,0.4); color:#c07d2a; }
+
+/* ── Checklist module ────────────────────────────────────────────────── */
+.chk-root { padding:8px 0 24px; }
+.chk-section-tabs { display:flex; gap:4px; margin-bottom:1rem; border-bottom:0.5px solid var(--border); padding-bottom:8px; flex-wrap:wrap; }
+.chk-section-tab { background:none; border:none; padding:8px 14px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-secondary); cursor:pointer; border-bottom:2px solid transparent; transition:all .15s; }
+.chk-section-tab:hover:not(.disabled) { color:#c07d2a; }
+.chk-section-tab.active { color:#c07d2a; border-bottom-color:#c07d2a; }
+.chk-section-tab.disabled { opacity:0.4; cursor:default; }
+.chk-section-tab .chk-section-tag { font-size:8.5px; letter-spacing:0.12em; opacity:0.65; margin-left:4px; font-weight:400; text-transform:uppercase; }
+
+.chk-phase-chips { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1rem; }
+.chk-phase-chip { background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:999px; padding:6px 14px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; color:var(--text-secondary); cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:8px; }
+.chk-phase-chip:hover { border-color:rgba(192,125,42,0.4); color:#c07d2a; }
+.chk-phase-chip.selected { background:rgba(192,125,42,0.12); border-color:rgba(192,125,42,0.6); color:#c07d2a; }
+.chk-phase-chip .chk-active-dot { width:6px; height:6px; border-radius:50%; background:#c07d2a; animation:staffShiftPulse 1800ms ease-in-out infinite; }
+.chk-phase-chip .chk-active-label { font-size:9px; opacity:0.7; letter-spacing:0.1em; }
+
+.chk-meta-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.75rem; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; flex-wrap:wrap; }
+.chk-meta { color:var(--text-tertiary); }
+.chk-progress { color:#c07d2a; }
+
+.chk-carryover { background:rgba(192,125,42,0.06); border:0.5px solid rgba(192,125,42,0.3); border-radius:10px; padding:12px 14px; margin-bottom:1.25rem; }
+.chk-carryover-title { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.12em; color:#c07d2a; text-transform:uppercase; margin-bottom:8px; }
+.chk-carryover-empty { font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-tertiary); }
+
+.chk-task-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }
+.chk-task { display:flex; gap:10px; padding:10px 12px; border:0.5px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.015); transition:background .15s, border-color .15s; align-items:flex-start; }
+.chk-task:hover { border-color:rgba(192,125,42,0.3); }
+.chk-task.done { background:rgba(192,125,42,0.05); border-color:rgba(192,125,42,0.2); }
+.chk-task.done .chk-task-label { text-decoration:line-through; color:var(--text-tertiary); }
+.chk-task.carryover { border-color:rgba(192,125,42,0.4); }
+.chk-task.pending-prominent { background:rgba(217,83,79,0.04); }
+.chk-checkbox { flex-shrink:0; width:22px; height:22px; border-radius:5px; border:1.5px solid rgba(192,125,42,0.5); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; color:transparent; transition:all .15s; margin-top:2px; }
+.chk-checkbox:hover { background:rgba(192,125,42,0.1); }
+.chk-task.done .chk-checkbox { background:#c07d2a; border-color:#c07d2a; color:#fff; }
+.chk-task-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.chk-task-label { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.35; color:var(--text-primary); }
+.chk-task-meta { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:var(--text-tertiary); }
+.chk-task-meta .chk-carry-tag { color:#c07d2a; }
+.chk-task-comment { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:13px; color:var(--text-secondary); margin-top:4px; padding:4px 8px; background:rgba(255,255,255,0.02); border-left:2px solid rgba(192,125,42,0.4); border-radius:0 4px 4px 0; }
+.chk-comment-btn { flex-shrink:0; background:none; border:none; cursor:pointer; padding:4px 6px; color:var(--text-tertiary); font-size:14px; border-radius:4px; transition:all .15s; margin-top:1px; }
+.chk-comment-btn:hover { color:#c07d2a; background:rgba(192,125,42,0.08); }
+.chk-comment-btn.has-comment { color:#c07d2a; }
+.chk-task.pending-prominent .chk-comment-btn { color:#c07d2a; }
+.chk-task.pending-prominent .chk-comment-btn::after { content:''; display:block; width:6px; height:6px; border-radius:50%; background:#c07d2a; position:absolute; }
+
+.chk-comment-editor { margin-top:8px; display:flex; flex-direction:column; gap:6px; padding:8px; background:rgba(255,255,255,0.02); border:0.5px solid rgba(192,125,42,0.25); border-radius:6px; }
+.chk-comment-editor textarea { resize:vertical; min-height:54px; width:100%; padding:6px 8px; border-radius:4px; border:0.5px solid var(--border); background:rgba(0,0,0,0.15); color:var(--text-primary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:14px; box-sizing:border-box; }
+.chk-comment-editor textarea:focus { outline:none; border-color:rgba(192,125,42,0.5); }
+.chk-comment-editor-actions { display:flex; gap:6px; justify-content:space-between; align-items:center; flex-wrap:wrap; }
+.chk-comment-editor-hint { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; color:var(--text-tertiary); letter-spacing:0.05em; flex:1; min-width:120px; }
+.chk-comment-editor button { padding:6px 12px; border-radius:4px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; cursor:pointer; border:none; }
+.chk-comment-save { background:rgba(192,125,42,0.85); color:#fff; }
+.chk-comment-save:hover { background:#c07d2a; }
+.chk-comment-cancel { background:none; border:0.5px solid var(--border); color:var(--text-secondary); }
+
+.chk-empty { padding:1.5rem; text-align:center; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; color:var(--text-tertiary); border:0.5px dashed var(--border); border-radius:10px; }
+.chk-coming-soon { padding:3rem 1.5rem; text-align:center; }
+.chk-coming-soon-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:26px; color:#c07d2a; margin-bottom:6px; }
+.chk-coming-soon-body { font-family:'Courier Prime','Courier New',monospace; font-size:12px; color:var(--text-tertiary); letter-spacing:0.05em; }
+
+.chk-footer { margin-top:1.5rem; display:flex; gap:8px; justify-content:flex-end; align-items:center; flex-wrap:wrap; }
+.chk-edit-btn { background:none; border:0.5px solid var(--border); color:var(--text-secondary); padding:8px 14px; border-radius:6px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; cursor:pointer; transition:all .15s; }
+.chk-edit-btn:hover { border-color:rgba(192,125,42,0.4); color:#c07d2a; }
+.chk-edit-btn.exit { background:rgba(192,125,42,0.12); border-color:rgba(192,125,42,0.5); color:#c07d2a; }
+
+/* Edit mode rows */
+.chk-edit-banner { background:rgba(192,125,42,0.08); border:0.5px solid rgba(192,125,42,0.4); border-radius:8px; padding:10px 14px; margin-bottom:1rem; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; color:#c07d2a; }
+.chk-edit-list { display:flex; flex-direction:column; gap:6px; margin-bottom:1rem; }
+.chk-edit-row { display:flex; gap:8px; align-items:center; padding:8px 10px; border:0.5px dashed rgba(192,125,42,0.3); border-radius:6px; background:rgba(192,125,42,0.03); }
+.chk-edit-row.inactive { opacity:0.5; }
+.chk-edit-order { display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
+.chk-edit-order button { background:none; border:0.5px solid var(--border); color:var(--text-tertiary); cursor:pointer; padding:1px 5px; font-size:10px; line-height:1; border-radius:3px; }
+.chk-edit-order button:hover { color:#c07d2a; border-color:rgba(192,125,42,0.4); }
+.chk-edit-input { flex:1; min-width:0; padding:6px 8px; border-radius:4px; border:0.5px solid var(--border); background:rgba(0,0,0,0.15); color:var(--text-primary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:14px; box-sizing:border-box; }
+.chk-edit-input:focus { outline:none; border-color:rgba(192,125,42,0.5); }
+.chk-edit-toggle { flex-shrink:0; background:none; border:0.5px solid var(--border); border-radius:4px; padding:4px 8px; font-size:10px; font-family:'Courier Prime','Courier New',monospace; cursor:pointer; color:var(--text-tertiary); letter-spacing:0.05em; }
+.chk-edit-toggle.on { color:#c07d2a; border-color:rgba(192,125,42,0.5); }
+.chk-edit-delete { flex-shrink:0; background:none; border:none; cursor:pointer; color:var(--text-tertiary); font-size:14px; padding:4px 6px; }
+.chk-edit-delete:hover { color:#d9534f; }
+.chk-edit-add { width:100%; padding:10px; border:0.5px dashed rgba(192,125,42,0.4); background:transparent; border-radius:6px; color:#c07d2a; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; }
+.chk-edit-add:hover { background:rgba(192,125,42,0.06); }
+.chk-edit-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:1.25rem; padding-top:1rem; border-top:0.5px solid var(--border); }
+.chk-edit-actions button { padding:10px 18px; border-radius:6px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; cursor:pointer; }
+.chk-edit-save { background:rgba(192,125,42,0.85); color:#fff; border:none; } .chk-edit-save:hover { background:#c07d2a; }
+.chk-edit-discard { background:none; border:0.5px solid var(--border); color:var(--text-secondary); } .chk-edit-discard:hover { border-color:#d9534f; color:#d9534f; }
+
+/* PIN gate */
+.chk-pin-overlay { position:fixed; inset:0; background:rgba(15,15,16,0.85); backdrop-filter:blur(4px); z-index:200; display:flex; align-items:center; justify-content:center; padding:1rem; }
+.chk-pin-modal { background:var(--bg); border:0.5px solid var(--border); border-radius:14px; padding:1.5rem 1.25rem; max-width:300px; width:100%; }
+.chk-pin-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:24px; color:#c07d2a; margin-bottom:6px; text-align:center; }
+.chk-pin-sub { font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-tertiary); letter-spacing:0.06em; margin-bottom:1rem; text-align:center; }
+.chk-pin-display { display:flex; justify-content:center; gap:10px; margin-bottom:1rem; }
+.chk-pin-dot { width:12px; height:12px; border-radius:50%; border:1px solid rgba(192,125,42,0.6); }
+.chk-pin-dot.filled { background:#c07d2a; border-color:#c07d2a; }
+.chk-pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.chk-pin-key { padding:14px; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:8px; font-family:'Courier Prime','Courier New',monospace; font-size:16px; color:var(--text-primary); cursor:pointer; transition:all .15s; }
+.chk-pin-key:hover { background:rgba(192,125,42,0.1); border-color:rgba(192,125,42,0.4); }
+.chk-pin-key.action { color:var(--text-tertiary); font-size:12px; }
+.chk-pin-error { font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:#d9534f; margin-top:0.75rem; min-height:14px; text-align:center; letter-spacing:0.05em; }
+.chk-pin-close { background:none; border:none; color:var(--text-tertiary); font-size:18px; cursor:pointer; float:right; padding:0; line-height:1; margin-top:-8px; margin-right:-4px; }
+.chk-pin-close:hover { color:#c07d2a; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -883,6 +985,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
     <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">E-Check</button>
     <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol">Rol</button>
+    <button class="tab" onclick="setTab('checklist',this)" id="tab-btn-checklist">Checklist</button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -964,6 +1067,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <!-- ROL TAB — gated weekly shift reader. Renders entirely from JS. -->
   <div id="tab-rol" class="hidden">
     <div class="rol-root" id="rol-root"></div>
+  </div>
+
+  <!-- CHECKLIST TAB — GEO pre-service checklists. Renders entirely from JS. -->
+  <div id="tab-checklist" class="hidden">
+    <div class="chk-root" id="chk-root"></div>
   </div>
 
 <footer style="margin-top:3rem;padding:1.25rem 0 0.5rem;border-top:0.5px solid var(--border);text-align:center;">
@@ -1165,6 +1273,74 @@ let ROL_LOAD_ERROR     = false;
 let ROL_LAST_UPDATE    = null;        // ISO timestamp from /meta/last_update
 let ROL_SWIPE          = null;        // active touch-drag state for week swipe
 
+// --- Checklist module state ---------------------------------------------
+// Module: chk — operational pre-service checklists for the GEO team.
+// Today: only "pasillo" section is active (3 phases: post_desayuno,
+// post_almuerzo, post_cena). Montaje / Repaso are placeholders. The active
+// phase is *suggested* by time-of-day but all three are always clickable —
+// UX principle: no walls, fluidity over restriction (see feedback memory).
+//
+// Firebase paths:
+//   checklist_templates/{section}/{phase}  ← editable by supervisor (PIN)
+//     { version, updated_at, tasks: [{id, label, order, active}] }
+//   checklist_runs/{YYYY-MM-DD}/{section}/{phase}
+//     meta: { opened_at, template_version, viajeros, geos_count,
+//             senior[], geos[] }
+//     tasks/{task_id}: { done, done_at, comment, carried_from }
+//   checklist_summaries/{YYYY-MM}          ← monthly rollup before raw purge
+//
+// Carry-over chain (cyclic across services):
+//   post_desayuno ← previous day's post_cena
+//   post_almuerzo ← today's post_desayuno
+//   post_cena     ← today's post_almuerzo
+//
+// Retention: 90 days raw, then compacted to summary on first open of new
+// month (client-side, opportunistic — same pattern as orders_history).
+const CHK_TEMPLATES_PATH    = 'checklist_templates';
+const CHK_RUNS_PATH         = 'checklist_runs';
+const CHK_SUMMARIES_PATH    = 'checklist_summaries';
+const CHK_RETENTION_DAYS    = 90;
+const CHK_SUPERVISOR_PIN    = '9876';
+// Phases cover the 24h with no gaps. post_cena rolls over midnight; the
+// chkActivePhase helper knows about the wrap. Edit the windows here if the
+// service rhythm changes — they are advisory (UX default), never a wall.
+const CHK_PHASES = [
+  { key:'post_desayuno', labelKey:'chkPhaseDesayuno', startMin:  6*60+30, endMin: 13*60      },
+  { key:'post_almuerzo', labelKey:'chkPhaseAlmuerzo', startMin: 13*60,    endMin: 20*60      },
+  { key:'post_cena',     labelKey:'chkPhaseCena',     startMin: 20*60,    endMin:  6*60+30   } // wraps midnight
+];
+// Carry-over chain. Source = { phase: previous-phase, daysBack: 0|1 }.
+const CHK_CARRYOVER = {
+  post_desayuno: { phase:'post_cena',     daysBack:1 },
+  post_almuerzo: { phase:'post_desayuno', daysBack:0 },
+  post_cena:     { phase:'post_almuerzo', daysBack:0 }
+};
+const CHK_SECTIONS = [
+  { key:'pasillo', labelKey:'chkSectionPasillo', active:true  },
+  { key:'montaje', labelKey:'chkSectionMontaje', active:false },
+  { key:'repaso',  labelKey:'chkSectionRepaso',  active:false }
+];
+let CHK_SECTION             = 'pasillo';
+let CHK_PHASE_VIEW          = null;     // user-selected phase ('post_*'); null = follow active
+let CHK_TEMPLATES           = {};       // { 'section/phase': { version, tasks[] } }
+let CHK_RUNS                = {};       // { phase: { meta, tasks{} } } for today (current section)
+let CHK_RUNS_PREV           = {};       // { phase: { tasks{} } } — sources of carry-over
+let CHK_DATE_KEY            = null;     // 'YYYY-MM-DD' for the loaded runs
+let CHK_EDIT_MODE           = false;
+let CHK_EDIT_DRAFT          = null;     // { tasks: [...] } working copy while editing
+let CHK_EDIT_PHASE          = null;     // phase being edited
+let CHK_EDIT_PIN_BUFFER     = '';
+let CHK_EDIT_GATE_OPEN      = false;    // numpad visible
+let CHK_EDIT_PIN_ERROR      = false;
+let CHK_COMMENT_OPEN_ID     = null;     // task id whose comment editor is open
+let CHK_COMMENT_DRAFT       = '';       // working text while editor is open
+let CHK_POLL_INTERVAL       = null;
+let CHK_LAST_INTERACTION    = 0;
+let CHK_SEEDED              = {};       // { section: bool } — true after we've checked/seeded
+let _CHK_WRITE_QUEUE        = {};       // { 'section/phase/taskId': patch } pending writes
+let _CHK_WRITE_INFLIGHT     = false;
+let _CHK_META_WRITE_QUEUE   = {};       // { 'section/phase': meta patch }
+
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
 // ════════════════════════════════════════════════════════════════════════════
@@ -1251,7 +1427,36 @@ const UI = {
     cmdCustomAdd:'Agregar', cmdCustomCancel:'Cancelar',
     cmdTimerStart:'Iniciar', cmdTimerReset:'Reiniciar', cmdTimerCancel:'Cancelar',
     cmdFullViewTitle:'Comanda completa',
-    cmdServiceUnit:'D' /* short for cycle day */
+    cmdServiceUnit:'D', /* short for cycle day */
+    // Checklist module
+    tabChecklist:'Checklist',
+    chkSectionPasillo:'Pasillo', chkSectionMontaje:'Montaje', chkSectionRepaso:'Repaso',
+    chkSectionComingTag:'próx.',
+    chkPhaseDesayuno:'Post-Desayuno', chkPhaseAlmuerzo:'Post-Almuerzo', chkPhaseCena:'Post-Cena',
+    chkActiveTag:'en curso',
+    chkProgress:'completadas',
+    chkMetaPrefix:'Servicio',
+    chkCarryoverTitle:'Pendientes del momento anterior',
+    chkCarryoverEmpty:'Nada pendiente del momento anterior · turno limpio.',
+    chkCarryFrom:'desde',
+    chkMarkedAt:'Marcada a las',
+    chkEmpty:'Aún no hay tareas en este momento. El supervisor puede agregarlas con Editar.',
+    chkComingSoonTitle:'Próximamente',
+    chkComingSoonBody:'El checklist de esta sección se diseñará en una próxima sesión.',
+    chkCommentBtn:'Comentario',
+    chkCommentPlaceholder:'Anotar contexto (p.ej. razón, observación)…',
+    chkCommentSave:'Guardar', chkCommentClose:'Cerrar', chkCommentClear:'Borrar',
+    chkCommentPendingHint:'Si quedó sin marcar, deja una nota para el siguiente turno.',
+    chkEditBtn:'✎ Editar tareas',
+    chkEditExitBtn:'✕ Salir de edición',
+    chkEditBanner:'Modo edición · los cambios se guardan al pulsar “Guardar cambios”.',
+    chkEditAddTask:'+ Añadir tarea',
+    chkEditTaskPlaceholder:'Describir la tarea…',
+    chkEditToggleActive:'activa', chkEditToggleInactive:'inactiva',
+    chkEditDeleteConfirm:'¿Eliminar esta tarea?',
+    chkEditSave:'Guardar cambios', chkEditCancel:'Descartar',
+    chkPinTitle:'Modo edición', chkPinSub:'Introduce el código del supervisor',
+    chkPinError:'Código incorrecto', chkPinClose:'Cerrar'
   },
   en: {
     appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'The detail, at hand.',
@@ -1332,7 +1537,36 @@ const UI = {
     cmdCustomAdd:'Add', cmdCustomCancel:'Cancel',
     cmdTimerStart:'Start', cmdTimerReset:'Reset', cmdTimerCancel:'Cancel',
     cmdFullViewTitle:'Full ticket',
-    cmdServiceUnit:'D'
+    cmdServiceUnit:'D',
+    // Checklist module
+    tabChecklist:'Checklist',
+    chkSectionPasillo:'Hallway', chkSectionMontaje:'Setup', chkSectionRepaso:'Final pass',
+    chkSectionComingTag:'soon',
+    chkPhaseDesayuno:'After Breakfast', chkPhaseAlmuerzo:'After Lunch', chkPhaseCena:'After Dinner',
+    chkActiveTag:'active',
+    chkProgress:'done',
+    chkMetaPrefix:'Service',
+    chkCarryoverTitle:'Pending from previous service',
+    chkCarryoverEmpty:'Nothing pending from the previous service · clean handoff.',
+    chkCarryFrom:'from',
+    chkMarkedAt:'Marked at',
+    chkEmpty:'No tasks set for this moment yet. The supervisor can add them via Edit.',
+    chkComingSoonTitle:'Coming soon',
+    chkComingSoonBody:'This section\'s checklist will be designed in a future session.',
+    chkCommentBtn:'Comment',
+    chkCommentPlaceholder:'Add context (reason, observation)…',
+    chkCommentSave:'Save', chkCommentClose:'Close', chkCommentClear:'Clear',
+    chkCommentPendingHint:'If left unmarked, leave a note for the next shift.',
+    chkEditBtn:'✎ Edit tasks',
+    chkEditExitBtn:'✕ Exit edit mode',
+    chkEditBanner:'Edit mode · changes apply when you press “Save changes”.',
+    chkEditAddTask:'+ Add task',
+    chkEditTaskPlaceholder:'Describe the task…',
+    chkEditToggleActive:'active', chkEditToggleInactive:'inactive',
+    chkEditDeleteConfirm:'Delete this task?',
+    chkEditSave:'Save changes', chkEditCancel:'Discard',
+    chkPinTitle:'Edit mode', chkPinSub:'Enter the supervisor code',
+    chkPinError:'Wrong code', chkPinClose:'Close'
   },
   pt: {
     appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'O detalhe, à mão.',
@@ -1413,7 +1647,36 @@ const UI = {
     cmdCustomAdd:'Adicionar', cmdCustomCancel:'Cancelar',
     cmdTimerStart:'Iniciar', cmdTimerReset:'Reiniciar', cmdTimerCancel:'Cancelar',
     cmdFullViewTitle:'Comanda completa',
-    cmdServiceUnit:'D'
+    cmdServiceUnit:'D',
+    // Checklist module
+    tabChecklist:'Checklist',
+    chkSectionPasillo:'Corredor', chkSectionMontaje:'Montagem', chkSectionRepaso:'Revisão',
+    chkSectionComingTag:'em breve',
+    chkPhaseDesayuno:'Pós-Café', chkPhaseAlmuerzo:'Pós-Almoço', chkPhaseCena:'Pós-Jantar',
+    chkActiveTag:'em curso',
+    chkProgress:'concluídas',
+    chkMetaPrefix:'Serviço',
+    chkCarryoverTitle:'Pendentes do serviço anterior',
+    chkCarryoverEmpty:'Nada pendente do serviço anterior · troca limpa.',
+    chkCarryFrom:'desde',
+    chkMarkedAt:'Marcada às',
+    chkEmpty:'Ainda não há tarefas neste momento. O supervisor pode adicioná-las em Editar.',
+    chkComingSoonTitle:'Em breve',
+    chkComingSoonBody:'O checklist desta seção será desenhado em uma próxima sessão.',
+    chkCommentBtn:'Comentário',
+    chkCommentPlaceholder:'Adicionar contexto (motivo, observação)…',
+    chkCommentSave:'Salvar', chkCommentClose:'Fechar', chkCommentClear:'Apagar',
+    chkCommentPendingHint:'Se ficou pendente, deixe uma nota para o próximo turno.',
+    chkEditBtn:'✎ Editar tarefas',
+    chkEditExitBtn:'✕ Sair da edição',
+    chkEditBanner:'Modo edição · as mudanças se aplicam ao apertar “Salvar alterações”.',
+    chkEditAddTask:'+ Adicionar tarefa',
+    chkEditTaskPlaceholder:'Descrever a tarefa…',
+    chkEditToggleActive:'ativa', chkEditToggleInactive:'inativa',
+    chkEditDeleteConfirm:'Excluir esta tarefa?',
+    chkEditSave:'Salvar alterações', chkEditCancel:'Descartar',
+    chkPinTitle:'Modo edição', chkPinSub:'Insira o código do supervisor',
+    chkPinError:'Código incorreto', chkPinClose:'Fechar'
   }
 };
 function t(k){ return UI[currentLang][k] || UI.es[k]; }
@@ -1646,6 +1909,8 @@ function setLang(lang, el) {
   if (cmdBtn) cmdBtn.textContent = t('tabComandera');
   const rolBtn = document.getElementById('tab-btn-rol');
   if (rolBtn) rolBtn.textContent = t('tabRol');
+  const chkBtn = document.getElementById('tab-btn-checklist');
+  if (chkBtn) chkBtn.textContent = t('tabChecklist');
   const mn = document.getElementById('momentos-notice-text');
   if (mn) mn.textContent = t('momentNotice');
   // Fire i18n hooks — modules that need to re-render their labels in the
@@ -1663,7 +1928,7 @@ function setTab(tab, el) {
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  ['menus','vinos','cocktails','cafe','comandera','rol'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  ['menus','vinos','cocktails','cafe','comandera','rol','checklist'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'cocktails'){
     renderCocktails();
     if (cocktailsShowingMomentos) renderMomentos();
@@ -1671,6 +1936,7 @@ function setTab(tab, el) {
   if (tab === 'cafe') renderCafeTab();
   if (tab === 'comandera') comandaEnter();
   if (tab === 'rol') rolEnter();
+  if (tab === 'checklist') chkEnter();
 }
 
 function setDay(day, el) {
@@ -6005,6 +6271,768 @@ onI18nChange(() => { if (currentTab === 'rol') rolRender(); });
     if (currentTab === 'comandera') COMANDA_LAST_INTERACTION = Date.now();
   }, { passive: true, capture: true });
 });
+
+// ──────────────────────────────────────────────────────────────────────────
+// Module: checklist — pre-service operational checklists for the GEO team.
+// See STATE TOP for paths, retention, carry-over and phase ranges. The
+// module follows the patterns from comanda: optimistic UI + coalescing
+// write queue, polling skip-on-interaction, escapeHtml-safe rendering.
+//
+// First-open seed: if checklist_templates/{section}/{phase} is missing on
+// first fetch this session, write CHK_SEED[section][phase] as version=1.
+// The supervisor edits from there (PIN 9876).
+// ──────────────────────────────────────────────────────────────────────────
+
+// --- URL & date helpers --------------------------------------------------
+function chkUrl(suffix){ return CF_FIREBASE_CONFIG.databaseURL + '/' + suffix + '.json'; }
+function chkPad(n){ return String(n).padStart(2,'0'); }
+function chkDateKey(d){ return d.getFullYear()+'-'+chkPad(d.getMonth()+1)+'-'+chkPad(d.getDate()); }
+function chkTimeStr(ts){
+  if (!ts) return '';
+  const d = new Date(ts);
+  return chkPad(d.getHours())+':'+chkPad(d.getMinutes());
+}
+function chkPhaseDef(key){ return CHK_PHASES.find(p => p.key === key); }
+function chkSectionDef(key){ return CHK_SECTIONS.find(s => s.key === key); }
+function chkTplKey(section, phase){ return section + '/' + phase; }
+function chkPrevDate(daysBack){
+  const d = new Date();
+  d.setDate(d.getDate() - daysBack);
+  return chkDateKey(d);
+}
+function chkSlug(s, n){
+  // Stable id derived from the seed text. Same text → same id, so a seeded
+  // template can be re-seeded without orphaning task runs from earlier days.
+  let h = 0;
+  for (let i = 0; i < s.length; i++){ h = ((h<<5)-h) + s.charCodeAt(i); h |= 0; }
+  return 't' + (h >>> 0).toString(36) + (n || '');
+}
+function chkEscapeHtml(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+// Firebase REST returns `{ "error": "Permission denied" }` (with non-2xx) for
+// paths the rules forbid. Treat those payloads as null so they don't end up
+// stored as if they were valid templates/runs.
+function chkSafeJson(data){
+  if (data && typeof data === 'object' && typeof data.error === 'string') return null;
+  return data;
+}
+
+// Active-phase detector. Returns 'post_desayuno' | 'post_almuerzo' | 'post_cena'.
+// Ranges cover 24h with no gaps; post_cena wraps midnight.
+function chkActivePhase(now){
+  now = now || new Date();
+  const mins = now.getHours()*60 + now.getMinutes();
+  if (mins >= 6*60+30 && mins < 13*60) return 'post_desayuno';
+  if (mins >= 13*60   && mins < 20*60) return 'post_almuerzo';
+  return 'post_cena';
+}
+function chkVisiblePhase(){ return CHK_PHASE_VIEW || chkActivePhase(); }
+
+// --- Fetch templates -----------------------------------------------------
+async function chkFetchTemplate(section, phase){
+  const url = chkUrl(CHK_TEMPLATES_PATH + '/' + section + '/' + phase);
+  try {
+    const r = await fetch(url);
+    let data = await r.json();
+    if (!r.ok) data = null;
+    data = chkSafeJson(data);
+    CHK_TEMPLATES[chkTplKey(section, phase)] = data || null;
+    return data;
+  } catch (e) {
+    console.warn('[chk] fetch template failed', section, phase, e);
+    return null;
+  }
+}
+async function chkSeedIfMissing(section, phase){
+  const key = chkTplKey(section, phase);
+  const existing = CHK_TEMPLATES[key];
+  if (existing && Array.isArray(existing.tasks) && existing.tasks.length) return existing;
+  const seedTexts = (CHK_SEED[section] || {})[phase] || [];
+  if (!seedTexts.length) return null;
+  const template = {
+    version: 1,
+    updated_at: Date.now(),
+    updated_by: 'seed',
+    tasks: seedTexts.map((label, i) => ({
+      id: chkSlug(label, i),
+      label: label,
+      order: i,
+      active: true
+    }))
+  };
+  const url = chkUrl(CHK_TEMPLATES_PATH + '/' + section + '/' + phase);
+  try {
+    const r = await fetch(url, { method:'PUT', body: JSON.stringify(template) });
+    if (!r.ok){
+      console.warn('[chk] seed rejected by Firebase (rules?)', section, phase, r.status);
+      // Still load the seed into memory so the UI is usable for the current
+      // session, but don't mark SEEDED — next entry will retry.
+      CHK_TEMPLATES[key] = template;
+      return template;
+    }
+    CHK_TEMPLATES[key] = template;
+  } catch (e) {
+    console.warn('[chk] seed failed', section, phase, e);
+    CHK_TEMPLATES[key] = template;
+  }
+  return template;
+}
+
+// --- Fetch runs ----------------------------------------------------------
+async function chkFetchRun(dateKey, section, phase){
+  const url = chkUrl(CHK_RUNS_PATH + '/' + dateKey + '/' + section + '/' + phase);
+  try {
+    const r = await fetch(url);
+    let data = await r.json();
+    if (!r.ok) data = null;
+    data = chkSafeJson(data);
+    return data || { meta: null, tasks: {} };
+  } catch (e) {
+    return { meta: null, tasks: {} };
+  }
+}
+async function chkLoadAll(){
+  CHK_DATE_KEY = chkDateKey(new Date());
+  const section = CHK_SECTION;
+  // Templates: fetch all phases first; then seed any missing.
+  await Promise.all(CHK_PHASES.map(p => chkFetchTemplate(section, p.key)));
+  if (chkSectionDef(section).active && !CHK_SEEDED[section]){
+    await Promise.all(CHK_PHASES.map(p => chkSeedIfMissing(section, p.key)));
+    CHK_SEEDED[section] = true;
+  }
+  // Today's runs
+  const todayRuns = {};
+  await Promise.all(CHK_PHASES.map(async p => { todayRuns[p.key] = await chkFetchRun(CHK_DATE_KEY, section, p.key); }));
+  CHK_RUNS = todayRuns;
+  // Carry-over sources
+  const prevRuns = {};
+  await Promise.all(CHK_PHASES.map(async p => {
+    const src = CHK_CARRYOVER[p.key];
+    if (!src){ prevRuns[p.key] = null; return; }
+    const dateKey = src.daysBack > 0 ? chkPrevDate(src.daysBack) : CHK_DATE_KEY;
+    prevRuns[p.key] = await chkFetchRun(dateKey, section, src.phase);
+  }));
+  CHK_RUNS_PREV = prevRuns;
+}
+
+// --- Build current run meta on first interaction -------------------------
+// Best-effort: tries to capture viajeros + senior + geos from the staffing
+// module's already-loaded data. Defensive — if shapes differ, just leaves
+// fields null. The run still works; analytics simply has less context.
+function chkCurrentMeta(){
+  const now = new Date();
+  let shift = null;
+  try { shift = (typeof staffingActiveShift === 'function') ? staffingActiveShift(now) : null; } catch(e){}
+  const dayKeyShort = chkPad(now.getDate());
+  let viajeros = null, senior = [], geos = [], geosCount = null;
+  if (STAFFING_DATA){
+    const day = STAFFING_DATA[dayKeyShort] || STAFFING_DATA[String(now.getDate())] || null;
+    if (day){
+      viajeros = day.viajeros != null ? day.viajeros : null;
+      if (shift){
+        senior = Array.isArray(day['geo_senior_'+shift]) ? day['geo_senior_'+shift] : [];
+        geos   = Array.isArray(day['geos_'+shift])      ? day['geos_'+shift]      : [];
+        geosCount = senior.length + geos.length;
+      }
+    }
+  }
+  return {
+    opened_at: Date.now(),
+    template_version: null,
+    shift: shift,
+    viajeros: viajeros,
+    geos_count: geosCount,
+    senior: senior,
+    geos: geos
+  };
+}
+
+// --- Persistence: coalescing write queue ---------------------------------
+function chkQueueTaskWrite(section, phase, taskId, patch){
+  const key = section + '|' + phase + '|' + taskId;
+  _CHK_WRITE_QUEUE[key] = Object.assign(_CHK_WRITE_QUEUE[key] || {}, patch);
+  if (_CHK_WRITE_INFLIGHT) return;
+  _chkDrain();
+}
+function chkQueueMetaWrite(section, phase, meta){
+  const key = section + '|' + phase;
+  _CHK_META_WRITE_QUEUE[key] = Object.assign(_CHK_META_WRITE_QUEUE[key] || {}, meta);
+  if (_CHK_WRITE_INFLIGHT) return;
+  _chkDrain();
+}
+async function _chkDrain(){
+  _CHK_WRITE_INFLIGHT = true;
+  try {
+    while (Object.keys(_CHK_WRITE_QUEUE).length || Object.keys(_CHK_META_WRITE_QUEUE).length){
+      const taskQ = _CHK_WRITE_QUEUE; _CHK_WRITE_QUEUE = {};
+      const metaQ = _CHK_META_WRITE_QUEUE; _CHK_META_WRITE_QUEUE = {};
+      const promises = [];
+      for (const k in taskQ){
+        const [section, phase, taskId] = k.split('|');
+        const url = chkUrl(CHK_RUNS_PATH + '/' + CHK_DATE_KEY + '/' + section + '/' + phase + '/tasks/' + taskId);
+        promises.push(fetch(url, { method:'PATCH', body: JSON.stringify(taskQ[k]) }).catch(e => console.warn('[chk] task write', e)));
+      }
+      for (const k in metaQ){
+        const [section, phase] = k.split('|');
+        const url = chkUrl(CHK_RUNS_PATH + '/' + CHK_DATE_KEY + '/' + section + '/' + phase + '/meta');
+        promises.push(fetch(url, { method:'PATCH', body: JSON.stringify(metaQ[k]) }).catch(e => console.warn('[chk] meta write', e)));
+      }
+      await Promise.all(promises);
+    }
+  } finally {
+    _CHK_WRITE_INFLIGHT = false;
+  }
+}
+
+// --- Toggle / comment (optimistic) ---------------------------------------
+function chkEnsureRun(section, phase){
+  const run = CHK_RUNS[phase] || (CHK_RUNS[phase] = { meta:null, tasks:{} });
+  if (!run.meta){
+    const tpl = CHK_TEMPLATES[chkTplKey(section, phase)];
+    run.meta = chkCurrentMeta();
+    if (tpl) run.meta.template_version = tpl.version || 1;
+    chkQueueMetaWrite(section, phase, run.meta);
+  }
+  if (!run.tasks) run.tasks = {};
+  return run;
+}
+function chkToggle(taskId){
+  const section = CHK_SECTION;
+  const phase = chkVisiblePhase();
+  const run = chkEnsureRun(section, phase);
+  const cur = run.tasks[taskId] || { done:false, done_at:null, comment:'' };
+  const newDone = !cur.done;
+  const patch = { done: newDone, done_at: newDone ? Date.now() : null };
+  run.tasks[taskId] = Object.assign({}, cur, patch);
+  chkQueueTaskWrite(section, phase, taskId, patch);
+  chkRender();
+}
+function chkOpenComment(taskId){
+  const phase = chkVisiblePhase();
+  const cur = (CHK_RUNS[phase] && CHK_RUNS[phase].tasks && CHK_RUNS[phase].tasks[taskId]) || {};
+  CHK_COMMENT_OPEN_ID = taskId;
+  CHK_COMMENT_DRAFT = cur.comment || '';
+  chkRender();
+  setTimeout(() => {
+    const ta = document.getElementById('chk-comment-ta-' + taskId);
+    if (ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }, 30);
+}
+function chkCloseComment(){
+  CHK_COMMENT_OPEN_ID = null;
+  CHK_COMMENT_DRAFT = '';
+  chkRender();
+}
+function chkSaveComment(taskId){
+  const ta = document.getElementById('chk-comment-ta-' + taskId);
+  const val = ta ? ta.value : CHK_COMMENT_DRAFT;
+  const section = CHK_SECTION;
+  const phase = chkVisiblePhase();
+  const run = chkEnsureRun(section, phase);
+  run.tasks[taskId] = Object.assign({}, run.tasks[taskId] || { done:false, done_at:null }, { comment: val });
+  chkQueueTaskWrite(section, phase, taskId, { comment: val });
+  chkCloseComment();
+}
+function chkClearComment(taskId){
+  const section = CHK_SECTION;
+  const phase = chkVisiblePhase();
+  const run = chkEnsureRun(section, phase);
+  run.tasks[taskId] = Object.assign({}, run.tasks[taskId] || { done:false, done_at:null }, { comment: '' });
+  chkQueueTaskWrite(section, phase, taskId, { comment: '' });
+  chkCloseComment();
+}
+
+// --- Phase override / section switch -------------------------------------
+function chkSelectPhase(phase){
+  if (CHK_EDIT_MODE) return;
+  CHK_PHASE_VIEW = phase;
+  CHK_COMMENT_OPEN_ID = null;
+  chkRender();
+}
+function chkSelectSection(section){
+  const def = chkSectionDef(section);
+  if (!def) return;
+  CHK_SECTION = section;
+  CHK_PHASE_VIEW = null;
+  CHK_EDIT_MODE = false;
+  CHK_COMMENT_OPEN_ID = null;
+  if (def.active){
+    chkLoadAll().then(chkRender);
+  } else {
+    chkRender();
+  }
+}
+
+// --- Edit mode (supervisor) ----------------------------------------------
+function chkOpenEditGate(){
+  CHK_EDIT_PIN_BUFFER = '';
+  CHK_EDIT_PIN_ERROR = false;
+  CHK_EDIT_GATE_OPEN = true;
+  chkRender();
+}
+function chkCloseEditGate(){
+  CHK_EDIT_GATE_OPEN = false;
+  CHK_EDIT_PIN_BUFFER = '';
+  CHK_EDIT_PIN_ERROR = false;
+  chkRender();
+}
+function chkPinPress(key){
+  if (key === 'clear'){ CHK_EDIT_PIN_BUFFER = ''; CHK_EDIT_PIN_ERROR = false; }
+  else if (key === 'back'){ CHK_EDIT_PIN_BUFFER = CHK_EDIT_PIN_BUFFER.slice(0, -1); CHK_EDIT_PIN_ERROR = false; }
+  else if (CHK_EDIT_PIN_BUFFER.length < 6){
+    CHK_EDIT_PIN_BUFFER += key;
+    if (CHK_EDIT_PIN_BUFFER.length === CHK_SUPERVISOR_PIN.length){
+      if (CHK_EDIT_PIN_BUFFER === CHK_SUPERVISOR_PIN){ chkEnterEditMode(); return; }
+      CHK_EDIT_PIN_ERROR = true;
+      setTimeout(() => { CHK_EDIT_PIN_BUFFER = ''; CHK_EDIT_PIN_ERROR = false; chkRender(); }, 800);
+    }
+  }
+  chkRender();
+}
+function chkEnterEditMode(){
+  const phase = chkVisiblePhase();
+  chkLoadEditDraft(phase);
+  CHK_EDIT_MODE = true;
+  CHK_EDIT_GATE_OPEN = false;
+  CHK_EDIT_PIN_BUFFER = '';
+  CHK_COMMENT_OPEN_ID = null;
+  chkRender();
+}
+function chkLoadEditDraft(phase){
+  const tpl = CHK_TEMPLATES[chkTplKey(CHK_SECTION, phase)] || { tasks: [] };
+  CHK_EDIT_PHASE = phase;
+  CHK_EDIT_DRAFT = {
+    version: tpl.version || 1,
+    tasks: (tpl.tasks || []).map(x => Object.assign({}, x))
+  };
+}
+function chkExitEditMode(){
+  CHK_EDIT_MODE = false;
+  CHK_EDIT_DRAFT = null;
+  CHK_EDIT_PHASE = null;
+  chkRender();
+}
+function chkSwitchEditPhase(phase){
+  if (!CHK_EDIT_MODE) return;
+  chkEditFlushInputs();
+  chkLoadEditDraft(phase);
+  chkRender();
+}
+function chkEditFlushInputs(){
+  if (!CHK_EDIT_DRAFT) return;
+  CHK_EDIT_DRAFT.tasks.forEach(t => {
+    const inp = document.getElementById('chk-edit-input-' + t.id);
+    if (inp) t.label = inp.value;
+  });
+}
+function chkEditUpdateLabel(id, label){
+  if (!CHK_EDIT_DRAFT) return;
+  const task = CHK_EDIT_DRAFT.tasks.find(x => x.id === id);
+  if (task) task.label = label;
+}
+function chkEditToggleActive(id){
+  if (!CHK_EDIT_DRAFT) return;
+  chkEditFlushInputs();
+  const task = CHK_EDIT_DRAFT.tasks.find(x => x.id === id);
+  if (task){ task.active = task.active === false ? true : false; chkRender(); }
+}
+function chkEditDeleteTask(id){
+  if (!CHK_EDIT_DRAFT) return;
+  if (!confirm(t('chkEditDeleteConfirm'))) return;
+  chkEditFlushInputs();
+  CHK_EDIT_DRAFT.tasks = CHK_EDIT_DRAFT.tasks.filter(x => x.id !== id);
+  chkRender();
+}
+function chkEditMove(id, dir){
+  if (!CHK_EDIT_DRAFT) return;
+  chkEditFlushInputs();
+  const arr = CHK_EDIT_DRAFT.tasks;
+  const i = arr.findIndex(x => x.id === id);
+  if (i < 0) return;
+  const j = i + dir;
+  if (j < 0 || j >= arr.length) return;
+  const [moved] = arr.splice(i, 1);
+  arr.splice(j, 0, moved);
+  chkRender();
+}
+function chkEditAddTask(){
+  if (!CHK_EDIT_DRAFT) return;
+  chkEditFlushInputs();
+  const id = 't' + Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-3);
+  CHK_EDIT_DRAFT.tasks.push({ id, label: '', order: CHK_EDIT_DRAFT.tasks.length, active: true });
+  chkRender();
+  setTimeout(() => {
+    const inp = document.getElementById('chk-edit-input-' + id);
+    if (inp) inp.focus();
+  }, 30);
+}
+async function chkEditSave(){
+  if (!CHK_EDIT_DRAFT) return;
+  chkEditFlushInputs();
+  CHK_EDIT_DRAFT.tasks = CHK_EDIT_DRAFT.tasks.filter(task => (task.label || '').trim().length);
+  CHK_EDIT_DRAFT.tasks.forEach((task, i) => { task.order = i; });
+  const template = {
+    version: (CHK_EDIT_DRAFT.version || 1) + 1,
+    updated_at: Date.now(),
+    updated_by: 'supervisor',
+    tasks: CHK_EDIT_DRAFT.tasks
+  };
+  const url = chkUrl(CHK_TEMPLATES_PATH + '/' + CHK_SECTION + '/' + CHK_EDIT_PHASE);
+  let ok = false;
+  try {
+    const r = await fetch(url, { method:'PUT', body: JSON.stringify(template) });
+    ok = r.ok;
+    if (!ok) console.warn('[chk] template save rejected', r.status);
+  } catch (e) {
+    console.warn('[chk] template save failed', e);
+  }
+  if (ok) CHK_TEMPLATES[chkTplKey(CHK_SECTION, CHK_EDIT_PHASE)] = template;
+  chkExitEditMode();
+}
+function chkEditCancel(){ chkExitEditMode(); }
+
+// --- Auto-purge (opportunistic) ------------------------------------------
+// Same pattern as orders_history: any client that opens the tab is willing
+// to spend a shallow listing + a few DELETEs to keep the bucket bounded.
+// Compaction-to-summary is left as a stub for now; the raw shape preserves
+// every field analytics will need later.
+async function chkPurgeOld(){
+  try {
+    const r = await fetch(chkUrl(CHK_RUNS_PATH) + '?shallow=true');
+    const data = await r.json();
+    if (!data || typeof data !== 'object') return;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - CHK_RETENTION_DAYS);
+    const cutoffKey = chkDateKey(cutoff);
+    const toDelete = Object.keys(data).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && k < cutoffKey);
+    if (!toDelete.length) return;
+    await Promise.all(toDelete.map(k =>
+      fetch(chkUrl(CHK_RUNS_PATH + '/' + k), { method:'DELETE' }).catch(()=>{})
+    ));
+  } catch (e) {
+    console.warn('[chk] purge failed', e);
+  }
+}
+
+// --- Render --------------------------------------------------------------
+function chkRender(){
+  const root = document.getElementById('chk-root');
+  if (!root) return;
+  if (currentTab !== 'checklist') return;
+
+  const section = CHK_SECTION;
+  const sectionDef = chkSectionDef(section);
+  let html = '';
+
+  // Section sub-tabs
+  html += `<div class="chk-section-tabs">`;
+  CHK_SECTIONS.forEach(s => {
+    const cls = (s.key === section ? 'active' : '') + (s.active ? '' : ' disabled');
+    const tag = s.active ? '' : `<span class="chk-section-tag">${chkEscapeHtml(t('chkSectionComingTag'))}</span>`;
+    const click = s.active ? `onclick="chkSelectSection('${s.key}')"` : '';
+    html += `<button class="chk-section-tab ${cls}" ${click}>${chkEscapeHtml(t(s.labelKey))}${tag}</button>`;
+  });
+  html += `</div>`;
+
+  if (!sectionDef.active){
+    html += `<div class="chk-coming-soon">
+      <div class="chk-coming-soon-title">${chkEscapeHtml(t('chkComingSoonTitle'))}</div>
+      <div class="chk-coming-soon-body">${chkEscapeHtml(t('chkComingSoonBody'))}</div>
+    </div>`;
+    root.innerHTML = html;
+    return;
+  }
+
+  if (CHK_EDIT_MODE){
+    html += chkRenderEditMode();
+    root.innerHTML = html;
+    return;
+  }
+
+  // Phase chips
+  const activeByClock = chkActivePhase();
+  const visible = chkVisiblePhase();
+  html += `<div class="chk-phase-chips">`;
+  CHK_PHASES.forEach(p => {
+    const isVisible = (p.key === visible);
+    const isActive  = (p.key === activeByClock);
+    const dot = isActive ? `<span class="chk-active-dot"></span>` : '';
+    const tag = isActive ? `<span class="chk-active-label">· ${chkEscapeHtml(t('chkActiveTag'))}</span>` : '';
+    html += `<button class="chk-phase-chip ${isVisible ? 'selected' : ''}" onclick="chkSelectPhase('${p.key}')">${dot}${chkEscapeHtml(t(p.labelKey))}${tag}</button>`;
+  });
+  html += `</div>`;
+
+  // Meta + progress
+  const tpl = CHK_TEMPLATES[chkTplKey(section, visible)] || { tasks: [] };
+  const activeTasks = (tpl.tasks || []).filter(x => x.active !== false);
+  const run = CHK_RUNS[visible] || { tasks: {} };
+  const doneCount = activeTasks.filter(x => run.tasks && run.tasks[x.id] && run.tasks[x.id].done).length;
+  const todayLabel = chkDateKey(new Date());
+  let metaInfo = `${chkEscapeHtml(t('chkMetaPrefix'))} · ${todayLabel}`;
+  let viaj = (run.meta && run.meta.viajeros != null) ? run.meta.viajeros : null;
+  if (viaj == null){
+    const live = chkCurrentMeta();
+    if (live.viajeros != null) viaj = live.viajeros;
+  }
+  if (viaj != null) metaInfo += ` · ${viaj} ${chkEscapeHtml(t('staffViajeros'))}`;
+  html += `<div class="chk-meta-row">
+    <span class="chk-meta">${metaInfo}</span>
+    <span class="chk-progress">${doneCount}/${activeTasks.length} ${chkEscapeHtml(t('chkProgress'))}</span>
+  </div>`;
+
+  html += chkRenderCarryover(visible);
+
+  if (!activeTasks.length){
+    html += `<div class="chk-empty">${chkEscapeHtml(t('chkEmpty'))}</div>`;
+  } else {
+    html += `<ul class="chk-task-list">`;
+    activeTasks.forEach(task => {
+      html += chkRenderTaskRow(task, run.tasks && run.tasks[task.id], visible, { carryover:false });
+    });
+    html += `</ul>`;
+  }
+
+  html += `<div class="chk-footer">
+    <button class="chk-edit-btn" onclick="chkOpenEditGate()">${chkEscapeHtml(t('chkEditBtn'))}</button>
+  </div>`;
+
+  if (CHK_EDIT_GATE_OPEN) html += chkRenderPinGate();
+
+  root.innerHTML = html;
+}
+
+function chkRenderCarryover(phase){
+  const prev = CHK_RUNS_PREV[phase];
+  const src = CHK_CARRYOVER[phase];
+  if (!src) return '';
+  const srcDef = chkPhaseDef(src.phase);
+  const tpl = CHK_TEMPLATES[chkTplKey(CHK_SECTION, src.phase)] || { tasks: [] };
+  const activeTasks = (tpl.tasks || []).filter(x => x.active !== false);
+  const carry = activeTasks.filter(task =>
+    !(prev && prev.tasks && prev.tasks[task.id] && prev.tasks[task.id].done)
+  );
+  // If prev run was never opened (no meta), don't pretend everything is pending — show empty.
+  const prevWasOpened = !!(prev && prev.meta);
+  let html = `<div class="chk-carryover">
+    <div class="chk-carryover-title">${chkEscapeHtml(t('chkCarryoverTitle'))} · ${chkEscapeHtml(t(srcDef.labelKey))}</div>`;
+  if (!prevWasOpened || !carry.length){
+    html += `<div class="chk-carryover-empty">${chkEscapeHtml(t('chkCarryoverEmpty'))}</div>`;
+  } else {
+    html += `<ul class="chk-task-list">`;
+    carry.forEach(task => {
+      const taskRun = prev.tasks && prev.tasks[task.id];
+      html += chkRenderTaskRow(task, taskRun, src.phase, { carryover:true, sourcePhaseLabel: t(srcDef.labelKey) });
+    });
+    html += `</ul>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function chkRenderTaskRow(task, taskRun, phase, opts){
+  opts = opts || {};
+  const run = taskRun || {};
+  const isDone = !!run.done;
+  const hasComment = !!(run.comment && run.comment.trim());
+  const isCommentOpen = (CHK_COMMENT_OPEN_ID === task.id) && !opts.carryover;
+  // "Pending prominent" = visible service, not done, no comment yet → nudge to leave a note.
+  const pendingProminent = !isDone && !opts.carryover && !hasComment;
+  const cls = 'chk-task'
+    + (isDone ? ' done' : '')
+    + (opts.carryover ? ' carryover' : '')
+    + (pendingProminent ? ' pending-prominent' : '');
+  const checkboxClick = opts.carryover ? '' : `onclick="chkToggle('${task.id}')"`;
+  const metaParts = [];
+  if (isDone && run.done_at) metaParts.push(`${chkEscapeHtml(t('chkMarkedAt'))} ${chkTimeStr(run.done_at)}`);
+  if (opts.carryover && opts.sourcePhaseLabel){
+    metaParts.push(`<span class="chk-carry-tag">${chkEscapeHtml(t('chkCarryFrom'))} ${chkEscapeHtml(opts.sourcePhaseLabel)}</span>`);
+  }
+  const meta = metaParts.length ? `<div class="chk-task-meta">${metaParts.join(' · ')}</div>` : '';
+  const commentLine = (hasComment && !isCommentOpen)
+    ? `<div class="chk-task-comment">${chkEscapeHtml(run.comment)}</div>` : '';
+  const editor = isCommentOpen ? chkRenderCommentEditor(task.id, run.comment || '', !isDone) : '';
+  const commentBtn = opts.carryover ? '' : `<button class="chk-comment-btn${hasComment ? ' has-comment' : ''}" onclick="chkOpenComment('${task.id}')" title="${chkEscapeHtml(t('chkCommentBtn'))}">💬</button>`;
+
+  return `<li class="${cls}">
+    <button class="chk-checkbox" ${checkboxClick} aria-label="toggle">${isDone ? '✓' : ''}</button>
+    <div class="chk-task-body">
+      <div class="chk-task-label">${chkEscapeHtml(task.label)}</div>
+      ${meta}
+      ${commentLine}
+      ${editor}
+    </div>
+    ${commentBtn}
+  </li>`;
+}
+
+function chkRenderCommentEditor(taskId, initial, showPendingHint){
+  const hint = showPendingHint
+    ? `<span class="chk-comment-editor-hint">${chkEscapeHtml(t('chkCommentPendingHint'))}</span>`
+    : `<span class="chk-comment-editor-hint"></span>`;
+  return `<div class="chk-comment-editor" onclick="event.stopPropagation()">
+    <textarea id="chk-comment-ta-${taskId}" placeholder="${chkEscapeHtml(t('chkCommentPlaceholder'))}">${chkEscapeHtml(initial)}</textarea>
+    <div class="chk-comment-editor-actions">
+      ${hint}
+      <button class="chk-comment-cancel" onclick="chkClearComment('${taskId}')">${chkEscapeHtml(t('chkCommentClear'))}</button>
+      <button class="chk-comment-cancel" onclick="chkCloseComment()">${chkEscapeHtml(t('chkCommentClose'))}</button>
+      <button class="chk-comment-save" onclick="chkSaveComment('${taskId}')">${chkEscapeHtml(t('chkCommentSave'))}</button>
+    </div>
+  </div>`;
+}
+
+function chkRenderEditMode(){
+  let html = `<div class="chk-edit-banner">${chkEscapeHtml(t('chkEditBanner'))}</div>`;
+  html += `<div class="chk-phase-chips">`;
+  CHK_PHASES.forEach(p => {
+    const isVisible = (p.key === CHK_EDIT_PHASE);
+    html += `<button class="chk-phase-chip ${isVisible ? 'selected' : ''}" onclick="chkSwitchEditPhase('${p.key}')">${chkEscapeHtml(t(p.labelKey))}</button>`;
+  });
+  html += `</div>`;
+  html += `<div class="chk-edit-list">`;
+  const tasks = (CHK_EDIT_DRAFT && CHK_EDIT_DRAFT.tasks) || [];
+  tasks.forEach((task, i) => {
+    const inactiveCls = task.active === false ? ' inactive' : '';
+    const total = tasks.length;
+    html += `<div class="chk-edit-row${inactiveCls}">
+      <div class="chk-edit-order">
+        <button onclick="chkEditMove('${task.id}', -1)" ${i===0 ? 'disabled' : ''}>▲</button>
+        <button onclick="chkEditMove('${task.id}', 1)" ${i===total-1 ? 'disabled' : ''}>▼</button>
+      </div>
+      <input id="chk-edit-input-${task.id}" class="chk-edit-input" type="text" value="${chkEscapeHtml(task.label || '')}" placeholder="${chkEscapeHtml(t('chkEditTaskPlaceholder'))}" oninput="chkEditUpdateLabel('${task.id}', this.value)" />
+      <button class="chk-edit-toggle ${task.active === false ? '' : 'on'}" onclick="chkEditToggleActive('${task.id}')">${task.active === false ? chkEscapeHtml(t('chkEditToggleInactive')) : chkEscapeHtml(t('chkEditToggleActive'))}</button>
+      <button class="chk-edit-delete" onclick="chkEditDeleteTask('${task.id}')" title="delete">✕</button>
+    </div>`;
+  });
+  html += `</div>`;
+  html += `<button class="chk-edit-add" onclick="chkEditAddTask()">${chkEscapeHtml(t('chkEditAddTask'))}</button>`;
+  html += `<div class="chk-edit-actions">
+    <button class="chk-edit-discard" onclick="chkEditCancel()">${chkEscapeHtml(t('chkEditCancel'))}</button>
+    <button class="chk-edit-save" onclick="chkEditSave()">${chkEscapeHtml(t('chkEditSave'))}</button>
+  </div>`;
+  return html;
+}
+
+function chkRenderPinGate(){
+  const len = CHK_SUPERVISOR_PIN.length;
+  let dots = '';
+  for (let i = 0; i < len; i++){
+    dots += `<span class="chk-pin-dot ${i < CHK_EDIT_PIN_BUFFER.length ? 'filled' : ''}"></span>`;
+  }
+  return `<div class="chk-pin-overlay" onclick="chkCloseEditGate()">
+    <div class="chk-pin-modal" onclick="event.stopPropagation()">
+      <button class="chk-pin-close" onclick="chkCloseEditGate()" aria-label="close">×</button>
+      <div class="chk-pin-title">${chkEscapeHtml(t('chkPinTitle'))}</div>
+      <div class="chk-pin-sub">${chkEscapeHtml(t('chkPinSub'))}</div>
+      <div class="chk-pin-display">${dots}</div>
+      <div class="chk-pin-pad">
+        ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="chk-pin-key" onclick="chkPinPress('${n}')">${n}</button>`).join('')}
+        <button class="chk-pin-key action" onclick="chkPinPress('clear')">C</button>
+        <button class="chk-pin-key" onclick="chkPinPress('0')">0</button>
+        <button class="chk-pin-key action" onclick="chkPinPress('back')">⌫</button>
+      </div>
+      <div class="chk-pin-error">${CHK_EDIT_PIN_ERROR ? chkEscapeHtml(t('chkPinError')) : ''}</div>
+    </div>
+  </div>`;
+}
+
+// --- Entry & polling -----------------------------------------------------
+async function chkEnter(){
+  CHK_COMMENT_OPEN_ID = null;
+  CHK_EDIT_GATE_OPEN = false;
+  CHK_EDIT_MODE = false;
+  const root = document.getElementById('chk-root');
+  if (root) root.innerHTML = `<div class="chk-empty" style="opacity:.6">…</div>`;
+  await chkLoadAll();
+  chkRender();
+  chkPurgeOld(); // fire-and-forget
+  if (CHK_POLL_INTERVAL) clearInterval(CHK_POLL_INTERVAL);
+  CHK_POLL_INTERVAL = setInterval(async () => {
+    if (currentTab !== 'checklist') return;
+    if (CHK_EDIT_MODE) return;
+    if (CHK_COMMENT_OPEN_ID) return;
+    if (Date.now() - CHK_LAST_INTERACTION < 2500) return;
+    const dateKey = chkDateKey(new Date());
+    if (dateKey !== CHK_DATE_KEY){ await chkLoadAll(); chkRender(); return; }
+    const section = CHK_SECTION;
+    const fresh = {};
+    await Promise.all(CHK_PHASES.map(async p => { fresh[p.key] = await chkFetchRun(dateKey, section, p.key); }));
+    CHK_RUNS = fresh;
+    chkRender();
+  }, 12000);
+}
+
+// --- Interaction tracking + i18n hook ------------------------------------
+['touchstart','touchend','click','keydown','input','pointerdown'].forEach(evt => {
+  document.addEventListener(evt, () => {
+    if (currentTab === 'checklist') CHK_LAST_INTERACTION = Date.now();
+  }, { passive: true, capture: true });
+});
+onI18nChange(() => { if (currentTab === 'checklist') chkRender(); });
+
+// --- Seed data ------------------------------------------------------------
+// Hard-coded initial Pasillo lists. Written to Firebase as version=1 the
+// first time the tab is opened with empty templates. After that the
+// supervisor edits via Edit mode (PIN 9876); each save increments version
+// and replaces the template. Runs already in progress keep their original
+// version reference so analytics stay coherent across edits.
+const CHK_SEED = {
+  pasillo: {
+    post_desayuno: [
+      'Llevar cristalería restante al bar.',
+      'Limpiar y desmanchar chilewitch para montaje (mezcla oasis pro + agua caliente y escobillar). Líquido amarillo para grasas o manchas difíciles, líquido rosado para superficies.',
+      'Bajar mantelería del desayuno a más tardar a las 10:00 hrs.',
+      'Limpiar percoladora.',
+      'Limpiar y reponer cafetera para servicio de almuerzo.',
+      'Limpiar y rellenar botellas de agua con y sin gas.',
+      'Rellenar café, té, infusiones y chocolate. Preparar stock de rica rica y hojas de coca.',
+      'Rellenar, guardar y rotular leches. Desmontar mermeladas y dejar listas para el desayuno siguiente.',
+      'Rellenar y limpiar azucareros, saleros y pimenteros.',
+      'Rellenar aceite de oliva y aceto (2 dedos bajo la boquilla de la alcuza), limpiar pistilos con agua caliente y dejar listos para siguiente servicio.',
+      'Hacer y cortar mantequillas para servicio de almuerzo, dejar stock para próximos desayunos.',
+      'Sacar mantequillas para servicio de cena.',
+      'Limpiar bandejas.',
+      'Retirar loza de bodega de HH y rellenar atomizadores de oasis pro.',
+      'Limpiar paredes y vidrios.',
+      'Lavar trapos de limpieza, barrer y trapear.'
+    ],
+    post_almuerzo: [
+      'Llevar cristalería restante al bar.',
+      'Bajar mantelería a más tardar a las 15:00 hrs · TURNO AM.',
+      'Limpiar y desmanchar chilewitch para montaje (mezcla oasis pro + agua caliente y escobillar). Líquido amarillo para grasas o manchas difíciles, líquido rosado para superficies.',
+      'Limpiar y reponer cafetera para servicio de cena.',
+      'Limpiar y rellenar botellas de agua con y sin gas.',
+      'Rellenar café, té, infusiones y chocolate. Preparar stock de rica rica y hojas de coca.',
+      'Rellenar, guardar y rotular leches. LIMPIAR REFRI Y MUEBLES.',
+      'Rellenar y limpiar azucareros, saleros y pimenteros si aplica.',
+      'Rellenar aceite de oliva y aceto (2 dedos bajo la boquilla de la alcuza), limpiar pistilos con agua caliente y dejar listos para siguiente servicio.',
+      'Preparar lulos de mantequilla.',
+      'Limpiar bandejas.',
+      'Retirar loza de bodega de HH y rellenar atomizadores de oasis pro y sanitizer rosado.',
+      'Limpiar paredes y vidrios.',
+      'Lavar trapos de limpieza, barrer y trapear.'
+    ],
+    post_cena: [
+      'Llevar cristalería restante al bar.',
+      'Bajar mantelería.',
+      'Dejar mise en place de pastelería: 4 servilletas + la panera grande o mediana según ocupación + platos para bollería.',
+      'Dejar mise en place de cuarto caliente: frascos para dips y bowls quinoa de desayuno.',
+      'Limpiar y reponer cafetera para servicio de desayuno.',
+      'Limpiar y rellenar botellas de agua con y sin gas, dejar refri cerrado con candado.',
+      'Rellenar café, té, infusiones y chocolate. Preparar stock de rica rica y hojas de coca.',
+      'Rellenar, guardar y rotular leches.',
+      'Rellenar aceite de oliva y aceto (2 dedos bajo la boquilla de la alcuza), limpiar pistilos con agua caliente y dejar listos para siguiente servicio.',
+      'Rellenar y limpiar azucareros, saleros y pimenteros si aplica.',
+      'Bajar reciclaje y cambiar bolsas de basura.',
+      'Limpiar bandejas.',
+      'Retirar loza de bodega de HH y rellenar atomizadores de oasis pro.',
+      'Limpiar paredes y vidrios.',
+      'Lavar trapos de limpieza, barrer y trapear.'
+    ]
+  }
+};
 </script>
 </body>
 </html>
