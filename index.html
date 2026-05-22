@@ -1301,24 +1301,45 @@ const CHK_RUNS_PATH         = 'checklist_runs';
 const CHK_SUMMARIES_PATH    = 'checklist_summaries';
 const CHK_RETENTION_DAYS    = 90;
 const CHK_SUPERVISOR_PIN    = '9876';
-// Phases cover the 24h with no gaps. post_cena rolls over midnight; the
-// chkActivePhase helper knows about the wrap. Edit the windows here if the
-// service rhythm changes — they are advisory (UX default), never a wall.
-const CHK_PHASES = [
-  { key:'post_desayuno', labelKey:'chkPhaseDesayuno', startMin:  6*60+30, endMin: 13*60      },
-  { key:'post_almuerzo', labelKey:'chkPhaseAlmuerzo', startMin: 13*60,    endMin: 20*60      },
-  { key:'post_cena',     labelKey:'chkPhaseCena',     startMin: 20*60,    endMin:  6*60+30   } // wraps midnight
-];
-// Carry-over chain. Source = { phase: previous-phase, daysBack: 0|1 }.
-const CHK_CARRYOVER = {
-  post_desayuno: { phase:'post_cena',     daysBack:1 },
-  post_almuerzo: { phase:'post_desayuno', daysBack:0 },
-  post_cena:     { phase:'post_almuerzo', daysBack:0 }
-};
+// Each section defines its own "moments" (chip row entries), whether the
+// active moment is auto-suggested by clock, and whether carry-over between
+// moments applies. Pasillo follows a 24h cyclical pattern with pending
+// tasks rolling into the next service. Montaje is preparation work chosen
+// manually by the GEO — no clock, no carry-over. Edit moments, windows or
+// carry-over chains here; the rest of the module is generic.
 const CHK_SECTIONS = [
-  { key:'pasillo', labelKey:'chkSectionPasillo', active:true  },
-  { key:'montaje', labelKey:'chkSectionMontaje', active:false },
-  { key:'repaso',  labelKey:'chkSectionRepaso',  active:false }
+  {
+    key:'pasillo', labelKey:'chkSectionPasillo', active:true,
+    autoActive:true,
+    moments: [
+      { key:'post_desayuno', labelKey:'chkPhaseDesayuno', startMin:  6*60+30, endMin: 13*60    },
+      { key:'post_almuerzo', labelKey:'chkPhaseAlmuerzo', startMin: 13*60,    endMin: 20*60    },
+      { key:'post_cena',     labelKey:'chkPhaseCena',     startMin: 20*60,    endMin:  6*60+30 } // wraps midnight
+    ],
+    // Carry-over chain. Source = { moment: previous-moment, daysBack: 0|1 }.
+    carryover: {
+      post_desayuno: { moment:'post_cena',     daysBack:1 },
+      post_almuerzo: { moment:'post_desayuno', daysBack:0 },
+      post_cena:     { moment:'post_almuerzo', daysBack:0 }
+    }
+  },
+  {
+    key:'montaje', labelKey:'chkSectionMontaje', active:true,
+    autoActive:false,
+    moments: [
+      { key:'desayuno', labelKey:'chkMontajeDesayuno' },
+      { key:'almuerzo', labelKey:'chkMontajeAlmuerzo' },
+      { key:'cena',     labelKey:'chkMontajeCena'     },
+      { key:'quincho',  labelKey:'chkMontajeQuincho'  }
+    ],
+    carryover: null
+  },
+  {
+    key:'repaso', labelKey:'chkSectionRepaso', active:false,
+    autoActive:false,
+    moments: [],
+    carryover: null
+  }
 ];
 let CHK_SECTION             = 'pasillo';
 let CHK_PHASE_VIEW          = null;     // user-selected phase ('post_*'); null = follow active
@@ -1433,6 +1454,7 @@ const UI = {
     chkSectionPasillo:'Pasillo', chkSectionMontaje:'Montaje', chkSectionRepaso:'Repaso',
     chkSectionComingTag:'próx.',
     chkPhaseDesayuno:'Post-Desayuno', chkPhaseAlmuerzo:'Post-Almuerzo', chkPhaseCena:'Post-Cena',
+    chkMontajeDesayuno:'Desayuno', chkMontajeAlmuerzo:'Almuerzo', chkMontajeCena:'Cena', chkMontajeQuincho:'Quincho',
     chkActiveTag:'en curso',
     chkProgress:'completadas',
     chkMetaPrefix:'Servicio',
@@ -1543,6 +1565,7 @@ const UI = {
     chkSectionPasillo:'Hallway', chkSectionMontaje:'Setup', chkSectionRepaso:'Final pass',
     chkSectionComingTag:'soon',
     chkPhaseDesayuno:'After Breakfast', chkPhaseAlmuerzo:'After Lunch', chkPhaseCena:'After Dinner',
+    chkMontajeDesayuno:'Breakfast', chkMontajeAlmuerzo:'Lunch', chkMontajeCena:'Dinner', chkMontajeQuincho:'Quincho',
     chkActiveTag:'active',
     chkProgress:'done',
     chkMetaPrefix:'Service',
@@ -1653,6 +1676,7 @@ const UI = {
     chkSectionPasillo:'Corredor', chkSectionMontaje:'Montagem', chkSectionRepaso:'Revisão',
     chkSectionComingTag:'em breve',
     chkPhaseDesayuno:'Pós-Café', chkPhaseAlmuerzo:'Pós-Almoço', chkPhaseCena:'Pós-Jantar',
+    chkMontajeDesayuno:'Café', chkMontajeAlmuerzo:'Almoço', chkMontajeCena:'Jantar', chkMontajeQuincho:'Churrasqueira',
     chkActiveTag:'em curso',
     chkProgress:'concluídas',
     chkMetaPrefix:'Serviço',
@@ -6292,8 +6316,14 @@ function chkTimeStr(ts){
   const d = new Date(ts);
   return chkPad(d.getHours())+':'+chkPad(d.getMinutes());
 }
-function chkPhaseDef(key){ return CHK_PHASES.find(p => p.key === key); }
 function chkSectionDef(key){ return CHK_SECTIONS.find(s => s.key === key); }
+function chkMoments(sectionKey){ const s = chkSectionDef(sectionKey); return (s && s.moments) ? s.moments : []; }
+function chkMomentDef(sectionKey, momentKey){ return chkMoments(sectionKey).find(m => m.key === momentKey) || null; }
+function chkCarryoverFor(sectionKey, momentKey){
+  const s = chkSectionDef(sectionKey);
+  if (!s || !s.carryover) return null;
+  return s.carryover[momentKey] || null;
+}
 function chkTplKey(section, phase){ return section + '/' + phase; }
 function chkPrevDate(daysBack){
   const d = new Date();
@@ -6320,16 +6350,40 @@ function chkSafeJson(data){
   return data;
 }
 
-// Active-phase detector. Returns 'post_desayuno' | 'post_almuerzo' | 'post_cena'.
-// Ranges cover 24h with no gaps; post_cena wraps midnight.
-function chkActivePhase(now){
+// Active-moment detector. Only meaningful for sections with autoActive=true.
+// For Pasillo, returns 'post_desayuno' | 'post_almuerzo' | 'post_cena' based
+// on the configured windows (post_cena wraps midnight). For Montaje/Repaso
+// (manual mode), returns null — the GEO picks the moment by tapping a chip.
+function chkActivePhase(sectionKey, now){
+  const cfg = chkSectionDef(sectionKey);
+  if (!cfg || !cfg.autoActive) return null;
   now = now || new Date();
   const mins = now.getHours()*60 + now.getMinutes();
-  if (mins >= 6*60+30 && mins < 13*60) return 'post_desayuno';
-  if (mins >= 13*60   && mins < 20*60) return 'post_almuerzo';
-  return 'post_cena';
+  for (const m of (cfg.moments || [])){
+    if (m.startMin == null || m.endMin == null) continue;
+    if (m.startMin < m.endMin){
+      if (mins >= m.startMin && mins < m.endMin) return m.key;
+    } else {
+      // wraps midnight
+      if (mins >= m.startMin || mins < m.endMin) return m.key;
+    }
+  }
+  return null;
 }
-function chkVisiblePhase(){ return CHK_PHASE_VIEW || chkActivePhase(); }
+// Resolves which moment is currently shown in the UI for the current section.
+// Priority: user override (CHK_PHASE_VIEW) if still valid → auto-active by
+// clock if the section opts in → first moment as fallback.
+function chkVisiblePhase(){
+  const section = CHK_SECTION;
+  if (CHK_PHASE_VIEW){
+    if (chkMomentDef(section, CHK_PHASE_VIEW)) return CHK_PHASE_VIEW;
+    CHK_PHASE_VIEW = null;
+  }
+  const active = chkActivePhase(section);
+  if (active) return active;
+  const first = chkMoments(section)[0];
+  return first ? first.key : null;
+}
 
 // --- Fetch templates -----------------------------------------------------
 async function chkFetchTemplate(section, phase){
@@ -6397,23 +6451,28 @@ async function chkFetchRun(dateKey, section, phase){
 async function chkLoadAll(){
   CHK_DATE_KEY = chkDateKey(new Date());
   const section = CHK_SECTION;
-  // Templates: fetch all phases first; then seed any missing.
-  await Promise.all(CHK_PHASES.map(p => chkFetchTemplate(section, p.key)));
+  const moments = chkMoments(section);
+  if (!moments.length){
+    CHK_RUNS = {}; CHK_RUNS_PREV = {};
+    return;
+  }
+  // Templates: fetch all moments first; then seed any missing.
+  await Promise.all(moments.map(m => chkFetchTemplate(section, m.key)));
   if (chkSectionDef(section).active && !CHK_SEEDED[section]){
-    await Promise.all(CHK_PHASES.map(p => chkSeedIfMissing(section, p.key)));
+    await Promise.all(moments.map(m => chkSeedIfMissing(section, m.key)));
     CHK_SEEDED[section] = true;
   }
   // Today's runs
   const todayRuns = {};
-  await Promise.all(CHK_PHASES.map(async p => { todayRuns[p.key] = await chkFetchRun(CHK_DATE_KEY, section, p.key); }));
+  await Promise.all(moments.map(async m => { todayRuns[m.key] = await chkFetchRun(CHK_DATE_KEY, section, m.key); }));
   CHK_RUNS = todayRuns;
-  // Carry-over sources
+  // Carry-over sources (skipped automatically for sections without carryover config)
   const prevRuns = {};
-  await Promise.all(CHK_PHASES.map(async p => {
-    const src = CHK_CARRYOVER[p.key];
-    if (!src){ prevRuns[p.key] = null; return; }
+  await Promise.all(moments.map(async m => {
+    const src = chkCarryoverFor(section, m.key);
+    if (!src){ prevRuns[m.key] = null; return; }
     const dateKey = src.daysBack > 0 ? chkPrevDate(src.daysBack) : CHK_DATE_KEY;
-    prevRuns[p.key] = await chkFetchRun(dateKey, section, src.phase);
+    prevRuns[m.key] = await chkFetchRun(dateKey, section, src.moment);
   }));
   CHK_RUNS_PREV = prevRuns;
 }
@@ -6752,16 +6811,17 @@ function chkRender(){
     return;
   }
 
-  // Phase chips
-  const activeByClock = chkActivePhase();
+  // Moment chips. The "active by clock" chip is only highlighted for
+  // sections with autoActive=true (Pasillo). In Montaje the GEO picks.
+  const activeByClock = chkActivePhase(section);
   const visible = chkVisiblePhase();
   html += `<div class="chk-phase-chips">`;
-  CHK_PHASES.forEach(p => {
-    const isVisible = (p.key === visible);
-    const isActive  = (p.key === activeByClock);
+  chkMoments(section).forEach(m => {
+    const isVisible = (m.key === visible);
+    const isActive  = (m.key === activeByClock);
     const dot = isActive ? `<span class="chk-active-dot"></span>` : '';
     const tag = isActive ? `<span class="chk-active-label">· ${chkEscapeHtml(t('chkActiveTag'))}</span>` : '';
-    html += `<button class="chk-phase-chip ${isVisible ? 'selected' : ''}" onclick="chkSelectPhase('${p.key}')">${dot}${chkEscapeHtml(t(p.labelKey))}${tag}</button>`;
+    html += `<button class="chk-phase-chip ${isVisible ? 'selected' : ''}" onclick="chkSelectPhase('${m.key}')">${dot}${chkEscapeHtml(t(m.labelKey))}${tag}</button>`;
   });
   html += `</div>`;
 
@@ -6805,11 +6865,12 @@ function chkRender(){
 }
 
 function chkRenderCarryover(phase){
+  const src = chkCarryoverFor(CHK_SECTION, phase);
+  if (!src) return ''; // section without carry-over (e.g. Montaje) renders nothing
   const prev = CHK_RUNS_PREV[phase];
-  const src = CHK_CARRYOVER[phase];
-  if (!src) return '';
-  const srcDef = chkPhaseDef(src.phase);
-  const tpl = CHK_TEMPLATES[chkTplKey(CHK_SECTION, src.phase)] || { tasks: [] };
+  const srcDef = chkMomentDef(CHK_SECTION, src.moment);
+  if (!srcDef) return '';
+  const tpl = CHK_TEMPLATES[chkTplKey(CHK_SECTION, src.moment)] || { tasks: [] };
   const activeTasks = (tpl.tasks || []).filter(x => x.active !== false);
   const carry = activeTasks.filter(task =>
     !(prev && prev.tasks && prev.tasks[task.id] && prev.tasks[task.id].done)
@@ -6824,7 +6885,7 @@ function chkRenderCarryover(phase){
     html += `<ul class="chk-task-list">`;
     carry.forEach(task => {
       const taskRun = prev.tasks && prev.tasks[task.id];
-      html += chkRenderTaskRow(task, taskRun, src.phase, { carryover:true, sourcePhaseLabel: t(srcDef.labelKey) });
+      html += chkRenderTaskRow(task, taskRun, src.moment, { carryover:true, sourcePhaseLabel: t(srcDef.labelKey) });
     });
     html += `</ul>`;
   }
@@ -6886,9 +6947,9 @@ function chkRenderCommentEditor(taskId, initial, showPendingHint){
 function chkRenderEditMode(){
   let html = `<div class="chk-edit-banner">${chkEscapeHtml(t('chkEditBanner'))}</div>`;
   html += `<div class="chk-phase-chips">`;
-  CHK_PHASES.forEach(p => {
-    const isVisible = (p.key === CHK_EDIT_PHASE);
-    html += `<button class="chk-phase-chip ${isVisible ? 'selected' : ''}" onclick="chkSwitchEditPhase('${p.key}')">${chkEscapeHtml(t(p.labelKey))}</button>`;
+  chkMoments(CHK_SECTION).forEach(m => {
+    const isVisible = (m.key === CHK_EDIT_PHASE);
+    html += `<button class="chk-phase-chip ${isVisible ? 'selected' : ''}" onclick="chkSwitchEditPhase('${m.key}')">${chkEscapeHtml(t(m.labelKey))}</button>`;
   });
   html += `</div>`;
   html += `<div class="chk-edit-list">`;
@@ -6957,8 +7018,10 @@ async function chkEnter(){
     const dateKey = chkDateKey(new Date());
     if (dateKey !== CHK_DATE_KEY){ await chkLoadAll(); chkRender(); return; }
     const section = CHK_SECTION;
+    const moments = chkMoments(section);
+    if (!moments.length){ chkRender(); return; }
     const fresh = {};
-    await Promise.all(CHK_PHASES.map(async p => { fresh[p.key] = await chkFetchRun(dateKey, section, p.key); }));
+    await Promise.all(moments.map(async m => { fresh[m.key] = await chkFetchRun(dateKey, section, m.key); }));
     CHK_RUNS = fresh;
     chkRender();
   }, 12000);
@@ -7030,6 +7093,30 @@ const CHK_SEED = {
       'Retirar loza de bodega de HH y rellenar atomizadores de oasis pro.',
       'Limpiar paredes y vidrios.',
       'Lavar trapos de limpieza, barrer y trapear.'
+    ]
+  },
+  // Montaje: tareas demo. Bruno pule estas con PIN 9876 desde el edit mode.
+  // Cada sub-sección tiene 3 tareas plausibles para validar el flujo visual.
+  montaje: {
+    desayuno: [
+      'Montar mesas con mantel, servilleta y cubiertos de desayuno.',
+      'Disponer panera, mantequillera y mermeladas en cada mesa.',
+      'Preparar buffet de desayuno (frutas, panes, lácteos, jugos).'
+    ],
+    almuerzo: [
+      'Montar mesas de terraza con mantel, cubiertos y copas.',
+      'Disponer mise en place del buffet (platos, utensilios, salsas, señalética).',
+      'Preparar estación de bebidas (agua, jugos, hielera).'
+    ],
+    cena: [
+      'Montar mesas de comedor con mantelería formal y cubiertos completos.',
+      'Disponer centros de mesa, velas y panera.',
+      'Preparar mise en place de copas (agua, vino blanco, vino tinto).'
+    ],
+    quincho: [
+      'Encender y preparar parrilla; verificar carbón/leña y temperatura.',
+      'Montar mesas de quincho con cubiertos rústicos y servilletas.',
+      'Disponer buffet de ensaladas y aderezos en mesón central.'
     ]
   }
 };
