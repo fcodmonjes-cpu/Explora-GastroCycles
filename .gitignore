@@ -13,3 +13,4 @@ firebase-rules.json
 *.png
 *.svg
 !Explora.png
+!favicon.svg
