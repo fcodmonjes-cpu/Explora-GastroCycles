@@ -1408,7 +1408,13 @@ let CHK_COMMENT_OPEN_ID     = null;     // task id whose comment editor is open
 let CHK_COMMENT_DRAFT       = '';       // working text while editor is open
 let CHK_POLL_INTERVAL       = null;
 let CHK_LAST_INTERACTION    = 0;
-let CHK_SEEDED              = {};       // { section: bool } — true after we've checked/seeded
+// Tracks which (section, moment) templates we have already attempted to PUT to
+// Firebase this session. The PUT is a one-shot per session: if it succeeds,
+// the template lives in Firebase from then on; if it fails (e.g. rules
+// closed), retrying every navigation would just spam 401s. The in-memory
+// SEED is restored separately by chkSeedIfMissing — independent of this flag,
+// so the UI stays usable even after repeated server-side failures.
+let CHK_SEED_PUT_TRIED      = {};       // { 'section/moment': bool }
 let _CHK_WRITE_QUEUE        = {};       // { 'section/phase/taskId': patch } pending writes
 let _CHK_WRITE_INFLIGHT     = false;
 let _CHK_META_WRITE_QUEUE   = {};       // { 'section/phase': meta patch }
@@ -6445,20 +6451,30 @@ function chkVisiblePhase(){
 }
 
 // --- Fetch templates -----------------------------------------------------
+// On HTTP error or network failure we deliberately do NOT overwrite the
+// local CHK_TEMPLATES[key]. Previously a failed fetch wrote `null` over a
+// SEED that had been restored in-memory; combined with CHK_SEEDED gating the
+// re-seed, that caused the "tareas desaparecen al volver a la sección" bug
+// reported on 2026-05-22. Keep last-known-good state on transient failures.
 async function chkFetchTemplate(section, phase){
   const url = chkUrl(CHK_TEMPLATES_PATH + '/' + section + '/' + phase);
   try {
     const r = await fetch(url);
+    if (!r.ok) return; // keep local state intact
     let data = await r.json();
-    if (!r.ok) data = null;
     data = chkSafeJson(data);
-    CHK_TEMPLATES[chkTplKey(section, phase)] = data || null;
+    if (data == null) return; // empty response: don't blank an existing SEED
+    CHK_TEMPLATES[chkTplKey(section, phase)] = data;
     return data;
   } catch (e) {
     console.warn('[chk] fetch template failed', section, phase, e);
-    return null;
+    // keep local state intact
   }
 }
+// Restore the SEED for (section, moment) in memory whenever the current
+// template is empty/missing. Idempotent and cheap — safe to call every
+// chkLoadAll. The server-side PUT is attempted once per session via
+// CHK_SEED_PUT_TRIED so we don't spam 401s when rules are closed.
 async function chkSeedIfMissing(section, phase){
   const key = chkTplKey(section, phase);
   const existing = CHK_TEMPLATES[key];
@@ -6476,36 +6492,54 @@ async function chkSeedIfMissing(section, phase){
       active: true
     }))
   };
-  const url = chkUrl(CHK_TEMPLATES_PATH + '/' + section + '/' + phase);
-  try {
-    const r = await fetch(url, { method:'PUT', body: JSON.stringify(template) });
-    if (!r.ok){
-      console.warn('[chk] seed rejected by Firebase (rules?)', section, phase, r.status);
-      // Still load the seed into memory so the UI is usable for the current
-      // session, but don't mark SEEDED — next entry will retry.
-      CHK_TEMPLATES[key] = template;
-      return template;
+  // Restore in memory immediately so the UI is usable regardless of the
+  // server-side write outcome.
+  CHK_TEMPLATES[key] = template;
+  // Server-side PUT: at most once per session per (section, moment).
+  if (!CHK_SEED_PUT_TRIED[key]){
+    CHK_SEED_PUT_TRIED[key] = true;
+    const url = chkUrl(CHK_TEMPLATES_PATH + '/' + section + '/' + phase);
+    try {
+      const r = await fetch(url, { method:'PUT', body: JSON.stringify(template) });
+      if (!r.ok) console.warn('[chk] seed rejected by Firebase (rules?)', section, phase, r.status);
+    } catch (e) {
+      console.warn('[chk] seed PUT failed', section, phase, e);
     }
-    CHK_TEMPLATES[key] = template;
-  } catch (e) {
-    console.warn('[chk] seed failed', section, phase, e);
-    CHK_TEMPLATES[key] = template;
   }
   return template;
 }
 
 // --- Fetch runs ----------------------------------------------------------
+// Returns one of:
+//   { meta, tasks }           — normal success (entry exists or empty entry)
+//   { meta: null, tasks: {} } — legitimate "no run yet today" (HTTP 200, null body)
+//   { __error: true }         — transient failure (HTTP not OK, network error,
+//                               or Firebase server-side error payload). Callers
+//                               must treat this as "unknown" and preserve local
+//                               state instead of overwriting with empty. Previously
+//                               errors were collapsed to `{meta:null, tasks:{}}`
+//                               which caused the "marca se desmarca sola tras
+//                               unos segundos" bug — polling overwrote local
+//                               optimistic marks with the failed-fetch fallback.
 async function chkFetchRun(dateKey, section, phase){
   const url = chkUrl(CHK_RUNS_PATH + '/' + dateKey + '/' + section + '/' + phase);
   try {
     const r = await fetch(url);
+    if (!r.ok) return { __error: true };
     let data = await r.json();
-    if (!r.ok) data = null;
+    if (chkSafeJson(data) === null && data && data.error) return { __error: true };
     data = chkSafeJson(data);
     return data || { meta: null, tasks: {} };
   } catch (e) {
-    return { meta: null, tasks: {} };
+    return { __error: true };
   }
+}
+// Caller helper: given a fetch result and the current local run for the same
+// key, decide what to store. On error → keep local; otherwise → take the
+// server result.
+function chkPickRun(serverResult, localRun){
+  if (serverResult && serverResult.__error) return localRun || { meta: null, tasks: {} };
+  return serverResult;
 }
 async function chkLoadAll(){
   CHK_DATE_KEY = chkDateKey(new Date());
@@ -6515,15 +6549,22 @@ async function chkLoadAll(){
     CHK_RUNS = {}; CHK_RUNS_PREV = {};
     return;
   }
-  // Templates: fetch all moments first; then seed any missing.
+  // Templates: fetch all moments first; then ensure SEED is in memory for
+  // any moment that came back empty/missing. chkSeedIfMissing is idempotent
+  // and cheap — calling it every load (instead of gating with a per-section
+  // flag) guarantees the SEED is restored if a previous fetch wiped the
+  // local template on a transient failure.
   await Promise.all(moments.map(m => chkFetchTemplate(section, m.key)));
-  if (chkSectionDef(section).active && !CHK_SEEDED[section]){
+  if (chkSectionDef(section).active){
     await Promise.all(moments.map(m => chkSeedIfMissing(section, m.key)));
-    CHK_SEEDED[section] = true;
   }
-  // Today's runs
+  // Today's runs — preserve local state on transient fetch errors so we
+  // don't blank optimistic marks the user just made.
   const todayRuns = {};
-  await Promise.all(moments.map(async m => { todayRuns[m.key] = await chkFetchRun(CHK_DATE_KEY, section, m.key); }));
+  await Promise.all(moments.map(async m => {
+    const res = await chkFetchRun(CHK_DATE_KEY, section, m.key);
+    todayRuns[m.key] = chkPickRun(res, CHK_RUNS[m.key]);
+  }));
   CHK_RUNS = todayRuns;
   // Carry-over sources (skipped automatically for sections without carryover config)
   const prevRuns = {};
@@ -6531,7 +6572,8 @@ async function chkLoadAll(){
     const src = chkCarryoverFor(section, m.key);
     if (!src){ prevRuns[m.key] = null; return; }
     const dateKey = src.daysBack > 0 ? chkPrevDate(src.daysBack) : CHK_DATE_KEY;
-    prevRuns[m.key] = await chkFetchRun(dateKey, section, src.moment);
+    const res = await chkFetchRun(dateKey, section, src.moment);
+    prevRuns[m.key] = chkPickRun(res, CHK_RUNS_PREV[m.key]);
   }));
   CHK_RUNS_PREV = prevRuns;
 }
@@ -7079,8 +7121,15 @@ async function chkEnter(){
     const section = CHK_SECTION;
     const moments = chkMoments(section);
     if (!moments.length){ chkRender(); return; }
+    // Per-moment merge: if the server fetch errors for a given moment we
+    // keep the existing local state for THAT moment, while still picking up
+    // any moments that synced successfully. This prevents optimistic marks
+    // from being wiped by a transient Firebase rejection.
     const fresh = {};
-    await Promise.all(moments.map(async m => { fresh[m.key] = await chkFetchRun(dateKey, section, m.key); }));
+    await Promise.all(moments.map(async m => {
+      const res = await chkFetchRun(dateKey, section, m.key);
+      fresh[m.key] = chkPickRun(res, CHK_RUNS[m.key]);
+    }));
     CHK_RUNS = fresh;
     chkRender();
   }, 12000);
