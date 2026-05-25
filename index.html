@@ -931,6 +931,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .chk-checkbox:hover { background:rgba(192,125,42,0.1); }
 .chk-task.done .chk-checkbox { background:#c07d2a; border-color:#c07d2a; color:#fff; }
 .chk-task-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.chk-task-body.tappable { cursor:pointer; }
 .chk-task-label { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.35; color:var(--text-primary); }
 .chk-task-meta { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:var(--text-tertiary); }
 .chk-task-meta .chk-carry-tag { color:#c07d2a; }
@@ -6841,6 +6842,12 @@ function chkOpenEditGate(){
   CHK_EDIT_PIN_ERROR = false;
   CHK_EDIT_GATE_OPEN = true;
   chkRender();
+  // Some mobile browsers (notably iOS Safari with the URL bar scrolled away)
+  // don't honor position:fixed against the visual viewport, so the overlay
+  // can end up out of frame when the page was scrolled deep into the task
+  // list. Reset scroll to top so the PIN pad is centered and immediately
+  // visible without manual swiping.
+  window.scrollTo(0, 0);
 }
 function chkCloseEditGate(){
   CHK_EDIT_GATE_OPEN = false;
@@ -7215,9 +7222,11 @@ function chkRenderTaskRow(task, taskRun, phase, opts){
 
   // Reference image thumbnail (only if the task has one). onerror hides the
   // button silently when the asset isn't on disk yet — keeps the row clean
-  // until the operator drops the image into assets/.
+  // until the operator drops the image into assets/. event.stopPropagation
+  // prevents the tap from bubbling up to the task body (which now also
+  // handles toggle — see <div class="chk-task-body"> below).
   const imageThumb = task.image
-    ? `<button class="chk-task-image-btn" onclick="chkOpenImageModal('${chkEscapeHtml(task.image)}')" aria-label="${chkEscapeHtml(t('chkImageRefAlt'))}"><img src="${chkEscapeHtml(task.image)}" alt="${chkEscapeHtml(t('chkImageRefAlt'))}" onerror="this.parentElement.style.display='none'"></button>`
+    ? `<button class="chk-task-image-btn" onclick="event.stopPropagation(); chkOpenImageModal('${chkEscapeHtml(task.image)}')" aria-label="${chkEscapeHtml(t('chkImageRefAlt'))}"><img src="${chkEscapeHtml(task.image)}" alt="${chkEscapeHtml(t('chkImageRefAlt'))}" onerror="this.parentElement.style.display='none'"></button>`
     : '';
 
   // "Last done" sub-label for Bar > Transversal (long-cadence tasks).
@@ -7236,9 +7245,17 @@ function chkRenderTaskRow(task, taskRun, phase, opts){
     }
   }
 
+  // Larger tap target: the whole task body toggles the checkbox, not just
+  // the small chk-checkbox button itself. The comment editor (textarea) and
+  // image thumbnail stop propagation explicitly so they don't accidentally
+  // mark the task when the operator taps to edit a comment or zoom the
+  // reference image.
+  const bodyClick = opts.carryover ? '' : `onclick="chkToggle('${task.id}')"`;
+  const bodyClass = 'chk-task-body' + (opts.carryover ? '' : ' tappable');
+
   return `<li class="${cls}">
     <button class="chk-checkbox" ${checkboxClick} aria-label="toggle">${isDone ? '✓' : ''}</button>
-    <div class="chk-task-body">
+    <div class="${bodyClass}" ${bodyClick}>
       <div class="chk-task-label">${chkEscapeHtml(task.label)}</div>
       ${meta}
       ${historyLine}
