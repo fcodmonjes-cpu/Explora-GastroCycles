@@ -408,8 +408,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .lang-btn:hover { background: var(--bg-secondary); color: var(--text-secondary); }
 .lang-btn.active { background: var(--surface); color: var(--text); border-color: var(--border-md); }
 
-.main-tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; flex-wrap: wrap; }
-.tab { padding: 6px 14px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; }
+/* Reference tabs: fixed 3×2 grid so the row reads symmetric on every
+   viewport. Was flex+wrap, which let chip widths follow their text and
+   produced an asymmetric 4+2 layout on iPhone (reported 2026-05-25). */
+.main-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 8px; margin-bottom: 1.5rem; }
+.tab { padding: 8px 6px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; text-align: center; }
 .tab:hover { background: var(--bg-secondary); }
 .tab.active { background: var(--wine-red); color: white; border-color: var(--wine-red); font-weight: 500; }
 /* Wine sub-tab that opens a different VIEW (general pairings), not a wine
@@ -428,8 +431,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .search-bar input::placeholder { color: var(--text-tertiary); }
 .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-tertiary); pointer-events: none; }
 
-.day-selector { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
-.day-btn { padding: 5px 12px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; }
+/* Day filter (Todos + D1..D4) in a 5-column grid so the chips share width
+   and read symmetric, matching the .main-tabs treatment. */
+.day-selector { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 1.5rem; }
+.day-btn { padding: 7px 6px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; text-align: center; }
 .day-btn:hover { background: var(--bg-secondary); }
 .day-btn.active { background: var(--gold); color: white; border-color: var(--gold); font-weight: 500; }
 @keyframes today-glow {
