@@ -869,6 +869,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .chk-section-tab.active { color:#c07d2a; border-bottom-color:#c07d2a; }
 .chk-section-tab.disabled { opacity:0.4; cursor:default; }
 .chk-section-tab .chk-section-tag { font-size:8.5px; letter-spacing:0.12em; opacity:0.65; margin-left:4px; font-weight:400; text-transform:uppercase; }
+/* Divider before a section chip — visually groups "equipo GEO" vs "equipo Bar"
+   without forcing a row break. Subtle: thin border-left + extra padding. */
+.chk-section-tab[data-divider-before] { margin-left:14px; position:relative; }
+.chk-section-tab[data-divider-before]::before { content:''; position:absolute; left:-8px; top:20%; bottom:20%; width:0.5px; background:var(--border); }
 
 .chk-phase-chips { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1rem; }
 .chk-phase-chip { background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:999px; padding:6px 14px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; color:var(--text-secondary); cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:8px; }
@@ -1380,8 +1384,7 @@ const CHK_SECTIONS = [
     moments: [
       { key:'desayuno', labelKey:'chkMontajeDesayuno' },
       { key:'almuerzo', labelKey:'chkMontajeAlmuerzo' },
-      { key:'cena',     labelKey:'chkMontajeCena'     },
-      { key:'quincho',  labelKey:'chkMontajeQuincho'  }
+      { key:'cena',     labelKey:'chkMontajeCena'     }
     ],
     carryover: null
   },
@@ -1389,6 +1392,23 @@ const CHK_SECTIONS = [
     key:'repaso', labelKey:'chkSectionRepaso', active:false,
     autoActive:false,
     moments: [],
+    carryover: null
+  },
+  // Bar lives on the other side of a visual divider in the sub-tab row —
+  // dividerBefore:true tells the render to draw a separator before this chip.
+  // This groups Pasillo/Montaje/Repaso (equipo GEO) on the left and Bar
+  // (equipo bartender) on the right, without breaking the existing layout.
+  {
+    key:'bar', labelKey:'chkSectionBar', active:true,
+    autoActive:false,
+    dividerBefore:true,
+    moments: [
+      { key:'apertura',    labelKey:'chkBarApertura'    },
+      { key:'am',          labelKey:'chkBarAm'          },
+      { key:'quincho',     labelKey:'chkBarQuincho'     },
+      { key:'cierre',      labelKey:'chkBarCierre'      },
+      { key:'transversal', labelKey:'chkBarTransversal' }
+    ],
     carryover: null
   }
 ];
@@ -1508,10 +1528,11 @@ const UI = {
     cmdServiceUnit:'D', /* short for cycle day */
     // Checklist module
     tabChecklist:'Checklist & Protocolos',
-    chkSectionPasillo:'Pasillo', chkSectionMontaje:'Montaje', chkSectionRepaso:'Repaso',
+    chkSectionPasillo:'Pasillo', chkSectionMontaje:'Montaje', chkSectionRepaso:'Repaso', chkSectionBar:'Bar',
     chkSectionComingTag:'próx.',
     chkPhaseDesayuno:'Post-Desayuno', chkPhaseAlmuerzo:'Post-Almuerzo', chkPhaseCena:'Post-Cena',
-    chkMontajeDesayuno:'Desayuno', chkMontajeAlmuerzo:'Almuerzo', chkMontajeCena:'Cena', chkMontajeQuincho:'Quincho',
+    chkMontajeDesayuno:'Desayuno', chkMontajeAlmuerzo:'Almuerzo', chkMontajeCena:'Cena',
+    chkBarApertura:'Apertura', chkBarAm:'AM / Almuerzo', chkBarQuincho:'Quincho', chkBarCierre:'Cierre', chkBarTransversal:'Transversal',
     chkActiveTag:'en curso',
     chkProgress:'completadas',
     chkMetaPrefix:'Servicio',
@@ -1619,10 +1640,11 @@ const UI = {
     cmdServiceUnit:'D',
     // Checklist module
     tabChecklist:'Checklist & Protocols',
-    chkSectionPasillo:'Hallway', chkSectionMontaje:'Setup', chkSectionRepaso:'Final pass',
+    chkSectionPasillo:'Hallway', chkSectionMontaje:'Setup', chkSectionRepaso:'Final pass', chkSectionBar:'Bar',
     chkSectionComingTag:'soon',
     chkPhaseDesayuno:'After Breakfast', chkPhaseAlmuerzo:'After Lunch', chkPhaseCena:'After Dinner',
-    chkMontajeDesayuno:'Breakfast', chkMontajeAlmuerzo:'Lunch', chkMontajeCena:'Dinner', chkMontajeQuincho:'Quincho',
+    chkMontajeDesayuno:'Breakfast', chkMontajeAlmuerzo:'Lunch', chkMontajeCena:'Dinner',
+    chkBarApertura:'Open', chkBarAm:'AM / Lunch', chkBarQuincho:'Quincho', chkBarCierre:'Close', chkBarTransversal:'Recurring',
     chkActiveTag:'active',
     chkProgress:'done',
     chkMetaPrefix:'Service',
@@ -1730,10 +1752,11 @@ const UI = {
     cmdServiceUnit:'D',
     // Checklist module
     tabChecklist:'Checklist & Protocolos',
-    chkSectionPasillo:'Corredor', chkSectionMontaje:'Montagem', chkSectionRepaso:'Revisão',
+    chkSectionPasillo:'Corredor', chkSectionMontaje:'Montagem', chkSectionRepaso:'Revisão', chkSectionBar:'Bar',
     chkSectionComingTag:'em breve',
     chkPhaseDesayuno:'Pós-Café', chkPhaseAlmuerzo:'Pós-Almoço', chkPhaseCena:'Pós-Jantar',
-    chkMontajeDesayuno:'Café', chkMontajeAlmuerzo:'Almoço', chkMontajeCena:'Jantar', chkMontajeQuincho:'Churrasqueira',
+    chkMontajeDesayuno:'Café', chkMontajeAlmuerzo:'Almoço', chkMontajeCena:'Jantar',
+    chkBarApertura:'Abertura', chkBarAm:'AM / Almoço', chkBarQuincho:'Churrasqueira', chkBarCierre:'Fechamento', chkBarTransversal:'Recorrente',
     chkActiveTag:'em curso',
     chkProgress:'concluídas',
     chkMetaPrefix:'Serviço',
@@ -6887,13 +6910,17 @@ function chkRender(){
   const sectionDef = chkSectionDef(section);
   let html = '';
 
-  // Section sub-tabs
+  // Section sub-tabs. `dividerBefore` on a section adds a thin vertical
+  // separator before its chip — used to group "equipo GEO" (Pasillo / Montaje
+  // / Repaso) on the left and "equipo Bar" on the right without breaking the
+  // single-row layout.
   html += `<div class="chk-section-tabs">`;
   CHK_SECTIONS.forEach(s => {
     const cls = (s.key === section ? 'active' : '') + (s.active ? '' : ' disabled');
     const tag = s.active ? '' : `<span class="chk-section-tag">${chkEscapeHtml(t('chkSectionComingTag'))}</span>`;
     const click = s.active ? `onclick="chkSelectSection('${s.key}')"` : '';
-    html += `<button class="chk-section-tab ${cls}" ${click}>${chkEscapeHtml(t(s.labelKey))}${tag}</button>`;
+    const divider = s.dividerBefore ? ' data-divider-before="1"' : '';
+    html += `<button class="chk-section-tab ${cls}"${divider} ${click}>${chkEscapeHtml(t(s.labelKey))}${tag}</button>`;
   });
   html += `</div>`;
 
@@ -7203,28 +7230,118 @@ const CHK_SEED = {
       'Lavar trapos de limpieza, barrer y trapear.'
     ]
   },
-  // Montaje: tareas demo. Bruno pule estas con PIN 9876 desde el edit mode.
-  // Cada sub-sección tiene 3 tareas plausibles para validar el flujo visual.
+  // Montaje: listas reales pasadas el 2026-05-23. Editable desde PIN 9876.
+  // Nota: Montaje Desayuno se hace en turno PM (la noche anterior).
+  // Quincho ya no vive aquí — se movió a bar.quincho.
   montaje: {
     desayuno: [
-      'Montar mesas con mantel, servilleta y cubiertos de desayuno.',
-      'Disponer panera, mantequillera y mermeladas en cada mesa.',
-      'Preparar buffet de desayuno (frutas, panes, lácteos, jugos).'
+      'Desmontar y limpiar estación de vinos, copas, etc. Vinos abiertos deben estar rotulados con números pequeños en la etiqueta trasera del vino (lápiz pasta o plumón punta fina). Es posible juntar conchos, SÓLO con la misma fecha de rotulación.',
+      'Cerrar mesas de la cena en sistema.',
+      'Montar salón para desayuno según la distribución de mesas que indica reporte "comedor" del día siguiente (solicitar a recepción), siempre montar al menos 2 mesas extras.',
+      'Limpiar mesas y poner chilewitch con etiqueta hacia abajo. Montaje: servilleta al centro (2 dedos sobre el borde), tenedor a la izquierda alineado, cuchillo a la derecha seguido por cuchara, taza en la esquina superior diagonal derecha de la servilleta. Guiarse por imagen de referencia entregada por GES.',
+      'Todas las mesas deben tener azucarero, endulzante y sal en el centro (saleros piedra prioridad mesas 50’s y 40’s). De izquierda a derecha: sal, endulzante y azucarero con la cuchara hacia la derecha.',
+      'Dejar preparados los porta menú con los menús de desayuno en el sector de buffet.',
+      'Montar ambos mesones con el buffet de desayuno, todo con sus respectivas pinzas y carteles. Seguir imagen de referencia enviada por GES.',
+      'Cerrar cavas, apagar ventiladores y cerrar puertas.'
     ],
     almuerzo: [
-      'Montar mesas de terraza con mantel, cubiertos y copas.',
-      'Disponer mise en place del buffet (platos, utensilios, salsas, señalética).',
-      'Preparar estación de bebidas (agua, jugos, hielera).'
+      'Montar terraza de almuerzo según la distribución de mesas que indica reporte "comedor", siempre montar al menos 2 mesas extras.',
+      'Limpiar mesas y poner chilewitch con etiqueta hacia abajo. Montaje: servilleta al centro (2 dedos sobre el borde), tenedor a la izquierda alineado, cuchillo a la derecha seguido por cuchara, plato de pan a la izquierda (la mitad fuera del borde izquierdo del chilewitch), menú a la derecha 2 dedos bajo la servilleta, vaso de agua en la esquina superior diagonal derecha. Guiarse por imagen de referencia entregada por GES.',
+      'Limpiar ambos mesones de buffet y poner chilewitchs largos.',
+      'Montaje Buffet: seguir imagen de referencia entregada por GES; corroborar bases de madera para ensalada, aderezos, proteínas y crudo. Verificar cantidad y tipo de pinza correcta, porta pinza, nombre de platos de buffet, platos de sopa suficientes, cucharas y agua para la olla de sopa.',
+      'Dejar preparados los porta menús con el menú del día correspondiente (4 menús rotativos) más menús de postres y niños si aplica. También montar menús de vinos de la casa y premium, bebestibles y carta de bar.',
+      'Preparar litos para estación de vinos, servilletas para montaje y para los siguientes servicios. LAS SERVILLETAS EN BUEN ESTADO SON PARA MONTAJE; SEPARAR LAS NO PRESENTABLES PARA REPASO.',
+      'Sobre 50 pax en el almuerzo y con la confirmación de cocina, montar buffet espejo. La estación de vinos, cubiertos, copas, etc., pasa a prepararse en el sector de las mesas 30’.',
+      'Dejar repuestos los vasos del desayuno.',
+      'Verificar que salón de desayuno quedó limpio y desconchado, máquinas de desayuno limpias, semillas y cereales del buffet repuestos.'
     ],
     cena: [
-      'Montar mesas de comedor con mantelería formal y cubiertos completos.',
-      'Disponer centros de mesa, velas y panera.',
-      'Preparar mise en place de copas (agua, vino blanco, vino tinto).'
+      'Montar el salón para cena según la distribución de mesas que indica reporte "comedor", siempre montar al menos 2 mesas extras. PARA OCUPACIÓN SOBRE 70 MONTAR TERRAZA. SALÓN SIEMPRE SE MONTA COMPLETO.',
+      'Cena con caminos planchados y en buen estado (plancha en bodega de GEOs si hace falta). Montaje: servilleta al centro (2 dedos sobre el borde), tenedor a la izquierda alineado, cuchillo a la derecha seguido por cuchara, plato de pan a la izquierda (la mitad fuera del borde izquierdo del chilewitch), menú cubriendo la servilleta, vaso de agua en la esquina superior diagonal derecha. Guiarse por imagen de referencia entregada por GES.',
+      'Asegurar servilletas suficientes listas para el servicio. Si no, ir a lavandería y priorizar la cantidad necesaria. Preparar litos para estación de vinos, servilletas para montaje y siguientes servicios. LAS SERVILLETAS EN BUEN ESTADO SON PARA MONTAJE; SEPARAR LAS NO PRESENTABLES PARA REPASO.',
+      'Si quedan viajeros en servicio de cena, la persona asignada en montaje finaliza el servicio para luego desconchar esas mesas, idealmente antes de empezar montaje.',
+      'Preparar en el mesón más corto del buffet la estación de vinos, copas, aguas con y sin gas, cubiertos para marcar/remontar y litos. Dejar también los menús de drinks y vinos. Dejar preparados los porta menús con menús de postres y niños si aplica, más vinos de la casa y premium, bebestibles y carta de bar.'
+    ]
+  },
+  // Bar: 5 sub-momentos (apertura, am, quincho, cierre, transversal).
+  // El bartender elige; sin auto-activa por reloj, sin carryover.
+  // AM concatenado con prefijos [HH-HH] para preservar la agrupación temporal
+  // sin sobre-fragmentar en sub-pestañas. Transversal contiene tareas con
+  // cadencia larga (cada 7 días, cada 2 semanas) que el bartender marca
+  // cuando toca — el sistema no las programa, pero registra cuándo se hicieron.
+  bar: {
+    apertura: [
+      'Marcar ingreso a turno en Talana.',
+      'Encender máquina de café (30 a 40 minutos tarda en calentar).',
+      'Revisar mise en place cafetería.',
+      'Encender y montar máquina lavacopas.',
+      'Registro de temperatura AM.',
+      'Producción goma (FIFO).',
+      'Producción limón (FIFO).',
+      'Producción jugos almuerzo (FIFO).',
+      'Limpiar estación de trabajo.',
+      'Montar estación de trabajo.',
+      'Montaje botellas.',
+      'Reposición coolers (FIFO).',
+      'Revisión de garnituras.',
+      'Abrir CO₂ barril de cerveza.',
+      'Revisar stock de infusión de bienvenida (maceración de hierbas — welcome drink).',
+      'Retirar in/out de recepción para preparar mocktail de bienvenida.',
+      'Preparar dispensador de agua.'
+    ],
+    am: [
+      '[08-11] Apoyar con cafetera comedor sobre 65 viajeros, de 08:00 a 09:00 aproximadamente.',
+      '[08-11] Encender la cafetera del bar.',
+      '[08-11] Limpiar superficies de todo el bar.',
+      '[08-11] Lavar y repasar vasos del desayuno (y de la cena si quedaron).',
+      '[08-11] Preparar infusión para welcome drink y dejar en el lobby con vasos limpios. Confirmar con recepción la hora del primer check-in para tenerlo listo antes.',
+      '[08-11] Durante el turno: retirar vasos sucios del lobby y reponer con nuevos para el welcome drink.',
+      '[08-11] Producción de bar para almuerzo, cena y desayuno del día siguiente: limón, goma, pomelo, jengibre, horchata, jugos (desayuno 1 botella x 8 viajeros).',
+      '[08-11] Preparar garnish/deshidratados si hace falta. Deshojar menta, porcionar y guardar.',
+      '[08-11] Mantener stock de servilletas, cubiertos y bowls (para frutos secos).',
+      '[08-11] Reponer refrigerador con bebidas, cervezas, ginger beer y todo lo necesario para servicio.',
+      '[08-11] Reponer stock de cafetera (café de grano, tazas, espresso, cucharas de té y espresso, sobres de té, azúcar, endulzante).',
+      '[11-12:30] Montaje de bar antes de las 11:00 hrs.',
+      '[11-12:30] Apertura de bar 11:00 hrs — todo debe estar OK.',
+      '[11-12:30] Informar a comedor jugos del día y productos en 101 o en 86.',
+      '[11-12:30] Carta de bar desde 12:30 hrs. Confirmar stock de alimentos de la carta del bar.',
+      '[12:30-14:30] Servicio de almuerzo.',
+      '[12:30-14:30] Retirar y reponer vasos del lobby.',
+      '[12:30-14:30] Recorrer el área alrededor del bar en busca de cristalería o loza.',
+      '[14:30-16:30] Terminado el servicio, lavar y repasar cristalería de almuerzo.',
+      '[14:30-16:30] Durante el registro, ofrecer drinks a los viajeros.',
+      '[14:30-16:30] Entrega de turno a equipo PM: limpio, repuesto y notificando novedades.',
+      '[14:30-16:30] Sacar a "once" al turno PM.',
+      '[14:30-16:30] Retirar y reponer vasos del lobby.'
     ],
     quincho: [
-      'Encender y preparar parrilla; verificar carbón/leña y temperatura.',
-      'Montar mesas de quincho con cubiertos rústicos y servilletas.',
-      'Disponer buffet de ensaladas y aderezos en mesón central.'
+      'Revisar stock de bebidas y jugo.',
+      'Revisar stock de vinos.',
+      'Revisar stock de espumante.',
+      'Guardar e inventariar lo que queda en quincho.'
+    ],
+    cierre: [
+      'Repaso de cristalería.',
+      'Desmontar cada estación de trabajo.',
+      'Limpiar en profundidad estaciones de trabajo y superficies.',
+      'Desmontar máquina de café y limpiar en profundidad (cafizar según calendario).',
+      'Dejar limpio dispensador de agua.',
+      'Apagar luces exhibidor de botellas.',
+      'Asegurar que todo quede rotulado y mermar según corresponda.',
+      'Registrar temperatura en planilla.',
+      'Cortar paso de CO₂ máquina de shop.',
+      'Desmontar, drenar y limpiar lavacopas.',
+      'Enviar pedido según corresponda y en torno a stock mínimo.',
+      'Notificar cualquier novedad a turno siguiente.',
+      'Montar jugos desayuno del día siguiente.'
+    ],
+    transversal: [
+      'Limpiar línea de shopera según calendario (cada 7 días o cambio de barril).',
+      'Cafizar máquina de café (cada 2 semanas).',
+      'Deshidratar frutas para garnituras.',
+      'Limpiar repisa mostrador.',
+      'Producciones específicas (pendiente detalle por falta de herramientas).',
+      'Registrar temperatura intermedia.'
     ]
   }
 };
