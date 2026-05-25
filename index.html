@@ -904,6 +904,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .chk-task-meta { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:var(--text-tertiary); }
 .chk-task-meta .chk-carry-tag { color:#c07d2a; }
 .chk-task-comment { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:13px; color:var(--text-secondary); margin-top:4px; padding:4px 8px; background:rgba(255,255,255,0.02); border-left:2px solid rgba(192,125,42,0.4); border-radius:0 4px 4px 0; }
+/* Reference image thumbnail attached to a task. Click → fullscreen modal. */
+.chk-task-image-btn { display:inline-block; margin-top:8px; padding:0; background:none; border:0.5px solid var(--border); border-radius:4px; cursor:zoom-in; overflow:hidden; line-height:0; }
+.chk-task-image-btn img { width:96px; height:64px; object-fit:cover; display:block; transition:opacity .15s; }
+.chk-task-image-btn:hover img { opacity:0.85; }
+/* Fullscreen modal for the reference image. Click outside or × to close. */
+.chk-image-modal { position:fixed; inset:0; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center; z-index:9999; cursor:zoom-out; animation:chkModalFadeIn 0.15s ease-out; }
+.chk-image-modal-img { max-width:92vw; max-height:88vh; border-radius:4px; box-shadow:0 8px 32px rgba(0,0,0,0.5); cursor:default; }
+.chk-image-modal-close { position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.2); color:#fff; font-size:24px; line-height:1; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; transition:background .15s; }
+.chk-image-modal-close:hover { background:rgba(255,255,255,0.18); }
+@keyframes chkModalFadeIn { from { opacity:0; } to { opacity:1; } }
+/* "Última vez: hace X días" sub-label under Transversal tasks. */
+.chk-task-history { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:#c07d2a; margin-top:3px; opacity:0.85; }
+.chk-task-history.chk-task-history-none { color:var(--text-tertiary); opacity:0.55; }
 .chk-comment-btn { flex-shrink:0; background:none; border:none; cursor:pointer; padding:4px 6px; color:var(--text-tertiary); font-size:14px; border-radius:4px; transition:all .15s; margin-top:1px; }
 .chk-comment-btn:hover { color:#c07d2a; background:rgba(192,125,42,0.08); }
 .chk-comment-btn.has-comment { color:#c07d2a; }
@@ -1435,6 +1448,15 @@ let CHK_LAST_INTERACTION    = 0;
 // SEED is restored separately by chkSeedIfMissing — independent of this flag,
 // so the UI stays usable even after repeated server-side failures.
 let CHK_SEED_PUT_TRIED      = {};       // { 'section/moment': bool }
+let CHK_IMAGE_MODAL_SRC     = null;     // image being viewed in fullscreen modal (null = closed)
+// Last-marked history for Bar > Transversal. Tasks here have long cadences
+// (every 7 / 14 days), so the operator needs to see when each was last done.
+// Populated lazily when the user opens the Transversal sub-tab; updated
+// optimistically when they toggle a task.
+let CHK_TRANSVERSAL_HISTORY         = {};    // { task_id: last_done_at_ms }
+let CHK_TRANSVERSAL_HISTORY_LOADED  = false; // true after first successful load
+let CHK_TRANSVERSAL_HISTORY_LOADING = false; // in-flight guard
+const CHK_TRANSVERSAL_HISTORY_DAYS  = 30;    // window scanned for "last done"
 let _CHK_WRITE_QUEUE        = {};       // { 'section/phase/taskId': patch } pending writes
 let _CHK_WRITE_INFLIGHT     = false;
 let _CHK_META_WRITE_QUEUE   = {};       // { 'section/phase': meta patch }
@@ -1533,6 +1555,7 @@ const UI = {
     chkPhaseDesayuno:'Post-Desayuno', chkPhaseAlmuerzo:'Post-Almuerzo', chkPhaseCena:'Post-Cena',
     chkMontajeDesayuno:'Desayuno', chkMontajeAlmuerzo:'Almuerzo', chkMontajeCena:'Cena',
     chkBarApertura:'Apertura', chkBarAm:'AM / Almuerzo', chkBarQuincho:'Quincho', chkBarCierre:'Cierre', chkBarTransversal:'Transversal',
+    chkLastDoneToday:'Última vez: hoy', chkLastDoneYesterday:'Última vez: ayer', chkLastDoneDaysAgo:'Última vez: hace {n} días', chkLastDoneNone:'Sin registro en los últimos 30 días', chkImageRefAlt:'Imagen de referencia', chkImageClose:'Cerrar',
     chkActiveTag:'en curso',
     chkProgress:'completadas',
     chkMetaPrefix:'Servicio',
@@ -1645,6 +1668,7 @@ const UI = {
     chkPhaseDesayuno:'After Breakfast', chkPhaseAlmuerzo:'After Lunch', chkPhaseCena:'After Dinner',
     chkMontajeDesayuno:'Breakfast', chkMontajeAlmuerzo:'Lunch', chkMontajeCena:'Dinner',
     chkBarApertura:'Open', chkBarAm:'AM / Lunch', chkBarQuincho:'Quincho', chkBarCierre:'Close', chkBarTransversal:'Recurring',
+    chkLastDoneToday:'Last done: today', chkLastDoneYesterday:'Last done: yesterday', chkLastDoneDaysAgo:'Last done: {n} days ago', chkLastDoneNone:'No record in the last 30 days', chkImageRefAlt:'Reference image', chkImageClose:'Close',
     chkActiveTag:'active',
     chkProgress:'done',
     chkMetaPrefix:'Service',
@@ -1757,6 +1781,7 @@ const UI = {
     chkPhaseDesayuno:'Pós-Café', chkPhaseAlmuerzo:'Pós-Almoço', chkPhaseCena:'Pós-Jantar',
     chkMontajeDesayuno:'Café', chkMontajeAlmuerzo:'Almoço', chkMontajeCena:'Jantar',
     chkBarApertura:'Abertura', chkBarAm:'AM / Almoço', chkBarQuincho:'Churrasqueira', chkBarCierre:'Fechamento', chkBarTransversal:'Recorrente',
+    chkLastDoneToday:'Última: hoje', chkLastDoneYesterday:'Última: ontem', chkLastDoneDaysAgo:'Última: há {n} dias', chkLastDoneNone:'Sem registro nos últimos 30 dias', chkImageRefAlt:'Imagem de referência', chkImageClose:'Fechar',
     chkActiveTag:'em curso',
     chkProgress:'concluídas',
     chkMetaPrefix:'Serviço',
@@ -6502,18 +6527,24 @@ async function chkSeedIfMissing(section, phase){
   const key = chkTplKey(section, phase);
   const existing = CHK_TEMPLATES[key];
   if (existing && Array.isArray(existing.tasks) && existing.tasks.length) return existing;
-  const seedTexts = (CHK_SEED[section] || {})[phase] || [];
-  if (!seedTexts.length) return null;
+  const seedItems = (CHK_SEED[section] || {})[phase] || [];
+  if (!seedItems.length) return null;
+  // SEED items can be a plain string (label only) OR an object { label, image }.
+  // The object form is used when the task has a reference image (e.g. table
+  // setup photos for Montaje). Only documented optional field is `image`,
+  // a path relative to the site root (e.g. 'assets/montaje-desayuno-mesa.jpg').
   const template = {
     version: 1,
     updated_at: Date.now(),
     updated_by: 'seed',
-    tasks: seedTexts.map((label, i) => ({
-      id: chkSlug(label, i),
-      label: label,
-      order: i,
-      active: true
-    }))
+    tasks: seedItems.map((item, i) => {
+      const isObj = (item && typeof item === 'object');
+      const label = isObj ? item.label : item;
+      const image = isObj ? item.image : undefined;
+      const task = { id: chkSlug(label, i), label: label, order: i, active: true };
+      if (image) task.image = image;
+      return task;
+    })
   };
   // Restore in memory immediately so the UI is usable regardless of the
   // server-side write outcome.
@@ -6690,6 +6721,13 @@ function chkToggle(taskId){
   const newDone = !cur.done;
   const patch = { done: newDone, done_at: newDone ? Date.now() : null };
   run.tasks[taskId] = Object.assign({}, cur, patch);
+  // Reflect the optimistic mark in the Transversal history immediately so the
+  // sub-label updates without waiting for a refetch. On unmark, clear the
+  // local entry so the row reverts to "no record" until the next reload.
+  if (section === 'bar' && phase === 'transversal'){
+    if (newDone) CHK_TRANSVERSAL_HISTORY[taskId] = patch.done_at;
+    else delete CHK_TRANSVERSAL_HISTORY[taskId];
+  }
   chkQueueTaskWrite(section, phase, taskId, patch);
   chkRender();
 }
@@ -6882,6 +6920,72 @@ function chkEditCancel(){ chkExitEditMode(); }
 // to spend a shallow listing + a few DELETEs to keep the bucket bounded.
 // Compaction-to-summary is left as a stub for now; the raw shape preserves
 // every field analytics will need later.
+// --- Image modal ---------------------------------------------------------
+// Reference images live in the SEED as `task.image` paths. The modal is a
+// single fullscreen overlay rendered on demand by chkRender when
+// CHK_IMAGE_MODAL_SRC is set. Click outside (or on the × button) closes.
+function chkOpenImageModal(src){
+  CHK_IMAGE_MODAL_SRC = src;
+  chkRender();
+}
+function chkCloseImageModal(){
+  CHK_IMAGE_MODAL_SRC = null;
+  chkRender();
+}
+function chkRenderImageModal(){
+  if (!CHK_IMAGE_MODAL_SRC) return '';
+  const src = chkEscapeHtml(CHK_IMAGE_MODAL_SRC);
+  return `<div class="chk-image-modal" onclick="chkCloseImageModal()">
+    <img class="chk-image-modal-img" src="${src}" alt="${chkEscapeHtml(t('chkImageRefAlt'))}" onclick="event.stopPropagation()">
+    <button class="chk-image-modal-close" onclick="chkCloseImageModal()" aria-label="${chkEscapeHtml(t('chkImageClose'))}">×</button>
+  </div>`;
+}
+
+// --- Transversal "last done" history -------------------------------------
+// Scans the last CHK_TRANSVERSAL_HISTORY_DAYS days of checklist_runs and
+// builds { task_id: most_recent_done_at_ms } for Bar > Transversal tasks.
+// Called lazily on first visit to that sub-tab. Cheap-ish: 1 shallow fetch
+// + N parallel fetches of bar/transversal/tasks per date. With 30 days,
+// that's ~31 requests total, all small.
+async function chkLoadTransversalHistory(){
+  if (CHK_TRANSVERSAL_HISTORY_LOADING || CHK_TRANSVERSAL_HISTORY_LOADED) return;
+  CHK_TRANSVERSAL_HISTORY_LOADING = true;
+  try {
+    const shallowR = await fetch(chkUrl(CHK_RUNS_PATH) + '?shallow=true');
+    if (!shallowR.ok){ CHK_TRANSVERSAL_HISTORY_LOADED = true; return; }
+    const shallow = await shallowR.json();
+    if (!shallow || typeof shallow !== 'object'){ CHK_TRANSVERSAL_HISTORY_LOADED = true; return; }
+    const dates = Object.keys(shallow)
+      .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k))
+      .sort().reverse()
+      .slice(0, CHK_TRANSVERSAL_HISTORY_DAYS);
+    const lists = await Promise.all(dates.map(async d => {
+      try {
+        const r = await fetch(chkUrl(CHK_RUNS_PATH + '/' + d + '/bar/transversal/tasks'));
+        if (!r.ok) return null;
+        return chkSafeJson(await r.json());
+      } catch { return null; }
+    }));
+    const history = {};
+    lists.forEach(tasks => {
+      if (!tasks || typeof tasks !== 'object') return;
+      Object.entries(tasks).forEach(([taskId, task]) => {
+        if (task && task.done && task.done_at){
+          const prev = history[taskId] || 0;
+          if (task.done_at > prev) history[taskId] = task.done_at;
+        }
+      });
+    });
+    CHK_TRANSVERSAL_HISTORY = history;
+    CHK_TRANSVERSAL_HISTORY_LOADED = true;
+  } catch (e) {
+    console.warn('[chk] transversal history failed', e);
+    CHK_TRANSVERSAL_HISTORY_LOADED = true; // give up; show "no record" state
+  } finally {
+    CHK_TRANSVERSAL_HISTORY_LOADING = false;
+  }
+}
+
 async function chkPurgeOld(){
   try {
     const r = await fetch(chkUrl(CHK_RUNS_PATH) + '?shallow=true');
@@ -6988,8 +7092,16 @@ function chkRender(){
   </div>`;
 
   if (CHK_EDIT_GATE_OPEN) html += chkRenderPinGate();
+  html += chkRenderImageModal();
 
   root.innerHTML = html;
+
+  // Lazy-load Transversal history the first time the user enters that sub-tab.
+  // The chkRender re-runs on completion, so the empty rows pick up "last done"
+  // labels without an explicit refresh.
+  if (CHK_SECTION === 'bar' && chkVisiblePhase() === 'transversal' && !CHK_TRANSVERSAL_HISTORY_LOADED && !CHK_TRANSVERSAL_HISTORY_LOADING){
+    chkLoadTransversalHistory().then(() => chkRender());
+  }
 }
 
 function chkRenderCarryover(phase){
@@ -7045,13 +7157,38 @@ function chkRenderTaskRow(task, taskRun, phase, opts){
   const editor = isCommentOpen ? chkRenderCommentEditor(task.id, run.comment || '', !isDone) : '';
   const commentBtn = opts.carryover ? '' : `<button class="chk-comment-btn${hasComment ? ' has-comment' : ''}" onclick="chkOpenComment('${task.id}')" title="${chkEscapeHtml(t('chkCommentBtn'))}">💬</button>`;
 
+  // Reference image thumbnail (only if the task has one). onerror hides the
+  // button silently when the asset isn't on disk yet — keeps the row clean
+  // until the operator drops the image into assets/.
+  const imageThumb = task.image
+    ? `<button class="chk-task-image-btn" onclick="chkOpenImageModal('${chkEscapeHtml(task.image)}')" aria-label="${chkEscapeHtml(t('chkImageRefAlt'))}"><img src="${chkEscapeHtml(task.image)}" alt="${chkEscapeHtml(t('chkImageRefAlt'))}" onerror="this.parentElement.style.display='none'"></button>`
+    : '';
+
+  // "Last done" sub-label for Bar > Transversal (long-cadence tasks).
+  let historyLine = '';
+  if (!opts.carryover && CHK_SECTION === 'bar' && phase === 'transversal'){
+    const lastMs = CHK_TRANSVERSAL_HISTORY[task.id];
+    if (lastMs){
+      const daysAgo = Math.floor((Date.now() - lastMs) / 86400000);
+      let label;
+      if (daysAgo <= 0)      label = t('chkLastDoneToday');
+      else if (daysAgo === 1) label = t('chkLastDoneYesterday');
+      else                    label = (t('chkLastDoneDaysAgo') || '').replace('{n}', daysAgo);
+      historyLine = `<div class="chk-task-history">${chkEscapeHtml(label)}</div>`;
+    } else if (CHK_TRANSVERSAL_HISTORY_LOADED){
+      historyLine = `<div class="chk-task-history chk-task-history-none">${chkEscapeHtml(t('chkLastDoneNone'))}</div>`;
+    }
+  }
+
   return `<li class="${cls}">
     <button class="chk-checkbox" ${checkboxClick} aria-label="toggle">${isDone ? '✓' : ''}</button>
     <div class="chk-task-body">
       <div class="chk-task-label">${chkEscapeHtml(task.label)}</div>
       ${meta}
+      ${historyLine}
       ${commentLine}
       ${editor}
+      ${imageThumb}
     </div>
     ${commentBtn}
   </li>`;
@@ -7238,7 +7375,11 @@ const CHK_SEED = {
       'Desmontar y limpiar estación de vinos, copas, etc. Vinos abiertos deben estar rotulados con números pequeños en la etiqueta trasera del vino (lápiz pasta o plumón punta fina). Es posible juntar conchos, SÓLO con la misma fecha de rotulación.',
       'Cerrar mesas de la cena en sistema.',
       'Montar salón para desayuno según la distribución de mesas que indica reporte "comedor" del día siguiente (solicitar a recepción), siempre montar al menos 2 mesas extras.',
-      'Limpiar mesas y poner chilewitch con etiqueta hacia abajo. Montaje: servilleta al centro (2 dedos sobre el borde), tenedor a la izquierda alineado, cuchillo a la derecha seguido por cuchara, taza en la esquina superior diagonal derecha de la servilleta. Guiarse por imagen de referencia entregada por GES.',
+      // Esta tarea tiene imagen de referencia adjunta. Cuando un item del
+      // SEED es un objeto con { label, image }, el render muestra un
+      // thumbnail clickable que abre la imagen en fullscreen.
+      { label: 'Limpiar mesas y poner chilewitch con etiqueta hacia abajo. Montaje: servilleta al centro (2 dedos sobre el borde), tenedor a la izquierda alineado, cuchillo a la derecha seguido por cuchara, taza en la esquina superior diagonal derecha de la servilleta. Guiarse por imagen de referencia entregada por GES.',
+        image: 'assets/montaje-desayuno-mesa.jpg' },
       'Todas las mesas deben tener azucarero, endulzante y sal en el centro (saleros piedra prioridad mesas 50’s y 40’s). De izquierda a derecha: sal, endulzante y azucarero con la cuchara hacia la derecha.',
       'Dejar preparados los porta menú con los menús de desayuno en el sector de buffet.',
       'Montar ambos mesones con el buffet de desayuno, todo con sus respectivas pinzas y carteles. Seguir imagen de referencia enviada por GES.',
