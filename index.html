@@ -881,22 +881,48 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .chk-phase-chip .chk-active-dot { width:6px; height:6px; border-radius:50%; background:#c07d2a; animation:staffShiftPulse 1800ms ease-in-out infinite; }
 .chk-phase-chip .chk-active-label { font-size:9px; opacity:0.7; letter-spacing:0.1em; }
 
-.chk-meta-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.75rem; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; flex-wrap:wrap; }
+.chk-meta-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.5rem; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; flex-wrap:wrap; }
 .chk-meta { color:var(--text-tertiary); }
 .chk-progress { color:#c07d2a; }
+/* E · Progress bar — slim gold fill below the meta row, animates as marks
+   change. Reads as the "this is how much of the service you've covered"
+   beat of the checklist. */
+.chk-progress-bar { width:100%; height:3px; background:rgba(192,125,42,0.1); border-radius:2px; overflow:hidden; margin-bottom:1.2rem; }
+.chk-progress-fill { height:100%; background:#c07d2a; border-radius:2px; transition:width .45s cubic-bezier(0.4,0,0.2,1); width:0; }
+/* C · Carry-over collapsed when empty — single muted line instead of a
+   full panel. The full panel only renders when there's actual carry. */
+.chk-carryover-empty-inline { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.08em; color:rgba(192,125,42,0.55); margin:0 0 1rem; padding:0; text-transform:lowercase; }
+/* D · When the user is in the Checklist tab, the ops-strip collapses to the
+   essentials: the turno head (AM/PM + viajeros) stays visible because the
+   GEO needs that context, but the senior/comedor/apoyo rows and the
+   desserts strip get hidden. The other tabs (Menú, Vinos, …) keep the full
+   strip because they're reference-y and benefit from the roster.
+   Click on the panel re-expands (handled in JS as a toggle, optional). */
+body.in-checklist .desserts-strip { display:none; }
+body.in-checklist .staffing-panel { margin-bottom:0; }
+body.in-checklist .staffing-panel .staffing-row { display:none; }
+body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
+/* G · Hide the language toggle until the program actually uses other
+   languages. Keep the dict and setLang intact in case it's reactivated. */
+.lang-toggle { display:none !important; }
 
 .chk-carryover { background:rgba(192,125,42,0.06); border:0.5px solid rgba(192,125,42,0.3); border-radius:10px; padding:12px 14px; margin-bottom:1.25rem; }
 .chk-carryover-title { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.12em; color:#c07d2a; text-transform:uppercase; margin-bottom:8px; }
 .chk-carryover-empty { font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-tertiary); }
 
 .chk-task-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }
-.chk-task { display:flex; gap:10px; padding:10px 12px; border:0.5px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.015); transition:background .15s, border-color .15s; align-items:flex-start; }
+/* A · Editorial rows: no cards, no per-row borders — a thin hairline between
+   tasks reads like a printed manual. Pending-prominent uses a sutil gold
+   left tick instead of a red background. */
+.chk-task { display:flex; gap:14px; padding:16px 0 18px; border:0; border-radius:0; background:none; border-bottom:0.5px solid rgba(255,255,255,0.05); transition:opacity .2s; align-items:flex-start; }
+.chk-task:last-child { border-bottom:0; }
 .chk-task:hover { border-color:rgba(192,125,42,0.3); }
-.chk-task.done { background:rgba(192,125,42,0.05); border-color:rgba(192,125,42,0.2); }
+.chk-task.done { background:none; opacity:0.5; }
 .chk-task.done .chk-task-label { text-decoration:line-through; color:var(--text-tertiary); }
-.chk-task.carryover { border-color:rgba(192,125,42,0.4); }
-.chk-task.pending-prominent { background:rgba(217,83,79,0.04); }
-.chk-checkbox { flex-shrink:0; width:22px; height:22px; border-radius:5px; border:1.5px solid rgba(192,125,42,0.5); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; color:transparent; transition:all .15s; margin-top:2px; }
+.chk-task.carryover { padding-left:10px; border-left:0.5px solid rgba(192,125,42,0.4); }
+.chk-task.pending-prominent { background:none; }
+/* B · Lighter checkbox (1px instead of 2px), warmer hover */
+.chk-checkbox { flex-shrink:0; width:20px; height:20px; border-radius:4px; border:1px solid rgba(192,125,42,0.4); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; color:transparent; transition:all .15s; margin-top:3px; }
 .chk-checkbox:hover { background:rgba(192,125,42,0.1); }
 .chk-task.done .chk-checkbox { background:#c07d2a; border-color:#c07d2a; color:#fff; }
 .chk-task-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
@@ -919,11 +945,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* "Última vez: hace X días" sub-label under Transversal tasks. */
 .chk-task-history { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:#c07d2a; margin-top:3px; opacity:0.85; }
 .chk-task-history.chk-task-history-none { color:var(--text-tertiary); opacity:0.55; }
-.chk-comment-btn { flex-shrink:0; background:none; border:none; cursor:pointer; padding:4px 6px; color:var(--text-tertiary); font-size:14px; border-radius:4px; transition:all .15s; margin-top:1px; }
-.chk-comment-btn:hover { color:#c07d2a; background:rgba(192,125,42,0.08); }
+/* B · Comment button as a quiet monoline icon (no emoji), no pending dot
+   (the row's left-tick already conveys "needs attention"). */
+.chk-comment-btn { flex-shrink:0; background:none; border:none; cursor:pointer; padding:6px; color:rgba(192,125,42,0.45); border-radius:4px; transition:color .15s; margin-top:2px; display:flex; align-items:center; justify-content:center; }
+.chk-comment-btn svg { width:16px; height:16px; display:block; }
+.chk-comment-btn:hover { color:#c07d2a; }
 .chk-comment-btn.has-comment { color:#c07d2a; }
-.chk-task.pending-prominent .chk-comment-btn { color:#c07d2a; }
-.chk-task.pending-prominent .chk-comment-btn::after { content:''; display:block; width:6px; height:6px; border-radius:50%; background:#c07d2a; position:absolute; }
+.chk-task.pending-prominent .chk-comment-btn { color:rgba(192,125,42,0.7); }
 
 .chk-comment-editor { margin-top:8px; display:flex; flex-direction:column; gap:6px; padding:8px; background:rgba(255,255,255,0.02); border:0.5px solid rgba(192,125,42,0.25); border-radius:6px; }
 .chk-comment-editor textarea { resize:vertical; min-height:54px; width:100%; padding:6px 8px; border-radius:4px; border:0.5px solid var(--border); background:rgba(0,0,0,0.15); color:var(--text-primary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:14px; box-sizing:border-box; }
@@ -940,10 +968,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .chk-coming-soon-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:26px; color:#c07d2a; margin-bottom:6px; }
 .chk-coming-soon-body { font-family:'Courier Prime','Courier New',monospace; font-size:12px; color:var(--text-tertiary); letter-spacing:0.05em; }
 
-.chk-footer { margin-top:1.5rem; display:flex; gap:8px; justify-content:flex-end; align-items:center; flex-wrap:wrap; }
-.chk-edit-btn { background:none; border:0.5px solid var(--border); color:var(--text-secondary); padding:8px 14px; border-radius:6px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; cursor:pointer; transition:all .15s; }
-.chk-edit-btn:hover { border-color:rgba(192,125,42,0.4); color:#c07d2a; }
-.chk-edit-btn.exit { background:rgba(192,125,42,0.12); border-color:rgba(192,125,42,0.5); color:#c07d2a; }
+/* F · Edit button as a discreet link (no card), aligned right at the foot */
+.chk-footer { margin-top:1.75rem; padding-top:1rem; display:flex; gap:12px; justify-content:flex-end; align-items:center; flex-wrap:wrap; border-top:0.5px solid rgba(255,255,255,0.04); }
+.chk-edit-btn { background:none; border:0; color:rgba(192,125,42,0.55); padding:4px 0; font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.1em; text-transform:lowercase; cursor:pointer; transition:color .15s; }
+.chk-edit-btn:hover { color:#c07d2a; }
+.chk-edit-btn.exit { color:#c07d2a; }
 
 /* Edit mode rows */
 .chk-edit-banner { background:rgba(192,125,42,0.08); border:0.5px solid rgba(192,125,42,0.4); border-radius:8px; padding:10px 14px; margin-bottom:1rem; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; color:#c07d2a; }
@@ -2067,6 +2096,10 @@ function setTab(tab, el) {
   const chkBtn = document.getElementById('tab-btn-checklist');
   if (chkBtn) chkBtn.classList.toggle('active', tab === 'checklist');
   if (el && el !== chkBtn) el.classList.add('active');
+  // D · Collapse the ops-strip (staffing + desserts) when the user is in
+  // Checklist — the operator wants the task list above the fold, not the
+  // staffing roster that they already know.
+  document.body.classList.toggle('in-checklist', tab === 'checklist');
   ['menus','vinos','cocktails','cafe','comandera','rol','checklist'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'cocktails'){
     renderCocktails();
@@ -2356,8 +2389,12 @@ setLang(currentLang, document.querySelectorAll('.lang-btn')[['es','en','pt'].ind
 })();
 
 // ── LANGUAGE SHORTCUTS ───────────────────────────────────────────────────────
-// Desktop: Tab key cycles ES → EN → PT (skipped when focus is inside an input)
+// G (2026-05-25): the language cycling shortcut and swipe gesture are
+// disabled until the program has a real bilingual/trilingual audience. The
+// LANGS array, cycleLang and setLang stay defined so reactivation is a one-
+// liner — the Tab key handler below simply skips the call.
 const LANGS = ['es', 'en', 'pt'];
+const CHK_LANG_CYCLING_ENABLED = false;
 function cycleLang(dir) {
   const idx = LANGS.indexOf(currentLang);
   const next = LANGS[(idx + dir + LANGS.length) % LANGS.length];
@@ -2368,7 +2405,7 @@ document.addEventListener('keydown', function(e) {
   const tag = document.activeElement?.tagName;
   const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 
-  if (e.key === 'Tab' && !typing) {
+  if (e.key === 'Tab' && !typing && CHK_LANG_CYCLING_ENABLED) {
     e.preventDefault();
     cycleLang(e.shiftKey ? -1 : 1);
     return;
@@ -2440,6 +2477,10 @@ document.addEventListener('keydown', function(e) {
     }
     const dx = e.changedTouches[0].clientX - sx;
     if (Math.abs(dx) < 45) { springBack(); return; }  // too short — bounce back
+    // G · Swipe-to-cycle-language disabled (see CHK_LANG_CYCLING_ENABLED).
+    // Bounce back without firing cycleLang. The gesture detection stays in
+    // place so reactivation is one flag flip.
+    if (!CHK_LANG_CYCLING_ENABLED) { springBack(); return; }
     const dir = dx < 0 ? 1 : -1;
     const vw  = window.innerWidth;
     busy = true;
@@ -7072,10 +7113,15 @@ function chkRender(){
     if (live.viajeros != null) viaj = live.viajeros;
   }
   if (viaj != null) metaInfo += ` · ${viaj} ${chkEscapeHtml(t('staffViajeros'))}`;
+  // E · Progress: a slim gold bar under a condensed meta line. The numeric
+  // (5/15) lives in the same row as the meta so the user sees context +
+  // progress at a glance, and the bar visualises completion.
+  const pct = activeTasks.length ? Math.round((doneCount / activeTasks.length) * 100) : 0;
   html += `<div class="chk-meta-row">
     <span class="chk-meta">${metaInfo}</span>
-    <span class="chk-progress">${doneCount}/${activeTasks.length} ${chkEscapeHtml(t('chkProgress'))}</span>
-  </div>`;
+    <span class="chk-progress">${doneCount}/${activeTasks.length}</span>
+  </div>
+  <div class="chk-progress-bar"><div class="chk-progress-fill" style="width:${pct}%"></div></div>`;
 
   html += chkRenderCarryover(visible);
 
@@ -7119,19 +7165,19 @@ function chkRenderCarryover(phase){
   );
   // If prev run was never opened (no meta), don't pretend everything is pending — show empty.
   const prevWasOpened = !!(prev && prev.meta);
-  let html = `<div class="chk-carryover">
-    <div class="chk-carryover-title">${chkEscapeHtml(t('chkCarryoverTitle'))} · ${chkEscapeHtml(t(srcDef.labelKey))}</div>`;
+  // C · When the previous turn left nothing pending (or wasn't opened at
+  // all), collapse to a single muted line instead of a full panel.
   if (!prevWasOpened || !carry.length){
-    html += `<div class="chk-carryover-empty">${chkEscapeHtml(t('chkCarryoverEmpty'))}</div>`;
-  } else {
-    html += `<ul class="chk-task-list">`;
-    carry.forEach(task => {
-      const taskRun = prev.tasks && prev.tasks[task.id];
-      html += chkRenderTaskRow(task, taskRun, src.moment, { carryover:true, sourcePhaseLabel: t(srcDef.labelKey) });
-    });
-    html += `</ul>`;
+    return `<p class="chk-carryover-empty-inline">✓ ${chkEscapeHtml(t('chkCarryoverEmpty'))}</p>`;
   }
-  html += `</div>`;
+  let html = `<div class="chk-carryover">
+    <div class="chk-carryover-title">${chkEscapeHtml(t('chkCarryoverTitle'))} · ${chkEscapeHtml(t(srcDef.labelKey))}</div>
+    <ul class="chk-task-list">`;
+  carry.forEach(task => {
+    const taskRun = prev.tasks && prev.tasks[task.id];
+    html += chkRenderTaskRow(task, taskRun, src.moment, { carryover:true, sourcePhaseLabel: t(srcDef.labelKey) });
+  });
+  html += `</ul></div>`;
   return html;
 }
 
@@ -7157,7 +7203,10 @@ function chkRenderTaskRow(task, taskRun, phase, opts){
   const commentLine = (hasComment && !isCommentOpen)
     ? `<div class="chk-task-comment">${chkEscapeHtml(run.comment)}</div>` : '';
   const editor = isCommentOpen ? chkRenderCommentEditor(task.id, run.comment || '', !isDone) : '';
-  const commentBtn = opts.carryover ? '' : `<button class="chk-comment-btn${hasComment ? ' has-comment' : ''}" onclick="chkOpenComment('${task.id}')" title="${chkEscapeHtml(t('chkCommentBtn'))}">💬</button>`;
+  // Monoline speech-bubble icon (replaces the loud 💬 emoji). Stays in the
+  // gold tonal family; intensity changes via .has-comment / hover.
+  const commentIcon = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.25h11v6h-4.5L6 12.5v-2.25H2.5z"/></svg>`;
+  const commentBtn = opts.carryover ? '' : `<button class="chk-comment-btn${hasComment ? ' has-comment' : ''}" onclick="chkOpenComment('${task.id}')" title="${chkEscapeHtml(t('chkCommentBtn'))}" aria-label="${chkEscapeHtml(t('chkCommentBtn'))}">${commentIcon}</button>`;
 
   // Reference image thumbnail (only if the task has one). onerror hides the
   // button silently when the asset isn't on disk yet — keeps the row clean
