@@ -904,10 +904,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .chk-task-meta { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:var(--text-tertiary); }
 .chk-task-meta .chk-carry-tag { color:#c07d2a; }
 .chk-task-comment { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:13px; color:var(--text-secondary); margin-top:4px; padding:4px 8px; background:rgba(255,255,255,0.02); border-left:2px solid rgba(192,125,42,0.4); border-radius:0 4px 4px 0; }
-/* Reference image thumbnail attached to a task. Click → fullscreen modal. */
-.chk-task-image-btn { display:inline-block; margin-top:8px; padding:0; background:none; border:0.5px solid var(--border); border-radius:4px; cursor:zoom-in; overflow:hidden; line-height:0; }
-.chk-task-image-btn img { width:96px; height:64px; object-fit:cover; display:block; transition:opacity .15s; }
-.chk-task-image-btn:hover img { opacity:0.85; }
+/* Reference image attached to a task. Full width of the task body so it
+   reads as part of the instruction itself; height grows with the image's
+   own aspect ratio. Click → fullscreen modal. */
+.chk-task-image-btn { display:block; width:100%; margin-top:10px; padding:0; background:none; border:0.5px solid var(--border); border-radius:4px; cursor:zoom-in; overflow:hidden; line-height:0; }
+.chk-task-image-btn img { width:100%; height:auto; display:block; transition:opacity .15s; }
+.chk-task-image-btn:hover img { opacity:0.9; }
 /* Fullscreen modal for the reference image. Click outside or × to close. */
 .chk-image-modal { position:fixed; inset:0; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center; z-index:9999; cursor:zoom-out; animation:chkModalFadeIn 0.15s ease-out; }
 .chk-image-modal-img { max-width:92vw; max-height:88vh; border-radius:4px; box-shadow:0 8px 32px rgba(0,0,0,0.5); cursor:default; }
