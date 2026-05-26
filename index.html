@@ -394,6 +394,77 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-course-divider::before, .cmd-course-divider::after { content:''; flex:1; height:0.5px; background:rgba(202,138,4,0.32); }
 .cmd-course-divider span { flex:0 0 auto; }
 .cmd-course-divider:first-child { margin-top:0; }
+/* Batch dividers — define the two buckets in the ticket: */
+/*   .is-pending → "Por enviar"  (amber, action needed)   */
+/*   .is-sent    → "Enviado · 21:34"  (gold, confirmed)   */
+/* Within a batch, course dividers still group by Entrada/Plato/Postre. */
+.cmd-batch-divider { display:flex; align-items:center; gap:10px; margin:16px 0 10px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; }
+.cmd-batch-divider::before, .cmd-batch-divider::after { content:''; flex:1; height:0.5px; }
+.cmd-batch-divider .cmd-batch-label { flex:0 0 auto; }
+.cmd-batch-divider .cmd-batch-time { font-family:'Courier Prime','Courier New',monospace; font-style:normal; font-size:11px; letter-spacing:0.08em; margin-left:6px; }
+.cmd-batch-divider:first-child { margin-top:0; }
+.cmd-batch-divider.is-pending { color:#f6c46b; }
+.cmd-batch-divider.is-pending::before, .cmd-batch-divider.is-pending::after { background:rgba(246,196,107,0.45); }
+.cmd-batch-divider.is-pending .cmd-batch-time { color:rgba(246,196,107,0.7); }
+.cmd-batch-divider.is-sent { color:var(--gold); }
+.cmd-batch-divider.is-sent::before, .cmd-batch-divider.is-sent::after { background:rgba(202,138,4,0.55); }
+.cmd-batch-divider.is-sent .cmd-batch-time { color:rgba(202,138,4,0.7); }
+/* Already-sent items: subtle dim so the eye lands on Por enviar instead. */
+.cmd-line.is-sent { opacity:0.78; }
+.cmd-line.is-sent .cmd-line-grip { visibility:hidden; }
+/* Send CTA — the primary action in the waiter footer when there are open */
+/* items. Amber gradient (matches "Por enviar" header), full-width feel. */
+.cmd-send-btn { background:linear-gradient(135deg, #d49b3a, #b67d1f); color:#1a1a1a; border:0.5px solid rgba(202,138,4,0.7); border-radius:var(--radius-md); padding:10px 18px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; font-style:italic; font-weight:600; letter-spacing:0.04em; cursor:pointer; box-shadow:0 0 0 0 rgba(246,196,107,0.5); animation:cmdSendBtnPulse 2.2s ease-in-out infinite; }
+.cmd-send-btn:hover { filter:brightness(1.05); }
+@keyframes cmdSendBtnPulse {
+  0%, 100% { box-shadow:0 0 0 0 rgba(246,196,107,0.0); }
+  50%      { box-shadow:0 0 0 6px rgba(246,196,107,0.18); }
+}
+/* Recibidor view — mesa cards. Glow while lastSentAt > recibidorSeenAt. */
+.cmd-recibidor-card { position:relative; display:flex; align-items:center; gap:14px; padding:14px 16px; margin-bottom:10px; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); cursor:pointer; transition:transform .15s, border-color .2s; }
+.cmd-recibidor-card:hover { transform:translateY(-1px); }
+.cmd-recibidor-card.is-new { border-color:var(--gold); animation:cmdRecibidorGlow 1.6s ease-in-out infinite; }
+@keyframes cmdRecibidorGlow {
+  0%, 100% { box-shadow:0 0 0 0 rgba(202,138,4,0); }
+  50%      { box-shadow:0 0 0 4px rgba(202,138,4,0.45); }
+}
+.cmd-recibidor-card .cmd-mesa-num { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:28px; color:var(--gold); min-width:48px; }
+.cmd-recibidor-card .cmd-rcb-info { flex:1; min-width:0; }
+.cmd-recibidor-card .cmd-rcb-meta { font-size:13px; color:rgba(255,255,255,0.78); }
+.cmd-recibidor-card .cmd-rcb-sub  { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; color:rgba(255,255,255,0.55); margin-top:3px; }
+.cmd-recibidor-card .cmd-rcb-new-chip { font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); border:0.5px solid rgba(202,138,4,0.7); border-radius:3px; padding:2px 6px; flex:0 0 auto; }
+/* Recibidor detail modal — items grouped by batch (Enviado · HH:MM) */
+.cmd-rcb-batch-head { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:15px; color:var(--gold); margin:14px 0 6px; padding-bottom:4px; border-bottom:0.5px solid rgba(202,138,4,0.35); display:flex; justify-content:space-between; align-items:baseline; }
+.cmd-rcb-batch-head .cmd-rcb-batch-time { font-family:'Courier Prime','Courier New',monospace; font-style:normal; font-size:11px; letter-spacing:0.08em; color:rgba(202,138,4,0.7); }
+.cmd-rcb-line { display:flex; gap:10px; padding:5px 0; border-top:0.5px solid rgba(255,255,255,0.05); font-size:14px; }
+.cmd-rcb-line:first-child { border-top:0; }
+.cmd-rcb-line .cmd-rcb-diner { color:#9ec9ff; font-family:'Courier Prime','Courier New',monospace; font-size:12px; min-width:30px; }
+.cmd-rcb-line .cmd-rcb-qty   { color:rgba(255,255,255,0.6); font-family:'Courier Prime','Courier New',monospace; font-size:12px; min-width:24px; }
+.cmd-rcb-line.is-cancelled { opacity:0.45; }
+.cmd-rcb-line.is-cancelled .cmd-rcb-name { text-decoration:line-through; }
+.cmd-rcb-line .cmd-line-note { display:block; color:rgba(202,138,4,0.85); font-style:italic; font-size:12px; margin-left:54px; }
+/* Freshness halo on newly-added items. <60s: pulsing gold accent + "nuevo" */
+/* chip. 60-180s: static gold accent. After: normal. Driven by addedAt; */
+/* refreshed in place by the 1s timer tick (no full re-render). */
+.cmd-line.is-fresh { background:rgba(202,138,4,0.10); box-shadow:inset 3px 0 0 var(--gold); border-radius:4px; animation:cmdFreshPulse 1.8s ease-in-out infinite; }
+.cmd-line.is-recent { box-shadow:inset 3px 0 0 rgba(202,138,4,0.55); border-radius:4px; }
+@keyframes cmdFreshPulse {
+  0%, 100% { background:rgba(202,138,4,0.06); }
+  50%      { background:rgba(202,138,4,0.16); }
+}
+.cmd-fresh-chip { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); border:0.5px solid rgba(202,138,4,0.5); border-radius:3px; padding:1px 5px; margin-left:8px; vertical-align:middle; }
+/* Soft-cancelled items: kept on the ticket as audit trail, struck through */
+/* and dimmed. The ✕ button is hidden so they cannot be re-cancelled. */
+.cmd-line.is-cancelled { opacity:0.45; }
+.cmd-line.is-cancelled .cmd-line-name { text-decoration:line-through; }
+.cmd-line.is-cancelled .cmd-line-btn.cmd-rm { display:none; }
+.cmd-cancelled-chip { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#ff8a80; border:0.5px solid rgba(255,138,128,0.45); border-radius:3px; padding:1px 5px; margin-left:8px; vertical-align:middle; }
+/* Change-mesa modal: inline error text under the numpad when collision. */
+.cmd-change-err { color:#ff8a80; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-align:center; margin-top:8px; min-height:14px; }
+/* "Cambiar mesa" trigger in active header — sits next to the timer chip, */
+/* low-emphasis so it doesn't compete with the close-mesa action. */
+.cmd-change-mesa-btn { background:transparent; color:rgba(255,255,255,0.62); border:0.5px solid rgba(255,255,255,0.18); border-radius:var(--radius-md); padding:6px 10px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; cursor:pointer; }
+.cmd-change-mesa-btn:hover { color:var(--gold); border-color:rgba(202,138,4,0.55); }
 
 /* Drag-to-reorder visuals. The grip handle is the leftmost cell of the
    line; only it triggers drag (the rest of the row stays tappable for the
@@ -1128,9 +1199,28 @@ let DESSERTS_FORM_OPEN      = false;
 // {auto-id} where each auto-id is one comanda (mesa+sitting). See module
 // block for shape and lifecycle. PIN gate at first tap on the tab.
 const COMANDA_PATH          = 'comandas';
-const COMANDA_PIN_CODE      = '666';
+const COMANDA_PIN_CODE      = '666';                 // waiter (E-Check)
+const COMANDA_RECIBIDOR_PIN = '777';                 // expediter / pase
 const COMANDA_AUTOCLOSE_MS  = 12 * 60 * 60 * 1000;  // open >12h → auto-close
 const COMANDA_PURGE_DAYS    = 30;                    // closed >30d → purge
+// Batch model: items live in one of two buckets per mesa — 'Por enviar'
+// (status:'open', no sentAt) or 'Enviado · HH:MM' (status:'sent', sentAt
+// set when the waiter confirmed the batch). Batches are defined by sentAt,
+// not by time gaps. Adding a new item to a fully-sent mesa drops it into
+// a fresh 'Por enviar' batch and re-arms the Enviar button.
+// Recibidor (PIN 777) sees one card per mesa with at least one sent item;
+// the card glows while lastSentAt > recibidorSeenAt (i.e., the latest
+// batch hasn't been opened). Tapping the card persists recibidorSeenAt
+// and the glow extinguishes server-side across devices.
+// Freshness halo: items <FRESH_MS get a pulsing gold border + "nuevo" chip,
+// items <FRESH_SOFT_MS get a static gold accent. After that, normal styling.
+// The 1s timer tick refreshes these classes in place (no full re-render).
+const COMANDA_FRESH_MS       = 60 * 1000;
+const COMANDA_FRESH_SOFT_MS  = 180 * 1000;
+// Soft-cancel threshold: pressing ✕ on an item older than this marks it
+// cancelled (struck through, kept in the record) instead of deleting it.
+// Newer items still delete silently — they were just typed, no audit value.
+const COMANDA_SOFT_CANCEL_MS = 5 * 60 * 1000;
 let COMANDA_AUTHED          = false;
 let COMANDA_VIEW            = 'gate';   // 'gate' | 'home' | 'new' | 'active'
 let COMANDA_PIN_BUFFER      = '';
@@ -1145,6 +1235,14 @@ let COMANDA_NEW_MESA_BUF    = '';
 let COMANDA_NEW_DINERS      = 2;
 let COMANDA_NOTE_EDIT_ID    = null;     // item id whose note dialog is open
 let COMANDA_FULL_OPEN       = false;    // "ver comanda completa" modal
+let COMANDA_CHANGE_MESA_OPEN= false;    // "cambiar n° de mesa" modal flag
+let COMANDA_CHANGE_MESA_BUF = '';       // numpad buffer for new table #
+let COMANDA_CHANGE_MESA_ERR = '';       // 'taken' when collision detected
+let COMANDA_ROLE            = 'waiter'; // 'waiter' (666) | 'recibidor' (777)
+let COMANDA_RECIBIDOR_LIST  = [];       // mesas with sent items, for recibidor home
+let COMANDA_RECIBIDOR_VIEW_ID = null;   // mesa currently open in recibidor detail
+let COMANDA_RECIBIDOR_DETAIL = null;    // full data of the mesa in detail view
+let COMANDA_RECIBIDOR_POLL  = null;     // poll interval id for recibidor home
 let COMANDA_TIMER_INTERVAL  = null;
 let COMANDA_POLL_INTERVAL   = null;
 let COMANDA_CUSTOM_OPEN     = false;
@@ -1241,7 +1339,7 @@ const UI = {
     rolUpdatedHours:'actualizado hace {n} h',
     rolUpdatedOn:'actualizado el {date}',
     tabComandera:'E-Check',
-    cmdPinTitle:'Comandera', cmdPinSub:'Código de mesero', cmdPinError:'Código incorrecto',
+    cmdPinTitle:'Comandera', cmdPinSub:'Código de acceso', cmdPinError:'Código incorrecto',
     cmdHomeTitle:'Mesas activas', cmdHomeEmpty:'No hay mesas abiertas',
     cmdNewMesaBtn:'+ Nueva mesa',
     cmdNewMesaTitle:'Abrir comanda', cmdMesaNumLabel:'N° de mesa', cmdDinersLabel:'Comensales',
@@ -1260,6 +1358,15 @@ const UI = {
     cmdNotePlaceholder:'Punto medio · sin cebolla · alérgico al maní…',
     cmdNoteSave:'Guardar', cmdNoteCancel:'Cancelar',
     cmdItemRemove:'Quitar',
+    cmdChangeMesa:'Cambiar mesa', cmdChangeMesaTitle:'Cambiar n° de mesa',
+    cmdMesaTaken:'Esa mesa ya está abierta',
+    cmdFreshChip:'nuevo',
+    cmdPendingBatch:'Por enviar', cmdSentBatch:'Enviado',
+    cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
+    cmdRecibidorHome:'Pedidos recibidos', cmdRecibidorEmpty:'Sin pedidos enviados aún',
+    cmdRecibidorBack:'← Volver', cmdRecibidorNewBatch:'nuevo envío',
+    cmdLastSent:'último envío', cmdSentItems:'enviados',
+    cmdItemCancelled:'cancelado',
     cmdCustomTitle:'Producto especial',
     cmdCustomNamePh:'Nombre del producto', cmdCustomCatPh:'Categoría (jugo, gaseosa…)',
     cmdCustomAdd:'Agregar', cmdCustomCancel:'Cancelar',
@@ -1322,7 +1429,7 @@ const UI = {
     rolUpdatedHours:'updated {n} h ago',
     rolUpdatedOn:'updated on {date}',
     tabComandera:'E-Check',
-    cmdPinTitle:'Order pad', cmdPinSub:'Server access code', cmdPinError:'Wrong code',
+    cmdPinTitle:'Order pad', cmdPinSub:'Access code', cmdPinError:'Wrong code',
     cmdHomeTitle:'Active tables', cmdHomeEmpty:'No tables open',
     cmdNewMesaBtn:'+ New table',
     cmdNewMesaTitle:'Open table', cmdMesaNumLabel:'Table #', cmdDinersLabel:'Guests',
@@ -1341,6 +1448,15 @@ const UI = {
     cmdNotePlaceholder:'Medium · no onion · peanut allergy…',
     cmdNoteSave:'Save', cmdNoteCancel:'Cancel',
     cmdItemRemove:'Remove',
+    cmdChangeMesa:'Change table', cmdChangeMesaTitle:'Change table #',
+    cmdMesaTaken:'That table is already open',
+    cmdFreshChip:'new',
+    cmdPendingBatch:'To send', cmdSentBatch:'Sent',
+    cmdSendBtn:'Send', cmdSendBtnCount:'Send ({n})',
+    cmdRecibidorHome:'Incoming orders', cmdRecibidorEmpty:'No orders sent yet',
+    cmdRecibidorBack:'← Back', cmdRecibidorNewBatch:'new batch',
+    cmdLastSent:'last sent', cmdSentItems:'sent',
+    cmdItemCancelled:'cancelled',
     cmdCustomTitle:'Special item',
     cmdCustomNamePh:'Item name', cmdCustomCatPh:'Category (juice, soda…)',
     cmdCustomAdd:'Add', cmdCustomCancel:'Cancel',
@@ -1403,7 +1519,7 @@ const UI = {
     rolUpdatedHours:'atualizado há {n} h',
     rolUpdatedOn:'atualizado em {date}',
     tabComandera:'E-Check',
-    cmdPinTitle:'Comanda', cmdPinSub:'Código do garçom', cmdPinError:'Código incorreto',
+    cmdPinTitle:'Comanda', cmdPinSub:'Código de acesso', cmdPinError:'Código incorreto',
     cmdHomeTitle:'Mesas ativas', cmdHomeEmpty:'Sem mesas abertas',
     cmdNewMesaBtn:'+ Nova mesa',
     cmdNewMesaTitle:'Abrir comanda', cmdMesaNumLabel:'N° de mesa', cmdDinersLabel:'Hóspedes',
@@ -1422,6 +1538,15 @@ const UI = {
     cmdNotePlaceholder:'Ao ponto · sem cebola · alergia a amendoim…',
     cmdNoteSave:'Salvar', cmdNoteCancel:'Cancelar',
     cmdItemRemove:'Remover',
+    cmdChangeMesa:'Mudar mesa', cmdChangeMesaTitle:'Mudar n° de mesa',
+    cmdMesaTaken:'Essa mesa já está aberta',
+    cmdFreshChip:'novo',
+    cmdPendingBatch:'A enviar', cmdSentBatch:'Enviado',
+    cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
+    cmdRecibidorHome:'Pedidos recebidos', cmdRecibidorEmpty:'Sem pedidos enviados ainda',
+    cmdRecibidorBack:'← Voltar', cmdRecibidorNewBatch:'novo envio',
+    cmdLastSent:'último envio', cmdSentItems:'enviados',
+    cmdItemCancelled:'cancelado',
     cmdCustomTitle:'Produto especial',
     cmdCustomNamePh:'Nome do produto', cmdCustomCatPh:'Categoria (suco, refrigerante…)',
     cmdCustomAdd:'Adicionar', cmdCustomCancel:'Cancelar',
@@ -4451,7 +4576,7 @@ const COMANDA_SOURCES = [
       // Lunch: 11:30 – 17:59 · Dinner: 18:00 – 00:59 (post-midnight)
       const isLunch  = minOfDay >= (11*60+30) && minOfDay < (18*60);
       const isDinner = (minOfDay >= 18*60) || (minOfDay < 60);
-      return DISHES.filter(d => {
+      const list = DISHES.filter(d => {
         if (d.day !== cycleDay) return false;
         const svc = d.service || '';
         if (isLunch)  return svc === 'Almuerzo' || svc === 'Almuerzo y Cena';
@@ -4461,6 +4586,19 @@ const COMANDA_SOURCES = [
         sourceId: d.id, name: d.name,
         group: d.course, allergens: d.allergens || []
       }));
+      // Standing desserts — Helado / Sorbet / Fruta del día are always on
+      // offer in both lunch and dinner alongside the rotating menu desserts.
+      // Their actual flavour of the day is fed via the header dessert strip;
+      // here the generic label is what the waiter taps. Suppressed outside
+      // service hours (when the catalog as a whole is meant to show "—").
+      if (isLunch || isDinner){
+        list.push(
+          { sourceId:'gen-helado', name:'Helado',        group:'Postre', allergens:[] },
+          { sourceId:'gen-sorbet', name:'Sorbet',        group:'Postre', allergens:[] },
+          { sourceId:'gen-fruta',  name:'Fruta del día', group:'Postre', allergens:[] }
+        );
+      }
+      return list;
     }
   },
   {
@@ -4531,11 +4669,87 @@ function comandaTimerClass(ms){
   return '';
 }
 
+// --- Batches (por enviar / enviado) ----------------------------------------
+// Partition a diner's items into batches by send action:
+//   • items with sentAt → one bucket per distinct sentAt (chronological)
+//   • items without sentAt → trailing "Por enviar" bucket (drives Send btn)
+// Cancelled items keep their sentAt (so they stay in their original batch,
+// just dimmed and struck-through). Pure function of items — same input,
+// same output across waiter / recibidor / history, no extra state to sync.
+function comandaSplitBatches(items){
+  const sentGroups = new Map();
+  const openBatch = { kind:'open', sentAt:null, items:[] };
+  (items || []).forEach(it => {
+    if (it.sentAt){
+      if (!sentGroups.has(it.sentAt)){
+        sentGroups.set(it.sentAt, { kind:'sent', sentAt: it.sentAt, items: [] });
+      }
+      sentGroups.get(it.sentAt).items.push(it);
+    } else {
+      openBatch.items.push(it);
+    }
+  });
+  const out = [...sentGroups.values()].sort((a,b) => a.sentAt - b.sentAt);
+  if (openBatch.items.length) out.push(openBatch);
+  return out;
+}
+// Count items still waiting to be sent (status:'open', not cancelled).
+// Drives the Send button's enabled state and its (N) count.
+function comandaPendingCount(items){
+  return (items || []).filter(it => !it.sentAt && it.status !== 'cancelled').length;
+}
+function comandaFmtHM(ms){
+  if (!ms) return '';
+  const d = new Date(ms);
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+// Freshness class for an item — used both at render time and by the 1s tick
+// that refreshes classes in place without a full re-render.
+function comandaFreshClass(item){
+  if (!item || !item.addedAt) return '';
+  // No halo on items the waiter has already committed to a sent batch or
+  // on cancelled items — the halo is meant to flag "you just typed this,
+  // it's still in Por enviar".
+  if (item.sentAt) return '';
+  if (item.status === 'cancelled') return '';
+  const age = Date.now() - item.addedAt;
+  if (age < COMANDA_FRESH_MS) return 'is-fresh';
+  if (age < COMANDA_FRESH_SOFT_MS) return 'is-recent';
+  return '';
+}
+// In-place refresh of fresh/recent classes on visible cmd-line rows.
+// Called from the 1s tick so the halo decays without yanking gestures.
+function comandaRefreshFreshness(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  const itemsById = {};
+  (COMANDA_ACTIVE_DATA.items || []).forEach(it => { itemsById[it.id] = it; });
+  document.querySelectorAll('.cmd-line[data-item-id]').forEach(el => {
+    const it = itemsById[el.dataset.itemId];
+    if (!it) return;
+    const cls = comandaFreshClass(it);
+    el.classList.toggle('is-fresh',  cls === 'is-fresh');
+    el.classList.toggle('is-recent', cls === 'is-recent');
+    // Drop the "nuevo" chip once the item is no longer fresh.
+    const chip = el.querySelector('.cmd-fresh-chip');
+    if (chip && cls !== 'is-fresh') chip.remove();
+  });
+}
+
 // --- Tab entry & gate ------------------------------------------------------
 function comandaEnter(){
   if (!COMANDA_AUTHED){
     COMANDA_VIEW = 'gate';
     COMANDA_PIN_BUFFER = '';
+    comandaRender();
+    return;
+  }
+  // Recibidor: re-arm polling (it was stopped when they navigated away or
+  // closed the detail), refresh the list, render. Detail view (if any)
+  // resumes where left off.
+  if (COMANDA_ROLE === 'recibidor'){
+    comandaFetchRecibidorMesas();
+    comandaStartRecibidorPolling();
     comandaRender();
     return;
   }
@@ -4561,16 +4775,26 @@ function comandaPinPress(key){
   comandaRender();
 }
 function comandaSubmitPin(){
+  // PIN double-duty: 666 → waiter (full E-Check), 777 → recibidor (read).
+  // The same gate handles both — the entered code selects the role and
+  // routes to the right home view.
   if (COMANDA_PIN_BUFFER === COMANDA_PIN_CODE){
     COMANDA_AUTHED = true;
+    COMANDA_ROLE   = 'waiter';
     COMANDA_PIN_BUFFER = '';
     COMANDA_VIEW = 'home';
     comandaAutoCloseStale();
     comandaPurgeOldDays();
     comandaFetchOpenMesas();
-    // Start the 1s tick now that we're authed — both home and active
-    // views need it. Stops only on explicit logout.
     comandaStartTimerInterval();
+  } else if (COMANDA_PIN_BUFFER === COMANDA_RECIBIDOR_PIN){
+    COMANDA_AUTHED = true;
+    COMANDA_ROLE   = 'recibidor';
+    COMANDA_PIN_BUFFER = '';
+    COMANDA_VIEW = 'home';
+    comandaFetchRecibidorMesas();
+    comandaStartRecibidorPolling();
+    comandaStartTimerInterval(); // tick used to refresh "last sent" labels
   } else {
     COMANDA_PIN_BUFFER = '';
     const err = document.getElementById('cmd-pin-error');
@@ -4758,9 +4982,59 @@ function comandaAddItem(source, sourceId, name, allergens, group){
 }
 function comandaRemoveItem(itemId){
   if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
-  COMANDA_ACTIVE_DATA.items = COMANDA_ACTIVE_DATA.items.filter(it => it.id !== itemId);
-  comandaRender();                               // immediate
-  comandaPersist({ items: COMANDA_ACTIVE_DATA.items }); // background
+  const items = COMANDA_ACTIVE_DATA.items;
+  const idx = items.findIndex(it => it.id === itemId);
+  if (idx < 0) return;
+  const target = items[idx];
+  // Pressing ✕ on an already-cancelled item performs a hard delete — gives
+  // a way out for misclicks on the audit row itself.
+  let wasSent = !!target.sentAt && target.status !== 'cancelled';
+  if (target.status === 'cancelled'){
+    COMANDA_ACTIVE_DATA.items = items.filter(it => it.id !== itemId);
+    wasSent = false; // already accounted for in a prior tick
+  } else {
+    const age = Date.now() - (target.addedAt || 0);
+    // Sent items always soft-cancel — they're part of the audit trail the
+    // recibidor sees, can't just vanish. Unsent old items also soft-cancel.
+    // Unsent + freshly typed: silent hard delete (no value in keeping).
+    if (wasSent || age >= COMANDA_SOFT_CANCEL_MS){
+      COMANDA_ACTIVE_DATA.items = items.map(it =>
+        it.id === itemId ? { ...it, status:'cancelled', cancelledAt: Date.now() } : it
+      );
+    } else {
+      COMANDA_ACTIVE_DATA.items = items.filter(it => it.id !== itemId);
+    }
+  }
+  // Cancelling a sent item alerts the recibidor — same channel as a new
+  // send. Bumping lastSentAt makes their card glow again so they re-check.
+  const patch = { items: COMANDA_ACTIVE_DATA.items };
+  if (wasSent){
+    COMANDA_ACTIVE_DATA.lastSentAt = Date.now();
+    patch.lastSentAt = COMANDA_ACTIVE_DATA.lastSentAt;
+  }
+  comandaRender();
+  comandaPersist(patch);
+}
+// Send batch: stamp every still-open, non-cancelled item with the same
+// sentAt = now. They jump from "Por enviar" into a new "Enviado · HH:MM"
+// batch atomically. lastSentAt on the mesa drives the recibidor glow:
+// when lastSentAt > recibidorSeenAt the card pulses until reviewed.
+function comandaSendBatch(){
+  if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
+  const now = Date.now();
+  let touched = false;
+  const items = COMANDA_ACTIVE_DATA.items.map(it => {
+    if (!it.sentAt && it.status !== 'cancelled'){
+      touched = true;
+      return { ...it, status:'sent', sentAt: now };
+    }
+    return it;
+  });
+  if (!touched) return;
+  COMANDA_ACTIVE_DATA.items = items;
+  COMANDA_ACTIVE_DATA.lastSentAt = now;
+  comandaRender();
+  comandaPersist({ items, lastSentAt: now });
 }
 function comandaUpdateNote(itemId, note){
   if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
@@ -4908,12 +5182,16 @@ function comandaStartTimerInterval(){
     if (COMANDA_VIEW === 'active'){
       // Single-element update — cheap. Only when the timer is running.
       const chip = document.getElementById('cmd-timer-btn');
-      if (!chip || !COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.timerStartedAt) return;
-      const ms = Date.now() - COMANDA_ACTIVE_DATA.timerStartedAt;
-      chip.textContent = '⏱ ' + comandaFmtTimer(ms);
-      chip.classList.remove('warn','urgent');
-      const cls = comandaTimerClass(ms);
-      if (cls) chip.classList.add(cls);
+      if (chip && COMANDA_ACTIVE_DATA && COMANDA_ACTIVE_DATA.timerStartedAt){
+        const ms = Date.now() - COMANDA_ACTIVE_DATA.timerStartedAt;
+        chip.textContent = '⏱ ' + comandaFmtTimer(ms);
+        chip.classList.remove('warn','urgent');
+        const cls = comandaTimerClass(ms);
+        if (cls) chip.classList.add(cls);
+      }
+      // Decay the freshness halo on item lines in place — no full re-render,
+      // so a tap mid-flight, a focused input, or a drag is not disturbed.
+      comandaRefreshFreshness();
     } else if (COMANDA_VIEW === 'home' && COMANDA_TICK_COUNT % 30 === 0){
       // Home cards display minute-resolution elapsed times; rebuild every 30s.
       comandaRender();
@@ -4950,7 +5228,7 @@ function comandaStartPolling(){
     if (_CMD_WRITE_PENDING || _CMD_WRITE_INFLIGHT) return;
     // Skip while user is actively interacting (note dialog, full-view modal,
     // or mid-drag) — re-rendering would yank their gesture.
-    if (COMANDA_NOTE_EDIT_ID || COMANDA_FULL_OPEN || (typeof CMD_DRAG !== 'undefined' && CMD_DRAG)) return;
+    if (COMANDA_NOTE_EDIT_ID || COMANDA_FULL_OPEN || COMANDA_CHANGE_MESA_OPEN || (typeof CMD_DRAG !== 'undefined' && CMD_DRAG)) return;
     // Skip if an input/textarea inside the comandera has focus right now —
     // a full re-render would destroy the input, the keyboard would disappear
     // and any typed text would be lost.
@@ -4975,6 +5253,164 @@ function comandaStartPolling(){
 }
 function comandaStopPolling(){
   if (COMANDA_POLL_INTERVAL){ clearInterval(COMANDA_POLL_INTERVAL); COMANDA_POLL_INTERVAL = null; }
+}
+
+// --- Recibidor (PIN 777) ---------------------------------------------------
+// Read-mostly view for the pase / expediter. Shows one card per mesa with
+// at least one sent item. Cards glow while lastSentAt > recibidorSeenAt;
+// tapping a card opens detail AND persists recibidorSeenAt = now, which
+// extinguishes the glow server-side for every device on the same role.
+async function comandaFetchRecibidorMesas(){
+  try {
+    const url = comandaFireUrl(comandaDateKey());
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const list = [];
+    if (data){
+      Object.entries(data).forEach(([id, c]) => {
+        if (!c || c.closedAt) return;            // only open mesas
+        const items = c.items || [];
+        // Surface only mesas that have at least one sent (or sent+cancelled)
+        // item — the waiter hasn't sent anything yet, recibidor has nothing
+        // to do with the mesa.
+        if (!items.some(it => it.sentAt)) return;
+        list.push({ id, ...c });
+      });
+    }
+    // Glowing (unseen) cards bubble to the top, then most-recently-sent.
+    list.sort((a, b) => {
+      const aNew = (a.lastSentAt || 0) > (a.recibidorSeenAt || 0);
+      const bNew = (b.lastSentAt || 0) > (b.recibidorSeenAt || 0);
+      if (aNew !== bNew) return aNew ? -1 : 1;
+      return (b.lastSentAt || 0) - (a.lastSentAt || 0);
+    });
+    COMANDA_RECIBIDOR_LIST = list;
+  } catch(e){
+    console.warn('[recibidor fetch]', e);
+    COMANDA_RECIBIDOR_LIST = [];
+  }
+  // Refresh detail data in place too, so the open mesa updates as the
+  // waiter adds/sends/cancels items without yanking the recibidor's view.
+  if (COMANDA_RECIBIDOR_VIEW_ID){
+    const fresh = COMANDA_RECIBIDOR_LIST.find(m => m.id === COMANDA_RECIBIDOR_VIEW_ID);
+    if (fresh) COMANDA_RECIBIDOR_DETAIL = fresh;
+    else {
+      // Was closed by the waiter — try a direct fetch in case it slipped
+      // out of the open list (e.g., closed since last poll).
+      try {
+        const r = await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_RECIBIDOR_VIEW_ID));
+        const d = await r.json();
+        if (d) COMANDA_RECIBIDOR_DETAIL = { id: COMANDA_RECIBIDOR_VIEW_ID, ...d };
+      } catch(e){}
+    }
+  }
+  if (currentTab === 'comandera' && COMANDA_AUTHED && COMANDA_ROLE === 'recibidor') comandaRender();
+}
+function comandaStartRecibidorPolling(){
+  comandaStopRecibidorPolling();
+  // 6s — faster than the waiter cross-device poll (8s) because new sends
+  // need to surface quickly to the pase. No interaction-skip needed: the
+  // recibidor view is read-only, so a re-render can't disturb a gesture.
+  COMANDA_RECIBIDOR_POLL = setInterval(()=>{
+    if (currentTab !== 'comandera' || COMANDA_ROLE !== 'recibidor') return;
+    comandaFetchRecibidorMesas();
+  }, 6000);
+}
+function comandaStopRecibidorPolling(){
+  if (COMANDA_RECIBIDOR_POLL){ clearInterval(COMANDA_RECIBIDOR_POLL); COMANDA_RECIBIDOR_POLL = null; }
+}
+function comandaRecibidorOpen(id){
+  COMANDA_RECIBIDOR_VIEW_ID = id;
+  const mesa = COMANDA_RECIBIDOR_LIST.find(m => m.id === id);
+  COMANDA_RECIBIDOR_DETAIL = mesa || null;
+  // Persist "seen" stamp so the glow extinguishes everywhere. Also reflect
+  // locally so the current render shows the card without glow on return.
+  const now = Date.now();
+  if (mesa){
+    mesa.recibidorSeenAt = now;
+  }
+  comandaRender();
+  fetch(comandaFireUrl(comandaDateKey() + '/' + id), {
+    method: 'PATCH',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({ recibidorSeenAt: now })
+  }).catch(()=>{});
+}
+function comandaRecibidorBack(){
+  COMANDA_RECIBIDOR_VIEW_ID = null;
+  COMANDA_RECIBIDOR_DETAIL = null;
+  comandaRender();
+}
+function comandaRenderRecibidorHome(root){
+  const list = COMANDA_RECIBIDOR_LIST;
+  const cards = list.length
+    ? list.map(c => {
+        const unseen = (c.lastSentAt || 0) > (c.recibidorSeenAt || 0);
+        const items = c.items || [];
+        const sentItems = items.filter(it => it.sentAt && it.status !== 'cancelled');
+        const lastSent = c.lastSentAt ? comandaFmtMsCompact(Date.now() - c.lastSentAt) : '—';
+        const newChip = unseen ? `<span class="cmd-rcb-new-chip">${t('cmdRecibidorNewBatch')}</span>` : '';
+        return `
+          <div class="cmd-recibidor-card ${unseen?'is-new':''}" onclick="comandaRecibidorOpen('${c.id}')">
+            <div class="cmd-mesa-num">${c.mesa}</div>
+            <div class="cmd-rcb-info">
+              <div class="cmd-rcb-meta">${sentItems.length} ${t('cmdSentItems')} · ${c.diners} ${c.diners===1?t('cmdComensal'):t('cmdComensales')}</div>
+              <div class="cmd-rcb-sub">${t('cmdLastSent')}: ${lastSent}</div>
+            </div>
+            ${newChip}
+          </div>`;
+      }).join('')
+    : `<div class="cmd-empty-state">${t('cmdRecibidorEmpty')}</div>`;
+  root.innerHTML = `
+    <div class="cmd-home-header">
+      <div class="cmd-home-title">${t('cmdRecibidorHome')}</div>
+      <button class="cmd-exit-btn" onclick="comandaLogout()">${t('cfExit')}</button>
+    </div>
+    ${cards}`;
+}
+function comandaRenderRecibidorDetail(root){
+  const c = COMANDA_RECIBIDOR_DETAIL;
+  if (!c){ COMANDA_RECIBIDOR_VIEW_ID = null; comandaRender(); return; }
+  const items = c.items || [];
+  // Group items by sentAt batch. Skip the "Por enviar" bucket — recibidor
+  // shouldn't see what hasn't been sent yet.
+  const batches = comandaSplitBatches(items).filter(b => b.kind === 'sent');
+  const batchesHtml = batches.length
+    ? batches.map(batch => {
+        const lines = batch.items.map(it => {
+          const isCancelled = it.status === 'cancelled';
+          const cls = ['cmd-rcb-line', isCancelled?'is-cancelled':''].filter(Boolean).join(' ');
+          return `
+            <div class="${cls}">
+              <div class="cmd-rcb-diner">#${it.dinerN}</div>
+              <div class="cmd-rcb-qty">${it.qty||1}×</div>
+              <div class="cmd-line-body">
+                <span class="cmd-rcb-name">${it.name}</span>${isCancelled?`<span class="cmd-cancelled-chip">${t('cmdItemCancelled')}</span>`:''}
+                ${it.notes ? `<span class="cmd-line-note">⚐ ${it.notes}</span>` : ''}
+              </div>
+            </div>`;
+        }).join('');
+        return `
+          <div class="cmd-rcb-batch">
+            <div class="cmd-rcb-batch-head">
+              <span>${t('cmdSentBatch')}</span>
+              <span class="cmd-rcb-batch-time">${comandaFmtHM(batch.sentAt)}</span>
+            </div>
+            ${lines}
+          </div>`;
+      }).join('')
+    : `<div class="cmd-empty-state">${t('cmdRecibidorEmpty')}</div>`;
+  root.innerHTML = `
+    <div class="cmd-active-header">
+      <div>
+        <div class="cmd-active-title">${t('cmdMesaPrefix')} ${c.mesa}</div>
+        <div class="cmd-active-sub">${c.diners} ${c.diners===1?t('cmdComensal'):t('cmdComensales')}</div>
+      </div>
+      <div class="cmd-active-controls">
+        <button class="cmd-mesas-btn" onclick="comandaRecibidorBack()">${t('cmdRecibidorBack')}</button>
+      </div>
+    </div>
+    ${batchesHtml}`;
 }
 
 // --- Auto-close stale + auto-purge old days ------------------------------
@@ -5026,6 +5462,11 @@ function comandaRender(){
   const root = document.getElementById('cmd-root');
   if (!root) return;
   if (!COMANDA_AUTHED) return comandaRenderGate(root);
+  if (COMANDA_ROLE === 'recibidor'){
+    return COMANDA_RECIBIDOR_VIEW_ID
+      ? comandaRenderRecibidorDetail(root)
+      : comandaRenderRecibidorHome(root);
+  }
   switch (COMANDA_VIEW){
     case 'home':   return comandaRenderHome(root);
     case 'new':    return comandaRenderNew(root);
@@ -5113,13 +5554,25 @@ function comandaRenderHistoryModal(){
     const its = items.filter(it => it.dinerN === n);
     let lines = '';
     if (its.length){
-      let prevGroup = null;
-      lines = its.map(it => {
-        const grp = comandaGroupOf(it);
-        const showDivider = (grp && grp !== prevGroup);
-        prevGroup = grp;
-        const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
-        return `${div}<div class="cmd-line"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
+      const batches = comandaSplitBatches(its);
+      lines = batches.map(batch => {
+        const isPending = batch.kind === 'open';
+        const header = isPending
+          ? `<div class="cmd-batch-divider is-pending"><span class="cmd-batch-label">${t('cmdPendingBatch')}</span></div>`
+          : `<div class="cmd-batch-divider is-sent"><span class="cmd-batch-label">${t('cmdSentBatch')}</span>${batch.sentAt?`<span class="cmd-batch-time">· ${comandaFmtHM(batch.sentAt)}</span>`:''}</div>`;
+        let prevGroup = null;
+        const inner = batch.items.map(it => {
+          const grp = comandaGroupOf(it);
+          const showDivider = (grp && grp !== prevGroup);
+          prevGroup = grp;
+          const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
+          const isCancelled = it.status === 'cancelled';
+          const isSent = !!it.sentAt && !isCancelled;
+          const cls = ['cmd-line', isCancelled?'is-cancelled':'', isSent?'is-sent':''].filter(Boolean).join(' ');
+          const cancelledChip = isCancelled ? `<span class="cmd-cancelled-chip">${t('cmdItemCancelled')}</span>` : '';
+          return `${div}<div class="${cls}"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${cancelledChip}${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
+        }).join('');
+        return header + inner;
       }).join('');
     } else {
       lines = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
@@ -5142,10 +5595,15 @@ function comandaRenderHistoryModal(){
 
 function comandaLogout(){
   COMANDA_AUTHED = false;
+  COMANDA_ROLE = 'waiter';
   COMANDA_VIEW = 'gate';
   COMANDA_PIN_BUFFER = '';
+  COMANDA_RECIBIDOR_VIEW_ID = null;
+  COMANDA_RECIBIDOR_DETAIL = null;
+  COMANDA_RECIBIDOR_LIST = [];
   comandaStopTimerInterval();
   comandaStopPolling();
+  comandaStopRecibidorPolling();
   comandaRender();
 }
 
@@ -5260,41 +5718,69 @@ function comandaRenderActive(root){
     }
   }
 
-  // Active diner's items, in array order. Insert a course/service-time
-  // divider whenever the consecutive items belong to different groups.
-  // Each line carries a grip handle that triggers touch-drag-to-reorder.
+  // Active diner's items, partitioned into batches (Por enviar / Enviado).
+  // Within each batch, course dividers still group by Entrada/Plato/Postre.
+  // Sent items lose the drag grip and dim slightly; pending items keep the
+  // freshness halo so the waiter still sees what they just typed.
   const dinerItems = items.filter(it => it.dinerN === COMANDA_ACTIVE_DINER);
   let dinerSummary = '';
   if (dinerItems.length){
-    let prevGroup = null;
-    dinerSummary = dinerItems.map(it => {
-      const grp = comandaGroupOf(it);
-      const showDivider = (grp && grp !== prevGroup);
-      prevGroup = grp;
-      const dividerHtml = showDivider
-        ? `<div class="cmd-course-divider"><span>${grp}</span></div>`
-        : '';
-      return `${dividerHtml}
-        <div class="cmd-line" data-item-id="${it.id}"
-             ontouchstart="cmdDragStart(event, '${it.id}')"
-             ontouchmove="cmdDragMove(event)"
-             ontouchend="cmdDragEnd(event)"
-             ontouchcancel="cmdDragEnd(event)">
-          <div class="cmd-line-grip" aria-label="reorder">⋮⋮</div>
-          <div class="cmd-line-qty">${it.qty || 1}×</div>
-          <div class="cmd-line-body">
-            <span class="cmd-line-name">${it.name}</span>
-            ${it.notes ? `<span class="cmd-line-note">⚐ ${it.notes}</span>` : ''}
-          </div>
-          <div class="cmd-line-actions">
-            <button class="cmd-line-btn" onclick="comandaOpenNote('${it.id}')" title="${t('cmdNoteOpen')}">⚐</button>
-            <button class="cmd-line-btn cmd-rm" onclick="comandaRemoveItem('${it.id}')" title="${t('cmdItemRemove')}">✕</button>
-          </div>
-        </div>`;
+    const batches = comandaSplitBatches(dinerItems);
+    dinerSummary = batches.map(batch => {
+      const isPending = batch.kind === 'open';
+      const header = isPending
+        ? `<div class="cmd-batch-divider is-pending"><span class="cmd-batch-label">${t('cmdPendingBatch')}</span></div>`
+        : `<div class="cmd-batch-divider is-sent"><span class="cmd-batch-label">${t('cmdSentBatch')}</span>${batch.sentAt?`<span class="cmd-batch-time">· ${comandaFmtHM(batch.sentAt)}</span>`:''}</div>`;
+      let prevGroup = null;
+      const lines = batch.items.map(it => {
+        const grp = comandaGroupOf(it);
+        const showDivider = (grp && grp !== prevGroup);
+        prevGroup = grp;
+        const dividerHtml = showDivider
+          ? `<div class="cmd-course-divider"><span>${grp}</span></div>`
+          : '';
+        const isCancelled = it.status === 'cancelled';
+        const isSent      = !!it.sentAt && !isCancelled;
+        const freshCls = isPending ? comandaFreshClass(it) : '';
+        const cls = ['cmd-line',
+          isCancelled?'is-cancelled':'',
+          isSent?'is-sent':'',
+          freshCls].filter(Boolean).join(' ');
+        const freshChip = (freshCls === 'is-fresh')
+          ? `<span class="cmd-fresh-chip">${t('cmdFreshChip')}</span>` : '';
+        const cancelledChip = isCancelled
+          ? `<span class="cmd-cancelled-chip">${t('cmdItemCancelled')}</span>` : '';
+        // Drag-to-reorder is disabled for sent items so a batch's order
+        // stays committed. Pending items still drag freely.
+        const dragHandlers = isSent || isCancelled ? '' :
+          `ontouchstart="cmdDragStart(event, '${it.id}')" ontouchmove="cmdDragMove(event)" ontouchend="cmdDragEnd(event)" ontouchcancel="cmdDragEnd(event)"`;
+        return `${dividerHtml}
+          <div class="${cls}" data-item-id="${it.id}" ${dragHandlers}>
+            <div class="cmd-line-grip" aria-label="reorder">⋮⋮</div>
+            <div class="cmd-line-qty">${it.qty || 1}×</div>
+            <div class="cmd-line-body">
+              <span class="cmd-line-name">${it.name}</span>${freshChip}${cancelledChip}
+              ${it.notes ? `<span class="cmd-line-note">⚐ ${it.notes}</span>` : ''}
+            </div>
+            <div class="cmd-line-actions">
+              <button class="cmd-line-btn" onclick="comandaOpenNote('${it.id}')" title="${t('cmdNoteOpen')}">⚐</button>
+              <button class="cmd-line-btn cmd-rm" onclick="comandaRemoveItem('${it.id}')" title="${t('cmdItemRemove')}">✕</button>
+            </div>
+          </div>`;
+      }).join('');
+      return header + lines;
     }).join('');
   } else {
     dinerSummary = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
   }
+
+  // Send-batch CTA — visible whenever ANY diner in the mesa has open items
+  // (not just the currently-focused one). Counts across the whole mesa so
+  // the waiter can finalise the whole table in one tap.
+  const pendingTotal = comandaPendingCount(items);
+  const sendBtn = pendingTotal > 0
+    ? `<button class="cmd-send-btn" onclick="comandaSendBatch()">${t('cmdSendBtnCount').replace('{n}', pendingTotal)}</button>`
+    : '';
 
   root.innerHTML = `
     <div class="cmd-active-header">
@@ -5304,6 +5790,7 @@ function comandaRenderActive(root){
       </div>
       <div class="cmd-active-controls">
         ${timerChip}
+        <button class="cmd-change-mesa-btn" onclick="comandaChangeMesaShow()" title="${t('cmdChangeMesa')}">⇆ ${t('cmdChangeMesa')}</button>
         <button class="cmd-mesas-btn" onclick="comandaBackToHome()">${t('cmdMesasBtn')}</button>
       </div>
     </div>
@@ -5322,11 +5809,97 @@ function comandaRenderActive(root){
 
     <div class="cmd-footer-actions">
       <button class="cmd-btn" onclick="comandaShowFullView()">${t('cmdViewFull')}</button>
+      ${sendBtn}
       <button class="cmd-btn primary" onclick="comandaCloseMesa()">${t('cmdCloseMesa')}</button>
     </div>
 
     ${COMANDA_NOTE_EDIT_ID ? comandaRenderNoteModal() : ''}
-    ${COMANDA_FULL_OPEN ? comandaRenderFullModal() : ''}`;
+    ${COMANDA_FULL_OPEN ? comandaRenderFullModal() : ''}
+    ${COMANDA_CHANGE_MESA_OPEN ? comandaRenderChangeMesaModal() : ''}`;
+}
+
+function comandaRenderChangeMesaModal(){
+  const c = COMANDA_ACTIVE_DATA;
+  if (!c) return '';
+  const buf = COMANDA_CHANGE_MESA_BUF;
+  const dispMesa = buf || '—';
+  const dispClass = buf ? '' : 'empty';
+  const errMsg = COMANDA_CHANGE_MESA_ERR === 'taken' ? t('cmdMesaTaken') : '';
+  return `
+    <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaChangeMesaCancel()">
+      <div class="cmd-modal-panel">
+        <div class="cmd-modal-title">${t('cmdChangeMesaTitle')}</div>
+        <div class="cmd-new-section">
+          <span class="cmd-new-label">${t('cmdMesaPrefix')} ${c.mesa} →</span>
+          <div class="cmd-new-mesa-display ${dispClass}">${dispMesa}</div>
+          <div class="cmd-numpad" style="max-width:240px;margin:0 auto">
+            <div class="cmd-numpad-grid">
+              ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="cmd-numpad-key" onclick="comandaChangeMesaPress('${n}')">${n}</button>`).join('')}
+              <button class="cmd-numpad-key cmd-nk-del" onclick="comandaChangeMesaPress('del')">⌫</button>
+              <button class="cmd-numpad-key" onclick="comandaChangeMesaPress('0')">0</button>
+              <button class="cmd-numpad-key cmd-nk-del" onclick="comandaChangeMesaPress('clr')">✕</button>
+            </div>
+          </div>
+          <div class="cmd-change-err">${errMsg}</div>
+        </div>
+        <div class="cmd-modal-actions">
+          <button class="cmd-btn" onclick="comandaChangeMesaCancel()">${t('cmdBack')}</button>
+          <button class="cmd-btn primary" onclick="comandaChangeMesaConfirm()" ${buf && buf !== c.mesa ? '' : 'disabled'}>${t('cmdContinue')}</button>
+        </div>
+      </div>
+    </div>`;
+}
+function comandaChangeMesaShow(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  COMANDA_CHANGE_MESA_OPEN = true;
+  COMANDA_CHANGE_MESA_BUF  = '';
+  COMANDA_CHANGE_MESA_ERR  = '';
+  comandaRender();
+}
+function comandaChangeMesaCancel(){
+  COMANDA_CHANGE_MESA_OPEN = false;
+  COMANDA_CHANGE_MESA_BUF  = '';
+  COMANDA_CHANGE_MESA_ERR  = '';
+  comandaRender();
+}
+function comandaChangeMesaPress(key){
+  if (key === 'del')      COMANDA_CHANGE_MESA_BUF = COMANDA_CHANGE_MESA_BUF.slice(0,-1);
+  else if (key === 'clr') COMANDA_CHANGE_MESA_BUF = '';
+  else if (COMANDA_CHANGE_MESA_BUF.length < 4) COMANDA_CHANGE_MESA_BUF += key;
+  COMANDA_CHANGE_MESA_ERR = '';
+  comandaRender();
+}
+async function comandaChangeMesaConfirm(){
+  if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_ID) return;
+  const target = COMANDA_CHANGE_MESA_BUF;
+  if (!target || target === COMANDA_ACTIVE_DATA.mesa) return;
+  // Collision check: any OTHER open mesa today already using this number?
+  // Re-fetch fresh to avoid stale local cache races between meseros.
+  try {
+    const resp = await fetch(comandaFireUrl(comandaDateKey()));
+    const data = await resp.json();
+    if (data){
+      const taken = Object.entries(data).some(([id, c]) =>
+        c && id !== COMANDA_ACTIVE_ID && !c.closedAt && String(c.mesa) === target
+      );
+      if (taken){
+        COMANDA_CHANGE_MESA_ERR = 'taken';
+        comandaRender();
+        return;
+      }
+    }
+  } catch(e){ /* network blip — proceed optimistically */ }
+  // Apply: append history entry, then persist mesa + mesaHistory together.
+  const from = COMANDA_ACTIVE_DATA.mesa;
+  const history = Array.isArray(COMANDA_ACTIVE_DATA.mesaHistory) ? COMANDA_ACTIVE_DATA.mesaHistory.slice() : [];
+  history.push({ from, to: target, at: Date.now() });
+  COMANDA_ACTIVE_DATA.mesa = target;
+  COMANDA_ACTIVE_DATA.mesaHistory = history;
+  COMANDA_CHANGE_MESA_OPEN = false;
+  COMANDA_CHANGE_MESA_BUF  = '';
+  COMANDA_CHANGE_MESA_ERR  = '';
+  comandaRender();
+  comandaPersist({ mesa: target, mesaHistory: history });
 }
 
 function comandaRenderNoteModal(){
@@ -5356,13 +5929,25 @@ function comandaRenderFullModal(){
     const its = items.filter(it => it.dinerN === n);
     let lines = '';
     if (its.length){
-      let prevGroup = null;
-      lines = its.map(it => {
-        const grp = comandaGroupOf(it);
-        const showDivider = (grp && grp !== prevGroup);
-        prevGroup = grp;
-        const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
-        return `${div}<div class="cmd-line"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
+      const batches = comandaSplitBatches(its);
+      lines = batches.map(batch => {
+        const isPending = batch.kind === 'open';
+        const header = isPending
+          ? `<div class="cmd-batch-divider is-pending"><span class="cmd-batch-label">${t('cmdPendingBatch')}</span></div>`
+          : `<div class="cmd-batch-divider is-sent"><span class="cmd-batch-label">${t('cmdSentBatch')}</span>${batch.sentAt?`<span class="cmd-batch-time">· ${comandaFmtHM(batch.sentAt)}</span>`:''}</div>`;
+        let prevGroup = null;
+        const inner = batch.items.map(it => {
+          const grp = comandaGroupOf(it);
+          const showDivider = (grp && grp !== prevGroup);
+          prevGroup = grp;
+          const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
+          const isCancelled = it.status === 'cancelled';
+          const isSent = !!it.sentAt && !isCancelled;
+          const cls = ['cmd-line', isCancelled?'is-cancelled':'', isSent?'is-sent':''].filter(Boolean).join(' ');
+          const cancelledChip = isCancelled ? `<span class="cmd-cancelled-chip">${t('cmdItemCancelled')}</span>` : '';
+          return `${div}<div class="${cls}"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${cancelledChip}${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
+        }).join('');
+        return header + inner;
       }).join('');
     } else {
       lines = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
