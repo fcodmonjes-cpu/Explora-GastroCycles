@@ -365,11 +365,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .rol-search-results:empty { display:none; }
 .rol-search-person { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:17px; margin-bottom:10px; color:var(--text); }
 .rol-search-month { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; font-family:'Courier Prime','Courier New',monospace; }
-.rol-search-cell { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border:0.5px solid var(--border); border-radius:4px; background:var(--surface); font-size:9px; padding:2px; }
-.rol-search-cell .d { font-size:10px; color:var(--text-tertiary); opacity:0.6; }
-.rol-search-cell .t { font-weight:500; color:var(--gold); margin-top:2px; }
+.rol-search-dow { text-align:center; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); padding:4px 0; }
+.rol-search-cell { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border:0.5px solid var(--border); border-radius:4px; background:var(--surface); padding:2px; cursor:pointer; transition: border-color 0.12s, background 0.12s; touch-action:manipulation; }
+.rol-search-cell:hover { border-color:var(--gold); }
+.rol-search-cell:active { background:rgba(202,138,4,0.08); }
+.rol-search-cell.blank { cursor:default; pointer-events:none; }
+.rol-search-cell .d { font-size:10px; color:var(--text-tertiary); opacity:0.7; }
+.rol-search-cell .t { font-size:13px; font-weight:500; color:var(--gold); margin-top:3px; letter-spacing:0.02em; }
 .rol-search-cell.off { background:transparent; border-style:dashed; }
-.rol-search-cell.off .t { color:var(--text-tertiary); opacity:0.35; }
+.rol-search-cell.off .t { color:var(--text-tertiary); opacity:0.4; font-size:12px; }
+.rol-search-cell.blank { background:transparent; border:none; }
+.rol-persona-calendar { margin-top:1.8rem; padding-top:1.2rem; border-top:0.5px solid var(--border); }
+.rol-persona-calendar .rol-search-person { margin-bottom:10px; }
+.rol-pill-tag { display:inline-block; margin-left:6px; padding:1px 6px; font-size:10px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; background:rgba(14,116,144,0.15); color:#67e8f9; border:0.5px solid rgba(14,116,144,0.4); border-radius:4px; vertical-align:1px; font-weight:400; }
+.rol-pill.senior .rol-pill-tag { background:rgba(21,17,13,0.15); color:rgba(21,17,13,0.65); border-color:rgba(21,17,13,0.3); }
 
 .rol-status { text-align:center; padding:2rem 1rem; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; color:var(--text-tertiary); }
 
@@ -1277,18 +1286,18 @@ const ROL_ROSTER_PATH   = 'roster';
 const ROL_STAFFING_PATH = 'staffing';
 const ROL_META_PATH     = 'meta/last_update';
 const ROL_PIN_CODE      = '2098';
-let ROL_AUTHED         = false;
-let ROL_VIEW           = 'gate';      // 'gate' | 'home'
-let ROL_PIN_BUFFER     = '';
-let ROL_MONTH_KEY      = null;        // 'YYYY-MM' currently loaded
-let ROL_ROSTER         = {};          // { personaName: { dayN: turnoCode } }
-let ROL_STAFFING       = {};          // { dayN: { geo_senior_am, geos_am, … } }
-let ROL_PERSONA        = (typeof localStorage !== 'undefined' && localStorage.getItem('rol.persona')) || '';
-let ROL_WEEK_START_DAY = 0;           // 0 = "compute from today on first render"
-let ROL_SEARCH_QUERY   = '';
-let ROL_LOAD_ERROR     = false;
-let ROL_LAST_UPDATE    = null;        // ISO timestamp from /meta/last_update
-let ROL_SWIPE          = null;        // active touch-drag state for week swipe
+let ROL_AUTHED            = false;
+let ROL_VIEW              = 'gate';   // 'gate' | 'home'
+let ROL_PIN_BUFFER        = '';
+let ROL_ROSTER_BY_MONTH   = {};       // { 'YYYY-MM': { personaName: { dayN: turnoCode } } }
+let ROL_STAFFING_BY_MONTH = {};       // { 'YYYY-MM': { dayN: { geo_senior_am, … } } }
+let ROL_MONTHS_LOADING    = {};       // { 'YYYY-MM': Promise } dedupe in-flight fetches
+let ROL_PERSONA           = (typeof localStorage !== 'undefined' && localStorage.getItem('rol.persona')) || '';
+let ROL_WINDOW_START      = null;     // Date — first day of the rolling 7-day window
+let ROL_SEARCH_QUERY      = '';
+let ROL_LOAD_ERROR        = false;
+let ROL_LAST_UPDATE       = null;     // ISO timestamp from /meta/last_update
+let ROL_SWIPE             = null;     // active touch-drag state for week swipe
 
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
@@ -1344,6 +1353,7 @@ const UI = {
     rolSearchDesc:'¿Qué días trabaja una persona y en qué turnos?',
     rolSearchPlaceholder:'Empieza a escribir un nombre…',
     rolSearchNoResults:'Sin resultados',
+    rolCortoTag:'Corto',
     rolWeekOutsideMonth:'Esta semana cae fuera del mes cargado.',
     rolLoadError:'No se pudo cargar los datos. Verifica tu conexión.',
     rolEmptyMonth:'Aún no hay roster cargado para este mes.',
@@ -1436,6 +1446,7 @@ const UI = {
     rolSearchDesc:'What days do they work, and which shifts?',
     rolSearchPlaceholder:'Start typing a name…',
     rolSearchNoResults:'No results',
+    rolCortoTag:'Short',
     rolWeekOutsideMonth:'This week is outside the loaded month.',
     rolLoadError:'Could not load data. Check your connection.',
     rolEmptyMonth:'No roster loaded yet for this month.',
@@ -1528,6 +1539,7 @@ const UI = {
     rolSearchDesc:'Que dias trabalha uma pessoa e em quais turnos?',
     rolSearchPlaceholder:'Comece a digitar um nome…',
     rolSearchNoResults:'Sem resultados',
+    rolCortoTag:'Curto',
     rolWeekOutsideMonth:'Esta semana está fora do mês carregado.',
     rolLoadError:'Não foi possível carregar os dados. Verifique sua conexão.',
     rolEmptyMonth:'Ainda não há rol carregado para este mês.',
@@ -6246,14 +6258,34 @@ function rolEnter(){
     rolRender();
     return;
   }
-  // If authed but no data yet, fetch
-  const wanted = rolMonthKey(new Date());
-  if (ROL_MONTH_KEY !== wanted){
-    ROL_MONTH_KEY = wanted;
-    rolFetchData();
-  }
+  if (!ROL_WINDOW_START) ROL_WINDOW_START = rolToday();
+  rolEnsureWindowMonths();
   ROL_VIEW = 'home';
   rolRender();
+}
+
+// Returns today's date with time stripped (so date-arithmetic is clean)
+function rolToday(){
+  const t = new Date();
+  return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+}
+
+// All YYYY-MM keys covered by the 7-day window starting at ROL_WINDOW_START
+function rolGetWindowMonthKeys(){
+  if (!ROL_WINDOW_START) return [];
+  const seen = new Set();
+  for (let i = 0; i < 7; i++){
+    const d = new Date(ROL_WINDOW_START);
+    d.setDate(ROL_WINDOW_START.getDate() + i);
+    seen.add(rolMonthKey(d));
+  }
+  return Array.from(seen);
+}
+
+// Month-key of the day that anchors the persona's monthly calendar.
+// We use the window's start day's month so the calendar follows the user.
+function rolAnchorMonthKey(){
+  return rolMonthKey(ROL_WINDOW_START || rolToday());
 }
 
 function rolPinPress(key){
@@ -6269,9 +6301,8 @@ function rolSubmitPin(){
     ROL_AUTHED = true;
     ROL_PIN_BUFFER = '';
     ROL_VIEW = 'home';
-    ROL_MONTH_KEY = rolMonthKey(new Date());
-    ROL_WEEK_START_DAY = 0; // marker: compute from today on first render
-    rolFetchData();
+    ROL_WINDOW_START = rolToday();
+    rolEnsureWindowMonths();
   } else {
     ROL_PIN_BUFFER = '';
     const err = document.getElementById('rol-pin-error');
@@ -6287,38 +6318,55 @@ function rolLogout(){
   rolRender();
 }
 
-async function rolFetchData(){
-  ROL_LOAD_ERROR = false;
-  const key = ROL_MONTH_KEY;
-  try {
-    const base = CF_FIREBASE_CONFIG.databaseURL;
-    const [rosterResp, staffingResp, metaResp] = await Promise.all([
-      fetch(`${base}/${ROL_ROSTER_PATH}/${key}.json`),
-      fetch(`${base}/${ROL_STAFFING_PATH}/${key}.json`),
-      fetch(`${base}/${ROL_META_PATH}.json`)
-    ]);
-    const rosterData   = await rosterResp.json();
-    const staffingData = await staffingResp.json();
-    const metaData     = await metaResp.json();
-    ROL_ROSTER   = rolNormalizeRoster(rosterData   || {});
-    ROL_STAFFING = normalizeStaffingMonth(staffingData || {}) || {};
-    // If the previously-selected persona was a mojibake variant, remap to
-    // the canonical name now that the roster is normalized.
-    if (ROL_PERSONA && !ROL_ROSTER[ROL_PERSONA]){
-      const fixedPersona = fixMojibake(ROL_PERSONA);
-      if (fixedPersona !== ROL_PERSONA && ROL_ROSTER[fixedPersona]){
-        ROL_PERSONA = fixedPersona;
-        try { localStorage.setItem('rol.persona', ROL_PERSONA); } catch(e){}
+// Load one month if not cached. Dedupes concurrent calls via ROL_MONTHS_LOADING.
+// Updates ROL_LAST_UPDATE on every successful call (it's a global meta, not per-month).
+async function rolEnsureMonth(key){
+  if (!key) return;
+  if (ROL_ROSTER_BY_MONTH[key] || ROL_STAFFING_BY_MONTH[key]) return;
+  if (ROL_MONTHS_LOADING[key]) return ROL_MONTHS_LOADING[key];
+  const p = (async () => {
+    try {
+      const base = CF_FIREBASE_CONFIG.databaseURL;
+      const [rosterResp, staffingResp, metaResp] = await Promise.all([
+        fetch(`${base}/${ROL_ROSTER_PATH}/${key}.json`),
+        fetch(`${base}/${ROL_STAFFING_PATH}/${key}.json`),
+        fetch(`${base}/${ROL_META_PATH}.json`)
+      ]);
+      const rosterData   = await rosterResp.json();
+      const staffingData = await staffingResp.json();
+      const metaData     = await metaResp.json();
+      ROL_ROSTER_BY_MONTH[key]   = rolNormalizeRoster(rosterData || {});
+      ROL_STAFFING_BY_MONTH[key] = normalizeStaffingMonth(staffingData || {}) || {};
+      // Repair persona name if mojibake — only when we actually have a canonical
+      // entry to remap to in this newly-loaded month.
+      if (ROL_PERSONA && !ROL_ROSTER_BY_MONTH[key][ROL_PERSONA]){
+        const fixedPersona = fixMojibake(ROL_PERSONA);
+        if (fixedPersona !== ROL_PERSONA && ROL_ROSTER_BY_MONTH[key][fixedPersona]){
+          ROL_PERSONA = fixedPersona;
+          try { localStorage.setItem('rol.persona', ROL_PERSONA); } catch(e){}
+        }
       }
+      ROL_LAST_UPDATE = (metaData && typeof metaData === 'object' && metaData.timestamp_iso) || ROL_LAST_UPDATE;
+      ROL_LOAD_ERROR = false;
+    } catch(e){
+      ROL_LOAD_ERROR = true;
+      ROL_ROSTER_BY_MONTH[key]   = {};
+      ROL_STAFFING_BY_MONTH[key] = {};
+    } finally {
+      delete ROL_MONTHS_LOADING[key];
     }
-    ROL_LAST_UPDATE = (metaData && typeof metaData === 'object' && metaData.timestamp_iso) || null;
-  } catch(e){
-    ROL_LOAD_ERROR = true;
-    ROL_ROSTER = {};
-    ROL_STAFFING = {};
-    ROL_LAST_UPDATE = null;
-  }
-  if (currentTab === 'rol' && ROL_VIEW === 'home') rolRender();
+    if (currentTab === 'rol' && ROL_VIEW === 'home') rolRender();
+  })();
+  ROL_MONTHS_LOADING[key] = p;
+  return p;
+}
+
+// Ensure all months covered by the current 7-day window are loaded, plus the
+// anchor month for the persona's monthly calendar (usually the same).
+function rolEnsureWindowMonths(){
+  const keys = new Set(rolGetWindowMonthKeys());
+  keys.add(rolAnchorMonthKey());
+  keys.forEach(k => rolEnsureMonth(k));
 }
 
 // Repair + dedupe the roster:
@@ -6384,30 +6432,67 @@ function rolFormatLastUpdate(iso){
   return t('rolUpdatedOn').replace('{date}', date.toLocaleDateString(locale));
 }
 
-function rolGetWeekStart(){
-  if (ROL_WEEK_START_DAY > 0) return ROL_WEEK_START_DAY;
-  const hoy = new Date();
-  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
-  const dayInMonth = (hoy.getFullYear() === y && hoy.getMonth()+1 === m) ? hoy.getDate() : 1;
-  const d = new Date(y, m-1, dayInMonth);
-  const dow = d.getDay();
-  const diff = dow === 0 ? -6 : 1 - dow;
-  d.setDate(d.getDate() + diff);
-  return d.getDate();
+function rolStepWeek(delta){
+  if (!ROL_WINDOW_START) ROL_WINDOW_START = rolToday();
+  const next = new Date(ROL_WINDOW_START);
+  next.setDate(ROL_WINDOW_START.getDate() + delta);
+  ROL_WINDOW_START = next;
+  rolEnsureWindowMonths();
+  rolRender();
 }
 
-function rolStepWeek(delta){
-  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
-  const diasEnMes = new Date(y, m, 0).getDate();
-  const next = Math.max(1, Math.min(diasEnMes, (ROL_WEEK_START_DAY || rolGetWeekStart()) + delta));
-  ROL_WEEK_START_DAY = next;
+// Tap a day in the monthly calendar → jump the weekly window to start there.
+function rolGoToDate(y, m, dd){
+  ROL_WINDOW_START = new Date(y, m-1, dd);
+  rolEnsureWindowMonths();
   rolRender();
+  // Smooth-scroll to the weekly list so the user sees the result of the tap.
+  const days = document.querySelector('#rol-root .rol-days');
+  if (days) days.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function rolSetPersona(name){
   ROL_PERSONA = name || '';
   try { localStorage.setItem('rol.persona', ROL_PERSONA); } catch(e){}
   rolRender();
+}
+
+// Returns the union of person names across all loaded months, sorted.
+function rolAllPersonas(){
+  const set = new Set();
+  Object.values(ROL_ROSTER_BY_MONTH).forEach(monthData => {
+    Object.keys(monthData || {}).forEach(n => set.add(n));
+  });
+  return Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
+}
+
+// Render a person's monthly calendar as a Mon-Sun aligned grid.
+// Used by both the auto-render-on-persona-selection block and the search box.
+// Returns the HTML string (caller decides where to place it).
+function rolBuildPersonaCalendar(nombre, monthKey){
+  const [y,m] = monthKey.split('-').map(Number);
+  const diasEnMes = new Date(y, m, 0).getDate();
+  // Day-of-week of day 1, in Mon=0..Sun=6 order
+  const firstDow = (new Date(y, m-1, 1).getDay() + 6) % 7;
+  const days = (ROL_ROSTER_BY_MONTH[monthKey] || {})[nombre] || {};
+  // Header row: L M M J V S D
+  const DOW_HEADER = ['L','M','M','J','V','S','D'];
+  let header = DOW_HEADER.map(d => `<div class="rol-search-dow">${d}</div>`).join('');
+  // Leading blanks before day 1
+  let cells = '';
+  for (let i = 0; i < firstDow; i++){
+    cells += `<div class="rol-search-cell blank"></div>`;
+  }
+  for (let dd = 1; dd <= diasEnMes; dd++){
+    const turno = days[dd];
+    if (turno){
+      cells += `<div class="rol-search-cell" onclick="rolGoToDate(${y},${m},${dd})"><div class="d">${dd}</div><div class="t">${turno}</div></div>`;
+    } else {
+      cells += `<div class="rol-search-cell off" onclick="rolGoToDate(${y},${m},${dd})"><div class="d">${dd}</div><div class="t">L</div></div>`;
+    }
+  }
+  return `<div class="rol-search-person">${nombre} · ${ROL_MESES[m-1]} ${y}</div>
+    <div class="rol-search-month">${header}${cells}</div>`;
 }
 
 function rolSearch(query){
@@ -6418,7 +6503,9 @@ function rolSearch(query){
     results.innerHTML = '';
     return;
   }
-  const nombres = Object.keys(ROL_ROSTER)
+  const anchorKey = rolAnchorMonthKey();
+  const roster = ROL_ROSTER_BY_MONTH[anchorKey] || {};
+  const nombres = Object.keys(roster)
     .filter(n => n.toLowerCase().includes(ROL_SEARCH_QUERY))
     .sort((a,b)=>a.localeCompare(b,'es'))
     .slice(0,3);
@@ -6426,23 +6513,9 @@ function rolSearch(query){
     results.innerHTML = `<div class="rol-search-person" style="opacity:0.5">${t('rolSearchNoResults')}</div>`;
     return;
   }
-  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
-  const diasEnMes = new Date(y, m, 0).getDate();
-  let html = '';
-  nombres.forEach(nombre => {
-    const days = ROL_ROSTER[nombre] || {};
-    let cells = '';
-    for (let dd = 1; dd <= diasEnMes; dd++){
-      const turno = days[dd];
-      if (turno){
-        cells += `<div class="rol-search-cell"><div class="d">${dd}</div><div class="t">${turno}</div></div>`;
-      } else {
-        cells += `<div class="rol-search-cell off"><div class="d">${dd}</div><div class="t">L</div></div>`;
-      }
-    }
-    html += `<div style="margin-bottom:18px"><div class="rol-search-person">${nombre}</div><div class="rol-search-month">${cells}</div></div>`;
-  });
-  results.innerHTML = html;
+  results.innerHTML = nombres
+    .map(n => `<div style="margin-bottom:18px">${rolBuildPersonaCalendar(n, anchorKey)}</div>`)
+    .join('');
 }
 
 function rolRender(){
@@ -6479,15 +6552,32 @@ function rolHorarioText(code){
 }
 
 function rolRenderHome(root){
-  if (ROL_LOAD_ERROR){
+  if (!ROL_WINDOW_START) ROL_WINDOW_START = rolToday();
+  const anchorKey = rolAnchorMonthKey();
+  const [ay, am] = anchorKey.split('-').map(Number);
+
+  // Build the 7-day window as Date objects (cross-month aware)
+  const dias = [];
+  for (let i = 0; i < 7; i++){
+    const d = new Date(ROL_WINDOW_START);
+    d.setDate(ROL_WINDOW_START.getDate() + i);
+    dias.push(d);
+  }
+
+  // Empty-state: anchor month has no data AND we're not still loading it
+  const anchorRoster = ROL_ROSTER_BY_MONTH[anchorKey];
+  const anchorStaffing = ROL_STAFFING_BY_MONTH[anchorKey];
+  const stillLoading = !!ROL_MONTHS_LOADING[anchorKey];
+  if (ROL_LOAD_ERROR && !stillLoading){
     root.innerHTML = `<div class="rol-status">${t('rolLoadError')}</div>`;
     return;
   }
-  if (!Object.keys(ROL_ROSTER).length && !Object.keys(ROL_STAFFING).length){
+  if (!stillLoading && anchorRoster !== undefined && !Object.keys(anchorRoster || {}).length
+      && anchorStaffing !== undefined && !Object.keys(anchorStaffing || {}).length){
     root.innerHTML = `
       <div class="rol-header">
         <div class="rol-header-text">
-          <div class="eyebrow">${ROL_MONTH_KEY || ''}</div>
+          <div class="eyebrow">${anchorKey}</div>
           <h1 class="rol-title">${t('rolPinTitle')}</h1>
         </div>
         <button class="rol-exit-btn" onclick="rolLogout()">${t('rolLogout')}</button>
@@ -6496,42 +6586,40 @@ function rolRenderHome(root){
     return;
   }
 
-  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
-  const diasEnMes = new Date(y, m, 0).getDate();
-  const weekStart = rolGetWeekStart();
-  if (ROL_WEEK_START_DAY === 0) ROL_WEEK_START_DAY = weekStart;
+  const hoy = rolToday();
+  const sameYMD = (a, b) => a.getFullYear()===b.getFullYear()
+                         && a.getMonth()===b.getMonth()
+                         && a.getDate()===b.getDate();
 
-  const dias = [];
-  for (let i = 0; i < 7; i++){
-    const dia = (ROL_WEEK_START_DAY || weekStart) + i;
-    if (dia >= 1 && dia <= diasEnMes) dias.push(dia);
-  }
-
-  const hoy = new Date();
-  const esHoy = dia => hoy.getFullYear() === y && hoy.getMonth()+1 === m && hoy.getDate() === dia;
-
-  // Person selector
-  const nombres = Object.keys(ROL_ROSTER).sort((a,b)=>a.localeCompare(b,'es'));
+  // Person selector — union across all loaded months
+  const nombres = rolAllPersonas();
   const options = [`<option value="">${t('rolSelectPlaceholder')}</option>`]
     .concat(nombres.map(n => `<option value="${n}"${n===ROL_PERSONA?' selected':''}>${n}</option>`))
     .join('');
 
   // Days
-  const daysHtml = dias.length
-    ? dias.map(dia => rolRenderDay(dia, esHoy(dia), y, m)).join('')
-    : `<div class="rol-status">${t('rolWeekOutsideMonth')}</div>`;
+  const daysHtml = dias.map(d => rolRenderDay(d, sameYMD(d, hoy))).join('');
 
-  const primer = dias[0], ultimo = dias[dias.length-1];
-  const weekLabel = dias.length ? `${primer} – ${ultimo} de ${ROL_MESES[m-1]}` : '—';
-  const prevDisabled = (ROL_WEEK_START_DAY || weekStart) <= 1;
-  const nextDisabled = ((ROL_WEEK_START_DAY || weekStart) + 7) > diasEnMes;
+  // Label spans the visible window — bridges months when applicable
+  const fmtDay = d => `${d.getDate()} ${ROL_MESES[d.getMonth()]}`;
+  const first = dias[0], last = dias[6];
+  const weekLabel = first.getMonth() === last.getMonth()
+    ? `${first.getDate()} – ${last.getDate()} de ${ROL_MESES[first.getMonth()]}`
+    : `${fmtDay(first)} – ${fmtDay(last)}`;
 
   const updatedTxt = rolFormatLastUpdate(ROL_LAST_UPDATE);
   const updatedChip = updatedTxt ? `<div class="rol-last-update">${updatedTxt}</div>` : '';
+
+  // Monthly calendar — auto-rendered when a persona is selected.
+  // Anchored to the month of the window's start day.
+  const personaCalendarHtml = ROL_PERSONA && (ROL_ROSTER_BY_MONTH[anchorKey] || {})[ROL_PERSONA]
+    ? `<div class="rol-persona-calendar">${rolBuildPersonaCalendar(ROL_PERSONA, anchorKey)}</div>`
+    : '';
+
   root.innerHTML = `
     <div class="rol-header">
       <div class="rol-header-text">
-        <div class="eyebrow">${ROL_MESES[m-1]} ${y}</div>
+        <div class="eyebrow">${ROL_MESES[am-1]} ${ay}</div>
         <h1 class="rol-title">Rol <em>de la semana</em></h1>
         <div class="rol-subtitle">${t('rolSubtitle')}</div>
         ${updatedChip}
@@ -6545,12 +6633,14 @@ function rolRenderHome(root){
     </div>
 
     <div class="rol-week-nav">
-      <button onclick="rolStepWeek(-7)" ${prevDisabled?'disabled':''}>${t('rolPrevWeek')}</button>
+      <button onclick="rolStepWeek(-7)">${t('rolPrevWeek')}</button>
       <span class="rol-week-label">${weekLabel}</span>
-      <button onclick="rolStepWeek(7)" ${nextDisabled?'disabled':''}>${t('rolNextWeek')}</button>
+      <button onclick="rolStepWeek(7)">${t('rolNextWeek')}</button>
     </div>
 
     <div class="rol-days">${daysHtml}</div>
+
+    ${personaCalendarHtml}
 
     <div class="rol-search-section">
       <h2>${t('rolSearchTitle')}</h2>
@@ -6563,11 +6653,14 @@ function rolRenderHome(root){
   if (ROL_SEARCH_QUERY) rolSearch(ROL_SEARCH_QUERY);
 }
 
-function rolRenderDay(dia, esHoy, year, month){
-  const fecha = new Date(year, month-1, dia);
-  const dowLabel = ROL_DOW[fecha.getDay()];
-  const turno = ROL_PERSONA ? (ROL_ROSTER[ROL_PERSONA]?.[dia] || null) : null;
-  const staffingDia = ROL_STAFFING[dia] || {};
+function rolRenderDay(date, esHoy){
+  const dia = date.getDate();
+  const monthKey = rolMonthKey(date);
+  const dowLabel = ROL_DOW[date.getDay()];
+  const roster = ROL_ROSTER_BY_MONTH[monthKey] || {};
+  const staffing = ROL_STAFFING_BY_MONTH[monthKey] || {};
+  const turno = ROL_PERSONA ? (roster[ROL_PERSONA]?.[dia] || null) : null;
+  const staffingDia = staffing[dia] || {};
   const todayCls = esHoy ? ' today' : '';
   const viajeros = staffingDia.viajeros
     ? `<div class="rol-ocupacion"><div class="num">${staffingDia.viajeros}</div><div class="label">${t('rolViajeros')}</div></div>`
@@ -6599,6 +6692,14 @@ function rolRenderDay(dia, esHoy, year, month){
   const esAM = turno === 'CAM' || turno === 'CAMC' || turno === 'DOB' || turno === 'CDOB';
   const esPM = turno === 'CPM' || turno === 'CPMC' || turno === 'DOB' || turno === 'CDOB';
 
+  // Helper: is a colleague's turno that day "short" for the given franja?
+  // CAMC for AM franja, CPMC for PM franja.
+  const isCorto = (name, franja) => {
+    const t2 = roster[name]?.[dia];
+    if (!t2) return false;
+    return franja === 'am' ? t2 === 'CAMC' : franja === 'pm' ? t2 === 'CPMC' : false;
+  };
+
   let compaHTML = '';
   if (esComedor){
     const franjas = [];
@@ -6609,8 +6710,14 @@ function rolRenderDay(dia, esHoy, year, month){
       const geos    = staffingDia[`geos_${f.key}`]       || [];
       const apoyos  = staffingDia[`apoyo_${f.key}`]      || [];
       const pills = [];
-      seniors.forEach(n => pills.push(`<span class="rol-pill senior">${n}</span>`));
-      geos.filter(n => n !== ROL_PERSONA).forEach(n => pills.push(`<span class="rol-pill">${n}</span>`));
+      seniors.forEach(n => {
+        const corto = isCorto(n, f.key) ? `<span class="rol-pill-tag">${t('rolCortoTag')}</span>` : '';
+        pills.push(`<span class="rol-pill senior">${n}${corto}</span>`);
+      });
+      geos.filter(n => n !== ROL_PERSONA).forEach(n => {
+        const corto = isCorto(n, f.key) ? `<span class="rol-pill-tag">${t('rolCortoTag')}</span>` : '';
+        pills.push(`<span class="rol-pill">${n}${corto}</span>`);
+      });
       apoyos.filter(n => n !== ROL_PERSONA).forEach(n => pills.push(`<span class="rol-pill apoyo">${n}</span>`));
       return `<div>
         <div class="rol-col-titulo">${f.titulo}</div>
