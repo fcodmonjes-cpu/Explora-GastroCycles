@@ -543,7 +543,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Dish cards */
 .dish-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 0.875rem 1rem; cursor: pointer; transition: border-color 0.15s; }
 .dish-card:hover { border-color: var(--border-md); }
-.dish-card.selected { border-color: var(--wine-red); border-width: 1.5px; }
+.dish-card.selected { border-color: var(--wine-red); border-width: 1.5px; grid-column: 1 / -1; }
+.dish-card.selected .dish-desc { -webkit-line-clamp: unset; overflow: visible; }
+.dish-card.selected .allergen-row { display: none; }
+.dish-expanded { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); animation: panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
 .dish-name { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.4; margin-bottom: 5px; }
 .dish-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 7px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 /* Footnote / glossary note inside a dish description. Hidden inside the
@@ -1900,10 +1903,24 @@ function renderDishes() {
         html += `<div class="course-section"><div class="course-label">${courseLabel(course)}</div><div class="dish-row">`;
         courseDishes.forEach(d => {
           const tr = getDishTr(d);
-          html += `<div class="dish-card${selectedDish===d.id?' selected':''}" data-dish-id="${d.id}" onclick="selectDish('${d.id}')">
+          const isSelected = selectedDish === d.id;
+          let expanded = '';
+          if (isSelected) {
+            const chips = d.wines.map(wid => {
+              const w = getWine(wid);
+              return `<div class="wine-chip ${typeChipClass(w)}" onclick="event.stopPropagation();openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${tr.why[wid]||''}</div></div>`;
+            }).join('');
+            expanded = `<div class="dish-expanded">
+              <p class="detail-meta">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)}</p>
+              ${d.allergens.length ? `<div class="detail-section"><h3>${t('allergens')}</h3><div class="allergen-detail">${d.allergens.map(a=>`<span class="allergen-pill${a==='Mariscos'?' pill-mariscos':''}">${a}</span>`).join('')}</div></div>` : ''}
+              <div class="detail-section"><h3>${t('pairings')}</h3><div class="wine-suggestions">${chips}</div></div>
+            </div>`;
+          }
+          html += `<div class="dish-card${isSelected?' selected':''}" data-dish-id="${d.id}" onclick="selectDish('${d.id}')">
             <div class="dish-name">${tr.name}</div>
             <div class="dish-desc">${tr.desc}</div>
             ${d.allergens.length ? `<div class="allergen-row">${d.allergens.map(a=>`<span class="allergen-tag${a==='Mariscos'?' tag-mariscos':''}">${a}</span>`).join('')}</div>` : ''}
+            ${expanded}
           </div>`;
         });
         html += `</div></div>`; // close dish-row and course-section
@@ -1917,25 +1934,6 @@ function renderDishes() {
 function selectDish(id) {
   selectedDish = selectedDish === id ? null : id;
   renderDishes();
-  if (!selectedDish) return;
-  const card = document.querySelector(`[data-dish-id="${selectedDish}"]`);
-  if (!card) return;
-  const d = DISHES.find(x => x.id === selectedDish);
-  const sdtr = getDishTr(d);
-  const chips = d.wines.map(wid => {
-    const w = getWine(wid);
-    return `<div class="wine-chip ${typeChipClass(w)}" onclick="openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${sdtr.why[wid]||''}</div></div>`;
-  }).join('');
-  const panelHTML = `<div class="detail-panel" id="dish-inline-panel" style="margin-top:10px;">
-    <button class="close-btn" onclick="closeDishDetail()">&#215;</button>
-    <h2>${sdtr.name}</h2>
-    <p class="detail-meta">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)}</p>
-    <p class="detail-desc">${sdtr.desc}</p>
-    ${d.allergens.length ? `<div class="detail-section"><h3>${t('allergens')}</h3><div class="allergen-detail">${d.allergens.map(a=>`<span class="allergen-pill${a==='Mariscos'?' pill-mariscos':''}">${a}</span>`).join('')}</div></div>` : ''}
-    <div class="detail-section"><h3>${t('pairings')}</h3><div class="wine-suggestions">${chips}</div></div>
-  </div>`;
-  card.closest('.dish-row').insertAdjacentHTML('afterend', panelHTML);
-  document.getElementById('dish-inline-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function closeDishDetail() {
@@ -1958,14 +1956,14 @@ function openWineFromDish(wid) {
   const w = WINES.find(x => x.id === wid);
   if (!w) return;
   const wtr = getWineTr(w);
-  const subHTML = `<div class="wine-sub-panel" id="dish-wine-sub-panel" data-wid="${wid}">
+  const subHTML = `<div class="wine-sub-panel" id="dish-wine-sub-panel" data-wid="${wid}" onclick="event.stopPropagation()">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
       <div>
         <span class="wine-type-badge ${typeBadgeClass(w)}" style="margin-bottom:4px;display:inline-block;">${typeLabel(w.type)}</span>
         <div style="font-size:15px;font-weight:500;color:var(--text);">${w.name}</div>
         <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${w.valley}</div>
       </div>
-      <button class="close-btn" onclick="closeWineSubPanel()" style="margin-left:8px;">&#215;</button>
+      <button class="close-btn" onclick="event.stopPropagation();closeWineSubPanel()" style="margin-left:8px;">&#215;</button>
     </div>
     <div class="wine-section"><h3>${t('identity')}</h3><p>${wtr.identity}</p></div>
     <div class="wine-section"><h3>${t('style')}</h3><p>${wtr.style}</p></div>
@@ -1977,10 +1975,9 @@ function openWineFromDish(wid) {
     </div>
   </div>`;
 
-  const winesSection = document.querySelector('#dish-inline-panel .wine-suggestions');
+  const winesSection = document.querySelector('.dish-card.selected .wine-suggestions');
   if (winesSection) {
     winesSection.insertAdjacentHTML('afterend', subHTML);
-    document.getElementById('dish-wine-sub-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
   }
 }
 
