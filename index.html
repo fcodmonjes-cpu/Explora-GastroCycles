@@ -443,6 +443,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-rcb-line.is-cancelled { opacity:0.45; }
 .cmd-rcb-line.is-cancelled .cmd-rcb-name { text-decoration:line-through; }
 .cmd-rcb-line .cmd-line-note { display:block; color:rgba(202,138,4,0.85); font-style:italic; font-size:12px; margin-left:54px; }
+/* Recibidor batch head — flex row with title left, time + 🖨 right. */
+.cmd-rcb-batch-actions { display:flex; align-items:center; gap:8px; }
+.cmd-rcb-print-btn { background:transparent; color:rgba(202,138,4,0.78); border:0.5px solid rgba(202,138,4,0.4); border-radius:4px; padding:3px 9px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.04em; cursor:pointer; }
+.cmd-rcb-print-btn:hover { color:var(--gold); border-color:var(--gold); background:rgba(202,138,4,0.08); }
+/* Print preview "paper" — white thermal-paper look, monospace, fixed width */
+/* for accurate 42-column / 80mm preview. Black-on-cream so it reads like */
+/* an actual receipt instead of a code block. */
+.cmd-ticket-panel { max-width:420px; padding:1rem; }
+.cmd-ticket-paper { background:#faf7ed; color:#111; font-family:'Courier Prime','Courier New',monospace; font-size:13px; line-height:1.42; padding:18px 14px; border-radius:4px; white-space:pre; overflow-x:auto; margin:0 0 12px; box-shadow:0 2px 10px rgba(0,0,0,0.45), inset 0 0 0 0.5px rgba(0,0,0,0.08); }
 /* Freshness halo on newly-added items. <60s: pulsing gold accent + "nuevo" */
 /* chip. 60-180s: static gold accent. After: normal. Driven by addedAt; */
 /* refreshed in place by the 1s timer tick (no full re-render). */
@@ -1243,6 +1252,7 @@ let COMANDA_RECIBIDOR_LIST  = [];       // mesas with sent items, for recibidor 
 let COMANDA_RECIBIDOR_VIEW_ID = null;   // mesa currently open in recibidor detail
 let COMANDA_RECIBIDOR_DETAIL = null;    // full data of the mesa in detail view
 let COMANDA_RECIBIDOR_POLL  = null;     // poll interval id for recibidor home
+let COMANDA_TICKET_PREVIEW  = null;     // { mesa, batch } when print-preview modal open
 let COMANDA_TIMER_INTERVAL  = null;
 let COMANDA_POLL_INTERVAL   = null;
 let COMANDA_CUSTOM_OPEN     = false;
@@ -1366,6 +1376,8 @@ const UI = {
     cmdRecibidorHome:'Pedidos recibidos', cmdRecibidorEmpty:'Sin pedidos enviados aún',
     cmdRecibidorBack:'← Volver', cmdRecibidorNewBatch:'nuevo envío',
     cmdLastSent:'último envío', cmdSentItems:'enviados',
+    cmdTicketPreviewTitle:'Vista previa del ticket', cmdTicketPreviewClose:'Cerrar',
+    cmdTicketPreviewBtn:'🖨 Ticket',
     cmdItemCancelled:'cancelado',
     cmdCustomTitle:'Producto especial',
     cmdCustomNamePh:'Nombre del producto', cmdCustomCatPh:'Categoría (jugo, gaseosa…)',
@@ -1456,6 +1468,8 @@ const UI = {
     cmdRecibidorHome:'Incoming orders', cmdRecibidorEmpty:'No orders sent yet',
     cmdRecibidorBack:'← Back', cmdRecibidorNewBatch:'new batch',
     cmdLastSent:'last sent', cmdSentItems:'sent',
+    cmdTicketPreviewTitle:'Ticket preview', cmdTicketPreviewClose:'Close',
+    cmdTicketPreviewBtn:'🖨 Ticket',
     cmdItemCancelled:'cancelled',
     cmdCustomTitle:'Special item',
     cmdCustomNamePh:'Item name', cmdCustomCatPh:'Category (juice, soda…)',
@@ -1546,6 +1560,8 @@ const UI = {
     cmdRecibidorHome:'Pedidos recebidos', cmdRecibidorEmpty:'Sem pedidos enviados ainda',
     cmdRecibidorBack:'← Voltar', cmdRecibidorNewBatch:'novo envio',
     cmdLastSent:'último envio', cmdSentItems:'enviados',
+    cmdTicketPreviewTitle:'Pré-visualização do ticket', cmdTicketPreviewClose:'Fechar',
+    cmdTicketPreviewBtn:'🖨 Ticket',
     cmdItemCancelled:'cancelado',
     cmdCustomTitle:'Produto especial',
     cmdCustomNamePh:'Nome do produto', cmdCustomCatPh:'Categoria (suco, refrigerante…)',
@@ -4698,6 +4714,95 @@ function comandaSplitBatches(items){
 function comandaPendingCount(items){
   return (items || []).filter(it => !it.sentAt && it.status !== 'cancelled').length;
 }
+// --- Ticket builder --------------------------------------------------------
+// Pure function: given a mesa + a sent batch, return the printable ticket
+// as a single string (newlines between rows). Targets 42-col 80mm thermal
+// stock (Epson Font A). ASCII-safe characters only — what you see in the
+// preview is what the ESC/POS bridge will emit when wired. Hybrid layout:
+//   familiar header/footer (ATA CHEF · Mesa # · date · clientes)
+//   modern body         (#diner Q× NAME, batch banner with HH:MM, notes
+//                        indented, cancellations marked [ANULADO]).
+function comandaBuildTicket(mesa, batch){
+  const W = 42;
+  const out = [];
+  const pad2 = n => String(n).padStart(2, '0');
+  const center = s => {
+    s = String(s);
+    if (s.length >= W) return s.slice(0, W);
+    return ' '.repeat(Math.floor((W - s.length) / 2)) + s;
+  };
+  const rule = () => '-'.repeat(W);
+  // Header — chef station + mesa, both centred between rules.
+  out.push(center('ATA CHEF'));
+  out.push(rule());
+  out.push(center('Mesa # ' + (mesa.mesa || '?')));
+  out.push(rule());
+  out.push('');
+  // Batch banner — when this group was sent, plain left-aligned.
+  const sentAt = batch.sentAt || Date.now();
+  out.push('Enviado - ' + comandaFmtHM(sentAt));
+  out.push(rule());
+  // Items: #N  Qx  NAME (uppercase, easier to scan in the cocina).
+  // Notes wrap onto the next line, indented to align under NAME.
+  const NAME_COL = 10;       // "#1   1x   " = 10 chars before name
+  const noteIndent = ' '.repeat(NAME_COL);
+  batch.items.forEach(it => {
+    const dn = ('#' + it.dinerN).padEnd(4);             // "#1  " / "#10 "
+    const qty = ((it.qty || 1) + 'x').padEnd(4);         // "1x  " / "12x "
+    const cancelled = it.status === 'cancelled';
+    const name = String(it.name || '').toUpperCase();
+    let line = dn + qty + name;
+    if (cancelled) line += '  [ANULADO]';
+    out.push(line);
+    if (it.notes){
+      // Wrap notes if they exceed the printable remainder.
+      const note = '> ' + it.notes;
+      const remainder = W - NAME_COL;
+      for (let i = 0; i < note.length; i += remainder){
+        out.push(noteIndent + note.slice(i, i + remainder));
+      }
+    }
+  });
+  out.push('');
+  // Footer — date+time, mesa, clientes, closing rule.
+  const d = new Date(sentAt);
+  const fdate = `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  out.push(fdate);
+  out.push('Mesa: ' + (mesa.mesa || '?') + '   Clientes: ' + (mesa.diners || '?'));
+  out.push(rule());
+  return out.join('\n');
+}
+function comandaShowTicketPreview(sentAtStr){
+  const mesa = COMANDA_RECIBIDOR_DETAIL || COMANDA_ACTIVE_DATA;
+  if (!mesa) return;
+  const sentAt = Number(sentAtStr);
+  const items = (mesa.items || []).filter(it => it.sentAt === sentAt);
+  if (!items.length) return;
+  COMANDA_TICKET_PREVIEW = { mesa, batch: { sentAt, items } };
+  comandaRender();
+}
+function comandaHideTicketPreview(){
+  COMANDA_TICKET_PREVIEW = null;
+  comandaRender();
+}
+function comandaRenderTicketPreviewModal(){
+  const tp = COMANDA_TICKET_PREVIEW;
+  if (!tp) return '';
+  // Escape angle brackets so a stray "<" in an item name can't inject HTML.
+  const ticket = comandaBuildTicket(tp.mesa, tp.batch).replace(/[<>&]/g, ch => (
+    { '<':'&lt;', '>':'&gt;', '&':'&amp;' }[ch]
+  ));
+  return `
+    <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaHideTicketPreview()">
+      <div class="cmd-modal-panel cmd-ticket-panel">
+        <div class="cmd-modal-title">${t('cmdTicketPreviewTitle')}</div>
+        <pre class="cmd-ticket-paper">${ticket}</pre>
+        <div class="cmd-modal-actions">
+          <button class="cmd-btn primary" onclick="comandaHideTicketPreview()">${t('cmdTicketPreviewClose')}</button>
+        </div>
+      </div>
+    </div>`;
+}
 function comandaFmtHM(ms){
   if (!ms) return '';
   const d = new Date(ms);
@@ -5304,7 +5409,10 @@ async function comandaFetchRecibidorMesas(){
       } catch(e){}
     }
   }
-  if (currentTab === 'comandera' && COMANDA_AUTHED && COMANDA_ROLE === 'recibidor') comandaRender();
+  // Skip the re-render while the ticket-preview modal is open — otherwise
+  // the innerHTML rewrite would flicker the modal every 6s. Fresh data is
+  // still cached locally; the next render (when modal closes) picks it up.
+  if (currentTab === 'comandera' && COMANDA_AUTHED && COMANDA_ROLE === 'recibidor' && !COMANDA_TICKET_PREVIEW) comandaRender();
 }
 function comandaStartRecibidorPolling(){
   comandaStopRecibidorPolling();
@@ -5394,7 +5502,10 @@ function comandaRenderRecibidorDetail(root){
           <div class="cmd-rcb-batch">
             <div class="cmd-rcb-batch-head">
               <span>${t('cmdSentBatch')}</span>
-              <span class="cmd-rcb-batch-time">${comandaFmtHM(batch.sentAt)}</span>
+              <span class="cmd-rcb-batch-actions">
+                <span class="cmd-rcb-batch-time">${comandaFmtHM(batch.sentAt)}</span>
+                <button class="cmd-rcb-print-btn" onclick="comandaShowTicketPreview('${batch.sentAt}')" title="${t('cmdTicketPreviewTitle')}">${t('cmdTicketPreviewBtn')}</button>
+              </span>
             </div>
             ${lines}
           </div>`;
@@ -5410,7 +5521,8 @@ function comandaRenderRecibidorDetail(root){
         <button class="cmd-mesas-btn" onclick="comandaRecibidorBack()">${t('cmdRecibidorBack')}</button>
       </div>
     </div>
-    ${batchesHtml}`;
+    ${batchesHtml}
+    ${COMANDA_TICKET_PREVIEW ? comandaRenderTicketPreviewModal() : ''}`;
 }
 
 // --- Auto-close stale + auto-purge old days ------------------------------
@@ -5601,6 +5713,7 @@ function comandaLogout(){
   COMANDA_RECIBIDOR_VIEW_ID = null;
   COMANDA_RECIBIDOR_DETAIL = null;
   COMANDA_RECIBIDOR_LIST = [];
+  COMANDA_TICKET_PREVIEW = null;
   comandaStopTimerInterval();
   comandaStopPolling();
   comandaStopRecibidorPolling();
