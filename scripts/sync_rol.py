@@ -185,7 +185,7 @@ def get_day_cols(rows):
 
 # ── Parseo principal ──────────────────────────────────────────────────────────
 
-def parse_excel(xlsx_bytes, month: int):
+def parse_excel(wb, month: int):
     """
     Retorna (staffing_dict, roster_dict).
 
@@ -194,7 +194,6 @@ def parse_excel(xlsx_bytes, month: int):
 
     roster:   { "Nombre": { "1": "CAM", "5": "CPM", ... } }
     """
-    wb   = openpyxl.load_workbook(xlsx_bytes, read_only=True, data_only=True)
     ws   = find_sheet(wb, month)
     rows = list(ws.iter_rows(values_only=True))
 
@@ -327,43 +326,67 @@ def parse_excel(xlsx_bytes, month: int):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+def months_to_sync(today):
+    """Mes actual + mes siguiente. Mantiene mayo visible mientras junio
+    empieza a aparecer en cuanto el supervisor agregue la pestaña JUNIO."""
+    cur = (today.year, today.month)
+    nxt = (today.year + 1, 1) if today.month == 12 else (today.year, today.month + 1)
+    return [cur, nxt]
+
+
 def main():
-    today     = datetime.date.today()
-    month_str = today.strftime("%Y-%m")
+    today = datetime.date.today()
 
     print(f"[sync-rol] {today} — descargando Excel...")
     xlsx = download_excel()
     print(f"[sync-rol] {xlsx.getbuffer().nbytes:,} bytes recibidos")
 
-    staffing, roster = parse_excel(xlsx, today.month)
-    print(f"[sync-rol] {len(staffing)} dias · {len(roster)} personas en roster")
+    wb = openpyxl.load_workbook(xlsx, read_only=True, data_only=True)
+
+    parsed = {}  # month_str → (staffing, roster)
+    for (y, m) in months_to_sync(today):
+        month_str = f"{y:04d}-{m:02d}"
+        try:
+            staffing, roster = parse_excel(wb, m)
+        except ValueError as e:
+            print(f"[sync-rol] {month_str} — saltado: {e}")
+            continue
+        print(f"[sync-rol] {month_str}: {len(staffing)} dias · {len(roster)} personas en roster")
+        parsed[month_str] = (staffing, roster)
+
+    if not parsed:
+        raise SystemExit("[sync-rol] No se pudo parsear ningún mes — abortando.")
 
     if DEBUG:
         import pprint
-        print(f"\n--- staffing dia {today.day} ---")
-        pprint.pprint(staffing.get(str(today.day)))
-        print("\n--- roster Bruno ---")
-        pprint.pprint(roster.get("Bruno"))
-        print("\n--- roster Bryan Rincon ---")
-        pprint.pprint(roster.get("Bryan Rincon"))
-        print("\n[sync-rol] Modo debug — Firebase no modificado.")
+        cur_str = today.strftime("%Y-%m")
+        if cur_str in parsed:
+            staffing, roster = parsed[cur_str]
+            print(f"\n--- staffing {cur_str} dia {today.day} ---")
+            pprint.pprint(staffing.get(str(today.day)))
+            print("\n--- roster Bruno ---")
+            pprint.pprint(roster.get("Bruno"))
+            print("\n--- roster Bryan Rincon ---")
+            pprint.pprint(roster.get("Bryan Rincon"))
+        print(f"\n[sync-rol] Meses parseados: {sorted(parsed.keys())}")
+        print("[sync-rol] Modo debug — Firebase no modificado.")
         return
 
     print("[sync-rol] Autenticando con Firebase...")
     token = get_token()
 
-    fb_put(token, f"staffing/{month_str}", staffing)
-    print(f"[sync-rol] OK /staffing/{month_str}")
-
-    fb_put(token, f"roster/{month_str}", roster)
-    print(f"[sync-rol] OK /roster/{month_str}")
+    for month_str, (staffing, roster) in parsed.items():
+        fb_put(token, f"staffing/{month_str}", staffing)
+        print(f"[sync-rol] OK /staffing/{month_str}")
+        fb_put(token, f"roster/{month_str}", roster)
+        print(f"[sync-rol] OK /roster/{month_str}")
 
     now_utc = datetime.datetime.utcnow()
     fb_put(token, "meta/last_update", {
         "timestamp_iso":   now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "timestamp_local": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "timestamp_ms":    int(now_utc.timestamp() * 1000),
-        "mes":             month_str,
+        "mes":             ",".join(sorted(parsed.keys())),
         "tipo":            "sync automatico",
     })
     print(f"[sync-rol] OK /meta/last_update")
