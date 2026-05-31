@@ -1647,7 +1647,7 @@ const UI = {
   es: {
     appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'El detalle, a mano.',
     tabMenus:'Menú', tabWines:'Vinos', tabGuiones:'Maridajes generales', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
-    wineFilterPairings:'Maridajes generales',
+    wineFilterPremium:'Vinos Premium', wineFilterPairings:'Maridajes generales',
     momentAllDay:'Todo el día', momentPreDinner:'Pre Dinner · Aperitivos', momentAfterDinner:'After Dinner', momentNotice:'Próximamente · Esta carta aún no está disponible en el bar',
     momentosBannerSub:'Nueva carta por implementar',
     ctMethod:'Método', ctGlass:'Vaso', ctIce:'Hielo', ctIngredients:'Ingredientes', ctGarnish:'Garnish', ctSearch:'Buscar cocktail...',
@@ -1772,7 +1772,7 @@ const UI = {
   en: {
     appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'The detail, at hand.',
     tabMenus:'Menu', tabWines:'Wines', tabGuiones:'General pairings', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Coffee',
-    wineFilterPairings:'General pairings',
+    wineFilterPremium:'Premium Wines', wineFilterPairings:'General pairings',
     momentAllDay:'All Day', momentPreDinner:'Before Dinner · Aperitifs', momentAfterDinner:'After Dinner', momentNotice:'Coming Soon · This menu is not yet available at the bar',
     momentosBannerSub:'New menu, to be implemented',
     ctMethod:'Method', ctGlass:'Glass', ctIce:'Ice', ctIngredients:'Ingredients', ctGarnish:'Garnish', ctSearch:'Search cocktail...',
@@ -1897,7 +1897,7 @@ const UI = {
   pt: {
     appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'O detalhe, à mão.',
     tabMenus:'Menu', tabWines:'Vinhos', tabGuiones:'Harmonizações gerais', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
-    wineFilterPairings:'Harmonizações gerais',
+    wineFilterPremium:'Vinhos Premium', wineFilterPairings:'Harmonizações gerais',
     momentAllDay:'Todo o dia', momentPreDinner:'Antes do Jantar · Aperitivos', momentAfterDinner:'Após o Jantar', momentNotice:'Em breve · Este cardápio ainda não está disponível no bar',
     momentosBannerSub:'Nova carta a implementar',
     ctMethod:'Método', ctGlass:'Copo', ctIce:'Gelo', ctIngredients:'Ingredientes', ctGarnish:'Decoração', ctSearch:'Buscar cocktail...',
@@ -2229,7 +2229,7 @@ function setLang(lang, el) {
   if (dayBtns[0]) dayBtns[0].textContent = t('allDays');
   for (let i=1;i<dayBtns.length;i++) dayBtns[i].textContent = 'D'+i;
   const wfTabs = document.querySelectorAll('.wine-filter-tabs .tab');
-  const wfKeys = ['all','sparkling','whites','rose','reds','sweet','wineFilterPairings'];
+  const wfKeys = ['all','sparkling','whites','rose','reds','sweet','wineFilterPremium','wineFilterPairings'];
   wfTabs.forEach((b,i) => { if(wfKeys[i]) b.textContent = t(wfKeys[i]); });
   // re-render content — preserve open panels across language switches
   const prevDish = selectedDish;
