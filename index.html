@@ -365,11 +365,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .rol-search-results:empty { display:none; }
 .rol-search-person { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:17px; margin-bottom:10px; color:var(--text); }
 .rol-search-month { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; font-family:'Courier Prime','Courier New',monospace; }
-.rol-search-cell { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border:0.5px solid var(--border); border-radius:4px; background:var(--surface); font-size:9px; padding:2px; }
-.rol-search-cell .d { font-size:10px; color:var(--text-tertiary); opacity:0.6; }
-.rol-search-cell .t { font-weight:500; color:var(--gold); margin-top:2px; }
+.rol-search-dow { text-align:center; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); padding:4px 0; }
+.rol-search-cell { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border:0.5px solid var(--border); border-radius:4px; background:var(--surface); padding:2px; cursor:pointer; transition: border-color 0.12s, background 0.12s; touch-action:manipulation; }
+.rol-search-cell:hover { border-color:var(--gold); }
+.rol-search-cell:active { background:rgba(202,138,4,0.08); }
+.rol-search-cell.blank { cursor:default; pointer-events:none; }
+.rol-search-cell .d { font-size:10px; color:var(--text-tertiary); opacity:0.7; }
+.rol-search-cell .t { font-size:13px; font-weight:500; color:var(--gold); margin-top:3px; letter-spacing:0.02em; }
 .rol-search-cell.off { background:transparent; border-style:dashed; }
-.rol-search-cell.off .t { color:var(--text-tertiary); opacity:0.35; }
+.rol-search-cell.off .t { color:var(--text-tertiary); opacity:0.4; font-size:12px; }
+.rol-search-cell.blank { background:transparent; border:none; }
+.rol-persona-calendar { margin-top:1.8rem; padding-top:1.2rem; border-top:0.5px solid var(--border); }
+.rol-persona-calendar .rol-search-person { margin-bottom:10px; }
+.rol-pill-tag { display:inline-block; margin-left:6px; padding:1px 6px; font-size:10px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; background:rgba(14,116,144,0.15); color:#67e8f9; border:0.5px solid rgba(14,116,144,0.4); border-radius:4px; vertical-align:1px; font-weight:400; }
+.rol-pill.senior .rol-pill-tag { background:rgba(21,17,13,0.15); color:rgba(21,17,13,0.65); border-color:rgba(21,17,13,0.3); }
 
 .rol-status { text-align:center; padding:2rem 1rem; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; color:var(--text-tertiary); }
 
@@ -394,6 +403,86 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-course-divider::before, .cmd-course-divider::after { content:''; flex:1; height:0.5px; background:rgba(202,138,4,0.32); }
 .cmd-course-divider span { flex:0 0 auto; }
 .cmd-course-divider:first-child { margin-top:0; }
+/* Batch dividers — define the two buckets in the ticket: */
+/*   .is-pending → "Por enviar"  (amber, action needed)   */
+/*   .is-sent    → "Enviado · 21:34"  (gold, confirmed)   */
+/* Within a batch, course dividers still group by Entrada/Plato/Postre. */
+.cmd-batch-divider { display:flex; align-items:center; gap:10px; margin:16px 0 10px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; }
+.cmd-batch-divider::before, .cmd-batch-divider::after { content:''; flex:1; height:0.5px; }
+.cmd-batch-divider .cmd-batch-label { flex:0 0 auto; }
+.cmd-batch-divider .cmd-batch-time { font-family:'Courier Prime','Courier New',monospace; font-style:normal; font-size:11px; letter-spacing:0.08em; margin-left:6px; }
+.cmd-batch-divider:first-child { margin-top:0; }
+.cmd-batch-divider.is-pending { color:#f6c46b; }
+.cmd-batch-divider.is-pending::before, .cmd-batch-divider.is-pending::after { background:rgba(246,196,107,0.45); }
+.cmd-batch-divider.is-pending .cmd-batch-time { color:rgba(246,196,107,0.7); }
+.cmd-batch-divider.is-sent { color:var(--gold); }
+.cmd-batch-divider.is-sent::before, .cmd-batch-divider.is-sent::after { background:rgba(202,138,4,0.55); }
+.cmd-batch-divider.is-sent .cmd-batch-time { color:rgba(202,138,4,0.7); }
+/* Already-sent items: subtle dim so the eye lands on Por enviar instead. */
+.cmd-line.is-sent { opacity:0.78; }
+.cmd-line.is-sent .cmd-line-grip { visibility:hidden; }
+/* Send CTA — the primary action in the waiter footer when there are open */
+/* items. Amber gradient (matches "Por enviar" header), full-width feel. */
+.cmd-send-btn { background:linear-gradient(135deg, #d49b3a, #b67d1f); color:#1a1a1a; border:0.5px solid rgba(202,138,4,0.7); border-radius:var(--radius-md); padding:10px 18px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; font-style:italic; font-weight:600; letter-spacing:0.04em; cursor:pointer; box-shadow:0 0 0 0 rgba(246,196,107,0.5); animation:cmdSendBtnPulse 2.2s ease-in-out infinite; }
+.cmd-send-btn:hover { filter:brightness(1.05); }
+@keyframes cmdSendBtnPulse {
+  0%, 100% { box-shadow:0 0 0 0 rgba(246,196,107,0.0); }
+  50%      { box-shadow:0 0 0 6px rgba(246,196,107,0.18); }
+}
+/* Recibidor view — mesa cards. Glow while lastSentAt > recibidorSeenAt. */
+.cmd-recibidor-card { position:relative; display:flex; align-items:center; gap:14px; padding:14px 16px; margin-bottom:10px; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); cursor:pointer; transition:transform .15s, border-color .2s; }
+.cmd-recibidor-card:hover { transform:translateY(-1px); }
+.cmd-recibidor-card.is-new { border-color:var(--gold); animation:cmdRecibidorGlow 1.6s ease-in-out infinite; }
+@keyframes cmdRecibidorGlow {
+  0%, 100% { box-shadow:0 0 0 0 rgba(202,138,4,0); }
+  50%      { box-shadow:0 0 0 4px rgba(202,138,4,0.45); }
+}
+.cmd-recibidor-card .cmd-mesa-num { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:28px; color:var(--gold); min-width:48px; }
+.cmd-recibidor-card .cmd-rcb-info { flex:1; min-width:0; }
+.cmd-recibidor-card .cmd-rcb-meta { font-size:13px; color:rgba(255,255,255,0.78); }
+.cmd-recibidor-card .cmd-rcb-sub  { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; color:rgba(255,255,255,0.55); margin-top:3px; }
+.cmd-recibidor-card .cmd-rcb-new-chip { font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); border:0.5px solid rgba(202,138,4,0.7); border-radius:3px; padding:2px 6px; flex:0 0 auto; }
+/* Recibidor detail modal — items grouped by batch (Enviado · HH:MM) */
+.cmd-rcb-batch-head { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:15px; color:var(--gold); margin:14px 0 6px; padding-bottom:4px; border-bottom:0.5px solid rgba(202,138,4,0.35); display:flex; justify-content:space-between; align-items:baseline; }
+.cmd-rcb-batch-head .cmd-rcb-batch-time { font-family:'Courier Prime','Courier New',monospace; font-style:normal; font-size:11px; letter-spacing:0.08em; color:rgba(202,138,4,0.7); }
+.cmd-rcb-line { display:flex; gap:10px; padding:5px 0; border-top:0.5px solid rgba(255,255,255,0.05); font-size:14px; }
+.cmd-rcb-line:first-child { border-top:0; }
+.cmd-rcb-line .cmd-rcb-diner { color:#9ec9ff; font-family:'Courier Prime','Courier New',monospace; font-size:12px; min-width:30px; }
+.cmd-rcb-line .cmd-rcb-qty   { color:rgba(255,255,255,0.6); font-family:'Courier Prime','Courier New',monospace; font-size:12px; min-width:24px; }
+.cmd-rcb-line.is-cancelled { opacity:0.45; }
+.cmd-rcb-line.is-cancelled .cmd-rcb-name { text-decoration:line-through; }
+.cmd-rcb-line .cmd-line-note { display:block; color:rgba(202,138,4,0.85); font-style:italic; font-size:12px; margin-left:54px; }
+/* Recibidor batch head — flex row with title left, time + 🖨 right. */
+.cmd-rcb-batch-actions { display:flex; align-items:center; gap:8px; }
+.cmd-rcb-print-btn { background:transparent; color:rgba(202,138,4,0.78); border:0.5px solid rgba(202,138,4,0.4); border-radius:4px; padding:3px 9px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.04em; cursor:pointer; }
+.cmd-rcb-print-btn:hover { color:var(--gold); border-color:var(--gold); background:rgba(202,138,4,0.08); }
+/* Print preview "paper" — white thermal-paper look, monospace, fixed width */
+/* for accurate 42-column / 80mm preview. Black-on-cream so it reads like */
+/* an actual receipt instead of a code block. */
+.cmd-ticket-panel { max-width:420px; padding:1rem; }
+.cmd-ticket-paper { background:#faf7ed; color:#111; font-family:'Courier Prime','Courier New',monospace; font-size:13px; line-height:1.42; padding:18px 14px; border-radius:4px; white-space:pre; overflow-x:auto; margin:0 0 12px; box-shadow:0 2px 10px rgba(0,0,0,0.45), inset 0 0 0 0.5px rgba(0,0,0,0.08); }
+/* Freshness halo on newly-added items. <60s: pulsing gold accent + "nuevo" */
+/* chip. 60-180s: static gold accent. After: normal. Driven by addedAt; */
+/* refreshed in place by the 1s timer tick (no full re-render). */
+.cmd-line.is-fresh { background:rgba(202,138,4,0.10); box-shadow:inset 3px 0 0 var(--gold); border-radius:4px; animation:cmdFreshPulse 1.8s ease-in-out infinite; }
+.cmd-line.is-recent { box-shadow:inset 3px 0 0 rgba(202,138,4,0.55); border-radius:4px; }
+@keyframes cmdFreshPulse {
+  0%, 100% { background:rgba(202,138,4,0.06); }
+  50%      { background:rgba(202,138,4,0.16); }
+}
+.cmd-fresh-chip { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); border:0.5px solid rgba(202,138,4,0.5); border-radius:3px; padding:1px 5px; margin-left:8px; vertical-align:middle; }
+/* Soft-cancelled items: kept on the ticket as audit trail, struck through */
+/* and dimmed. The ✕ button is hidden so they cannot be re-cancelled. */
+.cmd-line.is-cancelled { opacity:0.45; }
+.cmd-line.is-cancelled .cmd-line-name { text-decoration:line-through; }
+.cmd-line.is-cancelled .cmd-line-btn.cmd-rm { display:none; }
+.cmd-cancelled-chip { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#ff8a80; border:0.5px solid rgba(255,138,128,0.45); border-radius:3px; padding:1px 5px; margin-left:8px; vertical-align:middle; }
+/* Change-mesa modal: inline error text under the numpad when collision. */
+.cmd-change-err { color:#ff8a80; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-align:center; margin-top:8px; min-height:14px; }
+/* "Cambiar mesa" trigger in active header — sits next to the timer chip, */
+/* low-emphasis so it doesn't compete with the close-mesa action. */
+.cmd-change-mesa-btn { background:transparent; color:rgba(255,255,255,0.62); border:0.5px solid rgba(255,255,255,0.18); border-radius:var(--radius-md); padding:6px 10px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; cursor:pointer; }
+.cmd-change-mesa-btn:hover { color:var(--gold); border-color:rgba(202,138,4,0.55); }
 
 /* Drag-to-reorder visuals. The grip handle is the leftmost cell of the
    line; only it triggers drag (the rest of the row stays tappable for the
@@ -421,6 +510,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .tab.tab-pairings { border-color: rgba(202,138,4,0.42); color: var(--gold); box-shadow: 0 0 8px rgba(202,138,4,0.18); }
 .tab.tab-pairings:hover { background: rgba(202,138,4,0.08); }
 .tab.tab-pairings.active { background: var(--wine-red); border-color: var(--wine-red); color: #fff; box-shadow: 0 0 10px rgba(202,138,4,0.32); }
+.tab.tab-premium { border-color: rgba(212,175,55,0.5); color: #fcd34d; box-shadow: 0 0 8px rgba(212,175,55,0.2); }
+.tab.tab-premium:hover { background: rgba(212,175,55,0.1); }
+.tab.tab-premium.active { background: rgba(212,175,55,0.18); border-color: rgba(212,175,55,0.8); color: #fcd34d; box-shadow: 0 0 12px rgba(212,175,55,0.35); }
 
 .search-bar { position: relative; margin-bottom: 1.25rem; }
 /* Font-size must be ≥ 16px to prevent iOS Safari from auto-zooming when the
@@ -463,7 +555,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Dish cards */
 .dish-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 0.875rem 1rem; cursor: pointer; transition: border-color 0.15s; }
 .dish-card:hover { border-color: var(--border-md); }
-.dish-card.selected { border-color: var(--wine-red); border-width: 1.5px; }
+.dish-card.selected { border-color: var(--wine-red); border-width: 1.5px; grid-column: 1 / -1; }
+.dish-card.selected .dish-desc { -webkit-line-clamp: unset; overflow: visible; }
+.dish-card.selected .allergen-row { display: none; }
+.dish-expanded { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); animation: panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
 .dish-name { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.4; margin-bottom: 5px; }
 .dish-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 7px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 /* Footnote / glossary note inside a dish description. Hidden inside the
@@ -525,7 +620,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .wine-chip.chip-dulce:hover, .wine-chip.chip-dulce.chip-active { background: rgba(251,146,60,0.22); border-color: rgba(251,146,60,0.7); }
 .wine-chip.chip-dulce .wine-chip-name { color: #fdba74; }
 .wine-chip.chip-dulce .wine-chip-why { color: #fb923c; }
-.wine-sub-panel { margin-top: 12px; background: var(--bg-secondary); border: 0.5px solid rgba(139,26,46,0.3); border-radius: var(--radius-md); padding: 1rem; animation: panelIn 0.25s cubic-bezier(0.34,1.1,0.64,1) both; }
+.wine-chip.chip-premium { background: rgba(212,175,55,0.12); border-color: rgba(212,175,55,0.4); }
+.wine-chip.chip-premium:hover, .wine-chip.chip-premium.chip-active { background: rgba(212,175,55,0.22); border-color: rgba(212,175,55,0.8); }
+.wine-chip.chip-premium .wine-chip-name { color: #fcd34d; }
+.wine-chip.chip-premium .wine-chip-why { color: #d4af37; }
+.wine-chip.chip-active { padding-bottom: 12px; }
+.wine-chip-detail { margin-top: 10px; padding-top: 10px; border-top: 0.5px solid rgba(255,255,255,0.08); animation: panelIn 0.25s cubic-bezier(0.34,1.1,0.64,1) both; cursor: auto; }
+.wine-chip-detail .wine-section { margin-bottom: 0.75rem; }
+.wine-chip-detail .wine-section:last-child { margin-bottom: 0; }
 .close-btn { float: right; font-size: 20px; line-height: 1; cursor: pointer; color: var(--text-tertiary); background: none; border: none; padding: 0 0 0 8px; }
 .close-btn:hover { color: var(--text); }
 
@@ -534,13 +636,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .wine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .wine-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; cursor: pointer; transition: border-color 0.15s; }
 .wine-card:hover { border-color: var(--border-md); }
-.wine-card.selected { border-color: var(--wine-red); border-width: 1.5px; }
+.wine-card.selected { border-color: var(--wine-red); border-width: 1.5px; grid-column: 1 / -1; }
+.wine-card.selected .wine-aroma { -webkit-line-clamp: unset; overflow: visible; }
+.wine-expanded { margin-top: 14px; padding-top: 14px; border-top: 0.5px solid var(--border); animation: panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
 .wine-type-badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; display: inline-block; margin-bottom: 6px; }
 .badge-espumante { background: rgba(14,165,233,0.18); color: #7dd3fc; }
 .badge-blanco { background: rgba(34,197,94,0.15); color: #86efac; }
 .badge-rosado { background: var(--coral-light); color: #f87171; }
 .badge-tinto { background: rgba(139,92,246,0.2); color: #c4b5fd; }
 .badge-dulce { background: rgba(251,146,60,0.2); color: #fdba74; }
+.badge-premium { background: rgba(212,175,55,0.22); color: #fcd34d; border: 0.5px solid rgba(212,175,55,0.4); }
 .wine-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
 .wine-valley { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
 .wine-aroma { font-size: 12px; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -1122,6 +1227,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
       <button class="tab" onclick="setWineFilter('rosado',this)">Rosado</button>
       <button class="tab" onclick="setWineFilter('tinto',this)">Tintos</button>
       <button class="tab" onclick="setWineFilter('dulce',this)">Dulce</button>
+      <button class="tab tab-premium" onclick="setWineFilter('premium',this)">Vinos Premium</button>
       <button class="tab tab-pairings" onclick="setWineFilter('maridajes',this)">Maridajes generales</button>
     </div>
     <div class="wine-grid" id="wine-grid"></div>
@@ -1259,7 +1365,12 @@ const WINES = [
   {id:'perez-cruz',type:'tinto',name:'Pérez Cruz L.E. Carmenere',valley:'Maipo Andes',identity:'Tinto, Carmenere de selección de parcelas, DO Maipo Andes.',terroir:'Al sur de Santiago, pie de cordillera. Clima mediterráneo, gran amplitud térmica. Suelos aluviales y coluviales, pedregosos, de origen volcánico.',winery:'Viña Pérez Cruz, único viñedo en manejo sustentable. Limited Edition: versiones precisas de cepas bordelesas. Fruta madura, taninos redondos, madera equilibrada.',style:'Fruta negra madura, especias dulces, cacao, pimentón asado, hierbas. Tanino medio-alto pero redondo, cuerpo medio-alto, final largo.',shortpitch:'Es un Carmenere de Maipo Andes, con fruta negra y taninos firmes pero redondos; ideal para asado de tira, costillar y plateada.',pitch:'El viñedo está en la parte alta del Maipo, sobre suelos pedregosos. Eso da un Carmenere con estructura y frescor. Se siente la fruta negra y las especias, y el tanino se agarra muy bien a carnes de cocción lenta, con salsas concentradas.'},
   {id:'cabernet',type:'tinto',name:'Pura Fe Cabernet Sauvignon',valley:'Antiyal, Maipo Andes',identity:'Tinto, 100% Cabernet Sauvignon orgánico, Maipo Andes.',terroir:'Zona referente mundial para Cabernet. Suelos volcánicos, aluviales, con mucha piedra y excelente drenaje. Días calurosos y noches frías: madurez completa con acidez.',winery:'Antiyal, proyecto de Álvaro Espinoza, pionero de la biodinámica en Chile. Orgánico y biodinámico, rendimientos moderados, barrica equilibrada.',style:'Cassis, ciruela, pimentón asado, grafito, tabaco suave, hierbas. Cuerpo lleno, taninos firmes y pulidos, buena acidez, final largo.',shortpitch:'Es nuestro Cabernet orgánico de Maipo Andes, con estructura y fruta negra; perfecto para filetes, asado de tira, cordero y plateada.',pitch:'Es un Cabernet de clima andino, con taninos firmes pero muy pulidos y una acidez que evita que el vino se sienta pesado. Acompaña muy bien la textura de carnes rojas y de cocción larga, y aguanta salsas con fondo de vino tinto.'},
   {id:'syrah',type:'tinto',name:'Clos de Luz "Azuda" Syrah',valley:'Valle de Cachapoal (Almahue)',identity:'Tinto, 100% Syrah, línea Azuda de Clos de Luz, Almahue en Cachapoal.',terroir:'Almahue, interior del valle de Cachapoal. Clima templado, veranos cálidos moderados por la Cordillera. Laderas con suelos graníticos: acidez fresca y taninos finos.',winery:'Clos de Luz, viña familiar. Variedades mediterráneas en viñedos antiguos. Azuda en cubas de concreto y tinajas de greda. Frescor más que potencia.',style:'Fruta negra, moras, especias (pimienta, hierbas), notas florales, fondo mineral. Intenso pero fresco, cuerpo medio-alto, buena acidez, taninos elegantes.',shortpitch:'Es un Syrah de Almahue, intenso pero fresco, con mucha fruta negra y especias; funciona muy bien con cordero, costillar, plateada y pato.',pitch:'Se vinifica en concreto y tinajas, lo que conserva la frescura y el carácter de fruta. Tiene suficiente estructura para carnes de cocción larga, pero al mismo tiempo mantiene una acidez que hace el conjunto más liviano.'},
-  {id:'erasmo',type:'dulce',name:'Erasmo Late Harvest Torontel',valley:'Valle del Maule',identity:'Vino dulce natural (Late Harvest), uvas Torontel sobremaduras del Maule.',terroir:'Maule interior, clima mediterráneo, veranos cálidos y otoños secos. Suelos franco-arcillosos y graníticos. La uva concentra azúcar y aromas en la planta.',winery:'Erasmo: tradición italiana con secano del Maule. Late Harvest equilibrado: buena acidez y aromas florales intensos, sin sensaciones empalagosas.',style:'Flores blancas, miel, fruta de hueso, frutas confitadas, piel de naranja. Dulzor marcado con acidez suficiente. Textura untuosa, final largo.',shortpitch:'Es nuestro vino de postre, un Late Harvest de Torontel del Maule, con notas de miel y frutas confitadas; va muy bien con tres leches, cheesecake, carrot cake o la degustación de chañar.',pitch:'La uva se deja sobremadurar en la planta para concentrar azúcar y aromas. El resultado es un vino dulce pero con acidez suficiente para no cansar. Es la mejor opción cuando el viajero quiere cerrar con un maridaje clásico de postre y vino.'}
+  {id:'erasmo',type:'dulce',name:'Erasmo Late Harvest Torontel',valley:'Valle del Maule',identity:'Vino dulce natural (Late Harvest), uvas Torontel sobremaduras del Maule.',terroir:'Maule interior, clima mediterráneo, veranos cálidos y otoños secos. Suelos franco-arcillosos y graníticos. La uva concentra azúcar y aromas en la planta.',winery:'Erasmo: tradición italiana con secano del Maule. Late Harvest equilibrado: buena acidez y aromas florales intensos, sin sensaciones empalagosas.',style:'Flores blancas, miel, fruta de hueso, frutas confitadas, piel de naranja. Dulzor marcado con acidez suficiente. Textura untuosa, final largo.',shortpitch:'Es nuestro vino de postre, un Late Harvest de Torontel del Maule, con notas de miel y frutas confitadas; va muy bien con tres leches, cheesecake, carrot cake o la degustación de chañar.',pitch:'La uva se deja sobremadurar en la planta para concentrar azúcar y aromas. El resultado es un vino dulce pero con acidez suficiente para no cansar. Es la mejor opción cuando el viajero quiere cerrar con un maridaje clásico de postre y vino.'},
+  {id:'peters',type:'premium',name:'Pierre Péters Blanc des Blancs',valley:'Côte des Blancs, Grand Cru · Champagne, Francia',identity:'Champagne Blanc de Blancs Grand Cru, 100% Chardonnay de Le Mesnil-sur-Oger. Casa Récoltant-Manipulant: cosecha y elabora su propia fruta con control total desde el viñedo hasta la botella. Referencia mundial de mineralidad y tensión calcárea.',terroir:'Côte des Blancs, Champagne. Suelos de tiza pura ("la craie") que confieren una mineralidad vibrante e inconfundible. Le Mesnil-sur-Oger es considerado uno de los Grand Cru más finos de la región. Clima continental moderado con exposición este: lenta maduración que preserva la acidez natural.',winery:'Fermentación principal en acero inoxidable para preservar frescura y tensión frutal. Ensamblaje mediante sistema de solera con vinos de reserva perpetuos de décadas anteriores, que añade profundidad y complejidad aromática sin opacar la mineralidad. Fermentación maloláctica para redondear el perfil. Crianza prolongada sobre lías en botella.',style:'Burbuja finísima y persistente. Flores blancas, almendras frescas, limón Meyer, notas de brioche y masa madre por la guarda sobre lías. En boca: acidez tensa y filosa, cuerpo elegante, final de profunda mineralidad caliza y salina.',shortpitch:'Es un Champagne Grand Cru Blanc de Blancs de una casa familiar histórica. Burbuja extraordinaria, tensión calcárea y mineralidad pura. Excelente apertura para la experiencia gastronómica o para acompañar ostras frescas, tiraditos de pescado blanco y mariscos de alta calidad.',pitch:'Pierre Péters opera como Récoltant-Manipulant en Le Mesnil-sur-Oger, uno de los Grand Cru más reputados de la Côte des Blancs. Los suelos de tiza pura imprimen una mineralidad caliza y salina que es la firma del vino. La solera de reservas perpetuas añade complejidad sin sacrificar tensión. Es el aperitivo absoluto para una experiencia de alta gastronomía: limpia el paladar y lo prepara para cada bocado.'},
+  {id:'sena',type:'premium',name:'Viña Seña',valley:'DO Valle de Aconcagua, Chile',identity:'Ensamblaje bordelés icónico de Chile: Cabernet Sauvignon (predominio), Carmenère, Malbec, Cabernet Franc y Petit Verdot. Primer joint venture de élite del país (Eduardo Chadwick y Robert Mondavi). Hoy opera bajo estrictos principios de agricultura biodinámica con el objetivo de posicionarse como equivalente chileno de los Premier Grand Cru de Burdeos.',terroir:'Valle de Aconcagua, a los pies de la cordillera. Clima mediterráneo de grandes amplitudes térmicas. Los suelos aluviales y graníticos del piedemonte andino combinan retención de agua con excelente drenaje. La frescura y energía del valle, potenciadas por la influencia cordillerana, son el alma del vino.',winery:'Selección óptica de la fruta parcela por parcela. Fermentación en mix de acero inoxidable y grandes foudres de roble para extracciones controladas y precisas. Crianza de 22 meses en barricas de roble francés (alto porcentaje de madera nueva) complementadas con foudres para moderar el tostado y mantener la fruta vibrante. Viticultura biodinámica certificada.',style:'Perfil altamente elegante. Aromas de fruta roja y negra fresca, especias dulces, cedro y sutiles toques balsámicos. En boca: textura sedosa, taninos de grano excepcionalmente fino, acidez eléctrica y jugosa. Potencial de guarda de décadas.',shortpitch:'El gran vino icónico de Chile, ensamblaje bordelés biodinámico de Aconcagua. Elegancia absoluta, taninos de seda y acidez vibrante. Ideal para carnes rojas magras de alta cocina, estofados a baja temperatura o magret de pato con reducciones oscuras.',pitch:'Seña nació como el primer joint venture de élite de Chile y es hoy referente mundial. Su viticultura biodinámica en Aconcagua y la crianza de 22 meses en roble francés producen un vino de textura sedosa y acidez eléctrica. Los taninos de grano fino y el potencial de guarda lo posicionan como el equivalente chileno de un Premier Grand Cru de Burdeos. La acidez del vino balancea a la perfección las reducciones oscuras y la intensidad de las carnes de alta gastronomía.'},
+  {id:'almaviva',type:'premium',name:'Almaviva',valley:'DO Puente Alto · Valle del Maipo, Chile',identity:'Ensamblaje bordelés clásico: Cabernet Sauvignon mayoritario, Carmenère, Cabernet Franc, Petit Verdot y ocasionalmente Merlot. Unión histórica entre Concha y Toro y el Baron Philippe de Rothschild (Mouton Rothschild). Trajo a Chile el concepto del Château francés: un terroir excepcional, una bodega exclusiva y un único gran vino.',terroir:'Puente Alto, Valle del Maipo. Uno de los mejores terroirs del mundo para Cabernet Sauvignon: suelos pedregosos de origen glaciar con excelente drenaje, gran amplitud térmica y la influencia directa de la Cordillera de los Andes. La concentración natural de la fruta en este sector es excepcional.',winery:'Maceración pre-fermentativa en frío y fermentación en acero inoxidable con control riguroso de temperatura para extracciones precisas. Crianza de 18 a 20 meses en barricas de roble francés casi 100% nuevas, el esquema bordelés clásico que microoxigena y pule unos taninos naturalmente concentrados. Técnica Mouton Rothschild aplicada al terroir del Maipo.',style:'Arquetipo de la opulencia y concentración. Aromas profundos de cassis, mora negra, grafito, regaliz, vainilla y chocolate amargo. Voluminoso y carnoso en boca, taninos robustos y magistralmente pulidos, estructura densa y final larguísimo.',shortpitch:'Almaviva es el gran vino de Puente Alto, fruto de la alianza entre Concha y Toro y Mouton Rothschild. Opulento, concentrado y de final interminable. Para platos de peso y estructura: bife chorizo con infiltración, asado de tira glaseado, preparaciones con trufa, champiñones silvestres o salsas ricas a base de demiglace.',pitch:'Almaviva trajo a Chile el concepto del Château bordelés: un solo gran vino de un terroir excepcional en Puente Alto. La alianza con Mouton Rothschild garantiza rigor técnico sin concesiones. Los 18 a 20 meses en barricas 100% nuevas dan una estructura densa y taninos opulentos pero de altísima calidad. Es el compañero ideal para los platos de mayor peso y concentración de la experiencia gastronómica.'},
+  {id:'don-melchor',type:'premium',name:'Don Melchor',valley:'DO Puente Alto · Valle del Maipo, Chile',identity:'100% Cabernet Sauvignon (97-100% según añada, con pequeñísimas adiciones de Cabernet Franc u otras para afinar el corte). El clásico indiscutible del Maipo Andes y referente mundial de la variedad en Chile. Detrás del vino hay un trabajo microscópico de parcelación geológica: cada lote del viñedo de Puente Alto se vinifica por separado antes del corte maestro.',terroir:'Puente Alto, Valle del Maipo Andes. Suelos pedregosos y aluviales de origen volcánico y glaciar con excelente drenaje. Días calurosos y noches frías garantizan madurez completa con frescura y acidez natural. Considerado uno de los mejores terroirs del mundo para Cabernet Sauvignon.',winery:'Fermentación tradicional en acero inoxidable, lote por lote, con trabajo parcelario microscópico. Fermentación maloláctica. Crianza de 15 meses en barricas de roble francés (60-70% nuevas), que permite microoxigenación controlada manteniendo el foco en el carácter primario de la fruta. No se busca abrumar con madera, sino afinar.',style:'Fruta roja y negra muy nítida dominada por el cassis, con la inconfundible nota elegante de menta o eucalipto, polvo de cacao y grafito. Taninos aterciopelados y finos. Frescura natural que confiere textura vibrante y fluida. El clásico Maipo Andes en su expresión más pura.',shortpitch:'Don Melchor es el Cabernet Sauvignon de referencia de Chile. Cassis, menta elegante, cacao y grafito con taninos aterciopelados. Perfecto para cordero patagónico asado lentamente, filete de vacuno con guarniciones terrosas, o quesos maduros de pasta dura.',pitch:'Don Melchor no busca ensamblajes complejos, sino la expresión más pura del Cabernet Sauvignon en Puente Alto. El trabajo parcelario microscópico y la crianza de 15 meses en roble francés producen un vino de frescura vibrante, taninos sedosos y complejidad real. El eucalipto y la menta son la firma del Maipo Andes: es la referencia cuando el viajero busca la quintaesencia del Cabernet chileno.'},
+  {id:'rukumilla',type:'premium',name:'Rukumilla',valley:'DO Valle del Maipo · Isla de Maipo, Chile',identity:'Ensamblaje tinto boutique: Cabernet Sauvignon, Syrah, Malbec y Cabernet Franc, según línea y cosecha. Proyecto familiar del MOVI (Movimiento de Viñateros Independientes), defensor de viticultura orgánica de escala humana y mínima intervención. Su nombre remite a leyendas del Valle del Maipo.',terroir:'Isla de Maipo y Talagante, sector interior del Valle del Maipo. Clima mediterráneo con suelos aluviales. Diferencia clave: la bodega guarda extensamente sus reservas hasta 10-15 años en botella antes de lanzarlas al mercado, permitiendo que el tiempo integre y suavice todos sus componentes sin necesidad de sobre-extracción ni madera invasiva.',winery:'Procesos artesanales con extracción cuidadosa y mínima intervención. Agricultura orgánica de pequeña escala dentro del MOVI. El sello distintivo es la estiba prolongada en botella: la larga guarda reemplaza la sobreextracción y la madera invasiva. El tiempo hace el trabajo que otros hacen con barricas nuevas y chaptalización.',style:'Carácter marcadamente evolutivo en sus reservas guardadas. Nariz de cereza deshidratada, tabaco, madera cálida, clavo de olor y nuez moscada. En boca: ligero a medio, sin opulencia artificial, taninos maduros y redondos, acidez presente que le otorga vitalidad rústica y auténtica.',shortpitch:'Rukumilla es un ensamblaje boutique del Maipo con carácter evolutivo y personalidad propia. Cereza deshidratada, especias cálidas y taninos maduros. Muy versátil: pastas artesanales rellenas, guisos sabrosos, empanadas horneadas o carnes de media intensidad donde no se necesite un tónico astringente.',pitch:'Como miembro del MOVI, Rukumilla defiende la viticultura orgánica y la mínima intervención. Su gran diferenciador es la estiba prolongada: las reservas duermen en botella hasta 10-15 años antes de llegar al mercado. Eso da un vino con carácter evolutivo real, sin artificios ni maquillaje técnico. Es la opción para quienes buscan algo diferente, con historia y alma local del Valle del Maipo.'}
 ];
 
 const GUIONES = [
@@ -1327,9 +1438,28 @@ let DESSERTS_FORM_OPEN      = false;
 // {auto-id} where each auto-id is one comanda (mesa+sitting). See module
 // block for shape and lifecycle. PIN gate at first tap on the tab.
 const COMANDA_PATH          = 'comandas';
-const COMANDA_PIN_CODE      = '666';
+const COMANDA_PIN_CODE      = '666';                 // waiter (E-Check)
+const COMANDA_RECIBIDOR_PIN = '777';                 // expediter / pase
 const COMANDA_AUTOCLOSE_MS  = 12 * 60 * 60 * 1000;  // open >12h → auto-close
 const COMANDA_PURGE_DAYS    = 30;                    // closed >30d → purge
+// Batch model: items live in one of two buckets per mesa — 'Por enviar'
+// (status:'open', no sentAt) or 'Enviado · HH:MM' (status:'sent', sentAt
+// set when the waiter confirmed the batch). Batches are defined by sentAt,
+// not by time gaps. Adding a new item to a fully-sent mesa drops it into
+// a fresh 'Por enviar' batch and re-arms the Enviar button.
+// Recibidor (PIN 777) sees one card per mesa with at least one sent item;
+// the card glows while lastSentAt > recibidorSeenAt (i.e., the latest
+// batch hasn't been opened). Tapping the card persists recibidorSeenAt
+// and the glow extinguishes server-side across devices.
+// Freshness halo: items <FRESH_MS get a pulsing gold border + "nuevo" chip,
+// items <FRESH_SOFT_MS get a static gold accent. After that, normal styling.
+// The 1s timer tick refreshes these classes in place (no full re-render).
+const COMANDA_FRESH_MS       = 60 * 1000;
+const COMANDA_FRESH_SOFT_MS  = 180 * 1000;
+// Soft-cancel threshold: pressing ✕ on an item older than this marks it
+// cancelled (struck through, kept in the record) instead of deleting it.
+// Newer items still delete silently — they were just typed, no audit value.
+const COMANDA_SOFT_CANCEL_MS = 5 * 60 * 1000;
 let COMANDA_AUTHED          = false;
 let COMANDA_VIEW            = 'gate';   // 'gate' | 'home' | 'new' | 'active'
 let COMANDA_PIN_BUFFER      = '';
@@ -1344,6 +1474,15 @@ let COMANDA_NEW_MESA_BUF    = '';
 let COMANDA_NEW_DINERS      = 2;
 let COMANDA_NOTE_EDIT_ID    = null;     // item id whose note dialog is open
 let COMANDA_FULL_OPEN       = false;    // "ver comanda completa" modal
+let COMANDA_CHANGE_MESA_OPEN= false;    // "cambiar n° de mesa" modal flag
+let COMANDA_CHANGE_MESA_BUF = '';       // numpad buffer for new table #
+let COMANDA_CHANGE_MESA_ERR = '';       // 'taken' when collision detected
+let COMANDA_ROLE            = 'waiter'; // 'waiter' (666) | 'recibidor' (777)
+let COMANDA_RECIBIDOR_LIST  = [];       // mesas with sent items, for recibidor home
+let COMANDA_RECIBIDOR_VIEW_ID = null;   // mesa currently open in recibidor detail
+let COMANDA_RECIBIDOR_DETAIL = null;    // full data of the mesa in detail view
+let COMANDA_RECIBIDOR_POLL  = null;     // poll interval id for recibidor home
+let COMANDA_TICKET_PREVIEW  = null;     // { mesa, batch } when print-preview modal open
 let COMANDA_TIMER_INTERVAL  = null;
 let COMANDA_POLL_INTERVAL   = null;
 let COMANDA_CUSTOM_OPEN     = false;
@@ -1365,18 +1504,18 @@ const ROL_ROSTER_PATH   = 'roster';
 const ROL_STAFFING_PATH = 'staffing';
 const ROL_META_PATH     = 'meta/last_update';
 const ROL_PIN_CODE      = '2098';
-let ROL_AUTHED         = false;
-let ROL_VIEW           = 'gate';      // 'gate' | 'home'
-let ROL_PIN_BUFFER     = '';
-let ROL_MONTH_KEY      = null;        // 'YYYY-MM' currently loaded
-let ROL_ROSTER         = {};          // { personaName: { dayN: turnoCode } }
-let ROL_STAFFING       = {};          // { dayN: { geo_senior_am, geos_am, … } }
-let ROL_PERSONA        = (typeof localStorage !== 'undefined' && localStorage.getItem('rol.persona')) || '';
-let ROL_WEEK_START_DAY = 0;           // 0 = "compute from today on first render"
-let ROL_SEARCH_QUERY   = '';
-let ROL_LOAD_ERROR     = false;
-let ROL_LAST_UPDATE    = null;        // ISO timestamp from /meta/last_update
-let ROL_SWIPE          = null;        // active touch-drag state for week swipe
+let ROL_AUTHED            = false;
+let ROL_VIEW              = 'gate';   // 'gate' | 'home'
+let ROL_PIN_BUFFER        = '';
+let ROL_ROSTER_BY_MONTH   = {};       // { 'YYYY-MM': { personaName: { dayN: turnoCode } } }
+let ROL_STAFFING_BY_MONTH = {};       // { 'YYYY-MM': { dayN: { geo_senior_am, … } } }
+let ROL_MONTHS_LOADING    = {};       // { 'YYYY-MM': Promise } dedupe in-flight fetches
+let ROL_PERSONA           = (typeof localStorage !== 'undefined' && localStorage.getItem('rol.persona')) || '';
+let ROL_WINDOW_START      = null;     // Date — first day of the rolling 7-day window
+let ROL_SEARCH_QUERY      = '';
+let ROL_LOAD_ERROR        = false;
+let ROL_LAST_UPDATE       = null;     // ISO timestamp from /meta/last_update
+let ROL_SWIPE             = null;     // active touch-drag state for week swipe
 
 // --- Checklist module state ---------------------------------------------
 // Module: chk — operational pre-service checklists for the GEO team.
@@ -1508,7 +1647,7 @@ const UI = {
   es: {
     appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'El detalle, a mano.',
     tabMenus:'Menú', tabWines:'Vinos', tabGuiones:'Maridajes generales', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
-    wineFilterPairings:'Maridajes generales',
+    wineFilterPremium:'Vinos Premium', wineFilterPairings:'Maridajes generales',
     momentAllDay:'Todo el día', momentPreDinner:'Pre Dinner · Aperitivos', momentAfterDinner:'After Dinner', momentNotice:'Próximamente · Esta carta aún no está disponible en el bar',
     momentosBannerSub:'Nueva carta por implementar',
     ctMethod:'Método', ctGlass:'Vaso', ctIce:'Hielo', ctIngredients:'Ingredientes', ctGarnish:'Garnish', ctSearch:'Buscar cocktail...',
@@ -1521,7 +1660,7 @@ const UI = {
     pairedDishes:'Platos del menú con este vino', mentionedWines:'Vinos mencionados',
     noDishes:'No se encontraron platos',
     all:'Todos', sparkling:'Espumante', whites:'Blancos', rose:'Rosado', reds:'Tintos', sweet:'Dulce',
-    lbl_espumante:'Espumante', lbl_blanco:'Blanco', lbl_rosado:'Rosado', lbl_tinto:'Tinto', lbl_dulce:'Dulce',
+    lbl_espumante:'Espumante', lbl_blanco:'Blanco', lbl_rosado:'Rosado', lbl_tinto:'Tinto', lbl_dulce:'Dulce', lbl_premium:'Premium',
     cfServiceMode:'✦ Modo Servicio', cfPinTitle:'Modo Servicio', cfPinSub:'Introduce tu código de acceso', cfPinError:'Código incorrecto',
     cfWaiterTitle:'Nueva Orden', cfWaiterSub:'Selecciona bebida · anota el pedido especial',
     cfSelectDrink:'Bebida', cfTableLabel:'Mesa (opcional)', cfTablePlaceholder:'Mesa', cfSpecialRequest:'Petición especial (opcional)', cfSpecialPlaceholder:'Ej: sin azúcar, leche de avena…',
@@ -1552,6 +1691,7 @@ const UI = {
     rolSearchDesc:'¿Qué días trabaja una persona y en qué turnos?',
     rolSearchPlaceholder:'Empieza a escribir un nombre…',
     rolSearchNoResults:'Sin resultados',
+    rolCortoTag:'Corto',
     rolWeekOutsideMonth:'Esta semana cae fuera del mes cargado.',
     rolLoadError:'No se pudo cargar los datos. Verifica tu conexión.',
     rolEmptyMonth:'Aún no hay roster cargado para este mes.',
@@ -1560,7 +1700,7 @@ const UI = {
     rolUpdatedHours:'actualizado hace {n} h',
     rolUpdatedOn:'actualizado el {date}',
     tabComandera:'E-Check',
-    cmdPinTitle:'Comandera', cmdPinSub:'Código de mesero', cmdPinError:'Código incorrecto',
+    cmdPinTitle:'Comandera', cmdPinSub:'Código de acceso', cmdPinError:'Código incorrecto',
     cmdHomeTitle:'Mesas activas', cmdHomeEmpty:'No hay mesas abiertas',
     cmdNewMesaBtn:'+ Nueva mesa',
     cmdNewMesaTitle:'Abrir comanda', cmdMesaNumLabel:'N° de mesa', cmdDinersLabel:'Comensales',
@@ -1579,6 +1719,17 @@ const UI = {
     cmdNotePlaceholder:'Punto medio · sin cebolla · alérgico al maní…',
     cmdNoteSave:'Guardar', cmdNoteCancel:'Cancelar',
     cmdItemRemove:'Quitar',
+    cmdChangeMesa:'Cambiar mesa', cmdChangeMesaTitle:'Cambiar n° de mesa',
+    cmdMesaTaken:'Esa mesa ya está abierta',
+    cmdFreshChip:'nuevo',
+    cmdPendingBatch:'Por enviar', cmdSentBatch:'Enviado',
+    cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
+    cmdRecibidorHome:'Pedidos recibidos', cmdRecibidorEmpty:'Sin pedidos enviados aún',
+    cmdRecibidorBack:'← Volver', cmdRecibidorNewBatch:'nuevo envío',
+    cmdLastSent:'último envío', cmdSentItems:'enviados',
+    cmdTicketPreviewTitle:'Vista previa del ticket', cmdTicketPreviewClose:'Cerrar',
+    cmdTicketPreviewBtn:'🖨 Ticket',
+    cmdItemCancelled:'cancelado',
     cmdCustomTitle:'Producto especial',
     cmdCustomNamePh:'Nombre del producto', cmdCustomCatPh:'Categoría (jugo, gaseosa…)',
     cmdCustomAdd:'Agregar', cmdCustomCancel:'Cancelar',
@@ -1621,7 +1772,7 @@ const UI = {
   en: {
     appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'The detail, at hand.',
     tabMenus:'Menu', tabWines:'Wines', tabGuiones:'General pairings', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Coffee',
-    wineFilterPairings:'General pairings',
+    wineFilterPremium:'Premium Wines', wineFilterPairings:'General pairings',
     momentAllDay:'All Day', momentPreDinner:'Before Dinner · Aperitifs', momentAfterDinner:'After Dinner', momentNotice:'Coming Soon · This menu is not yet available at the bar',
     momentosBannerSub:'New menu, to be implemented',
     ctMethod:'Method', ctGlass:'Glass', ctIce:'Ice', ctIngredients:'Ingredients', ctGarnish:'Garnish', ctSearch:'Search cocktail...',
@@ -1634,7 +1785,7 @@ const UI = {
     pairedDishes:'Menu dishes with this wine', mentionedWines:'Mentioned wines',
     noDishes:'No dishes found',
     all:'All', sparkling:'Sparkling', whites:'Whites', rose:'Rosé', reds:'Reds', sweet:'Sweet',
-    lbl_espumante:'Sparkling', lbl_blanco:'White', lbl_rosado:'Rosé', lbl_tinto:'Red', lbl_dulce:'Sweet',
+    lbl_espumante:'Sparkling', lbl_blanco:'White', lbl_rosado:'Rosé', lbl_tinto:'Red', lbl_dulce:'Sweet', lbl_premium:'Premium',
     cfServiceMode:'✦ Service Mode', cfPinTitle:'Service Mode', cfPinSub:'Enter your access code', cfPinError:'Incorrect code',
     cfWaiterTitle:'New Order', cfWaiterSub:'Select drink · note special request',
     cfSelectDrink:'Drink', cfTableLabel:'Table (optional)', cfTablePlaceholder:'Table', cfSpecialRequest:'Special request (optional)', cfSpecialPlaceholder:'e.g. no sugar, oat milk…',
@@ -1665,6 +1816,7 @@ const UI = {
     rolSearchDesc:'What days do they work, and which shifts?',
     rolSearchPlaceholder:'Start typing a name…',
     rolSearchNoResults:'No results',
+    rolCortoTag:'Short',
     rolWeekOutsideMonth:'This week is outside the loaded month.',
     rolLoadError:'Could not load data. Check your connection.',
     rolEmptyMonth:'No roster loaded yet for this month.',
@@ -1673,7 +1825,7 @@ const UI = {
     rolUpdatedHours:'updated {n} h ago',
     rolUpdatedOn:'updated on {date}',
     tabComandera:'E-Check',
-    cmdPinTitle:'Order pad', cmdPinSub:'Server access code', cmdPinError:'Wrong code',
+    cmdPinTitle:'Order pad', cmdPinSub:'Access code', cmdPinError:'Wrong code',
     cmdHomeTitle:'Active tables', cmdHomeEmpty:'No tables open',
     cmdNewMesaBtn:'+ New table',
     cmdNewMesaTitle:'Open table', cmdMesaNumLabel:'Table #', cmdDinersLabel:'Guests',
@@ -1692,6 +1844,17 @@ const UI = {
     cmdNotePlaceholder:'Medium · no onion · peanut allergy…',
     cmdNoteSave:'Save', cmdNoteCancel:'Cancel',
     cmdItemRemove:'Remove',
+    cmdChangeMesa:'Change table', cmdChangeMesaTitle:'Change table #',
+    cmdMesaTaken:'That table is already open',
+    cmdFreshChip:'new',
+    cmdPendingBatch:'To send', cmdSentBatch:'Sent',
+    cmdSendBtn:'Send', cmdSendBtnCount:'Send ({n})',
+    cmdRecibidorHome:'Incoming orders', cmdRecibidorEmpty:'No orders sent yet',
+    cmdRecibidorBack:'← Back', cmdRecibidorNewBatch:'new batch',
+    cmdLastSent:'last sent', cmdSentItems:'sent',
+    cmdTicketPreviewTitle:'Ticket preview', cmdTicketPreviewClose:'Close',
+    cmdTicketPreviewBtn:'🖨 Ticket',
+    cmdItemCancelled:'cancelled',
     cmdCustomTitle:'Special item',
     cmdCustomNamePh:'Item name', cmdCustomCatPh:'Category (juice, soda…)',
     cmdCustomAdd:'Add', cmdCustomCancel:'Cancel',
@@ -1734,7 +1897,7 @@ const UI = {
   pt: {
     appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'O detalhe, à mão.',
     tabMenus:'Menu', tabWines:'Vinhos', tabGuiones:'Harmonizações gerais', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
-    wineFilterPairings:'Harmonizações gerais',
+    wineFilterPremium:'Vinhos Premium', wineFilterPairings:'Harmonizações gerais',
     momentAllDay:'Todo o dia', momentPreDinner:'Antes do Jantar · Aperitivos', momentAfterDinner:'Após o Jantar', momentNotice:'Em breve · Este cardápio ainda não está disponível no bar',
     momentosBannerSub:'Nova carta a implementar',
     ctMethod:'Método', ctGlass:'Copo', ctIce:'Gelo', ctIngredients:'Ingredientes', ctGarnish:'Decoração', ctSearch:'Buscar cocktail...',
@@ -1747,7 +1910,7 @@ const UI = {
     pairedDishes:'Pratos do menu com este vinho', mentionedWines:'Vinhos mencionados',
     noDishes:'Nenhum prato encontrado',
     all:'Todos', sparkling:'Espumante', whites:'Brancos', rose:'Rosé', reds:'Tintos', sweet:'Doce',
-    lbl_espumante:'Espumante', lbl_blanco:'Branco', lbl_rosado:'Rosé', lbl_tinto:'Tinto', lbl_dulce:'Doce',
+    lbl_espumante:'Espumante', lbl_blanco:'Branco', lbl_rosado:'Rosé', lbl_tinto:'Tinto', lbl_dulce:'Doce', lbl_premium:'Premium',
     cfServiceMode:'✦ Modo Serviço', cfPinTitle:'Modo Serviço', cfPinSub:'Insira seu código de acesso', cfPinError:'Código incorreto',
     cfWaiterTitle:'Novo Pedido', cfWaiterSub:'Selecione a bebida · anote o pedido especial',
     cfSelectDrink:'Bebida', cfTableLabel:'Mesa (opcional)', cfTablePlaceholder:'Mesa', cfSpecialRequest:'Pedido especial (opcional)', cfSpecialPlaceholder:'Ex: sem açúcar, leite de aveia…',
@@ -1778,6 +1941,7 @@ const UI = {
     rolSearchDesc:'Que dias trabalha uma pessoa e em quais turnos?',
     rolSearchPlaceholder:'Comece a digitar um nome…',
     rolSearchNoResults:'Sem resultados',
+    rolCortoTag:'Curto',
     rolWeekOutsideMonth:'Esta semana está fora do mês carregado.',
     rolLoadError:'Não foi possível carregar os dados. Verifique sua conexão.',
     rolEmptyMonth:'Ainda não há rol carregado para este mês.',
@@ -1786,7 +1950,7 @@ const UI = {
     rolUpdatedHours:'atualizado há {n} h',
     rolUpdatedOn:'atualizado em {date}',
     tabComandera:'E-Check',
-    cmdPinTitle:'Comanda', cmdPinSub:'Código do garçom', cmdPinError:'Código incorreto',
+    cmdPinTitle:'Comanda', cmdPinSub:'Código de acesso', cmdPinError:'Código incorreto',
     cmdHomeTitle:'Mesas ativas', cmdHomeEmpty:'Sem mesas abertas',
     cmdNewMesaBtn:'+ Nova mesa',
     cmdNewMesaTitle:'Abrir comanda', cmdMesaNumLabel:'N° de mesa', cmdDinersLabel:'Hóspedes',
@@ -1805,6 +1969,17 @@ const UI = {
     cmdNotePlaceholder:'Ao ponto · sem cebola · alergia a amendoim…',
     cmdNoteSave:'Salvar', cmdNoteCancel:'Cancelar',
     cmdItemRemove:'Remover',
+    cmdChangeMesa:'Mudar mesa', cmdChangeMesaTitle:'Mudar n° de mesa',
+    cmdMesaTaken:'Essa mesa já está aberta',
+    cmdFreshChip:'novo',
+    cmdPendingBatch:'A enviar', cmdSentBatch:'Enviado',
+    cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
+    cmdRecibidorHome:'Pedidos recebidos', cmdRecibidorEmpty:'Sem pedidos enviados ainda',
+    cmdRecibidorBack:'← Voltar', cmdRecibidorNewBatch:'novo envio',
+    cmdLastSent:'último envio', cmdSentItems:'enviados',
+    cmdTicketPreviewTitle:'Pré-visualização do ticket', cmdTicketPreviewClose:'Fechar',
+    cmdTicketPreviewBtn:'🖨 Ticket',
+    cmdItemCancelled:'cancelado',
     cmdCustomTitle:'Produto especial',
     cmdCustomNamePh:'Nome do produto', cmdCustomCatPh:'Categoria (suco, refrigerante…)',
     cmdCustomAdd:'Adicionar', cmdCustomCancel:'Cancelar',
@@ -2054,12 +2229,12 @@ function setLang(lang, el) {
   if (dayBtns[0]) dayBtns[0].textContent = t('allDays');
   for (let i=1;i<dayBtns.length;i++) dayBtns[i].textContent = 'D'+i;
   const wfTabs = document.querySelectorAll('.wine-filter-tabs .tab');
-  const wfKeys = ['all','sparkling','whites','rose','reds','sweet','wineFilterPairings'];
+  const wfKeys = ['all','sparkling','whites','rose','reds','sweet','wineFilterPremium','wineFilterPairings'];
   wfTabs.forEach((b,i) => { if(wfKeys[i]) b.textContent = t(wfKeys[i]); });
   // re-render content — preserve open panels across language switches
   const prevDish = selectedDish;
   const prevWine = selectedWine;
-  const prevSubWine = document.getElementById('dish-wine-sub-panel')?.dataset?.wid || null;
+  const prevSubWine = document.querySelector('.dish-card.selected .wine-chip.chip-active')?.dataset?.wid || null;
   selectedDish = null; selectedWine = null;
   renderDishes(); renderWines();
   if (currentTab === 'vinos' && wineFilter === 'maridajes') renderGuiones();
@@ -2150,12 +2325,13 @@ function setWineFilter(f, el) {
 
 function getWine(id) { return WINES.find(w => w.id === id); }
 function typeBadgeClass(w) {
-  if (w && typeof w === 'object') { if (w.badge) return w.badge; return {espumante:'badge-espumante',blanco:'badge-blanco',rosado:'badge-rosado',tinto:'badge-tinto',dulce:'badge-dulce'}[w.type]||''; }
-  return {espumante:'badge-espumante',blanco:'badge-blanco',rosado:'badge-rosado',tinto:'badge-tinto',dulce:'badge-dulce'}[w]||'';
+  const map = {espumante:'badge-espumante',blanco:'badge-blanco',rosado:'badge-rosado',tinto:'badge-tinto',dulce:'badge-dulce',premium:'badge-premium'};
+  if (w && typeof w === 'object') { if (w.badge) return w.badge; return map[w.type]||''; }
+  return map[w]||'';
 }
 function typeChipClass(w) {
   if (!w) return '';
-  return {espumante:'chip-espumante',blanco:'chip-blanco',rosado:'chip-rosado',tinto:'chip-tinto',dulce:'chip-dulce'}[w.type]||'';
+  return {espumante:'chip-espumante',blanco:'chip-blanco',rosado:'chip-rosado',tinto:'chip-tinto',dulce:'chip-dulce',premium:'chip-premium'}[w.type]||'';
 }
 function typeLabel(tp) { return UI[currentLang]['lbl_'+tp] || UI.es['lbl_'+tp] || tp; }
 
@@ -2189,10 +2365,24 @@ function renderDishes() {
         html += `<div class="course-section"><div class="course-label">${courseLabel(course)}</div><div class="dish-row">`;
         courseDishes.forEach(d => {
           const tr = getDishTr(d);
-          html += `<div class="dish-card${selectedDish===d.id?' selected':''}" data-dish-id="${d.id}" onclick="selectDish('${d.id}')">
+          const isSelected = selectedDish === d.id;
+          let expanded = '';
+          if (isSelected) {
+            const chips = d.wines.map(wid => {
+              const w = getWine(wid);
+              return `<div class="wine-chip ${typeChipClass(w)}" data-wid="${wid}" onclick="event.stopPropagation();openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${tr.why[wid]||''}</div></div>`;
+            }).join('');
+            expanded = `<div class="dish-expanded">
+              <p class="detail-meta">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)}</p>
+              ${d.allergens.length ? `<div class="detail-section"><h3>${t('allergens')}</h3><div class="allergen-detail">${d.allergens.map(a=>`<span class="allergen-pill${a==='Mariscos'?' pill-mariscos':''}">${a}</span>`).join('')}</div></div>` : ''}
+              <div class="detail-section"><h3>${t('pairings')}</h3><div class="wine-suggestions">${chips}</div></div>
+            </div>`;
+          }
+          html += `<div class="dish-card${isSelected?' selected':''}" data-dish-id="${d.id}" onclick="selectDish('${d.id}')">
             <div class="dish-name">${tr.name}</div>
             <div class="dish-desc">${tr.desc}</div>
             ${d.allergens.length ? `<div class="allergen-row">${d.allergens.map(a=>`<span class="allergen-tag${a==='Mariscos'?' tag-mariscos':''}">${a}</span>`).join('')}</div>` : ''}
+            ${expanded}
           </div>`;
         });
         html += `</div></div>`; // close dish-row and course-section
@@ -2206,25 +2396,6 @@ function renderDishes() {
 function selectDish(id) {
   selectedDish = selectedDish === id ? null : id;
   renderDishes();
-  if (!selectedDish) return;
-  const card = document.querySelector(`[data-dish-id="${selectedDish}"]`);
-  if (!card) return;
-  const d = DISHES.find(x => x.id === selectedDish);
-  const sdtr = getDishTr(d);
-  const chips = d.wines.map(wid => {
-    const w = getWine(wid);
-    return `<div class="wine-chip ${typeChipClass(w)}" onclick="openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${sdtr.why[wid]||''}</div></div>`;
-  }).join('');
-  const panelHTML = `<div class="detail-panel" id="dish-inline-panel" style="margin-top:10px;">
-    <button class="close-btn" onclick="closeDishDetail()">&#215;</button>
-    <h2>${sdtr.name}</h2>
-    <p class="detail-meta">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)}</p>
-    <p class="detail-desc">${sdtr.desc}</p>
-    ${d.allergens.length ? `<div class="detail-section"><h3>${t('allergens')}</h3><div class="allergen-detail">${d.allergens.map(a=>`<span class="allergen-pill${a==='Mariscos'?' pill-mariscos':''}">${a}</span>`).join('')}</div></div>` : ''}
-    <div class="detail-section"><h3>${t('pairings')}</h3><div class="wine-suggestions">${chips}</div></div>
-  </div>`;
-  card.closest('.dish-row').insertAdjacentHTML('afterend', panelHTML);
-  document.getElementById('dish-inline-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function closeDishDetail() {
@@ -2232,30 +2403,27 @@ function closeDishDetail() {
   renderDishes();
 }
 
+// Tap a wine chip inside the dish accordion → the chip itself expands in
+// place to show identity/style/sales-script. Tap again or tap another chip
+// to close/swap. Mirrors the dish-card accordion pattern: one element, no
+// separate sub-panel.
 function openWineFromDish(wid) {
-  // If same wine clicked again → close sub-panel
-  const existing = document.getElementById('dish-wine-sub-panel');
-  const sameWine = existing && existing.dataset.wid === wid;
-  document.querySelectorAll('.wine-chip').forEach(c => c.classList.remove('chip-active'));
-  if (existing) existing.remove();
-  if (sameWine) return;
+  const target = document.querySelector(`.dish-card.selected .wine-chip[data-wid="${wid}"]`);
+  if (!target) return;
+  const wasOpen = target.classList.contains('chip-active');
 
-  // Mark chip active
-  const clickedChip = document.querySelector(`.wine-chip[onclick="openWineFromDish('${wid}')"]`);
-  if (clickedChip) clickedChip.classList.add('chip-active');
+  // Collapse any currently expanded chip first
+  document.querySelectorAll('.dish-card.selected .wine-chip.chip-active').forEach(c => {
+    c.classList.remove('chip-active');
+    const d = c.querySelector('.wine-chip-detail');
+    if (d) d.remove();
+  });
+  if (wasOpen) return; // tap on the open chip = close
 
   const w = WINES.find(x => x.id === wid);
   if (!w) return;
   const wtr = getWineTr(w);
-  const subHTML = `<div class="wine-sub-panel" id="dish-wine-sub-panel" data-wid="${wid}">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-      <div>
-        <span class="wine-type-badge ${typeBadgeClass(w)}" style="margin-bottom:4px;display:inline-block;">${typeLabel(w.type)}</span>
-        <div style="font-size:15px;font-weight:500;color:var(--text);">${w.name}</div>
-        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${w.valley}</div>
-      </div>
-      <button class="close-btn" onclick="closeWineSubPanel()" style="margin-left:8px;">&#215;</button>
-    </div>
+  const detailHTML = `<div class="wine-chip-detail" onclick="event.stopPropagation()">
     <div class="wine-section"><h3>${t('identity')}</h3><p>${wtr.identity}</p></div>
     <div class="wine-section"><h3>${t('style')}</h3><p>${wtr.style}</p></div>
     <div class="wine-section"><h3>${t('salesScript')}</h3>
@@ -2265,18 +2433,8 @@ function openWineFromDish(wid) {
       </div>
     </div>
   </div>`;
-
-  const winesSection = document.querySelector('#dish-inline-panel .wine-suggestions');
-  if (winesSection) {
-    winesSection.insertAdjacentHTML('afterend', subHTML);
-    document.getElementById('dish-wine-sub-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
-  }
-}
-
-function closeWineSubPanel() {
-  const el = document.getElementById('dish-wine-sub-panel');
-  if (el) el.remove();
-  document.querySelectorAll('.wine-chip').forEach(c => c.classList.remove('chip-active'));
+  target.classList.add('chip-active');
+  target.insertAdjacentHTML('beforeend', detailHTML);
 }
 
 function renderWines() {
@@ -2288,49 +2446,37 @@ function renderWines() {
   });
   document.getElementById('wine-grid').innerHTML = wines.map(w => {
     const wtr = getWineTr(w);
-    return `<div class="wine-card${selectedWine===w.id?' selected':''}" data-wine-id="${w.id}" onclick="selectWine('${w.id}')">
+    const isSelected = selectedWine === w.id;
+    let expanded = '';
+    if (isSelected) {
+      const pairedDishes = DISHES.filter(d => d.wines.includes(w.id));
+      expanded = `<div class="wine-expanded" onclick="event.stopPropagation()">
+        <div class="wine-section"><h3>${t('identity')}</h3><p>${wtr.identity}</p></div>
+        <div class="wine-section"><h3>${t('terroir')}</h3><p>${wtr.terroir}</p></div>
+        <div class="wine-section"><h3>${t('winery')}</h3><p>${wtr.winery}</p></div>
+        <div class="wine-section"><h3>${t('salesScript')}</h3>
+          <div class="guion-box">
+            <p><span class="guion-label">${t('shortPitch')}</span> ${wtr.shortpitch}</p>
+            <p style="margin-top:8px;"><span class="guion-label">${t('development')}</span> ${wtr.pitch}</p>
+          </div>
+        </div>
+        <div class="wine-section"><h3>${t('pairedDishes')} (${pairedDishes.length})</h3>
+          <div class="paired-dishes">${pairedDishes.map(d=>{const dtr=getDishTr(d);return`<div class="paired-dish">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)} — ${dtr.name}</div>`;}).join('')}</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="wine-card${isSelected?' selected':''}" data-wine-id="${w.id}" onclick="selectWine('${w.id}')">
       <span class="wine-type-badge ${typeBadgeClass(w)}">${typeLabel(w.type)}</span>
       <div class="wine-name">${w.name}</div>
       <div class="wine-valley">${w.valley}</div>
       <div class="wine-aroma">${wtr.style}</div>
+      ${expanded}
     </div>`;
   }).join('');
 }
 
 function selectWine(id) {
   selectedWine = selectedWine === id ? null : id;
-  renderWines();
-  if (!selectedWine) return;
-  const card = document.querySelector(`[data-wine-id="${selectedWine}"]`);
-  if (!card) return;
-  const w = WINES.find(x => x.id === selectedWine);
-  const pairedDishes = DISHES.filter(d => d.wines.includes(selectedWine));
-  const wtr = getWineTr(w);
-  const panelHTML = `<div class="wine-detail" id="wine-inline-panel" style="margin-top:12px;grid-column:1/-1;">
-    <button class="close-btn" onclick="closeWineDetail()">&#215;</button>
-    <span class="wine-type-badge ${typeBadgeClass(w)}">${typeLabel(w.type)}</span>
-    <h2>${w.name}</h2>
-    <div class="valley">${w.valley}</div>
-    <div class="wine-section"><h3>${t('identity')}</h3><p>${wtr.identity}</p></div>
-    <div class="wine-section"><h3>${t('terroir')}</h3><p>${wtr.terroir}</p></div>
-    <div class="wine-section"><h3>${t('winery')}</h3><p>${wtr.winery}</p></div>
-    <div class="wine-section"><h3>${t('style')}</h3><p>${wtr.style}</p></div>
-    <div class="wine-section"><h3>${t('salesScript')}</h3>
-      <div class="guion-box">
-        <p><span class="guion-label">${t('shortPitch')}</span> ${wtr.shortpitch}</p>
-        <p style="margin-top:8px;"><span class="guion-label">${t('development')}</span> ${wtr.pitch}</p>
-      </div>
-    </div>
-    <div class="wine-section"><h3>${t('pairedDishes')} (${pairedDishes.length})</h3>
-      <div class="paired-dishes">${pairedDishes.map(d=>{const dtr=getDishTr(d);return`<div class="paired-dish">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)} — ${dtr.name}</div>`;}).join('')}</div>
-    </div>
-  </div>`;
-  card.insertAdjacentHTML('afterend', panelHTML);
-  document.getElementById('wine-inline-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
-}
-
-function closeWineDetail() {
-  selectedWine = null;
   renderWines();
 }
 
@@ -4889,7 +5035,7 @@ const COMANDA_SOURCES = [
       // Lunch: 11:30 – 17:59 · Dinner: 18:00 – 00:59 (post-midnight)
       const isLunch  = minOfDay >= (11*60+30) && minOfDay < (18*60);
       const isDinner = (minOfDay >= 18*60) || (minOfDay < 60);
-      return DISHES.filter(d => {
+      const list = DISHES.filter(d => {
         if (d.day !== cycleDay) return false;
         const svc = d.service || '';
         if (isLunch)  return svc === 'Almuerzo' || svc === 'Almuerzo y Cena';
@@ -4899,6 +5045,19 @@ const COMANDA_SOURCES = [
         sourceId: d.id, name: d.name,
         group: d.course, allergens: d.allergens || []
       }));
+      // Standing desserts — Helado / Sorbet / Fruta del día are always on
+      // offer in both lunch and dinner alongside the rotating menu desserts.
+      // Their actual flavour of the day is fed via the header dessert strip;
+      // here the generic label is what the waiter taps. Suppressed outside
+      // service hours (when the catalog as a whole is meant to show "—").
+      if (isLunch || isDinner){
+        list.push(
+          { sourceId:'gen-helado', name:'Helado',        group:'Postre', allergens:[] },
+          { sourceId:'gen-sorbet', name:'Sorbet',        group:'Postre', allergens:[] },
+          { sourceId:'gen-fruta',  name:'Fruta del día', group:'Postre', allergens:[] }
+        );
+      }
+      return list;
     }
   },
   {
@@ -4907,7 +5066,7 @@ const COMANDA_SOURCES = [
       sourceId: w.id, name: w.name,
       group: (function(){
         const ti = (w.type || '').toLowerCase();
-        const map = { espumante:'lbl_espumante', blanco:'lbl_blanco', rosado:'lbl_rosado', tinto:'lbl_tinto', dulce:'lbl_dulce' };
+        const map = { espumante:'lbl_espumante', blanco:'lbl_blanco', rosado:'lbl_rosado', tinto:'lbl_tinto', dulce:'lbl_dulce', premium:'lbl_premium' };
         return map[ti] ? t(map[ti]) : (w.type || '—');
       })(),
       allergens: []
@@ -4969,11 +5128,176 @@ function comandaTimerClass(ms){
   return '';
 }
 
+// --- Batches (por enviar / enviado) ----------------------------------------
+// Partition a diner's items into batches by send action:
+//   • items with sentAt → one bucket per distinct sentAt (chronological)
+//   • items without sentAt → trailing "Por enviar" bucket (drives Send btn)
+// Cancelled items keep their sentAt (so they stay in their original batch,
+// just dimmed and struck-through). Pure function of items — same input,
+// same output across waiter / recibidor / history, no extra state to sync.
+function comandaSplitBatches(items){
+  const sentGroups = new Map();
+  const openBatch = { kind:'open', sentAt:null, items:[] };
+  (items || []).forEach(it => {
+    if (it.sentAt){
+      if (!sentGroups.has(it.sentAt)){
+        sentGroups.set(it.sentAt, { kind:'sent', sentAt: it.sentAt, items: [] });
+      }
+      sentGroups.get(it.sentAt).items.push(it);
+    } else {
+      openBatch.items.push(it);
+    }
+  });
+  const out = [...sentGroups.values()].sort((a,b) => a.sentAt - b.sentAt);
+  if (openBatch.items.length) out.push(openBatch);
+  return out;
+}
+// Count items still waiting to be sent (status:'open', not cancelled).
+// Drives the Send button's enabled state and its (N) count.
+function comandaPendingCount(items){
+  return (items || []).filter(it => !it.sentAt && it.status !== 'cancelled').length;
+}
+// --- Ticket builder --------------------------------------------------------
+// Pure function: given a mesa + a sent batch, return the printable ticket
+// as a single string (newlines between rows). Targets 42-col 80mm thermal
+// stock (Epson Font A). ASCII-safe characters only — what you see in the
+// preview is what the ESC/POS bridge will emit when wired. Hybrid layout:
+//   familiar header/footer (ATA CHEF · Mesa # · date · clientes)
+//   modern body         (#diner Q× NAME, batch banner with HH:MM, notes
+//                        indented, cancellations marked [ANULADO]).
+function comandaBuildTicket(mesa, batch){
+  const W = 42;
+  const out = [];
+  const pad2 = n => String(n).padStart(2, '0');
+  const center = s => {
+    s = String(s);
+    if (s.length >= W) return s.slice(0, W);
+    return ' '.repeat(Math.floor((W - s.length) / 2)) + s;
+  };
+  const rule = () => '-'.repeat(W);
+  // Header — chef station + mesa, both centred between rules.
+  out.push(center('ATA CHEF'));
+  out.push(rule());
+  out.push(center('Mesa # ' + (mesa.mesa || '?')));
+  out.push(rule());
+  out.push('');
+  // Batch banner — when this group was sent, plain left-aligned.
+  const sentAt = batch.sentAt || Date.now();
+  out.push('Enviado - ' + comandaFmtHM(sentAt));
+  out.push(rule());
+  // Items: #N  Qx  NAME (uppercase, easier to scan in the cocina).
+  // Notes wrap onto the next line, indented to align under NAME.
+  const NAME_COL = 10;       // "#1   1x   " = 10 chars before name
+  const noteIndent = ' '.repeat(NAME_COL);
+  batch.items.forEach(it => {
+    const dn = ('#' + it.dinerN).padEnd(4);             // "#1  " / "#10 "
+    const qty = ((it.qty || 1) + 'x').padEnd(4);         // "1x  " / "12x "
+    const cancelled = it.status === 'cancelled';
+    const name = String(it.name || '').toUpperCase();
+    let line = dn + qty + name;
+    if (cancelled) line += '  [ANULADO]';
+    out.push(line);
+    if (it.notes){
+      // Wrap notes if they exceed the printable remainder.
+      const note = '> ' + it.notes;
+      const remainder = W - NAME_COL;
+      for (let i = 0; i < note.length; i += remainder){
+        out.push(noteIndent + note.slice(i, i + remainder));
+      }
+    }
+  });
+  out.push('');
+  // Footer — date+time, mesa, clientes, closing rule.
+  const d = new Date(sentAt);
+  const fdate = `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  out.push(fdate);
+  out.push('Mesa: ' + (mesa.mesa || '?') + '   Clientes: ' + (mesa.diners || '?'));
+  out.push(rule());
+  return out.join('\n');
+}
+function comandaShowTicketPreview(sentAtStr){
+  const mesa = COMANDA_RECIBIDOR_DETAIL || COMANDA_ACTIVE_DATA;
+  if (!mesa) return;
+  const sentAt = Number(sentAtStr);
+  const items = (mesa.items || []).filter(it => it.sentAt === sentAt);
+  if (!items.length) return;
+  COMANDA_TICKET_PREVIEW = { mesa, batch: { sentAt, items } };
+  comandaRender();
+}
+function comandaHideTicketPreview(){
+  COMANDA_TICKET_PREVIEW = null;
+  comandaRender();
+}
+function comandaRenderTicketPreviewModal(){
+  const tp = COMANDA_TICKET_PREVIEW;
+  if (!tp) return '';
+  // Escape angle brackets so a stray "<" in an item name can't inject HTML.
+  const ticket = comandaBuildTicket(tp.mesa, tp.batch).replace(/[<>&]/g, ch => (
+    { '<':'&lt;', '>':'&gt;', '&':'&amp;' }[ch]
+  ));
+  return `
+    <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaHideTicketPreview()">
+      <div class="cmd-modal-panel cmd-ticket-panel">
+        <div class="cmd-modal-title">${t('cmdTicketPreviewTitle')}</div>
+        <pre class="cmd-ticket-paper">${ticket}</pre>
+        <div class="cmd-modal-actions">
+          <button class="cmd-btn primary" onclick="comandaHideTicketPreview()">${t('cmdTicketPreviewClose')}</button>
+        </div>
+      </div>
+    </div>`;
+}
+function comandaFmtHM(ms){
+  if (!ms) return '';
+  const d = new Date(ms);
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+// Freshness class for an item — used both at render time and by the 1s tick
+// that refreshes classes in place without a full re-render.
+function comandaFreshClass(item){
+  if (!item || !item.addedAt) return '';
+  // No halo on items the waiter has already committed to a sent batch or
+  // on cancelled items — the halo is meant to flag "you just typed this,
+  // it's still in Por enviar".
+  if (item.sentAt) return '';
+  if (item.status === 'cancelled') return '';
+  const age = Date.now() - item.addedAt;
+  if (age < COMANDA_FRESH_MS) return 'is-fresh';
+  if (age < COMANDA_FRESH_SOFT_MS) return 'is-recent';
+  return '';
+}
+// In-place refresh of fresh/recent classes on visible cmd-line rows.
+// Called from the 1s tick so the halo decays without yanking gestures.
+function comandaRefreshFreshness(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  const itemsById = {};
+  (COMANDA_ACTIVE_DATA.items || []).forEach(it => { itemsById[it.id] = it; });
+  document.querySelectorAll('.cmd-line[data-item-id]').forEach(el => {
+    const it = itemsById[el.dataset.itemId];
+    if (!it) return;
+    const cls = comandaFreshClass(it);
+    el.classList.toggle('is-fresh',  cls === 'is-fresh');
+    el.classList.toggle('is-recent', cls === 'is-recent');
+    // Drop the "nuevo" chip once the item is no longer fresh.
+    const chip = el.querySelector('.cmd-fresh-chip');
+    if (chip && cls !== 'is-fresh') chip.remove();
+  });
+}
+
 // --- Tab entry & gate ------------------------------------------------------
 function comandaEnter(){
   if (!COMANDA_AUTHED){
     COMANDA_VIEW = 'gate';
     COMANDA_PIN_BUFFER = '';
+    comandaRender();
+    return;
+  }
+  // Recibidor: re-arm polling (it was stopped when they navigated away or
+  // closed the detail), refresh the list, render. Detail view (if any)
+  // resumes where left off.
+  if (COMANDA_ROLE === 'recibidor'){
+    comandaFetchRecibidorMesas();
+    comandaStartRecibidorPolling();
     comandaRender();
     return;
   }
@@ -4999,16 +5323,26 @@ function comandaPinPress(key){
   comandaRender();
 }
 function comandaSubmitPin(){
+  // PIN double-duty: 666 → waiter (full E-Check), 777 → recibidor (read).
+  // The same gate handles both — the entered code selects the role and
+  // routes to the right home view.
   if (COMANDA_PIN_BUFFER === COMANDA_PIN_CODE){
     COMANDA_AUTHED = true;
+    COMANDA_ROLE   = 'waiter';
     COMANDA_PIN_BUFFER = '';
     COMANDA_VIEW = 'home';
     comandaAutoCloseStale();
     comandaPurgeOldDays();
     comandaFetchOpenMesas();
-    // Start the 1s tick now that we're authed — both home and active
-    // views need it. Stops only on explicit logout.
     comandaStartTimerInterval();
+  } else if (COMANDA_PIN_BUFFER === COMANDA_RECIBIDOR_PIN){
+    COMANDA_AUTHED = true;
+    COMANDA_ROLE   = 'recibidor';
+    COMANDA_PIN_BUFFER = '';
+    COMANDA_VIEW = 'home';
+    comandaFetchRecibidorMesas();
+    comandaStartRecibidorPolling();
+    comandaStartTimerInterval(); // tick used to refresh "last sent" labels
   } else {
     COMANDA_PIN_BUFFER = '';
     const err = document.getElementById('cmd-pin-error');
@@ -5196,9 +5530,59 @@ function comandaAddItem(source, sourceId, name, allergens, group){
 }
 function comandaRemoveItem(itemId){
   if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
-  COMANDA_ACTIVE_DATA.items = COMANDA_ACTIVE_DATA.items.filter(it => it.id !== itemId);
-  comandaRender();                               // immediate
-  comandaPersist({ items: COMANDA_ACTIVE_DATA.items }); // background
+  const items = COMANDA_ACTIVE_DATA.items;
+  const idx = items.findIndex(it => it.id === itemId);
+  if (idx < 0) return;
+  const target = items[idx];
+  // Pressing ✕ on an already-cancelled item performs a hard delete — gives
+  // a way out for misclicks on the audit row itself.
+  let wasSent = !!target.sentAt && target.status !== 'cancelled';
+  if (target.status === 'cancelled'){
+    COMANDA_ACTIVE_DATA.items = items.filter(it => it.id !== itemId);
+    wasSent = false; // already accounted for in a prior tick
+  } else {
+    const age = Date.now() - (target.addedAt || 0);
+    // Sent items always soft-cancel — they're part of the audit trail the
+    // recibidor sees, can't just vanish. Unsent old items also soft-cancel.
+    // Unsent + freshly typed: silent hard delete (no value in keeping).
+    if (wasSent || age >= COMANDA_SOFT_CANCEL_MS){
+      COMANDA_ACTIVE_DATA.items = items.map(it =>
+        it.id === itemId ? { ...it, status:'cancelled', cancelledAt: Date.now() } : it
+      );
+    } else {
+      COMANDA_ACTIVE_DATA.items = items.filter(it => it.id !== itemId);
+    }
+  }
+  // Cancelling a sent item alerts the recibidor — same channel as a new
+  // send. Bumping lastSentAt makes their card glow again so they re-check.
+  const patch = { items: COMANDA_ACTIVE_DATA.items };
+  if (wasSent){
+    COMANDA_ACTIVE_DATA.lastSentAt = Date.now();
+    patch.lastSentAt = COMANDA_ACTIVE_DATA.lastSentAt;
+  }
+  comandaRender();
+  comandaPersist(patch);
+}
+// Send batch: stamp every still-open, non-cancelled item with the same
+// sentAt = now. They jump from "Por enviar" into a new "Enviado · HH:MM"
+// batch atomically. lastSentAt on the mesa drives the recibidor glow:
+// when lastSentAt > recibidorSeenAt the card pulses until reviewed.
+function comandaSendBatch(){
+  if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
+  const now = Date.now();
+  let touched = false;
+  const items = COMANDA_ACTIVE_DATA.items.map(it => {
+    if (!it.sentAt && it.status !== 'cancelled'){
+      touched = true;
+      return { ...it, status:'sent', sentAt: now };
+    }
+    return it;
+  });
+  if (!touched) return;
+  COMANDA_ACTIVE_DATA.items = items;
+  COMANDA_ACTIVE_DATA.lastSentAt = now;
+  comandaRender();
+  comandaPersist({ items, lastSentAt: now });
 }
 function comandaUpdateNote(itemId, note){
   if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
@@ -5346,12 +5730,16 @@ function comandaStartTimerInterval(){
     if (COMANDA_VIEW === 'active'){
       // Single-element update — cheap. Only when the timer is running.
       const chip = document.getElementById('cmd-timer-btn');
-      if (!chip || !COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.timerStartedAt) return;
-      const ms = Date.now() - COMANDA_ACTIVE_DATA.timerStartedAt;
-      chip.textContent = '⏱ ' + comandaFmtTimer(ms);
-      chip.classList.remove('warn','urgent');
-      const cls = comandaTimerClass(ms);
-      if (cls) chip.classList.add(cls);
+      if (chip && COMANDA_ACTIVE_DATA && COMANDA_ACTIVE_DATA.timerStartedAt){
+        const ms = Date.now() - COMANDA_ACTIVE_DATA.timerStartedAt;
+        chip.textContent = '⏱ ' + comandaFmtTimer(ms);
+        chip.classList.remove('warn','urgent');
+        const cls = comandaTimerClass(ms);
+        if (cls) chip.classList.add(cls);
+      }
+      // Decay the freshness halo on item lines in place — no full re-render,
+      // so a tap mid-flight, a focused input, or a drag is not disturbed.
+      comandaRefreshFreshness();
     } else if (COMANDA_VIEW === 'home' && COMANDA_TICK_COUNT % 30 === 0){
       // Home cards display minute-resolution elapsed times; rebuild every 30s.
       comandaRender();
@@ -5388,7 +5776,7 @@ function comandaStartPolling(){
     if (_CMD_WRITE_PENDING || _CMD_WRITE_INFLIGHT) return;
     // Skip while user is actively interacting (note dialog, full-view modal,
     // or mid-drag) — re-rendering would yank their gesture.
-    if (COMANDA_NOTE_EDIT_ID || COMANDA_FULL_OPEN || (typeof CMD_DRAG !== 'undefined' && CMD_DRAG)) return;
+    if (COMANDA_NOTE_EDIT_ID || COMANDA_FULL_OPEN || COMANDA_CHANGE_MESA_OPEN || (typeof CMD_DRAG !== 'undefined' && CMD_DRAG)) return;
     // Skip if an input/textarea inside the comandera has focus right now —
     // a full re-render would destroy the input, the keyboard would disappear
     // and any typed text would be lost.
@@ -5413,6 +5801,171 @@ function comandaStartPolling(){
 }
 function comandaStopPolling(){
   if (COMANDA_POLL_INTERVAL){ clearInterval(COMANDA_POLL_INTERVAL); COMANDA_POLL_INTERVAL = null; }
+}
+
+// --- Recibidor (PIN 777) ---------------------------------------------------
+// Read-mostly view for the pase / expediter. Shows one card per mesa with
+// at least one sent item. Cards glow while lastSentAt > recibidorSeenAt;
+// tapping a card opens detail AND persists recibidorSeenAt = now, which
+// extinguishes the glow server-side for every device on the same role.
+async function comandaFetchRecibidorMesas(){
+  try {
+    const url = comandaFireUrl(comandaDateKey());
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const list = [];
+    if (data){
+      Object.entries(data).forEach(([id, c]) => {
+        if (!c || c.closedAt) return;            // only open mesas
+        const items = c.items || [];
+        // Surface only mesas that have at least one sent (or sent+cancelled)
+        // item — the waiter hasn't sent anything yet, recibidor has nothing
+        // to do with the mesa.
+        if (!items.some(it => it.sentAt)) return;
+        list.push({ id, ...c });
+      });
+    }
+    // Glowing (unseen) cards bubble to the top, then most-recently-sent.
+    list.sort((a, b) => {
+      const aNew = (a.lastSentAt || 0) > (a.recibidorSeenAt || 0);
+      const bNew = (b.lastSentAt || 0) > (b.recibidorSeenAt || 0);
+      if (aNew !== bNew) return aNew ? -1 : 1;
+      return (b.lastSentAt || 0) - (a.lastSentAt || 0);
+    });
+    COMANDA_RECIBIDOR_LIST = list;
+  } catch(e){
+    console.warn('[recibidor fetch]', e);
+    COMANDA_RECIBIDOR_LIST = [];
+  }
+  // Refresh detail data in place too, so the open mesa updates as the
+  // waiter adds/sends/cancels items without yanking the recibidor's view.
+  if (COMANDA_RECIBIDOR_VIEW_ID){
+    const fresh = COMANDA_RECIBIDOR_LIST.find(m => m.id === COMANDA_RECIBIDOR_VIEW_ID);
+    if (fresh) COMANDA_RECIBIDOR_DETAIL = fresh;
+    else {
+      // Was closed by the waiter — try a direct fetch in case it slipped
+      // out of the open list (e.g., closed since last poll).
+      try {
+        const r = await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_RECIBIDOR_VIEW_ID));
+        const d = await r.json();
+        if (d) COMANDA_RECIBIDOR_DETAIL = { id: COMANDA_RECIBIDOR_VIEW_ID, ...d };
+      } catch(e){}
+    }
+  }
+  // Skip the re-render while the ticket-preview modal is open — otherwise
+  // the innerHTML rewrite would flicker the modal every 6s. Fresh data is
+  // still cached locally; the next render (when modal closes) picks it up.
+  if (currentTab === 'comandera' && COMANDA_AUTHED && COMANDA_ROLE === 'recibidor' && !COMANDA_TICKET_PREVIEW) comandaRender();
+}
+function comandaStartRecibidorPolling(){
+  comandaStopRecibidorPolling();
+  // 6s — faster than the waiter cross-device poll (8s) because new sends
+  // need to surface quickly to the pase. No interaction-skip needed: the
+  // recibidor view is read-only, so a re-render can't disturb a gesture.
+  COMANDA_RECIBIDOR_POLL = setInterval(()=>{
+    if (currentTab !== 'comandera' || COMANDA_ROLE !== 'recibidor') return;
+    comandaFetchRecibidorMesas();
+  }, 6000);
+}
+function comandaStopRecibidorPolling(){
+  if (COMANDA_RECIBIDOR_POLL){ clearInterval(COMANDA_RECIBIDOR_POLL); COMANDA_RECIBIDOR_POLL = null; }
+}
+function comandaRecibidorOpen(id){
+  COMANDA_RECIBIDOR_VIEW_ID = id;
+  const mesa = COMANDA_RECIBIDOR_LIST.find(m => m.id === id);
+  COMANDA_RECIBIDOR_DETAIL = mesa || null;
+  // Persist "seen" stamp so the glow extinguishes everywhere. Also reflect
+  // locally so the current render shows the card without glow on return.
+  const now = Date.now();
+  if (mesa){
+    mesa.recibidorSeenAt = now;
+  }
+  comandaRender();
+  fetch(comandaFireUrl(comandaDateKey() + '/' + id), {
+    method: 'PATCH',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({ recibidorSeenAt: now })
+  }).catch(()=>{});
+}
+function comandaRecibidorBack(){
+  COMANDA_RECIBIDOR_VIEW_ID = null;
+  COMANDA_RECIBIDOR_DETAIL = null;
+  comandaRender();
+}
+function comandaRenderRecibidorHome(root){
+  const list = COMANDA_RECIBIDOR_LIST;
+  const cards = list.length
+    ? list.map(c => {
+        const unseen = (c.lastSentAt || 0) > (c.recibidorSeenAt || 0);
+        const items = c.items || [];
+        const sentItems = items.filter(it => it.sentAt && it.status !== 'cancelled');
+        const lastSent = c.lastSentAt ? comandaFmtMsCompact(Date.now() - c.lastSentAt) : '—';
+        const newChip = unseen ? `<span class="cmd-rcb-new-chip">${t('cmdRecibidorNewBatch')}</span>` : '';
+        return `
+          <div class="cmd-recibidor-card ${unseen?'is-new':''}" onclick="comandaRecibidorOpen('${c.id}')">
+            <div class="cmd-mesa-num">${c.mesa}</div>
+            <div class="cmd-rcb-info">
+              <div class="cmd-rcb-meta">${sentItems.length} ${t('cmdSentItems')} · ${c.diners} ${c.diners===1?t('cmdComensal'):t('cmdComensales')}</div>
+              <div class="cmd-rcb-sub">${t('cmdLastSent')}: ${lastSent}</div>
+            </div>
+            ${newChip}
+          </div>`;
+      }).join('')
+    : `<div class="cmd-empty-state">${t('cmdRecibidorEmpty')}</div>`;
+  root.innerHTML = `
+    <div class="cmd-home-header">
+      <div class="cmd-home-title">${t('cmdRecibidorHome')}</div>
+      <button class="cmd-exit-btn" onclick="comandaLogout()">${t('cfExit')}</button>
+    </div>
+    ${cards}`;
+}
+function comandaRenderRecibidorDetail(root){
+  const c = COMANDA_RECIBIDOR_DETAIL;
+  if (!c){ COMANDA_RECIBIDOR_VIEW_ID = null; comandaRender(); return; }
+  const items = c.items || [];
+  // Group items by sentAt batch. Skip the "Por enviar" bucket — recibidor
+  // shouldn't see what hasn't been sent yet.
+  const batches = comandaSplitBatches(items).filter(b => b.kind === 'sent');
+  const batchesHtml = batches.length
+    ? batches.map(batch => {
+        const lines = batch.items.map(it => {
+          const isCancelled = it.status === 'cancelled';
+          const cls = ['cmd-rcb-line', isCancelled?'is-cancelled':''].filter(Boolean).join(' ');
+          return `
+            <div class="${cls}">
+              <div class="cmd-rcb-diner">#${it.dinerN}</div>
+              <div class="cmd-rcb-qty">${it.qty||1}×</div>
+              <div class="cmd-line-body">
+                <span class="cmd-rcb-name">${it.name}</span>${isCancelled?`<span class="cmd-cancelled-chip">${t('cmdItemCancelled')}</span>`:''}
+                ${it.notes ? `<span class="cmd-line-note">⚐ ${it.notes}</span>` : ''}
+              </div>
+            </div>`;
+        }).join('');
+        return `
+          <div class="cmd-rcb-batch">
+            <div class="cmd-rcb-batch-head">
+              <span>${t('cmdSentBatch')}</span>
+              <span class="cmd-rcb-batch-actions">
+                <span class="cmd-rcb-batch-time">${comandaFmtHM(batch.sentAt)}</span>
+                <button class="cmd-rcb-print-btn" onclick="comandaShowTicketPreview('${batch.sentAt}')" title="${t('cmdTicketPreviewTitle')}">${t('cmdTicketPreviewBtn')}</button>
+              </span>
+            </div>
+            ${lines}
+          </div>`;
+      }).join('')
+    : `<div class="cmd-empty-state">${t('cmdRecibidorEmpty')}</div>`;
+  root.innerHTML = `
+    <div class="cmd-active-header">
+      <div>
+        <div class="cmd-active-title">${t('cmdMesaPrefix')} ${c.mesa}</div>
+        <div class="cmd-active-sub">${c.diners} ${c.diners===1?t('cmdComensal'):t('cmdComensales')}</div>
+      </div>
+      <div class="cmd-active-controls">
+        <button class="cmd-mesas-btn" onclick="comandaRecibidorBack()">${t('cmdRecibidorBack')}</button>
+      </div>
+    </div>
+    ${batchesHtml}
+    ${COMANDA_TICKET_PREVIEW ? comandaRenderTicketPreviewModal() : ''}`;
 }
 
 // --- Auto-close stale + auto-purge old days ------------------------------
@@ -5464,6 +6017,11 @@ function comandaRender(){
   const root = document.getElementById('cmd-root');
   if (!root) return;
   if (!COMANDA_AUTHED) return comandaRenderGate(root);
+  if (COMANDA_ROLE === 'recibidor'){
+    return COMANDA_RECIBIDOR_VIEW_ID
+      ? comandaRenderRecibidorDetail(root)
+      : comandaRenderRecibidorHome(root);
+  }
   switch (COMANDA_VIEW){
     case 'home':   return comandaRenderHome(root);
     case 'new':    return comandaRenderNew(root);
@@ -5551,13 +6109,25 @@ function comandaRenderHistoryModal(){
     const its = items.filter(it => it.dinerN === n);
     let lines = '';
     if (its.length){
-      let prevGroup = null;
-      lines = its.map(it => {
-        const grp = comandaGroupOf(it);
-        const showDivider = (grp && grp !== prevGroup);
-        prevGroup = grp;
-        const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
-        return `${div}<div class="cmd-line"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
+      const batches = comandaSplitBatches(its);
+      lines = batches.map(batch => {
+        const isPending = batch.kind === 'open';
+        const header = isPending
+          ? `<div class="cmd-batch-divider is-pending"><span class="cmd-batch-label">${t('cmdPendingBatch')}</span></div>`
+          : `<div class="cmd-batch-divider is-sent"><span class="cmd-batch-label">${t('cmdSentBatch')}</span>${batch.sentAt?`<span class="cmd-batch-time">· ${comandaFmtHM(batch.sentAt)}</span>`:''}</div>`;
+        let prevGroup = null;
+        const inner = batch.items.map(it => {
+          const grp = comandaGroupOf(it);
+          const showDivider = (grp && grp !== prevGroup);
+          prevGroup = grp;
+          const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
+          const isCancelled = it.status === 'cancelled';
+          const isSent = !!it.sentAt && !isCancelled;
+          const cls = ['cmd-line', isCancelled?'is-cancelled':'', isSent?'is-sent':''].filter(Boolean).join(' ');
+          const cancelledChip = isCancelled ? `<span class="cmd-cancelled-chip">${t('cmdItemCancelled')}</span>` : '';
+          return `${div}<div class="${cls}"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${cancelledChip}${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
+        }).join('');
+        return header + inner;
       }).join('');
     } else {
       lines = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
@@ -5580,10 +6150,16 @@ function comandaRenderHistoryModal(){
 
 function comandaLogout(){
   COMANDA_AUTHED = false;
+  COMANDA_ROLE = 'waiter';
   COMANDA_VIEW = 'gate';
   COMANDA_PIN_BUFFER = '';
+  COMANDA_RECIBIDOR_VIEW_ID = null;
+  COMANDA_RECIBIDOR_DETAIL = null;
+  COMANDA_RECIBIDOR_LIST = [];
+  COMANDA_TICKET_PREVIEW = null;
   comandaStopTimerInterval();
   comandaStopPolling();
+  comandaStopRecibidorPolling();
   comandaRender();
 }
 
@@ -5698,41 +6274,69 @@ function comandaRenderActive(root){
     }
   }
 
-  // Active diner's items, in array order. Insert a course/service-time
-  // divider whenever the consecutive items belong to different groups.
-  // Each line carries a grip handle that triggers touch-drag-to-reorder.
+  // Active diner's items, partitioned into batches (Por enviar / Enviado).
+  // Within each batch, course dividers still group by Entrada/Plato/Postre.
+  // Sent items lose the drag grip and dim slightly; pending items keep the
+  // freshness halo so the waiter still sees what they just typed.
   const dinerItems = items.filter(it => it.dinerN === COMANDA_ACTIVE_DINER);
   let dinerSummary = '';
   if (dinerItems.length){
-    let prevGroup = null;
-    dinerSummary = dinerItems.map(it => {
-      const grp = comandaGroupOf(it);
-      const showDivider = (grp && grp !== prevGroup);
-      prevGroup = grp;
-      const dividerHtml = showDivider
-        ? `<div class="cmd-course-divider"><span>${grp}</span></div>`
-        : '';
-      return `${dividerHtml}
-        <div class="cmd-line" data-item-id="${it.id}"
-             ontouchstart="cmdDragStart(event, '${it.id}')"
-             ontouchmove="cmdDragMove(event)"
-             ontouchend="cmdDragEnd(event)"
-             ontouchcancel="cmdDragEnd(event)">
-          <div class="cmd-line-grip" aria-label="reorder">⋮⋮</div>
-          <div class="cmd-line-qty">${it.qty || 1}×</div>
-          <div class="cmd-line-body">
-            <span class="cmd-line-name">${it.name}</span>
-            ${it.notes ? `<span class="cmd-line-note">⚐ ${it.notes}</span>` : ''}
-          </div>
-          <div class="cmd-line-actions">
-            <button class="cmd-line-btn" onclick="comandaOpenNote('${it.id}')" title="${t('cmdNoteOpen')}">⚐</button>
-            <button class="cmd-line-btn cmd-rm" onclick="comandaRemoveItem('${it.id}')" title="${t('cmdItemRemove')}">✕</button>
-          </div>
-        </div>`;
+    const batches = comandaSplitBatches(dinerItems);
+    dinerSummary = batches.map(batch => {
+      const isPending = batch.kind === 'open';
+      const header = isPending
+        ? `<div class="cmd-batch-divider is-pending"><span class="cmd-batch-label">${t('cmdPendingBatch')}</span></div>`
+        : `<div class="cmd-batch-divider is-sent"><span class="cmd-batch-label">${t('cmdSentBatch')}</span>${batch.sentAt?`<span class="cmd-batch-time">· ${comandaFmtHM(batch.sentAt)}</span>`:''}</div>`;
+      let prevGroup = null;
+      const lines = batch.items.map(it => {
+        const grp = comandaGroupOf(it);
+        const showDivider = (grp && grp !== prevGroup);
+        prevGroup = grp;
+        const dividerHtml = showDivider
+          ? `<div class="cmd-course-divider"><span>${grp}</span></div>`
+          : '';
+        const isCancelled = it.status === 'cancelled';
+        const isSent      = !!it.sentAt && !isCancelled;
+        const freshCls = isPending ? comandaFreshClass(it) : '';
+        const cls = ['cmd-line',
+          isCancelled?'is-cancelled':'',
+          isSent?'is-sent':'',
+          freshCls].filter(Boolean).join(' ');
+        const freshChip = (freshCls === 'is-fresh')
+          ? `<span class="cmd-fresh-chip">${t('cmdFreshChip')}</span>` : '';
+        const cancelledChip = isCancelled
+          ? `<span class="cmd-cancelled-chip">${t('cmdItemCancelled')}</span>` : '';
+        // Drag-to-reorder is disabled for sent items so a batch's order
+        // stays committed. Pending items still drag freely.
+        const dragHandlers = isSent || isCancelled ? '' :
+          `ontouchstart="cmdDragStart(event, '${it.id}')" ontouchmove="cmdDragMove(event)" ontouchend="cmdDragEnd(event)" ontouchcancel="cmdDragEnd(event)"`;
+        return `${dividerHtml}
+          <div class="${cls}" data-item-id="${it.id}" ${dragHandlers}>
+            <div class="cmd-line-grip" aria-label="reorder">⋮⋮</div>
+            <div class="cmd-line-qty">${it.qty || 1}×</div>
+            <div class="cmd-line-body">
+              <span class="cmd-line-name">${it.name}</span>${freshChip}${cancelledChip}
+              ${it.notes ? `<span class="cmd-line-note">⚐ ${it.notes}</span>` : ''}
+            </div>
+            <div class="cmd-line-actions">
+              <button class="cmd-line-btn" onclick="comandaOpenNote('${it.id}')" title="${t('cmdNoteOpen')}">⚐</button>
+              <button class="cmd-line-btn cmd-rm" onclick="comandaRemoveItem('${it.id}')" title="${t('cmdItemRemove')}">✕</button>
+            </div>
+          </div>`;
+      }).join('');
+      return header + lines;
     }).join('');
   } else {
     dinerSummary = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
   }
+
+  // Send-batch CTA — visible whenever ANY diner in the mesa has open items
+  // (not just the currently-focused one). Counts across the whole mesa so
+  // the waiter can finalise the whole table in one tap.
+  const pendingTotal = comandaPendingCount(items);
+  const sendBtn = pendingTotal > 0
+    ? `<button class="cmd-send-btn" onclick="comandaSendBatch()">${t('cmdSendBtnCount').replace('{n}', pendingTotal)}</button>`
+    : '';
 
   root.innerHTML = `
     <div class="cmd-active-header">
@@ -5742,6 +6346,7 @@ function comandaRenderActive(root){
       </div>
       <div class="cmd-active-controls">
         ${timerChip}
+        <button class="cmd-change-mesa-btn" onclick="comandaChangeMesaShow()" title="${t('cmdChangeMesa')}">⇆ ${t('cmdChangeMesa')}</button>
         <button class="cmd-mesas-btn" onclick="comandaBackToHome()">${t('cmdMesasBtn')}</button>
       </div>
     </div>
@@ -5760,11 +6365,97 @@ function comandaRenderActive(root){
 
     <div class="cmd-footer-actions">
       <button class="cmd-btn" onclick="comandaShowFullView()">${t('cmdViewFull')}</button>
+      ${sendBtn}
       <button class="cmd-btn primary" onclick="comandaCloseMesa()">${t('cmdCloseMesa')}</button>
     </div>
 
     ${COMANDA_NOTE_EDIT_ID ? comandaRenderNoteModal() : ''}
-    ${COMANDA_FULL_OPEN ? comandaRenderFullModal() : ''}`;
+    ${COMANDA_FULL_OPEN ? comandaRenderFullModal() : ''}
+    ${COMANDA_CHANGE_MESA_OPEN ? comandaRenderChangeMesaModal() : ''}`;
+}
+
+function comandaRenderChangeMesaModal(){
+  const c = COMANDA_ACTIVE_DATA;
+  if (!c) return '';
+  const buf = COMANDA_CHANGE_MESA_BUF;
+  const dispMesa = buf || '—';
+  const dispClass = buf ? '' : 'empty';
+  const errMsg = COMANDA_CHANGE_MESA_ERR === 'taken' ? t('cmdMesaTaken') : '';
+  return `
+    <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaChangeMesaCancel()">
+      <div class="cmd-modal-panel">
+        <div class="cmd-modal-title">${t('cmdChangeMesaTitle')}</div>
+        <div class="cmd-new-section">
+          <span class="cmd-new-label">${t('cmdMesaPrefix')} ${c.mesa} →</span>
+          <div class="cmd-new-mesa-display ${dispClass}">${dispMesa}</div>
+          <div class="cmd-numpad" style="max-width:240px;margin:0 auto">
+            <div class="cmd-numpad-grid">
+              ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="cmd-numpad-key" onclick="comandaChangeMesaPress('${n}')">${n}</button>`).join('')}
+              <button class="cmd-numpad-key cmd-nk-del" onclick="comandaChangeMesaPress('del')">⌫</button>
+              <button class="cmd-numpad-key" onclick="comandaChangeMesaPress('0')">0</button>
+              <button class="cmd-numpad-key cmd-nk-del" onclick="comandaChangeMesaPress('clr')">✕</button>
+            </div>
+          </div>
+          <div class="cmd-change-err">${errMsg}</div>
+        </div>
+        <div class="cmd-modal-actions">
+          <button class="cmd-btn" onclick="comandaChangeMesaCancel()">${t('cmdBack')}</button>
+          <button class="cmd-btn primary" onclick="comandaChangeMesaConfirm()" ${buf && buf !== c.mesa ? '' : 'disabled'}>${t('cmdContinue')}</button>
+        </div>
+      </div>
+    </div>`;
+}
+function comandaChangeMesaShow(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  COMANDA_CHANGE_MESA_OPEN = true;
+  COMANDA_CHANGE_MESA_BUF  = '';
+  COMANDA_CHANGE_MESA_ERR  = '';
+  comandaRender();
+}
+function comandaChangeMesaCancel(){
+  COMANDA_CHANGE_MESA_OPEN = false;
+  COMANDA_CHANGE_MESA_BUF  = '';
+  COMANDA_CHANGE_MESA_ERR  = '';
+  comandaRender();
+}
+function comandaChangeMesaPress(key){
+  if (key === 'del')      COMANDA_CHANGE_MESA_BUF = COMANDA_CHANGE_MESA_BUF.slice(0,-1);
+  else if (key === 'clr') COMANDA_CHANGE_MESA_BUF = '';
+  else if (COMANDA_CHANGE_MESA_BUF.length < 4) COMANDA_CHANGE_MESA_BUF += key;
+  COMANDA_CHANGE_MESA_ERR = '';
+  comandaRender();
+}
+async function comandaChangeMesaConfirm(){
+  if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_ID) return;
+  const target = COMANDA_CHANGE_MESA_BUF;
+  if (!target || target === COMANDA_ACTIVE_DATA.mesa) return;
+  // Collision check: any OTHER open mesa today already using this number?
+  // Re-fetch fresh to avoid stale local cache races between meseros.
+  try {
+    const resp = await fetch(comandaFireUrl(comandaDateKey()));
+    const data = await resp.json();
+    if (data){
+      const taken = Object.entries(data).some(([id, c]) =>
+        c && id !== COMANDA_ACTIVE_ID && !c.closedAt && String(c.mesa) === target
+      );
+      if (taken){
+        COMANDA_CHANGE_MESA_ERR = 'taken';
+        comandaRender();
+        return;
+      }
+    }
+  } catch(e){ /* network blip — proceed optimistically */ }
+  // Apply: append history entry, then persist mesa + mesaHistory together.
+  const from = COMANDA_ACTIVE_DATA.mesa;
+  const history = Array.isArray(COMANDA_ACTIVE_DATA.mesaHistory) ? COMANDA_ACTIVE_DATA.mesaHistory.slice() : [];
+  history.push({ from, to: target, at: Date.now() });
+  COMANDA_ACTIVE_DATA.mesa = target;
+  COMANDA_ACTIVE_DATA.mesaHistory = history;
+  COMANDA_CHANGE_MESA_OPEN = false;
+  COMANDA_CHANGE_MESA_BUF  = '';
+  COMANDA_CHANGE_MESA_ERR  = '';
+  comandaRender();
+  comandaPersist({ mesa: target, mesaHistory: history });
 }
 
 function comandaRenderNoteModal(){
@@ -5794,13 +6485,25 @@ function comandaRenderFullModal(){
     const its = items.filter(it => it.dinerN === n);
     let lines = '';
     if (its.length){
-      let prevGroup = null;
-      lines = its.map(it => {
-        const grp = comandaGroupOf(it);
-        const showDivider = (grp && grp !== prevGroup);
-        prevGroup = grp;
-        const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
-        return `${div}<div class="cmd-line"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
+      const batches = comandaSplitBatches(its);
+      lines = batches.map(batch => {
+        const isPending = batch.kind === 'open';
+        const header = isPending
+          ? `<div class="cmd-batch-divider is-pending"><span class="cmd-batch-label">${t('cmdPendingBatch')}</span></div>`
+          : `<div class="cmd-batch-divider is-sent"><span class="cmd-batch-label">${t('cmdSentBatch')}</span>${batch.sentAt?`<span class="cmd-batch-time">· ${comandaFmtHM(batch.sentAt)}</span>`:''}</div>`;
+        let prevGroup = null;
+        const inner = batch.items.map(it => {
+          const grp = comandaGroupOf(it);
+          const showDivider = (grp && grp !== prevGroup);
+          prevGroup = grp;
+          const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
+          const isCancelled = it.status === 'cancelled';
+          const isSent = !!it.sentAt && !isCancelled;
+          const cls = ['cmd-line', isCancelled?'is-cancelled':'', isSent?'is-sent':''].filter(Boolean).join(' ');
+          const cancelledChip = isCancelled ? `<span class="cmd-cancelled-chip">${t('cmdItemCancelled')}</span>` : '';
+          return `${div}<div class="${cls}"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${cancelledChip}${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
+        }).join('');
+        return header + inner;
       }).join('');
     } else {
       lines = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
@@ -5989,14 +6692,34 @@ function rolEnter(){
     rolRender();
     return;
   }
-  // If authed but no data yet, fetch
-  const wanted = rolMonthKey(new Date());
-  if (ROL_MONTH_KEY !== wanted){
-    ROL_MONTH_KEY = wanted;
-    rolFetchData();
-  }
+  if (!ROL_WINDOW_START) ROL_WINDOW_START = rolToday();
+  rolEnsureWindowMonths();
   ROL_VIEW = 'home';
   rolRender();
+}
+
+// Returns today's date with time stripped (so date-arithmetic is clean)
+function rolToday(){
+  const t = new Date();
+  return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+}
+
+// All YYYY-MM keys covered by the 7-day window starting at ROL_WINDOW_START
+function rolGetWindowMonthKeys(){
+  if (!ROL_WINDOW_START) return [];
+  const seen = new Set();
+  for (let i = 0; i < 7; i++){
+    const d = new Date(ROL_WINDOW_START);
+    d.setDate(ROL_WINDOW_START.getDate() + i);
+    seen.add(rolMonthKey(d));
+  }
+  return Array.from(seen);
+}
+
+// Month-key of the day that anchors the persona's monthly calendar.
+// We use the window's start day's month so the calendar follows the user.
+function rolAnchorMonthKey(){
+  return rolMonthKey(ROL_WINDOW_START || rolToday());
 }
 
 function rolPinPress(key){
@@ -6012,9 +6735,8 @@ function rolSubmitPin(){
     ROL_AUTHED = true;
     ROL_PIN_BUFFER = '';
     ROL_VIEW = 'home';
-    ROL_MONTH_KEY = rolMonthKey(new Date());
-    ROL_WEEK_START_DAY = 0; // marker: compute from today on first render
-    rolFetchData();
+    ROL_WINDOW_START = rolToday();
+    rolEnsureWindowMonths();
   } else {
     ROL_PIN_BUFFER = '';
     const err = document.getElementById('rol-pin-error');
@@ -6030,38 +6752,55 @@ function rolLogout(){
   rolRender();
 }
 
-async function rolFetchData(){
-  ROL_LOAD_ERROR = false;
-  const key = ROL_MONTH_KEY;
-  try {
-    const base = CF_FIREBASE_CONFIG.databaseURL;
-    const [rosterResp, staffingResp, metaResp] = await Promise.all([
-      fetch(`${base}/${ROL_ROSTER_PATH}/${key}.json`),
-      fetch(`${base}/${ROL_STAFFING_PATH}/${key}.json`),
-      fetch(`${base}/${ROL_META_PATH}.json`)
-    ]);
-    const rosterData   = await rosterResp.json();
-    const staffingData = await staffingResp.json();
-    const metaData     = await metaResp.json();
-    ROL_ROSTER   = rolNormalizeRoster(rosterData   || {});
-    ROL_STAFFING = normalizeStaffingMonth(staffingData || {}) || {};
-    // If the previously-selected persona was a mojibake variant, remap to
-    // the canonical name now that the roster is normalized.
-    if (ROL_PERSONA && !ROL_ROSTER[ROL_PERSONA]){
-      const fixedPersona = fixMojibake(ROL_PERSONA);
-      if (fixedPersona !== ROL_PERSONA && ROL_ROSTER[fixedPersona]){
-        ROL_PERSONA = fixedPersona;
-        try { localStorage.setItem('rol.persona', ROL_PERSONA); } catch(e){}
+// Load one month if not cached. Dedupes concurrent calls via ROL_MONTHS_LOADING.
+// Updates ROL_LAST_UPDATE on every successful call (it's a global meta, not per-month).
+async function rolEnsureMonth(key){
+  if (!key) return;
+  if (ROL_ROSTER_BY_MONTH[key] || ROL_STAFFING_BY_MONTH[key]) return;
+  if (ROL_MONTHS_LOADING[key]) return ROL_MONTHS_LOADING[key];
+  const p = (async () => {
+    try {
+      const base = CF_FIREBASE_CONFIG.databaseURL;
+      const [rosterResp, staffingResp, metaResp] = await Promise.all([
+        fetch(`${base}/${ROL_ROSTER_PATH}/${key}.json`),
+        fetch(`${base}/${ROL_STAFFING_PATH}/${key}.json`),
+        fetch(`${base}/${ROL_META_PATH}.json`)
+      ]);
+      const rosterData   = await rosterResp.json();
+      const staffingData = await staffingResp.json();
+      const metaData     = await metaResp.json();
+      ROL_ROSTER_BY_MONTH[key]   = rolNormalizeRoster(rosterData || {});
+      ROL_STAFFING_BY_MONTH[key] = normalizeStaffingMonth(staffingData || {}) || {};
+      // Repair persona name if mojibake — only when we actually have a canonical
+      // entry to remap to in this newly-loaded month.
+      if (ROL_PERSONA && !ROL_ROSTER_BY_MONTH[key][ROL_PERSONA]){
+        const fixedPersona = fixMojibake(ROL_PERSONA);
+        if (fixedPersona !== ROL_PERSONA && ROL_ROSTER_BY_MONTH[key][fixedPersona]){
+          ROL_PERSONA = fixedPersona;
+          try { localStorage.setItem('rol.persona', ROL_PERSONA); } catch(e){}
+        }
       }
+      ROL_LAST_UPDATE = (metaData && typeof metaData === 'object' && metaData.timestamp_iso) || ROL_LAST_UPDATE;
+      ROL_LOAD_ERROR = false;
+    } catch(e){
+      ROL_LOAD_ERROR = true;
+      ROL_ROSTER_BY_MONTH[key]   = {};
+      ROL_STAFFING_BY_MONTH[key] = {};
+    } finally {
+      delete ROL_MONTHS_LOADING[key];
     }
-    ROL_LAST_UPDATE = (metaData && typeof metaData === 'object' && metaData.timestamp_iso) || null;
-  } catch(e){
-    ROL_LOAD_ERROR = true;
-    ROL_ROSTER = {};
-    ROL_STAFFING = {};
-    ROL_LAST_UPDATE = null;
-  }
-  if (currentTab === 'rol' && ROL_VIEW === 'home') rolRender();
+    if (currentTab === 'rol' && ROL_VIEW === 'home') rolRender();
+  })();
+  ROL_MONTHS_LOADING[key] = p;
+  return p;
+}
+
+// Ensure all months covered by the current 7-day window are loaded, plus the
+// anchor month for the persona's monthly calendar (usually the same).
+function rolEnsureWindowMonths(){
+  const keys = new Set(rolGetWindowMonthKeys());
+  keys.add(rolAnchorMonthKey());
+  keys.forEach(k => rolEnsureMonth(k));
 }
 
 // Repair + dedupe the roster:
@@ -6127,30 +6866,67 @@ function rolFormatLastUpdate(iso){
   return t('rolUpdatedOn').replace('{date}', date.toLocaleDateString(locale));
 }
 
-function rolGetWeekStart(){
-  if (ROL_WEEK_START_DAY > 0) return ROL_WEEK_START_DAY;
-  const hoy = new Date();
-  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
-  const dayInMonth = (hoy.getFullYear() === y && hoy.getMonth()+1 === m) ? hoy.getDate() : 1;
-  const d = new Date(y, m-1, dayInMonth);
-  const dow = d.getDay();
-  const diff = dow === 0 ? -6 : 1 - dow;
-  d.setDate(d.getDate() + diff);
-  return d.getDate();
+function rolStepWeek(delta){
+  if (!ROL_WINDOW_START) ROL_WINDOW_START = rolToday();
+  const next = new Date(ROL_WINDOW_START);
+  next.setDate(ROL_WINDOW_START.getDate() + delta);
+  ROL_WINDOW_START = next;
+  rolEnsureWindowMonths();
+  rolRender();
 }
 
-function rolStepWeek(delta){
-  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
-  const diasEnMes = new Date(y, m, 0).getDate();
-  const next = Math.max(1, Math.min(diasEnMes, (ROL_WEEK_START_DAY || rolGetWeekStart()) + delta));
-  ROL_WEEK_START_DAY = next;
+// Tap a day in the monthly calendar → jump the weekly window to start there.
+function rolGoToDate(y, m, dd){
+  ROL_WINDOW_START = new Date(y, m-1, dd);
+  rolEnsureWindowMonths();
   rolRender();
+  // Smooth-scroll to the weekly list so the user sees the result of the tap.
+  const days = document.querySelector('#rol-root .rol-days');
+  if (days) days.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function rolSetPersona(name){
   ROL_PERSONA = name || '';
   try { localStorage.setItem('rol.persona', ROL_PERSONA); } catch(e){}
   rolRender();
+}
+
+// Returns the union of person names across all loaded months, sorted.
+function rolAllPersonas(){
+  const set = new Set();
+  Object.values(ROL_ROSTER_BY_MONTH).forEach(monthData => {
+    Object.keys(monthData || {}).forEach(n => set.add(n));
+  });
+  return Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
+}
+
+// Render a person's monthly calendar as a Mon-Sun aligned grid.
+// Used by both the auto-render-on-persona-selection block and the search box.
+// Returns the HTML string (caller decides where to place it).
+function rolBuildPersonaCalendar(nombre, monthKey){
+  const [y,m] = monthKey.split('-').map(Number);
+  const diasEnMes = new Date(y, m, 0).getDate();
+  // Day-of-week of day 1, in Mon=0..Sun=6 order
+  const firstDow = (new Date(y, m-1, 1).getDay() + 6) % 7;
+  const days = (ROL_ROSTER_BY_MONTH[monthKey] || {})[nombre] || {};
+  // Header row: L M M J V S D
+  const DOW_HEADER = ['L','M','M','J','V','S','D'];
+  let header = DOW_HEADER.map(d => `<div class="rol-search-dow">${d}</div>`).join('');
+  // Leading blanks before day 1
+  let cells = '';
+  for (let i = 0; i < firstDow; i++){
+    cells += `<div class="rol-search-cell blank"></div>`;
+  }
+  for (let dd = 1; dd <= diasEnMes; dd++){
+    const turno = days[dd];
+    if (turno){
+      cells += `<div class="rol-search-cell" onclick="rolGoToDate(${y},${m},${dd})"><div class="d">${dd}</div><div class="t">${turno}</div></div>`;
+    } else {
+      cells += `<div class="rol-search-cell off" onclick="rolGoToDate(${y},${m},${dd})"><div class="d">${dd}</div><div class="t">L</div></div>`;
+    }
+  }
+  return `<div class="rol-search-person">${nombre} · ${ROL_MESES[m-1]} ${y}</div>
+    <div class="rol-search-month">${header}${cells}</div>`;
 }
 
 function rolSearch(query){
@@ -6161,7 +6937,9 @@ function rolSearch(query){
     results.innerHTML = '';
     return;
   }
-  const nombres = Object.keys(ROL_ROSTER)
+  const anchorKey = rolAnchorMonthKey();
+  const roster = ROL_ROSTER_BY_MONTH[anchorKey] || {};
+  const nombres = Object.keys(roster)
     .filter(n => n.toLowerCase().includes(ROL_SEARCH_QUERY))
     .sort((a,b)=>a.localeCompare(b,'es'))
     .slice(0,3);
@@ -6169,23 +6947,9 @@ function rolSearch(query){
     results.innerHTML = `<div class="rol-search-person" style="opacity:0.5">${t('rolSearchNoResults')}</div>`;
     return;
   }
-  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
-  const diasEnMes = new Date(y, m, 0).getDate();
-  let html = '';
-  nombres.forEach(nombre => {
-    const days = ROL_ROSTER[nombre] || {};
-    let cells = '';
-    for (let dd = 1; dd <= diasEnMes; dd++){
-      const turno = days[dd];
-      if (turno){
-        cells += `<div class="rol-search-cell"><div class="d">${dd}</div><div class="t">${turno}</div></div>`;
-      } else {
-        cells += `<div class="rol-search-cell off"><div class="d">${dd}</div><div class="t">L</div></div>`;
-      }
-    }
-    html += `<div style="margin-bottom:18px"><div class="rol-search-person">${nombre}</div><div class="rol-search-month">${cells}</div></div>`;
-  });
-  results.innerHTML = html;
+  results.innerHTML = nombres
+    .map(n => `<div style="margin-bottom:18px">${rolBuildPersonaCalendar(n, anchorKey)}</div>`)
+    .join('');
 }
 
 function rolRender(){
@@ -6222,15 +6986,32 @@ function rolHorarioText(code){
 }
 
 function rolRenderHome(root){
-  if (ROL_LOAD_ERROR){
+  if (!ROL_WINDOW_START) ROL_WINDOW_START = rolToday();
+  const anchorKey = rolAnchorMonthKey();
+  const [ay, am] = anchorKey.split('-').map(Number);
+
+  // Build the 7-day window as Date objects (cross-month aware)
+  const dias = [];
+  for (let i = 0; i < 7; i++){
+    const d = new Date(ROL_WINDOW_START);
+    d.setDate(ROL_WINDOW_START.getDate() + i);
+    dias.push(d);
+  }
+
+  // Empty-state: anchor month has no data AND we're not still loading it
+  const anchorRoster = ROL_ROSTER_BY_MONTH[anchorKey];
+  const anchorStaffing = ROL_STAFFING_BY_MONTH[anchorKey];
+  const stillLoading = !!ROL_MONTHS_LOADING[anchorKey];
+  if (ROL_LOAD_ERROR && !stillLoading){
     root.innerHTML = `<div class="rol-status">${t('rolLoadError')}</div>`;
     return;
   }
-  if (!Object.keys(ROL_ROSTER).length && !Object.keys(ROL_STAFFING).length){
+  if (!stillLoading && anchorRoster !== undefined && !Object.keys(anchorRoster || {}).length
+      && anchorStaffing !== undefined && !Object.keys(anchorStaffing || {}).length){
     root.innerHTML = `
       <div class="rol-header">
         <div class="rol-header-text">
-          <div class="eyebrow">${ROL_MONTH_KEY || ''}</div>
+          <div class="eyebrow">${anchorKey}</div>
           <h1 class="rol-title">${t('rolPinTitle')}</h1>
         </div>
         <button class="rol-exit-btn" onclick="rolLogout()">${t('rolLogout')}</button>
@@ -6239,42 +7020,40 @@ function rolRenderHome(root){
     return;
   }
 
-  const [y,m] = ROL_MONTH_KEY.split('-').map(Number);
-  const diasEnMes = new Date(y, m, 0).getDate();
-  const weekStart = rolGetWeekStart();
-  if (ROL_WEEK_START_DAY === 0) ROL_WEEK_START_DAY = weekStart;
+  const hoy = rolToday();
+  const sameYMD = (a, b) => a.getFullYear()===b.getFullYear()
+                         && a.getMonth()===b.getMonth()
+                         && a.getDate()===b.getDate();
 
-  const dias = [];
-  for (let i = 0; i < 7; i++){
-    const dia = (ROL_WEEK_START_DAY || weekStart) + i;
-    if (dia >= 1 && dia <= diasEnMes) dias.push(dia);
-  }
-
-  const hoy = new Date();
-  const esHoy = dia => hoy.getFullYear() === y && hoy.getMonth()+1 === m && hoy.getDate() === dia;
-
-  // Person selector
-  const nombres = Object.keys(ROL_ROSTER).sort((a,b)=>a.localeCompare(b,'es'));
+  // Person selector — union across all loaded months
+  const nombres = rolAllPersonas();
   const options = [`<option value="">${t('rolSelectPlaceholder')}</option>`]
     .concat(nombres.map(n => `<option value="${n}"${n===ROL_PERSONA?' selected':''}>${n}</option>`))
     .join('');
 
   // Days
-  const daysHtml = dias.length
-    ? dias.map(dia => rolRenderDay(dia, esHoy(dia), y, m)).join('')
-    : `<div class="rol-status">${t('rolWeekOutsideMonth')}</div>`;
+  const daysHtml = dias.map(d => rolRenderDay(d, sameYMD(d, hoy))).join('');
 
-  const primer = dias[0], ultimo = dias[dias.length-1];
-  const weekLabel = dias.length ? `${primer} – ${ultimo} de ${ROL_MESES[m-1]}` : '—';
-  const prevDisabled = (ROL_WEEK_START_DAY || weekStart) <= 1;
-  const nextDisabled = ((ROL_WEEK_START_DAY || weekStart) + 7) > diasEnMes;
+  // Label spans the visible window — bridges months when applicable
+  const fmtDay = d => `${d.getDate()} ${ROL_MESES[d.getMonth()]}`;
+  const first = dias[0], last = dias[6];
+  const weekLabel = first.getMonth() === last.getMonth()
+    ? `${first.getDate()} – ${last.getDate()} de ${ROL_MESES[first.getMonth()]}`
+    : `${fmtDay(first)} – ${fmtDay(last)}`;
 
   const updatedTxt = rolFormatLastUpdate(ROL_LAST_UPDATE);
   const updatedChip = updatedTxt ? `<div class="rol-last-update">${updatedTxt}</div>` : '';
+
+  // Monthly calendar — auto-rendered when a persona is selected.
+  // Anchored to the month of the window's start day.
+  const personaCalendarHtml = ROL_PERSONA && (ROL_ROSTER_BY_MONTH[anchorKey] || {})[ROL_PERSONA]
+    ? `<div class="rol-persona-calendar">${rolBuildPersonaCalendar(ROL_PERSONA, anchorKey)}</div>`
+    : '';
+
   root.innerHTML = `
     <div class="rol-header">
       <div class="rol-header-text">
-        <div class="eyebrow">${ROL_MESES[m-1]} ${y}</div>
+        <div class="eyebrow">${ROL_MESES[am-1]} ${ay}</div>
         <h1 class="rol-title">Rol <em>de la semana</em></h1>
         <div class="rol-subtitle">${t('rolSubtitle')}</div>
         ${updatedChip}
@@ -6288,12 +7067,14 @@ function rolRenderHome(root){
     </div>
 
     <div class="rol-week-nav">
-      <button onclick="rolStepWeek(-7)" ${prevDisabled?'disabled':''}>${t('rolPrevWeek')}</button>
+      <button onclick="rolStepWeek(-7)">${t('rolPrevWeek')}</button>
       <span class="rol-week-label">${weekLabel}</span>
-      <button onclick="rolStepWeek(7)" ${nextDisabled?'disabled':''}>${t('rolNextWeek')}</button>
+      <button onclick="rolStepWeek(7)">${t('rolNextWeek')}</button>
     </div>
 
     <div class="rol-days">${daysHtml}</div>
+
+    ${personaCalendarHtml}
 
     <div class="rol-search-section">
       <h2>${t('rolSearchTitle')}</h2>
@@ -6306,11 +7087,14 @@ function rolRenderHome(root){
   if (ROL_SEARCH_QUERY) rolSearch(ROL_SEARCH_QUERY);
 }
 
-function rolRenderDay(dia, esHoy, year, month){
-  const fecha = new Date(year, month-1, dia);
-  const dowLabel = ROL_DOW[fecha.getDay()];
-  const turno = ROL_PERSONA ? (ROL_ROSTER[ROL_PERSONA]?.[dia] || null) : null;
-  const staffingDia = ROL_STAFFING[dia] || {};
+function rolRenderDay(date, esHoy){
+  const dia = date.getDate();
+  const monthKey = rolMonthKey(date);
+  const dowLabel = ROL_DOW[date.getDay()];
+  const roster = ROL_ROSTER_BY_MONTH[monthKey] || {};
+  const staffing = ROL_STAFFING_BY_MONTH[monthKey] || {};
+  const turno = ROL_PERSONA ? (roster[ROL_PERSONA]?.[dia] || null) : null;
+  const staffingDia = staffing[dia] || {};
   const todayCls = esHoy ? ' today' : '';
   const viajeros = staffingDia.viajeros
     ? `<div class="rol-ocupacion"><div class="num">${staffingDia.viajeros}</div><div class="label">${t('rolViajeros')}</div></div>`
@@ -6342,6 +7126,14 @@ function rolRenderDay(dia, esHoy, year, month){
   const esAM = turno === 'CAM' || turno === 'CAMC' || turno === 'DOB' || turno === 'CDOB';
   const esPM = turno === 'CPM' || turno === 'CPMC' || turno === 'DOB' || turno === 'CDOB';
 
+  // Helper: is a colleague's turno that day "short" for the given franja?
+  // CAMC for AM franja, CPMC for PM franja.
+  const isCorto = (name, franja) => {
+    const t2 = roster[name]?.[dia];
+    if (!t2) return false;
+    return franja === 'am' ? t2 === 'CAMC' : franja === 'pm' ? t2 === 'CPMC' : false;
+  };
+
   let compaHTML = '';
   if (esComedor){
     const franjas = [];
@@ -6352,8 +7144,14 @@ function rolRenderDay(dia, esHoy, year, month){
       const geos    = staffingDia[`geos_${f.key}`]       || [];
       const apoyos  = staffingDia[`apoyo_${f.key}`]      || [];
       const pills = [];
-      seniors.forEach(n => pills.push(`<span class="rol-pill senior">${n}</span>`));
-      geos.filter(n => n !== ROL_PERSONA).forEach(n => pills.push(`<span class="rol-pill">${n}</span>`));
+      seniors.forEach(n => {
+        const corto = isCorto(n, f.key) ? `<span class="rol-pill-tag">${t('rolCortoTag')}</span>` : '';
+        pills.push(`<span class="rol-pill senior">${n}${corto}</span>`);
+      });
+      geos.filter(n => n !== ROL_PERSONA).forEach(n => {
+        const corto = isCorto(n, f.key) ? `<span class="rol-pill-tag">${t('rolCortoTag')}</span>` : '';
+        pills.push(`<span class="rol-pill">${n}${corto}</span>`);
+      });
       apoyos.filter(n => n !== ROL_PERSONA).forEach(n => pills.push(`<span class="rol-pill apoyo">${n}</span>`));
       return `<div>
         <div class="rol-col-titulo">${f.titulo}</div>
