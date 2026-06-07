@@ -1564,64 +1564,86 @@ let ROL_SWIPE             = null;     // active touch-drag state for week swipe
 const CHK_TEMPLATES_PATH    = 'checklist_templates';
 const CHK_RUNS_PATH         = 'checklist_runs';
 const CHK_SUMMARIES_PATH    = 'checklist_summaries';
+const CHK_STRUCTURE_PATH    = 'checklist_structure';
 const CHK_RETENTION_DAYS    = 90;
 const CHK_SUPERVISOR_PIN    = '9876';
-// Each section defines its own "moments" (chip row entries), whether the
-// active moment is auto-suggested by clock, and whether carry-over between
-// moments applies. Pasillo follows a 24h cyclical pattern with pending
-// tasks rolling into the next service. Montaje is preparation work chosen
-// manually by the GEO — no clock, no carry-over. Edit moments, windows or
-// carry-over chains here; the rest of the module is generic.
-const CHK_SECTIONS = [
-  {
-    key:'pasillo', labelKey:'chkSectionPasillo', active:true,
-    autoActive:true,
-    moments: [
-      { key:'post_desayuno', labelKey:'chkPhaseDesayuno', startMin:  6*60+30, endMin: 13*60    },
-      { key:'post_almuerzo', labelKey:'chkPhaseAlmuerzo', startMin: 13*60,    endMin: 20*60    },
-      { key:'post_cena',     labelKey:'chkPhaseCena',     startMin: 20*60,    endMin:  6*60+30 } // wraps midnight
-    ],
-    // Carry-over chain. Source = { moment: previous-moment, daysBack: 0|1 }.
+// ── Section structure: two layers ────────────────────────────────────────
+// (1) BEHAVIOR (code, keyed by section key): the technical config the
+//     supervisor must NOT break — clock auto-activation, time windows and
+//     carry-over chains. Keyed by `key` so it survives renames. Sections the
+//     supervisor creates (keys not here) default to simple manual mode.
+// (2) STRUCTURE (Firebase `checklist_structure`, seeded from below): the
+//     editable part — section/moment labels, order, visibility, and which
+//     moments exist. The supervisor edits this; it persists versioned.
+// CHK_SECTIONS is BUILT from structure + behavior (chkBuildSections) so the
+// rest of the module keeps consuming the same shape it always has.
+const CHK_SECTION_BEHAVIOR = {
+  pasillo: {
+    autoActive: true,
+    windows: {
+      post_desayuno: { startMin: 6*60+30, endMin: 13*60   },
+      post_almuerzo: { startMin: 13*60,   endMin: 20*60   },
+      post_cena:     { startMin: 20*60,   endMin: 6*60+30 } // wraps midnight
+    },
     carryover: {
       post_desayuno: { moment:'post_cena',     daysBack:1 },
       post_almuerzo: { moment:'post_desayuno', daysBack:0 },
       post_cena:     { moment:'post_almuerzo', daysBack:0 }
     }
   },
-  {
-    key:'montaje', labelKey:'chkSectionMontaje', active:true,
-    autoActive:false,
-    moments: [
-      { key:'desayuno', labelKey:'chkMontajeDesayuno' },
-      { key:'almuerzo', labelKey:'chkMontajeAlmuerzo' },
-      { key:'cena',     labelKey:'chkMontajeCena'     }
-    ],
-    carryover: null
-  },
-  {
-    key:'repaso', labelKey:'chkSectionRepaso', active:false,
-    autoActive:false,
-    moments: [],
-    carryover: null
-  },
-  // Bar lives on the other side of a visual divider in the sub-tab row —
-  // dividerBefore:true tells the render to draw a separator before this chip.
-  // This groups Pasillo/Montaje/Repaso (equipo GEO) on the left and Bar
-  // (equipo bartender) on the right, without breaking the existing layout.
-  {
-    key:'bar', labelKey:'chkSectionBar', active:true,
-    autoActive:false,
-    dividerBefore:true,
-    moments: [
-      { key:'apertura',    labelKey:'chkBarApertura'    },
-      { key:'am',          labelKey:'chkBarAm'          },
-      { key:'quincho',     labelKey:'chkBarQuincho'     },
-      { key:'cierre',      labelKey:'chkBarCierre'      },
-      { key:'transversal', labelKey:'chkBarTransversal' }
-    ],
-    carryover: null
-  }
-];
+  bar: { dividerBefore: true }
+};
+// Editable structure seed. Labels are stored directly (Spanish — the program
+// is single-language since the i18n cycling was retired). Becomes the initial
+// checklist_structure document the first time the tab loads with none stored.
+const CHK_STRUCTURE_SEED = {
+  version: 1,
+  sections: [
+    { key:'pasillo', label:'Pasillo', active:true, moments:[
+        { key:'post_desayuno', label:'Post-Desayuno' },
+        { key:'post_almuerzo', label:'Post-Almuerzo' },
+        { key:'post_cena',     label:'Post-Cena'     } ] },
+    { key:'montaje', label:'Montaje', active:true, moments:[
+        { key:'desayuno', label:'Desayuno' },
+        { key:'almuerzo', label:'Almuerzo' },
+        { key:'cena',     label:'Cena'     } ] },
+    { key:'repaso', label:'Repaso', active:false, moments:[] },
+    { key:'bar', label:'Bar', active:true, moments:[
+        { key:'apertura',    label:'Apertura'      },
+        { key:'am',          label:'AM / Almuerzo' },
+        { key:'quincho',     label:'Quincho'       },
+        { key:'cierre',      label:'Cierre'        },
+        { key:'transversal', label:'Transversal'   } ] }
+  ]
+};
+// Merge structure (editable) + behavior (technical) into the runtime shape
+// the rest of the module expects. Hidden sections/moments are dropped from
+// the runtime list (soft-delete) but stay in the structure doc + keep their
+// historical runs in Firebase.
+function chkBuildSections(structure){
+  const secs = (structure && Array.isArray(structure.sections)) ? structure.sections : [];
+  return secs.filter(s => !s.hidden).map(s => {
+    const beh = CHK_SECTION_BEHAVIOR[s.key] || {};
+    const moments = (s.moments || []).filter(m => !m.hidden).map(m => {
+      const out = { key:m.key, label:m.label };
+      const win = beh.windows && beh.windows[m.key];
+      if (win){ out.startMin = win.startMin; out.endMin = win.endMin; }
+      return out;
+    });
+    return {
+      key: s.key,
+      label: s.label,
+      active: s.active !== false,
+      autoActive: !!beh.autoActive,
+      dividerBefore: !!beh.dividerBefore,
+      moments,
+      carryover: beh.carryover || null
+    };
+  });
+}
+let CHK_STRUCTURE = CHK_STRUCTURE_SEED;            // raw structure doc (Firebase or seed)
+let CHK_SECTIONS  = chkBuildSections(CHK_STRUCTURE); // runtime sections consumed by render
+let CHK_STRUCTURE_PUT_TRIED = false;              // one-shot seed PUT guard (like templates)
 let CHK_SECTION             = 'pasillo';
 let CHK_PHASE_VIEW          = null;     // user-selected phase ('post_*'); null = follow active
 let CHK_TEMPLATES           = {};       // { 'section/phase': { version, tasks[] } }
@@ -7315,6 +7337,11 @@ function chkTimeStr(ts){
 function chkSectionDef(key){ return CHK_SECTIONS.find(s => s.key === key); }
 function chkMoments(sectionKey){ const s = chkSectionDef(sectionKey); return (s && s.moments) ? s.moments : []; }
 function chkMomentDef(sectionKey, momentKey){ return chkMoments(sectionKey).find(m => m.key === momentKey) || null; }
+// Labels now live directly on the built section/moment objects (from the
+// editable structure). Fall back to the legacy i18n key, then the raw key,
+// so nothing renders blank if a label is ever missing.
+function chkSectionLabel(s){ return s ? (s.label || (s.labelKey ? t(s.labelKey) : s.key)) : ''; }
+function chkMomentLabel(m){ return m ? (m.label || (m.labelKey ? t(m.labelKey) : m.key)) : ''; }
 function chkCarryoverFor(sectionKey, momentKey){
   const s = chkSectionDef(sectionKey);
   if (!s || !s.carryover) return null;
@@ -7477,6 +7504,51 @@ async function chkFetchRun(dateKey, section, phase){
 function chkPickRun(serverResult, localRun){
   if (serverResult && serverResult.__error) return localRun || { meta: null, tasks: {} };
   return serverResult;
+}
+// --- Editable structure (sections + moments) -----------------------------
+// Loads checklist_structure from Firebase and rebuilds CHK_SECTIONS. If the
+// doc is missing, seeds it once from CHK_STRUCTURE_SEED. Same defensive shape
+// as templates: a transient error keeps the in-memory structure intact.
+async function chkLoadStructure(){
+  try {
+    const r = await fetch(chkUrl(CHK_STRUCTURE_PATH));
+    if (r.ok){
+      const data = chkSafeJson(await r.json());
+      if (data && Array.isArray(data.sections)){
+        CHK_STRUCTURE = data;
+        CHK_SECTIONS = chkBuildSections(CHK_STRUCTURE);
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('[chk] structure fetch failed', e);
+    return; // keep seed/in-memory structure
+  }
+  // No valid structure stored → seed it (once per session).
+  if (!CHK_STRUCTURE_PUT_TRIED){
+    CHK_STRUCTURE_PUT_TRIED = true;
+    try {
+      await fetch(chkUrl(CHK_STRUCTURE_PATH), { method:'PUT', body: JSON.stringify(CHK_STRUCTURE_SEED) });
+    } catch (e) { console.warn('[chk] structure seed failed', e); }
+  }
+}
+// Persist the current structure (used by the supervisor's structure editor).
+// Bumps version + timestamp; rebuilds CHK_SECTIONS on success.
+async function chkSaveStructure(structure){
+  structure.version = (structure.version || 1) + 1;
+  structure.updated_at = Date.now();
+  structure.updated_by = 'supervisor';
+  let ok = false;
+  try {
+    const r = await fetch(chkUrl(CHK_STRUCTURE_PATH), { method:'PUT', body: JSON.stringify(structure) });
+    ok = r.ok;
+    if (!ok) console.warn('[chk] structure save rejected', r.status);
+  } catch (e) { console.warn('[chk] structure save failed', e); }
+  if (ok){
+    CHK_STRUCTURE = structure;
+    CHK_SECTIONS = chkBuildSections(CHK_STRUCTURE);
+  }
+  return ok;
 }
 async function chkLoadAll(){
   CHK_DATE_KEY = chkDateKey(new Date());
@@ -8009,7 +8081,7 @@ function chkRender(){
     const tag = s.active ? '' : `<span class="chk-section-tag">${chkEscapeHtml(t('chkSectionComingTag'))}</span>`;
     const click = s.active ? `onclick="chkSelectSection('${s.key}')"` : '';
     const divider = s.dividerBefore ? ' data-divider-before="1"' : '';
-    html += `<button class="chk-section-tab ${cls}"${divider} ${click}>${chkEscapeHtml(t(s.labelKey))}${tag}</button>`;
+    html += `<button class="chk-section-tab ${cls}"${divider} ${click}>${chkEscapeHtml(chkSectionLabel(s))}${tag}</button>`;
   });
   html += `</div>`;
 
@@ -8038,7 +8110,7 @@ function chkRender(){
     const isActive  = (m.key === activeByClock);
     const dot = isActive ? `<span class="chk-active-dot"></span>` : '';
     const tag = isActive ? `<span class="chk-active-label">· ${chkEscapeHtml(t('chkActiveTag'))}</span>` : '';
-    html += `<button class="chk-phase-chip ${isVisible ? 'selected' : ''}" onclick="chkSelectPhase('${m.key}')">${dot}${chkEscapeHtml(t(m.labelKey))}${tag}</button>`;
+    html += `<button class="chk-phase-chip ${isVisible ? 'selected' : ''}" onclick="chkSelectPhase('${m.key}')">${dot}${chkEscapeHtml(chkMomentLabel(m))}${tag}</button>`;
   });
   html += `</div>`;
 
@@ -8113,11 +8185,11 @@ function chkRenderCarryover(phase){
     return `<p class="chk-carryover-empty-inline">✓ ${chkEscapeHtml(t('chkCarryoverEmpty'))}</p>`;
   }
   let html = `<div class="chk-carryover">
-    <div class="chk-carryover-title">${chkEscapeHtml(t('chkCarryoverTitle'))} · ${chkEscapeHtml(t(srcDef.labelKey))}</div>
+    <div class="chk-carryover-title">${chkEscapeHtml(t('chkCarryoverTitle'))} · ${chkEscapeHtml(chkMomentLabel(srcDef))}</div>
     <ul class="chk-task-list">`;
   carry.forEach(task => {
     const taskRun = prev.tasks && prev.tasks[task.id];
-    html += chkRenderTaskRow(task, taskRun, src.moment, { carryover:true, sourcePhaseLabel: t(srcDef.labelKey) });
+    html += chkRenderTaskRow(task, taskRun, src.moment, { carryover:true, sourcePhaseLabel: chkMomentLabel(srcDef) });
   });
   html += `</ul></div>`;
   return html;
@@ -8229,7 +8301,7 @@ function chkRenderEditMode(){
   html += `<div class="chk-phase-chips">`;
   chkMoments(CHK_SECTION).forEach(m => {
     const isVisible = (m.key === CHK_EDIT_PHASE);
-    html += `<button class="chk-phase-chip ${isVisible ? 'selected' : ''}" onclick="chkSwitchEditPhase('${m.key}')">${chkEscapeHtml(t(m.labelKey))}</button>`;
+    html += `<button class="chk-phase-chip ${isVisible ? 'selected' : ''}" onclick="chkSwitchEditPhase('${m.key}')">${chkEscapeHtml(chkMomentLabel(m))}</button>`;
   });
   html += `</div>`;
   html += `<div class="chk-edit-list">`;
@@ -8303,6 +8375,13 @@ async function chkEnter(){
   CHK_EDIT_MODE = false;
   const root = document.getElementById('chk-root');
   if (root) root.innerHTML = `<div class="chk-empty" style="opacity:.6">…</div>`;
+  await chkLoadStructure();
+  // The active section may have been hidden/removed in the structure since
+  // last visit — fall back to the first available section if so.
+  if (!chkSectionDef(CHK_SECTION) && CHK_SECTIONS.length){
+    CHK_SECTION = CHK_SECTIONS[0].key;
+    CHK_PHASE_VIEW = null;
+  }
   await chkLoadAll();
   chkRender();
   chkPurgeOld(); // fire-and-forget
