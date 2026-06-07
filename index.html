@@ -1047,12 +1047,33 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .chk-task-image-btn { display:block; width:100%; margin-top:10px; padding:0; background:none; border:0.5px solid var(--border); border-radius:4px; cursor:zoom-in; overflow:hidden; line-height:0; }
 .chk-task-image-btn img { width:100%; height:auto; display:block; transition:opacity .15s; }
 .chk-task-image-btn:hover img { opacity:0.9; }
+/* Extra images beyond the first show as a strip of square thumbs under the
+   lead image. All open the same modal at their index. */
+.chk-task-image-strip { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+.chk-task-image-thumb { width:54px; height:54px; padding:0; background:none; border:0.5px solid var(--border); border-radius:4px; cursor:zoom-in; overflow:hidden; line-height:0; flex-shrink:0; }
+.chk-task-image-thumb img { width:100%; height:100%; object-fit:cover; display:block; transition:opacity .15s; }
+.chk-task-image-thumb:hover img { opacity:0.85; }
 /* Fullscreen modal for the reference image. Click outside or × to close. */
 .chk-image-modal { position:fixed; inset:0; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center; z-index:9999; cursor:zoom-out; animation:chkModalFadeIn 0.15s ease-out; }
 .chk-image-modal-img { max-width:92vw; max-height:88vh; border-radius:4px; box-shadow:0 8px 32px rgba(0,0,0,0.5); cursor:default; }
 .chk-image-modal-close { position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.2); color:#fff; font-size:24px; line-height:1; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; transition:background .15s; }
 .chk-image-modal-close:hover { background:rgba(255,255,255,0.18); }
+/* Modal nav arrows + counter when a task has more than one image. */
+.chk-image-modal-nav { position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.2); color:#fff; font-size:30px; line-height:1; width:44px; height:44px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0 0 4px; transition:background .15s; }
+.chk-image-modal-nav:hover { background:rgba(255,255,255,0.18); }
+.chk-image-modal-nav.prev { left:12px; }
+.chk-image-modal-nav.next { right:12px; }
+.chk-image-modal-count { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.75); font-family:'Courier Prime','Courier New',monospace; font-size:12px; letter-spacing:0.1em; background:rgba(0,0,0,0.4); padding:4px 12px; border-radius:12px; }
 @keyframes chkModalFadeIn { from { opacity:0; } to { opacity:1; } }
+/* Edit mode: image management per task row. */
+.chk-edit-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:7px; }
+.chk-edit-img-row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.chk-edit-img-thumb { position:relative; width:48px; height:48px; border-radius:4px; overflow:hidden; border:0.5px solid var(--border); flex-shrink:0; }
+.chk-edit-img-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.chk-edit-img-remove { position:absolute; top:1px; right:1px; width:18px; height:18px; border-radius:50%; border:none; background:rgba(0,0,0,0.65); color:#fff; font-size:13px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+.chk-edit-img-remove:hover { background:rgba(192,60,40,0.9); }
+.chk-edit-img-add { display:inline-flex; align-items:center; gap:4px; padding:7px 10px; border:0.5px dashed rgba(192,125,42,0.45); border-radius:4px; color:#c07d2a; font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.06em; cursor:pointer; transition:background .15s; height:48px; box-sizing:border-box; }
+.chk-edit-img-add:hover { background:rgba(192,125,42,0.08); }
 /* "Última vez: hace X días" sub-label under Transversal tasks. */
 .chk-task-history { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:#c07d2a; margin-top:3px; opacity:0.85; }
 .chk-task-history.chk-task-history-none { color:var(--text-tertiary); opacity:0.55; }
@@ -1088,7 +1109,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 /* Edit mode rows */
 .chk-edit-banner { background:rgba(192,125,42,0.08); border:0.5px solid rgba(192,125,42,0.4); border-radius:8px; padding:10px 14px; margin-bottom:1rem; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; color:#c07d2a; }
 .chk-edit-list { display:flex; flex-direction:column; gap:6px; margin-bottom:1rem; }
-.chk-edit-row { display:flex; gap:8px; align-items:center; padding:8px 10px; border:0.5px dashed rgba(192,125,42,0.3); border-radius:6px; background:rgba(192,125,42,0.03); }
+.chk-edit-row { display:flex; gap:8px; align-items:flex-start; padding:8px 10px; border:0.5px dashed rgba(192,125,42,0.3); border-radius:6px; background:rgba(192,125,42,0.03); }
 .chk-edit-row.inactive { opacity:0.5; }
 .chk-edit-order { display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
 .chk-edit-order button { background:none; border:0.5px solid var(--border); color:var(--text-tertiary); cursor:pointer; padding:1px 5px; font-size:10px; line-height:1; border-radius:3px; }
@@ -1624,7 +1645,22 @@ let CHK_LAST_INTERACTION    = 0;
 // SEED is restored separately by chkSeedIfMissing — independent of this flag,
 // so the UI stays usable even after repeated server-side failures.
 let CHK_SEED_PUT_TRIED      = {};       // { 'section/moment': bool }
-let CHK_IMAGE_MODAL_SRC     = null;     // image being viewed in fullscreen modal (null = closed)
+// Fullscreen image modal. A task can carry several reference images, so the
+// modal holds the whole list + the index currently shown; nav arrows step
+// through them. null list = closed.
+let CHK_IMAGE_MODAL_LIST    = null;     // array of image srcs (data URLs or paths), or null
+let CHK_IMAGE_MODAL_IDX     = 0;        // index into CHK_IMAGE_MODAL_LIST
+// Reference-image compression. Supervisor-uploaded photos are resized and
+// re-encoded client-side before they ever touch Firebase: a phone photo is
+// 2-4 MB, unusable inside a Realtime DB template. ~1000px long edge + JPEG
+// q0.65 lands each image around ~60 KB — sharp enough to read a table setup,
+// light enough to sync instantly over the lodge's 4G. (Decision 2026-06-07.)
+const CHK_IMG_MAX_EDGE      = 1000;     // px, longest side after resize
+const CHK_IMG_QUALITY       = 0.65;     // JPEG quality 0..1
+// Per-render map of task.id → image src list, so the gallery's onclick can
+// reference the list by task id instead of embedding (and duplicating) long
+// data URLs in HTML attributes. Repopulated on every chkRender.
+let CHK_IMG_LISTS           = {};
 // Last-marked history for Bar > Transversal. Tasks here have long cadences
 // (every 7 / 14 days), so the operator needs to see when each was last done.
 // Populated lazily when the user opens the Transversal sub-tab; updated
@@ -1743,7 +1779,7 @@ const UI = {
     chkPhaseDesayuno:'Post-Desayuno', chkPhaseAlmuerzo:'Post-Almuerzo', chkPhaseCena:'Post-Cena',
     chkMontajeDesayuno:'Desayuno', chkMontajeAlmuerzo:'Almuerzo', chkMontajeCena:'Cena',
     chkBarApertura:'Apertura', chkBarAm:'AM / Almuerzo', chkBarQuincho:'Quincho', chkBarCierre:'Cierre', chkBarTransversal:'Transversal',
-    chkLastDoneToday:'Última vez: hoy', chkLastDoneYesterday:'Última vez: ayer', chkLastDoneDaysAgo:'Última vez: hace {n} días', chkLastDoneNone:'Sin registro en los últimos 30 días', chkImageRefAlt:'Imagen de referencia', chkImageClose:'Cerrar',
+    chkLastDoneToday:'Última vez: hoy', chkLastDoneYesterday:'Última vez: ayer', chkLastDoneDaysAgo:'Última vez: hace {n} días', chkLastDoneNone:'Sin registro en los últimos 30 días', chkImageRefAlt:'Imagen de referencia', chkImageClose:'Cerrar', chkImageAdd:'Foto', chkImageRemove:'Quitar foto', chkImageError:'No se pudo procesar la imagen. Intenta con otra foto.',
     chkActiveTag:'en curso',
     chkProgress:'completadas',
     chkMetaPrefix:'Servicio',
@@ -1868,7 +1904,7 @@ const UI = {
     chkPhaseDesayuno:'After Breakfast', chkPhaseAlmuerzo:'After Lunch', chkPhaseCena:'After Dinner',
     chkMontajeDesayuno:'Breakfast', chkMontajeAlmuerzo:'Lunch', chkMontajeCena:'Dinner',
     chkBarApertura:'Open', chkBarAm:'AM / Lunch', chkBarQuincho:'Quincho', chkBarCierre:'Close', chkBarTransversal:'Recurring',
-    chkLastDoneToday:'Last done: today', chkLastDoneYesterday:'Last done: yesterday', chkLastDoneDaysAgo:'Last done: {n} days ago', chkLastDoneNone:'No record in the last 30 days', chkImageRefAlt:'Reference image', chkImageClose:'Close',
+    chkLastDoneToday:'Last done: today', chkLastDoneYesterday:'Last done: yesterday', chkLastDoneDaysAgo:'Last done: {n} days ago', chkLastDoneNone:'No record in the last 30 days', chkImageRefAlt:'Reference image', chkImageClose:'Close', chkImageAdd:'Photo', chkImageRemove:'Remove photo', chkImageError:'Could not process the image. Try another photo.',
     chkActiveTag:'active',
     chkProgress:'done',
     chkMetaPrefix:'Service',
@@ -1993,7 +2029,7 @@ const UI = {
     chkPhaseDesayuno:'Pós-Café', chkPhaseAlmuerzo:'Pós-Almoço', chkPhaseCena:'Pós-Jantar',
     chkMontajeDesayuno:'Café', chkMontajeAlmuerzo:'Almoço', chkMontajeCena:'Jantar',
     chkBarApertura:'Abertura', chkBarAm:'AM / Almoço', chkBarQuincho:'Churrasqueira', chkBarCierre:'Fechamento', chkBarTransversal:'Recorrente',
-    chkLastDoneToday:'Última: hoje', chkLastDoneYesterday:'Última: ontem', chkLastDoneDaysAgo:'Última: há {n} dias', chkLastDoneNone:'Sem registro nos últimos 30 dias', chkImageRefAlt:'Imagem de referência', chkImageClose:'Fechar',
+    chkLastDoneToday:'Última: hoje', chkLastDoneYesterday:'Última: ontem', chkLastDoneDaysAgo:'Última: há {n} dias', chkLastDoneNone:'Sem registro nos últimos 30 dias', chkImageRefAlt:'Imagem de referência', chkImageClose:'Fechar', chkImageAdd:'Foto', chkImageRemove:'Remover foto', chkImageError:'Não foi possível processar a imagem. Tente outra foto.',
     chkActiveTag:'em curso',
     chkProgress:'concluídas',
     chkMetaPrefix:'Serviço',
@@ -7743,6 +7779,44 @@ function chkEditAddTask(){
     if (inp) inp.focus();
   }, 30);
 }
+// Supervisor attaches a photo to a task: compress client-side, then push the
+// resulting data URL onto the draft task's images[]. Legacy task.image (a
+// SEED path) is migrated into images[] on first upload so both shapes don't
+// coexist on the same task. `inputEl` is the hidden <input type=file>.
+async function chkEditAddImage(taskId, inputEl){
+  if (!CHK_EDIT_DRAFT || !inputEl || !inputEl.files || !inputEl.files.length) return;
+  chkEditFlushInputs();
+  const task = CHK_EDIT_DRAFT.tasks.find(x => x.id === taskId);
+  if (!task){ inputEl.value = ''; return; }
+  if (!Array.isArray(task.images)){
+    task.images = task.image ? [task.image] : [];
+    delete task.image;
+  }
+  const files = Array.from(inputEl.files);
+  inputEl.value = ''; // reset so the same file can be re-picked later
+  for (const file of files){
+    try {
+      const dataUrl = await chkCompressImage(file);
+      task.images.push(dataUrl);
+    } catch (e){
+      console.warn('[chk] image compress failed', e);
+      alert(t('chkImageError'));
+    }
+  }
+  chkRender();
+}
+function chkEditRemoveImage(taskId, idx){
+  if (!CHK_EDIT_DRAFT) return;
+  chkEditFlushInputs();
+  const task = CHK_EDIT_DRAFT.tasks.find(x => x.id === taskId);
+  if (!task) return;
+  if (!Array.isArray(task.images)){
+    task.images = task.image ? [task.image] : [];
+    delete task.image;
+  }
+  task.images.splice(idx, 1);
+  chkRender();
+}
 async function chkEditSave(){
   if (!CHK_EDIT_DRAFT) return;
   chkEditFlushInputs();
@@ -7773,24 +7847,81 @@ function chkEditCancel(){ chkExitEditMode(); }
 // to spend a shallow listing + a few DELETEs to keep the bucket bounded.
 // Compaction-to-summary is left as a stub for now; the raw shape preserves
 // every field analytics will need later.
-// --- Image modal ---------------------------------------------------------
-// Reference images live in the SEED as `task.image` paths. The modal is a
-// single fullscreen overlay rendered on demand by chkRender when
-// CHK_IMAGE_MODAL_SRC is set. Click outside (or on the × button) closes.
-function chkOpenImageModal(src){
-  CHK_IMAGE_MODAL_SRC = src;
+// --- Reference images: model + compression -------------------------------
+// A task's images can come from two shapes, kept compatible:
+//   task.image  → single string (legacy: SEED paths like 'assets/…jpg')
+//   task.images → array of strings (data URLs uploaded by the supervisor)
+// chkTaskImages flattens both into one array so render/modal never branch.
+function chkTaskImages(task){
+  if (!task) return [];
+  const out = [];
+  if (Array.isArray(task.images)) task.images.forEach(s => { if (s) out.push(s); });
+  if (task.image) out.push(task.image);
+  return out;
+}
+// Resize + re-encode an uploaded File into a compact JPEG data URL via canvas.
+// No libraries. Returns a Promise<string>. Rejects if the file isn't a
+// readable image. EXIF orientation is left to the browser's native decoding
+// (modern mobile Safari/Chrome auto-orient drawImage from image-orientation).
+function chkCompressImage(file){
+  return new Promise((resolve, reject) => {
+    if (!file || !/^image\//.test(file.type)) { reject(new Error('not an image')); return; }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('read failed'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('decode failed'));
+      img.onload = () => {
+        let { width: w, height: h } = img;
+        const scale = Math.min(1, CHK_IMG_MAX_EDGE / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          resolve(canvas.toDataURL('image/jpeg', CHK_IMG_QUALITY));
+        } catch (e) { reject(e); }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// --- Image modal (multi-image) -------------------------------------------
+// Opens at a given index into a list; arrows step through when there's more
+// than one. Click outside or × closes. Rendered on demand by chkRender when
+// CHK_IMAGE_MODAL_LIST is set.
+function chkOpenImageModal(list, idx){
+  CHK_IMAGE_MODAL_LIST = Array.isArray(list) ? list : [list];
+  CHK_IMAGE_MODAL_IDX = idx || 0;
   chkRender();
 }
 function chkCloseImageModal(){
-  CHK_IMAGE_MODAL_SRC = null;
+  CHK_IMAGE_MODAL_LIST = null;
+  CHK_IMAGE_MODAL_IDX = 0;
+  chkRender();
+}
+function chkImageModalNav(dir){
+  if (!CHK_IMAGE_MODAL_LIST) return;
+  const n = CHK_IMAGE_MODAL_LIST.length;
+  CHK_IMAGE_MODAL_IDX = (CHK_IMAGE_MODAL_IDX + dir + n) % n;
   chkRender();
 }
 function chkRenderImageModal(){
-  if (!CHK_IMAGE_MODAL_SRC) return '';
-  const src = chkEscapeHtml(CHK_IMAGE_MODAL_SRC);
+  if (!CHK_IMAGE_MODAL_LIST || !CHK_IMAGE_MODAL_LIST.length) return '';
+  const n = CHK_IMAGE_MODAL_LIST.length;
+  const idx = Math.min(CHK_IMAGE_MODAL_IDX, n - 1);
+  const src = chkEscapeHtml(CHK_IMAGE_MODAL_LIST[idx]);
+  const nav = n > 1 ? `
+    <button class="chk-image-modal-nav prev" onclick="event.stopPropagation(); chkImageModalNav(-1)" aria-label="prev">‹</button>
+    <button class="chk-image-modal-nav next" onclick="event.stopPropagation(); chkImageModalNav(1)" aria-label="next">›</button>
+    <div class="chk-image-modal-count">${idx + 1} / ${n}</div>` : '';
   return `<div class="chk-image-modal" onclick="chkCloseImageModal()">
     <img class="chk-image-modal-img" src="${src}" alt="${chkEscapeHtml(t('chkImageRefAlt'))}" onclick="event.stopPropagation()">
     <button class="chk-image-modal-close" onclick="chkCloseImageModal()" aria-label="${chkEscapeHtml(t('chkImageClose'))}">×</button>
+    ${nav}
   </div>`;
 }
 
@@ -7863,6 +7994,7 @@ function chkRender(){
   if (!root) return;
   if (currentTab !== 'checklist') return;
 
+  CHK_IMG_LISTS = {}; // repopulated by chkRenderTaskRow for this render
   const section = CHK_SECTION;
   const sectionDef = chkSectionDef(section);
   let html = '';
@@ -8018,14 +8150,26 @@ function chkRenderTaskRow(task, taskRun, phase, opts){
   const commentIcon = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.25h11v6h-4.5L6 12.5v-2.25H2.5z"/></svg>`;
   const commentBtn = opts.carryover ? '' : `<button class="chk-comment-btn${hasComment ? ' has-comment' : ''}" onclick="chkOpenComment('${task.id}')" title="${chkEscapeHtml(t('chkCommentBtn'))}" aria-label="${chkEscapeHtml(t('chkCommentBtn'))}">${commentIcon}</button>`;
 
-  // Reference image thumbnail (only if the task has one). onerror hides the
-  // button silently when the asset isn't on disk yet — keeps the row clean
-  // until the operator drops the image into assets/. event.stopPropagation
-  // prevents the tap from bubbling up to the task body (which now also
-  // handles toggle — see <div class="chk-task-body"> below).
-  const imageThumb = task.image
-    ? `<button class="chk-task-image-btn" onclick="event.stopPropagation(); chkOpenImageModal('${chkEscapeHtml(task.image)}')" aria-label="${chkEscapeHtml(t('chkImageRefAlt'))}"><img src="${chkEscapeHtml(task.image)}" alt="${chkEscapeHtml(t('chkImageRefAlt'))}" onerror="this.parentElement.style.display='none'"></button>`
-    : '';
+  // Reference images. A task may carry one (legacy path) or several (uploaded
+  // by the supervisor). The first renders full-width as before; any extras
+  // show as a strip of smaller thumbs. All open the same modal at their index,
+  // so the operator can swipe through. event.stopPropagation keeps the tap
+  // from bubbling to the task body (which toggles done — see below). The list
+  // is JSON-embedded once on the wrapper to avoid repeating long data URLs.
+  const imgs = chkTaskImages(task);
+  let imageThumb = '';
+  if (imgs.length){
+    CHK_IMG_LISTS[task.id] = imgs; // referenced by onclick instead of embedding data URLs
+    const open = (idx) => `event.stopPropagation(); chkOpenImageModal(CHK_IMG_LISTS['${task.id}'], ${idx})`;
+    const lead = `<button class="chk-task-image-btn" onclick="${open(0)}" aria-label="${chkEscapeHtml(t('chkImageRefAlt'))}"><img src="${chkEscapeHtml(imgs[0])}" alt="${chkEscapeHtml(t('chkImageRefAlt'))}" onerror="this.parentElement.style.display='none'"></button>`;
+    let extras = '';
+    if (imgs.length > 1){
+      extras = `<div class="chk-task-image-strip">` + imgs.slice(1).map((src, i) =>
+        `<button class="chk-task-image-thumb" onclick="${open(i + 1)}" aria-label="${chkEscapeHtml(t('chkImageRefAlt'))}"><img src="${chkEscapeHtml(src)}" alt="" onerror="this.parentElement.style.display='none'"></button>`
+      ).join('') + `</div>`;
+    }
+    imageThumb = lead + extras;
+  }
 
   // "Last done" sub-label for Bar > Transversal (long-cadence tasks).
   let historyLine = '';
@@ -8093,12 +8237,29 @@ function chkRenderEditMode(){
   tasks.forEach((task, i) => {
     const inactiveCls = task.active === false ? ' inactive' : '';
     const total = tasks.length;
+    // Image management strip: a "+ foto" button (opens camera/gallery) plus a
+    // thumbnail per attached image, each with a remove (×) overlay.
+    const imgs = chkTaskImages(task);
+    const thumbs = imgs.map((src, idx) =>
+      `<div class="chk-edit-img-thumb">
+        <img src="${chkEscapeHtml(src)}" alt="" onerror="this.parentElement.style.display='none'">
+        <button class="chk-edit-img-remove" onclick="chkEditRemoveImage('${task.id}', ${idx})" aria-label="${chkEscapeHtml(t('chkImageRemove'))}">×</button>
+      </div>`).join('');
     html += `<div class="chk-edit-row${inactiveCls}">
       <div class="chk-edit-order">
         <button onclick="chkEditMove('${task.id}', -1)" ${i===0 ? 'disabled' : ''}>▲</button>
         <button onclick="chkEditMove('${task.id}', 1)" ${i===total-1 ? 'disabled' : ''}>▼</button>
       </div>
-      <input id="chk-edit-input-${task.id}" class="chk-edit-input" type="text" value="${chkEscapeHtml(task.label || '')}" placeholder="${chkEscapeHtml(t('chkEditTaskPlaceholder'))}" oninput="chkEditUpdateLabel('${task.id}', this.value)" />
+      <div class="chk-edit-main">
+        <input id="chk-edit-input-${task.id}" class="chk-edit-input" type="text" value="${chkEscapeHtml(task.label || '')}" placeholder="${chkEscapeHtml(t('chkEditTaskPlaceholder'))}" oninput="chkEditUpdateLabel('${task.id}', this.value)" />
+        <div class="chk-edit-img-row">
+          ${thumbs}
+          <label class="chk-edit-img-add" title="${chkEscapeHtml(t('chkImageAdd'))}">
+            <span>＋ ${chkEscapeHtml(t('chkImageAdd'))}</span>
+            <input type="file" accept="image/*" multiple onchange="chkEditAddImage('${task.id}', this)" hidden>
+          </label>
+        </div>
+      </div>
       <button class="chk-edit-toggle ${task.active === false ? '' : 'on'}" onclick="chkEditToggleActive('${task.id}')">${task.active === false ? chkEscapeHtml(t('chkEditToggleInactive')) : chkEscapeHtml(t('chkEditToggleActive'))}</button>
       <button class="chk-edit-delete" onclick="chkEditDeleteTask('${task.id}')" title="delete">✕</button>
     </div>`;
