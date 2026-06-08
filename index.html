@@ -1147,9 +1147,16 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .chk-struct-add-mom { align-self:flex-start; margin-top:2px; padding:5px 10px; background:none; border:0.5px dashed rgba(192,125,42,0.35); border-radius:5px; color:#c07d2a; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.06em; }
 .chk-struct-add-mom:hover { background:rgba(192,125,42,0.06); }
 
-/* PIN gate */
-.chk-pin-overlay { position:fixed; inset:0; background:rgba(15,15,16,0.85); backdrop-filter:blur(4px); z-index:200; display:flex; align-items:center; justify-content:center; padding:1rem; }
-.chk-pin-modal { background:var(--bg); border:0.5px solid var(--border); border-radius:14px; padding:1.5rem 1.25rem; max-width:300px; width:100%; }
+/* PIN gate — overlay is appended to <body> at runtime so position:fixed is
+   always viewport-relative (bypasses will-change:transform on .app). */
+@keyframes chkPinPop {
+  0%   { transform:scale(0.72) translateY(28px); opacity:0; }
+  62%  { transform:scale(1.06) translateY(-7px);  opacity:1; }
+  82%  { transform:scale(0.97) translateY(3px); }
+  100% { transform:scale(1)    translateY(0);   opacity:1; }
+}
+.chk-pin-overlay { position:fixed; inset:0; background:rgba(15,15,16,0.85); backdrop-filter:blur(4px); z-index:9000; display:flex; align-items:center; justify-content:center; padding:1rem; }
+.chk-pin-modal { background:var(--bg); border:0.5px solid var(--border); border-radius:14px; padding:1.5rem 1.25rem; max-width:300px; width:100%; animation:chkPinPop 0.42s cubic-bezier(0.34,1.56,0.64,1) both; }
 .chk-pin-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:24px; color:#c07d2a; margin-bottom:6px; text-align:center; }
 .chk-pin-sub { font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-tertiary); letter-spacing:0.06em; margin-bottom:1rem; text-align:center; }
 .chk-pin-display { display:flex; justify-content:center; gap:10px; margin-bottom:1rem; }
@@ -8330,10 +8337,36 @@ function chkRender(){
     <button class="chk-edit-btn" onclick="chkOpenEditGate()">${chkEscapeHtml(t('chkEditBtn'))}</button>
   </div>`;
 
-  if (CHK_EDIT_GATE_OPEN) html += chkRenderPinGate();
-  html += chkRenderImageModal();
+  // Both overlays use position:fixed. On iOS Safari, will-change:transform on
+  // .app makes it the containing block for every fixed descendant — they anchor
+  // to .app, not the viewport, so scrolled pages push them off-screen. Moving
+  // them to direct <body> children bypasses this entirely: body never has
+  // will-change set, so position:fixed is always viewport-relative.
+  const _hadPinOverlay = !!document.getElementById('chk-pin-body-overlay');
+  ['chk-pin-body-overlay','chk-img-body-overlay'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.remove();
+  });
 
   root.innerHTML = html;
+
+  if (CHK_EDIT_GATE_OPEN) {
+    const _pw = document.createElement('div');
+    _pw.id = 'chk-pin-body-overlay';
+    _pw.innerHTML = chkRenderPinGate();
+    // Don't re-run the bounce on every PIN keypress re-render — only on first open.
+    if (_hadPinOverlay) {
+      const _pm = _pw.querySelector('.chk-pin-modal');
+      if (_pm) _pm.style.animation = 'none';
+    }
+    document.body.appendChild(_pw);
+  }
+  const _imgHtml = chkRenderImageModal();
+  if (_imgHtml) {
+    const _iw = document.createElement('div');
+    _iw.id = 'chk-img-body-overlay';
+    _iw.innerHTML = _imgHtml;
+    document.body.appendChild(_iw);
+  }
 
   // Lazy-load Transversal history the first time the user enters that sub-tab.
   // The chkRender re-runs on completion, so the empty rows pick up "last done"
