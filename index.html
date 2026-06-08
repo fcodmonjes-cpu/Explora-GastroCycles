@@ -7786,16 +7786,17 @@ function chkSelectSection(section){
 
 // --- Edit mode (supervisor) ----------------------------------------------
 function chkOpenEditGate(){
+  // Scroll BEFORE render, not after. .app has will-change:transform which
+  // makes it the containing block for position:fixed children — so the pin
+  // overlay anchors to .app, not the viewport. Scrolling after painting
+  // means the page is still scrolled when the browser positions the overlay,
+  // pushing the numpad off-screen. Resetting first guarantees .app top ===
+  // viewport top at paint time, so inset:0 covers exactly what you see.
+  window.scrollTo(0, 0);
   CHK_EDIT_PIN_BUFFER = '';
   CHK_EDIT_PIN_ERROR = false;
   CHK_EDIT_GATE_OPEN = true;
   chkRender();
-  // Some mobile browsers (notably iOS Safari with the URL bar scrolled away)
-  // don't honor position:fixed against the visual viewport, so the overlay
-  // can end up out of frame when the page was scrolled deep into the task
-  // list. Reset scroll to top so the PIN pad is centered and immediately
-  // visible without manual swiping.
-  window.scrollTo(0, 0);
 }
 function chkCloseEditGate(){
   CHK_EDIT_GATE_OPEN = false;
