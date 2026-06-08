@@ -1163,7 +1163,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .chk-pin-dot { width:12px; height:12px; border-radius:50%; border:1px solid rgba(192,125,42,0.6); }
 .chk-pin-dot.filled { background:#c07d2a; border-color:#c07d2a; }
 .chk-pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.chk-pin-key { padding:14px; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:8px; font-family:'Courier Prime','Courier New',monospace; font-size:16px; color:var(--text-primary); cursor:pointer; transition:all .15s; }
+.chk-pin-key { padding:14px; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:8px; font-family:'Courier Prime','Courier New',monospace; font-size:16px; color:var(--text-primary); cursor:pointer; transition:all .15s; touch-action:manipulation; -webkit-user-select:none; user-select:none; }
 .chk-pin-key:hover { background:rgba(192,125,42,0.1); border-color:rgba(192,125,42,0.4); }
 .chk-pin-key.action { color:var(--text-tertiary); font-size:12px; }
 .chk-pin-error { font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:#d9534f; margin-top:0.75rem; min-height:14px; text-align:center; letter-spacing:0.05em; }
@@ -2397,6 +2397,15 @@ function setTab(tab, el) {
   if (tab === 'comandera') comandaEnter();
   if (tab === 'rol') rolEnter();
   if (tab === 'checklist') chkEnter();
+  else {
+    // The checklist PIN/image overlays live on <body> (not inside chk-root),
+    // so hiding the tab won't hide them — remove explicitly when leaving, and
+    // drop the gate flag so a stale numpad can't block another tab.
+    if (typeof CHK_EDIT_GATE_OPEN !== 'undefined') CHK_EDIT_GATE_OPEN = false;
+    ['chk-pin-body-overlay','chk-img-body-overlay'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.remove();
+    });
+  }
 }
 
 function setDay(day, el) {
@@ -7793,13 +7802,9 @@ function chkSelectSection(section){
 
 // --- Edit mode (supervisor) ----------------------------------------------
 function chkOpenEditGate(){
-  // Scroll BEFORE render, not after. .app has will-change:transform which
-  // makes it the containing block for position:fixed children — so the pin
-  // overlay anchors to .app, not the viewport. Scrolling after painting
-  // means the page is still scrolled when the browser positions the overlay,
-  // pushing the numpad off-screen. Resetting first guarantees .app top ===
-  // viewport top at paint time, so inset:0 covers exactly what you see.
-  window.scrollTo(0, 0);
+  // The PIN overlay is appended to <body> (see chkRender), so position:fixed is
+  // viewport-relative regardless of scroll — no scrollTo hack needed, and the
+  // page no longer jumps to the top when the gate opens.
   CHK_EDIT_PIN_BUFFER = '';
   CHK_EDIT_PIN_ERROR = false;
   CHK_EDIT_GATE_OPEN = true;
@@ -7811,6 +7816,17 @@ function chkCloseEditGate(){
   CHK_EDIT_PIN_ERROR = false;
   chkRender();
 }
+// Update only the dots + error text of the live PIN overlay, leaving the
+// button nodes untouched (see the overlay note in chkRender for why this
+// matters on iOS). Safe to call when the overlay isn't mounted — it no-ops.
+function chkUpdatePinDisplay(){
+  const wrap = document.getElementById('chk-pin-body-overlay');
+  if (!wrap) return;
+  const dots = wrap.querySelectorAll('.chk-pin-dot');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < CHK_EDIT_PIN_BUFFER.length));
+  const err = wrap.querySelector('.chk-pin-error');
+  if (err) err.textContent = CHK_EDIT_PIN_ERROR ? t('chkPinError') : '';
+}
 function chkPinPress(key){
   if (key === 'clear'){ CHK_EDIT_PIN_BUFFER = ''; CHK_EDIT_PIN_ERROR = false; }
   else if (key === 'back'){ CHK_EDIT_PIN_BUFFER = CHK_EDIT_PIN_BUFFER.slice(0, -1); CHK_EDIT_PIN_ERROR = false; }
@@ -7819,10 +7835,12 @@ function chkPinPress(key){
     if (CHK_EDIT_PIN_BUFFER.length === CHK_SUPERVISOR_PIN.length){
       if (CHK_EDIT_PIN_BUFFER === CHK_SUPERVISOR_PIN){ chkEnterEditMode(); return; }
       CHK_EDIT_PIN_ERROR = true;
-      setTimeout(() => { CHK_EDIT_PIN_BUFFER = ''; CHK_EDIT_PIN_ERROR = false; chkRender(); }, 800);
+      chkUpdatePinDisplay();
+      setTimeout(() => { CHK_EDIT_PIN_BUFFER = ''; CHK_EDIT_PIN_ERROR = false; chkUpdatePinDisplay(); }, 800);
+      return;
     }
   }
-  chkRender();
+  chkUpdatePinDisplay();
 }
 function chkEnterEditMode(){
   const phase = chkVisiblePhase();
@@ -8245,6 +8263,46 @@ async function chkPurgeOld(){
 }
 
 // --- Render --------------------------------------------------------------
+// Keep the two <body>-level overlays (PIN gate + image modal) in sync with
+// state. Lives on <body>, not inside chk-root, because .app has
+// will-change:transform which on iOS Safari makes it the containing block for
+// position:fixed descendants — anchoring them to .app instead of the viewport
+// and pushing them off-screen on scroll. body never has will-change, so fixed
+// is viewport-relative there.
+//
+// The PIN overlay is created ONCE when the gate opens, then updated in place
+// (only dots/error mutate). Tearing it down and recreating the buttons on every
+// keypress replaced the tapped node mid-gesture, and iOS Safari then cancels
+// the synthesized click for the *next* tap — the numpad froze after a couple of
+// digits. Stable button nodes fix it. Called at EVERY chkRender exit (including
+// the early returns for coming-soon / edit mode) so a closed gate never leaves
+// a stale overlay floating over the UI.
+function chkSyncBodyOverlays(){
+  const pinEl = document.getElementById('chk-pin-body-overlay');
+  if (CHK_EDIT_GATE_OPEN){
+    if (!pinEl){
+      const pw = document.createElement('div');
+      pw.id = 'chk-pin-body-overlay';
+      pw.innerHTML = chkRenderPinGate();
+      document.body.appendChild(pw); // bounce plays once, on creation
+    } else {
+      chkUpdatePinDisplay();
+    }
+  } else if (pinEl){
+    pinEl.remove();
+  }
+  // Image modal has no text input and its nav taps are slow/spaced, so a plain
+  // rebuild-per-render is fine here.
+  const imgEl = document.getElementById('chk-img-body-overlay');
+  if (imgEl) imgEl.remove();
+  const imgHtml = chkRenderImageModal();
+  if (imgHtml){
+    const iw = document.createElement('div');
+    iw.id = 'chk-img-body-overlay';
+    iw.innerHTML = imgHtml;
+    document.body.appendChild(iw);
+  }
+}
 function chkRender(){
   const root = document.getElementById('chk-root');
   if (!root) return;
@@ -8275,12 +8333,14 @@ function chkRender(){
       <div class="chk-coming-soon-body">${chkEscapeHtml(t('chkComingSoonBody'))}</div>
     </div>`;
     root.innerHTML = html;
+    chkSyncBodyOverlays();
     return;
   }
 
   if (CHK_EDIT_MODE){
     html += (CHK_STRUCT_EDIT ? chkStructRender() : chkRenderEditMode());
     root.innerHTML = html;
+    chkSyncBodyOverlays();
     return;
   }
 
@@ -8337,36 +8397,8 @@ function chkRender(){
     <button class="chk-edit-btn" onclick="chkOpenEditGate()">${chkEscapeHtml(t('chkEditBtn'))}</button>
   </div>`;
 
-  // Both overlays use position:fixed. On iOS Safari, will-change:transform on
-  // .app makes it the containing block for every fixed descendant — they anchor
-  // to .app, not the viewport, so scrolled pages push them off-screen. Moving
-  // them to direct <body> children bypasses this entirely: body never has
-  // will-change set, so position:fixed is always viewport-relative.
-  const _hadPinOverlay = !!document.getElementById('chk-pin-body-overlay');
-  ['chk-pin-body-overlay','chk-img-body-overlay'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.remove();
-  });
-
   root.innerHTML = html;
-
-  if (CHK_EDIT_GATE_OPEN) {
-    const _pw = document.createElement('div');
-    _pw.id = 'chk-pin-body-overlay';
-    _pw.innerHTML = chkRenderPinGate();
-    // Don't re-run the bounce on every PIN keypress re-render — only on first open.
-    if (_hadPinOverlay) {
-      const _pm = _pw.querySelector('.chk-pin-modal');
-      if (_pm) _pm.style.animation = 'none';
-    }
-    document.body.appendChild(_pw);
-  }
-  const _imgHtml = chkRenderImageModal();
-  if (_imgHtml) {
-    const _iw = document.createElement('div');
-    _iw.id = 'chk-img-body-overlay';
-    _iw.innerHTML = _imgHtml;
-    document.body.appendChild(_iw);
-  }
+  chkSyncBodyOverlays();
 
   // Lazy-load Transversal history the first time the user enters that sub-tab.
   // The chkRender re-runs on completion, so the empty rows pick up "last done"
@@ -8655,6 +8687,7 @@ async function chkEnter(){
   CHK_POLL_INTERVAL = setInterval(async () => {
     if (currentTab !== 'checklist') return;
     if (CHK_EDIT_MODE) return;
+    if (CHK_EDIT_GATE_OPEN) return; // don't churn the DOM mid PIN entry
     if (CHK_COMMENT_OPEN_ID) return;
     if (Date.now() - CHK_LAST_INTERACTION < 2500) return;
     const dateKey = chkDateKey(new Date());
