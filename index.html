@@ -517,15 +517,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .main-tabs .tab { flex: 0 0 auto; background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 11px 13px 9px; font-family: 'Courier Prime','Courier New',monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-secondary); white-space: nowrap; }
 .main-tabs .tab:hover { background: none; color: #c07d2a; }
 .main-tabs .tab.active { background: none; border-color: transparent; border-bottom-color: #c07d2a; color: #c07d2a; font-weight: 400; box-shadow: none; }
-/* Wine sub-tab that opens a different VIEW (general pairings), not a wine
-   filter. A subtle gold halo signals "this isn't a category — it's another
-   kind of content". Visible at all times so the distinction is obvious. */
-.tab.tab-pairings { border-color: rgba(202,138,4,0.42); color: var(--gold); box-shadow: 0 0 8px rgba(202,138,4,0.18); }
-.tab.tab-pairings:hover { background: rgba(202,138,4,0.08); }
-.tab.tab-pairings.active { background: var(--wine-red); border-color: var(--wine-red); color: #fff; box-shadow: 0 0 10px rgba(202,138,4,0.32); }
-.tab.tab-premium { border-color: rgba(212,175,55,0.5); color: #fcd34d; box-shadow: 0 0 8px rgba(212,175,55,0.2); }
-.tab.tab-premium:hover { background: rgba(212,175,55,0.1); }
-.tab.tab-premium.active { background: rgba(212,175,55,0.18); border-color: rgba(212,175,55,0.8); color: #fcd34d; box-shadow: 0 0 12px rgba(212,175,55,0.35); }
+/* (2026-06-09) Las clases .tab-pairings / .tab-premium quedaron sin uso al
+   reemplazar la fila de filtros de Vinos por .wine-nav-btn (ver más abajo).
+   Se removieron — usaban --wine-red (violeta), fuera de la paleta gold. */
 
 .search-bar { position: relative; margin-bottom: 1.25rem; }
 /* Font-size must be ≥ 16px to prevent iOS Safari from auto-zooming when the
@@ -631,20 +625,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .close-btn:hover { color: var(--text); }
 
 /* Wine tab */
-.wine-filter-tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.wine-filter-tabs { display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+/* Sub-nav de Vinos: pills consistentes con los day-filters / phase-chips
+   (gold pill = activo). Reemplaza la fila de filtros por tipo. */
+.wine-nav-btn { font-family:'Courier Prime','Courier New',monospace; font-size: 11px; letter-spacing: 0.08em; padding: 8px 16px; border-radius: 999px; border: 0.5px solid var(--border-md); background: rgba(255,255,255,0.02); color: var(--text-secondary); cursor: pointer; transition: all .15s; }
+.wine-nav-btn:hover { border-color: rgba(192,125,42,0.4); color: #c07d2a; }
+.wine-nav-btn.active { background: rgba(192,125,42,0.12); border-color: rgba(192,125,42,0.6); color: #c07d2a; }
+/* Premium con más jerarquía: borde dorado permanente + marca ✦ — no se esconde. */
+.wine-nav-premium { border-color: rgba(192,125,42,0.5); color: #c07d2a; }
+.wine-nav-premium.active { background: rgba(192,125,42,0.18); border-color: var(--gold); color: #f3b572; }
+.wine-nav-star { opacity: 0.85; }
 .wine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .wine-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; cursor: pointer; transition: border-color 0.15s; }
 .wine-card:hover { border-color: var(--border-md); }
 .wine-card.selected { border-color: var(--wine-red); border-width: 1.5px; grid-column: 1 / -1; }
 .wine-card.selected .wine-aroma { -webkit-line-clamp: unset; overflow: visible; }
 .wine-expanded { margin-top: 14px; padding-top: 14px; border-top: 0.5px solid var(--border); animation: panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
-.wine-type-badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; display: inline-block; margin-bottom: 6px; }
-.badge-espumante { background: rgba(14,165,233,0.18); color: #7dd3fc; }
-.badge-blanco { background: rgba(34,197,94,0.15); color: #86efac; }
-.badge-rosado { background: var(--coral-light); color: #f87171; }
-.badge-tinto { background: rgba(139,92,246,0.2); color: #c4b5fd; }
-.badge-dulce { background: rgba(251,146,60,0.2); color: #fdba74; }
-.badge-premium { background: rgba(212,175,55,0.22); color: #fcd34d; border: 0.5px solid rgba(212,175,55,0.4); }
+/* Badge de tipo unificado (2026-06-09): un solo tratamiento monospace apagado
+   en vez del arcoíris neón (teal/verde/rojo/violeta/naranjo) que rompía la
+   paleta. El tipo sigue legible como texto. Premium conserva un acento dorado
+   sutil — es el único tipo con jerarquía. */
+.wine-type-badge { font-family:'Courier Prime','Courier New',monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 7px; background: rgba(255,255,255,0.04); color: var(--text-tertiary); border: 0.5px solid var(--border); }
+.wine-type-badge.badge-premium { color: var(--gold); border-color: rgba(192,125,42,0.4); background: rgba(192,125,42,0.08); }
 .wine-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
 .wine-valley { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
 .wine-aroma { font-size: 12px; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -1266,15 +1268,12 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
       <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
       <input type="text" placeholder="Buscar vino o cepa..." id="wine-search" oninput="renderWines()">
     </div>
+    <!-- Filtros por tipo eliminados (2026-06-09): con pocos vinos filtrar por
+         categoría era ruido — el tipo ya se lee en el badge de cada ficha.
+         Quedan las dos puertas que importan: Premium (elevada) y Maridajes. -->
     <div class="wine-filter-tabs">
-      <button class="tab active" onclick="setWineFilter('todos',this)">Todos</button>
-      <button class="tab" onclick="setWineFilter('espumante',this)">Espumante</button>
-      <button class="tab" onclick="setWineFilter('blanco',this)">Blancos</button>
-      <button class="tab" onclick="setWineFilter('rosado',this)">Rosado</button>
-      <button class="tab" onclick="setWineFilter('tinto',this)">Tintos</button>
-      <button class="tab" onclick="setWineFilter('dulce',this)">Dulce</button>
-      <button class="tab tab-premium" onclick="setWineFilter('premium',this)">Vinos Premium</button>
-      <button class="tab tab-pairings" onclick="setWineFilter('maridajes',this)">Maridajes generales</button>
+      <button class="wine-nav-btn wine-nav-premium" onclick="setWineFilter('premium',this)"><span class="wine-nav-star">✦</span> <span data-wine-nav="premium">Vinos Premium</span></button>
+      <button class="wine-nav-btn" onclick="setWineFilter('maridajes',this)"><span data-wine-nav="pairings">Maridajes generales</span></button>
     </div>
     <div class="wine-grid" id="wine-grid"></div>
     <div id="guiones-content" style="display:none"></div>
@@ -2337,9 +2336,10 @@ function setLang(lang, el) {
   const dayBtns = document.querySelectorAll('.day-btn');
   if (dayBtns[0]) dayBtns[0].textContent = t('allDays');
   for (let i=1;i<dayBtns.length;i++) dayBtns[i].textContent = 'D'+i;
-  const wfTabs = document.querySelectorAll('.wine-filter-tabs .tab');
-  const wfKeys = ['all','sparkling','whites','rose','reds','sweet','wineFilterPremium','wineFilterPairings'];
-  wfTabs.forEach((b,i) => { if(wfKeys[i]) b.textContent = t(wfKeys[i]); });
+  const wnPrem = document.querySelector('[data-wine-nav="premium"]');
+  if (wnPrem) wnPrem.textContent = t('wineFilterPremium');
+  const wnPair = document.querySelector('[data-wine-nav="pairings"]');
+  if (wnPair) wnPair.textContent = t('wineFilterPairings');
   // re-render content — preserve open panels across language switches
   const prevDish = selectedDish;
   const prevWine = selectedWine;
@@ -2419,17 +2419,18 @@ function setDay(day, el) {
 }
 
 function setWineFilter(f, el) {
-  wineFilter = f;
-  document.querySelectorAll('.wine-filter-tabs .tab').forEach(t => t.classList.remove('active'));
-  if (el) el.classList.add('active');
+  // Toggle: re-tapear el filtro activo vuelve a la lista completa ('todos').
+  // Ya no hay botón "Todos" — el default de la sección es la lista completa.
+  wineFilter = (wineFilter === f) ? 'todos' : f;
+  document.querySelectorAll('.wine-filter-tabs .wine-nav-btn').forEach(b => b.classList.remove('active'));
+  if (el && wineFilter !== 'todos') el.classList.add('active');
   selectedWine = null;
   const grid    = document.getElementById('wine-grid');
   const search  = document.getElementById('wine-search-bar');
   const guiones = document.getElementById('guiones-content');
-  if (f === 'maridajes'){
-    // Switch to the "general pairings" view inside the Wines tab — wine
-    // filter row stays visible, but the search and grid are replaced by
-    // the pairing scripts. Search isn't useful for narrative content.
+  if (wineFilter === 'maridajes'){
+    // Vista de "Maridajes generales": reemplaza grilla + búsqueda por los
+    // guiones de venta. La búsqueda no aplica a contenido narrativo.
     if (grid)    grid.style.display = 'none';
     if (search)  search.style.display = 'none';
     if (guiones){ guiones.style.display = ''; renderGuiones(); }
@@ -2626,8 +2627,8 @@ function openWineFromGuion(wid) {
   ['menus','vinos','cocktails','cafe','comandera','rol'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t!=='vinos'));
   currentTab = 'vinos';
   wineFilter = 'todos';
-  const filterTabs = document.querySelectorAll('.wine-filter-tabs .tab');
-  filterTabs.forEach((tb,i) => tb.classList.toggle('active', i === 0));
+  // Vuelve a la lista completa: ningún sub-nav activo.
+  document.querySelectorAll('.wine-filter-tabs .wine-nav-btn').forEach(b => b.classList.remove('active'));
   const grid    = document.getElementById('wine-grid');
   const search  = document.getElementById('wine-search-bar');
   const guiones = document.getElementById('guiones-content');
@@ -7761,6 +7762,38 @@ function chkToggle(taskId){
   chkQueueTaskWrite(section, phase, taskId, patch);
   chkRender();
 }
+// Escritura puntual a una fecha explícita (no usa la cola coalescente, que
+// asume el día de hoy / CHK_DATE_KEY). La usa el marcado de carry-over cuando
+// el origen es el día anterior (Post-Cena de ayer → Post-Desayuno de hoy).
+function chkQueueTaskWriteDated(dateKey, section, phase, taskId, patch){
+  const url = chkUrl(CHK_RUNS_PATH + '/' + dateKey + '/' + section + '/' + phase + '/tasks/' + taskId);
+  fetch(url, { method:'PATCH', body: JSON.stringify(patch) }).catch(e => console.warn('[chk] carryover write', e));
+}
+// Marca/desmarca una tarea directamente desde el panel "Pendiente del servicio
+// anterior", escribiendo en el run de ORIGEN (el momento/día de donde viene),
+// para que desaparezca del carry-over sin tener que volver al momento anterior.
+function chkToggleCarryover(taskId, phase){
+  const section = CHK_SECTION;
+  const src = chkCarryoverFor(section, phase);
+  if (!src) return;
+  const prev = CHK_RUNS_PREV[phase];
+  if (!prev || !prev.tasks) return;
+  const cur = prev.tasks[taskId] || { done:false, done_at:null, comment:'' };
+  const newDone = !cur.done;
+  const patch = { done: newDone, done_at: newDone ? Date.now() : null };
+  prev.tasks[taskId] = Object.assign({}, cur, patch);
+  if (src.daysBack === 0){
+    // Origen es un momento de HOY: sincronizá también su run de hoy y usá la
+    // cola coalescente normal.
+    if (CHK_RUNS[src.moment] && CHK_RUNS[src.moment].tasks){
+      CHK_RUNS[src.moment].tasks[taskId] = Object.assign({}, CHK_RUNS[src.moment].tasks[taskId] || {}, patch);
+    }
+    chkQueueTaskWrite(section, src.moment, taskId, patch);
+  } else {
+    chkQueueTaskWriteDated(chkPrevDate(src.daysBack), section, src.moment, taskId, patch);
+  }
+  chkRender();
+}
 function chkOpenComment(taskId){
   const phase = chkVisiblePhase();
   const cur = (CHK_RUNS[phase] && CHK_RUNS[phase].tasks && CHK_RUNS[phase].tasks[taskId]) || {};
@@ -7806,9 +7839,25 @@ function chkSelectPhase(phase){
 function chkSelectSection(section){
   const def = chkSectionDef(section);
   if (!def) return;
+  // Si estamos editando tareas (no la estructura) y la sección destino es
+  // activa, NOS QUEDAMOS en modo edición: solo cambia el set de tareas a
+  // editar, igual que cambiar de fase. Menos fricción para el supervisor.
+  // Los cambios sin guardar se descartan al cambiar (mismo criterio que el
+  // switch de fase, que también recarga el draft).
+  if (CHK_EDIT_MODE && !CHK_STRUCT_EDIT && def.active){
+    CHK_SECTION = section;
+    CHK_PHASE_VIEW = null;
+    CHK_COMMENT_OPEN_ID = null;
+    chkLoadAll().then(() => {
+      chkLoadEditDraft(chkVisiblePhase());
+      chkRender();
+    });
+    return;
+  }
   CHK_SECTION = section;
   CHK_PHASE_VIEW = null;
   CHK_EDIT_MODE = false;
+  CHK_STRUCT_EDIT = false;
   CHK_COMMENT_OPEN_ID = null;
   if (def.active){
     chkLoadAll().then(chkRender);
@@ -8450,7 +8499,7 @@ function chkRenderCarryover(phase){
     <ul class="chk-task-list">`;
   carry.forEach(task => {
     const taskRun = prev.tasks && prev.tasks[task.id];
-    html += chkRenderTaskRow(task, taskRun, src.moment, { carryover:true, sourcePhaseLabel: chkMomentLabel(srcDef) });
+    html += chkRenderTaskRow(task, taskRun, src.moment, { carryover:true, carryoverPhase: phase, sourcePhaseLabel: chkMomentLabel(srcDef) });
   });
   html += `</ul></div>`;
   return html;
@@ -8468,7 +8517,9 @@ function chkRenderTaskRow(task, taskRun, phase, opts){
     + (isDone ? ' done' : '')
     + (opts.carryover ? ' carryover' : '')
     + (pendingProminent ? ' pending-prominent' : '');
-  const checkboxClick = opts.carryover ? '' : `onclick="chkToggle('${task.id}')"`;
+  const checkboxClick = opts.carryover
+    ? `onclick="chkToggleCarryover('${task.id}','${opts.carryoverPhase}')"`
+    : `onclick="chkToggle('${task.id}')"`;
   const metaParts = [];
   if (isDone && run.done_at) metaParts.push(`${chkEscapeHtml(t('chkMarkedAt'))} ${chkTimeStr(run.done_at)}`);
   if (opts.carryover && opts.sourcePhaseLabel){
@@ -8525,8 +8576,10 @@ function chkRenderTaskRow(task, taskRun, phase, opts){
   // image thumbnail stop propagation explicitly so they don't accidentally
   // mark the task when the operator taps to edit a comment or zoom the
   // reference image.
-  const bodyClick = opts.carryover ? '' : `onclick="chkToggle('${task.id}')"`;
-  const bodyClass = 'chk-task-body' + (opts.carryover ? '' : ' tappable');
+  const bodyClick = opts.carryover
+    ? `onclick="chkToggleCarryover('${task.id}','${opts.carryoverPhase}')"`
+    : `onclick="chkToggle('${task.id}')"`;
+  const bodyClass = 'chk-task-body tappable';
 
   return `<li class="${cls}">
     <button class="chk-checkbox" ${checkboxClick} aria-label="toggle">${isDone ? '✓' : ''}</button>
