@@ -1164,6 +1164,26 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
   82%  { transform:scale(0.97) translateY(3px); }
   100% { transform:scale(1)    translateY(0);   opacity:1; }
 }
+/* ── Intro curtain (telón editorial) ──────────────────────────────────────
+   Cubre el layout-shift del primer ~segundo (los botones pintan al toque, el
+   feed de Firebase llega después) y evita taps accidentales. Se levanta
+   deslizándose hacia arriba (.intro-lift) cuando los datos del header ya
+   llegaron — coordinado en el boot, con mínimo elegante y tope de seguridad. */
+#intro-curtain { position:fixed; inset:0; z-index:9990; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:13px; padding:1rem; transform:translateY(0); transition:transform 1s cubic-bezier(0.7,0,0.2,1); will-change:transform; }
+#intro-curtain.intro-lift { transform:translateY(-100%); }
+.intro-mark { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:31px; color:var(--text); letter-spacing:0.005em; opacity:0; transform:translateY(10px); animation:introRise 0.55s cubic-bezier(0.2,0.7,0.2,1) 0.08s forwards; }
+.intro-mark .ata { color:#c75c2a; font-weight:700; letter-spacing:0.04em; }
+.intro-rule { width:0; height:0.5px; background:rgba(192,125,42,0.6); animation:introRule 0.5s cubic-bezier(0.6,0,0.2,1) 0.34s forwards; }
+.intro-tagline { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-tertiary); opacity:0; animation:introFade 0.45s ease 0.46s forwards; }
+@keyframes introRise { to { opacity:1; transform:translateY(0); } }
+@keyframes introRule { to { width:96px; } }
+@keyframes introFade { to { opacity:1; } }
+@media (prefers-reduced-motion: reduce) {
+  .intro-mark, .intro-tagline { animation:none; opacity:1; transform:none; }
+  .intro-rule { animation:none; width:96px; }
+  #intro-curtain { transition:opacity .45s ease; }
+  #intro-curtain.intro-lift { transform:translateY(0); opacity:0; }
+}
 .chk-pin-overlay { position:fixed; inset:0; background:rgba(15,15,16,0.85); backdrop-filter:blur(4px); z-index:9000; display:flex; align-items:center; justify-content:center; padding:1rem; }
 .chk-pin-modal { background:var(--bg); border:0.5px solid var(--border); border-radius:14px; padding:1.5rem 1.25rem; max-width:300px; width:100%; animation:chkPinPop 0.42s cubic-bezier(0.34,1.56,0.64,1) both; }
 .chk-pin-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:24px; color:#c07d2a; margin-bottom:6px; text-align:center; }
@@ -1183,6 +1203,15 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
+<!-- Telón de intro: cubre el jank de carga del primer ~segundo (botones pintan
+     al toque, el feed de Firebase llega después) y bloquea taps accidentales.
+     Se levanta deslizándose hacia arriba cuando los datos del header llegaron
+     (ver boot). Vive en el HTML para pintar sin flash, antes de cualquier JS. -->
+<div id="intro-curtain" aria-hidden="true">
+  <div class="intro-mark">The <span class="ata">ATA</span> Handbook</div>
+  <div class="intro-rule"></div>
+  <div class="intro-tagline">El detalle, a mano.</div>
+</div>
 <div class="app">
   <div class="header">
     <div class="header-text">
@@ -5154,11 +5183,31 @@ function cfMarkDone(id){
 }
 
 // Boot the shift roster panel and the desserts strip. Both fire async;
-// each panel renders itself as soon as its fetch resolves. Until then,
-// the empty containers collapse (the .ops-strip wrapper's bottom border
-// stays as the visual divider).
-staffingFetch();
-dessertsFetch();
+// each panel renders itself as soon as its fetch resolves.
+//
+// Intro curtain: el telón cubre el jank de layout del primer ~segundo y se
+// levanta deslizándose hacia arriba cuando AMBOS fetches del header asentaron
+// (allSettled, así un error de red no lo cuelga), respetando un mínimo elegante
+// en pantalla (MIN_MS) y un tope duro de seguridad (MAX_MS) por si Firebase
+// tarda o está offline. Los fetches se disparan exactamente una vez acá.
+(function(){
+  const curtain = document.getElementById('intro-curtain');
+  if (!curtain){ staffingFetch(); dessertsFetch(); return; }
+  const clock = () => (window.performance && performance.now) ? performance.now() : Date.now();
+  const START = clock();
+  const MIN_MS = 900;   // deja cerrar la animación de entrada (~0.9s) antes de levantar
+  const MAX_MS = 2200;  // red de seguridad: levanta aunque los datos no lleguen
+  let lifted = false;
+  function lift(){
+    if (lifted) return; lifted = true;
+    curtain.classList.add('intro-lift');
+    setTimeout(() => { if (curtain.parentNode) curtain.parentNode.removeChild(curtain); }, 1100);
+  }
+  Promise.allSettled([staffingFetch(), dessertsFetch()]).then(() => {
+    setTimeout(lift, Math.max(0, MIN_MS - (clock() - START)));
+  });
+  setTimeout(lift, MAX_MS);
+})();
 
 // ── Comandera module ────────────────────────────────────────────────────
 // PIN-gated order pad. Path: /comandas/{YYYY-MM-DD}/{auto-id}
