@@ -534,7 +534,7 @@ Cuando el owner pida "retomemos lo de X":
 - **Trilingüe (ES/EN/PT):** cualquier string visible al usuario debe existir en los 3 idiomas del diccionario `UI`. Si falta un idioma para un módulo nuevo, consultar al owner antes de traducir automáticamente.
 - **Comentarios:** en español, salvo cuando se refieran a APIs/términos técnicos universales.
 - **Paleta y tipografías:** Cormorant Garamond + Courier Prime, dark amber. No introducir colores nuevos sin avisar.
-- **Convención de PINs:** 555 (mesero), 666 (E-Check), 999 (barista), 9876 (supervisor Checklist). El Rol tenía PIN 2098, desactivado el 2026-06-09 para reducir fricción — ahora entra directo; la tab quedó "oculta" al final del strip scrollable y esa obscuridad reemplaza la clave. El código del gate (`ROL_PIN_CODE`, `rolRenderGate`, `rolPinPress`, `rolSubmitPin`) queda latente para reactivar en una línea. Nuevos PINs deben ir aquí cuando se agreguen.
+- **Convención de PINs:** 555 (mesero), 999 (barista), 9876 (supervisor Checklist). Gates desactivados el 2026-06-09 para reducir fricción: **Rol** (tenía 2098 — ahora entra directo; quedó "oculto" al final del strip scrollable y esa obscuridad reemplaza la clave) y **E-Check/comandera** (tenía 666 waiter / 777 recibidor — ahora entra directo como waiter; reimaginada como herramienta personal + intercom entre meseros). El código de ambos gates queda latente para reactivar en una línea (`ROL_PIN_CODE`/`rolRenderGate`/… y `COMANDA_PIN_CODE`/`COMANDA_RECIBIDOR_PIN`/`comandaRenderGate`/…). Nuevos PINs deben ir aquí cuando se agreguen.
 
 ### Lo que NO se hace
 
