@@ -492,10 +492,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-line-grip:hover { opacity:1; color:var(--gold); }
 .cmd-line-dragging { background:rgba(202,138,4,0.12); border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.4); transform:scale(1.01); z-index:5; position:relative; transition:none; }
 .cmd-line-dragging .cmd-line-grip { color:var(--gold); opacity:1; cursor:grabbing; }
-.lang-toggle { display: flex; gap: 4px; flex-shrink: 0; }
-.lang-btn { padding: 4px 9px; border-radius: 6px; border: 0.5px solid var(--border-md); font-size: 11px; font-weight: 500; cursor: pointer; background: transparent; color: var(--text-tertiary); letter-spacing: 0.04em; transition: all 0.15s; }
-.lang-btn:hover { background: var(--bg-secondary); color: var(--text-secondary); }
-.lang-btn.active { background: var(--surface); color: var(--text); border-color: var(--border-md); }
+.lang-toggle { display: flex; align-items: center; flex-shrink: 0; }
+.lang-btn { padding: 4px 7px; border: none; border-right: 0.5px solid rgba(255,255,255,0.1); font-family:'Courier Prime','Courier New',monospace; font-size: 9px; letter-spacing: 0.16em; font-weight: 400; cursor: pointer; background: transparent; color: var(--text-tertiary); text-transform: uppercase; transition: color 0.15s; line-height: 1; }
+.lang-btn:hover { color: var(--text-secondary); background: transparent; }
+.lang-btn:last-child { border-right: none; }
+.lang-btn.active { color: #c07d2a; background: transparent; }
 
 /* Reference tabs: fixed 3×2 grid so the row reads symmetric on every
    viewport. Was flex+wrap, which let chip widths follow their text and
@@ -519,7 +520,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    input gains focus. Padding compensated to keep total height visually
    close to the previous 14 px design. */
 .search-bar input { width: 100%; padding: 7px 12px 7px 36px; border: 0.5px solid var(--border-md); border-radius: var(--radius-md); font-size: 16px; background: var(--surface); color: var(--text); outline: none; }
-.search-bar input:focus { border-color: var(--wine-red); }
+.search-bar input:focus { border-color: rgba(192,125,42,0.5); }
 .search-bar input::placeholder { color: var(--text-tertiary); }
 .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-tertiary); pointer-events: none; }
 
@@ -536,7 +537,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .day-btn-today { animation: today-glow 3s ease-in-out infinite; }
 
 /* Day heading */
-.day-heading { font-size: 14px; font-weight: 500; color: var(--text); margin: 1.5rem 0 1rem; padding-bottom: 6px; border-bottom: 0.5px solid var(--border); }
+.day-heading { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size: 12px; font-weight: 400; color: var(--text-tertiary); margin: 1.5rem 0 0.5rem; letter-spacing: 0.04em; }
 
 /* Service blocks */
 .service-block { margin-bottom: 2rem; }
@@ -555,7 +556,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Dish cards */
 .dish-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 0.875rem 1rem; cursor: pointer; transition: border-color 0.15s; }
 .dish-card:hover { border-color: var(--border-md); }
-.dish-card.selected { border-color: var(--wine-red); border-width: 1.5px; grid-column: 1 / -1; }
+.dish-card.selected { border-color: rgba(192,125,42,0.55); border-width: 1px; grid-column: 1 / -1; }
 .dish-card.selected .dish-desc { -webkit-line-clamp: unset; overflow: visible; }
 .dish-card.selected .allergen-row { display: none; }
 .dish-expanded { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); animation: panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
@@ -568,7 +569,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .detail-desc .dish-footnote { display: block; margin-top: 10px; padding-left: 10px; border-left: 2px solid rgba(202,138,4,0.32); font-size: 11px; font-style: italic; line-height: 1.5; color: var(--text-tertiary); }
 .allergen-row { display: flex; flex-wrap: wrap; gap: 4px; }
 .allergen-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border); }
-.allergen-tag.tag-mariscos { background: rgba(14,116,144,0.15); color: #67e8f9; border-color: rgba(14,116,144,0.4); }
 
 /* Panel open animation */
 @keyframes panelIn {
@@ -594,36 +594,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .detail-section h3 { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
 .allergen-detail { display: flex; flex-wrap: wrap; gap: 5px; }
 .allergen-pill { font-size: 12px; padding: 3px 10px; border-radius: 20px; background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border-md); }
-.allergen-pill.pill-mariscos { background: rgba(14,116,144,0.15); color: #67e8f9; border-color: rgba(14,116,144,0.4); }
 .wine-suggestions { display: flex; flex-direction: column; gap: 8px; }
-.wine-chip { background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius-md); padding: 8px 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
-.wine-chip-name { font-size: 13px; font-weight: 500; color: var(--text); }
-.wine-chip-why { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-/* chip colors per wine type */
-.wine-chip.chip-espumante { background: rgba(14,165,233,0.12); border-color: rgba(14,165,233,0.35); }
-.wine-chip.chip-espumante:hover, .wine-chip.chip-espumante.chip-active { background: rgba(14,165,233,0.22); border-color: rgba(14,165,233,0.7); }
-.wine-chip.chip-espumante .wine-chip-name { color: #7dd3fc; }
-.wine-chip.chip-espumante .wine-chip-why { color: #38bdf8; }
-.wine-chip.chip-blanco { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); }
-.wine-chip.chip-blanco:hover, .wine-chip.chip-blanco.chip-active { background: rgba(34,197,94,0.2); border-color: rgba(34,197,94,0.6); }
-.wine-chip.chip-blanco .wine-chip-name { color: #86efac; }
-.wine-chip.chip-blanco .wine-chip-why { color: #4ade80; }
-.wine-chip.chip-rosado { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); }
-.wine-chip.chip-rosado:hover, .wine-chip.chip-rosado.chip-active { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.6); }
-.wine-chip.chip-rosado .wine-chip-name { color: #fca5a5; }
-.wine-chip.chip-rosado .wine-chip-why { color: #f87171; }
-.wine-chip.chip-tinto { background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.35); }
-.wine-chip.chip-tinto:hover, .wine-chip.chip-tinto.chip-active { background: rgba(139,92,246,0.22); border-color: rgba(139,92,246,0.7); }
-.wine-chip.chip-tinto .wine-chip-name { color: #c4b5fd; }
-.wine-chip.chip-tinto .wine-chip-why { color: #a78bfa; }
-.wine-chip.chip-dulce { background: rgba(251,146,60,0.12); border-color: rgba(251,146,60,0.35); }
-.wine-chip.chip-dulce:hover, .wine-chip.chip-dulce.chip-active { background: rgba(251,146,60,0.22); border-color: rgba(251,146,60,0.7); }
-.wine-chip.chip-dulce .wine-chip-name { color: #fdba74; }
-.wine-chip.chip-dulce .wine-chip-why { color: #fb923c; }
-.wine-chip.chip-premium { background: rgba(212,175,55,0.12); border-color: rgba(212,175,55,0.4); }
-.wine-chip.chip-premium:hover, .wine-chip.chip-premium.chip-active { background: rgba(212,175,55,0.22); border-color: rgba(212,175,55,0.8); }
-.wine-chip.chip-premium .wine-chip-name { color: #fcd34d; }
-.wine-chip.chip-premium .wine-chip-why { color: #d4af37; }
+.wine-chip { background: rgba(255,255,255,0.02); border: 0.5px solid var(--border); border-left: 2px solid rgba(192,125,42,0.4); border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 9px 12px; cursor: pointer; transition: background 0.15s; }
+.wine-chip-name { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size: 15px; font-weight: 500; color: #c07d2a; line-height: 1.2; }
+.wine-chip-why { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style: italic; font-size: 12.5px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4; }
+/* Tipo → color del borde izquierdo. Diferencia los tipos sin fondos de neón. */
+.wine-chip.chip-espumante { border-left-color: rgba(14,165,233,0.6); }
+.wine-chip.chip-espumante:hover, .wine-chip.chip-espumante.chip-active { background: rgba(14,165,233,0.05); }
+.wine-chip.chip-blanco { border-left-color: rgba(34,197,94,0.55); }
+.wine-chip.chip-blanco:hover, .wine-chip.chip-blanco.chip-active { background: rgba(34,197,94,0.04); }
+.wine-chip.chip-rosado { border-left-color: rgba(239,68,68,0.55); }
+.wine-chip.chip-rosado:hover, .wine-chip.chip-rosado.chip-active { background: rgba(239,68,68,0.04); }
+.wine-chip.chip-tinto { border-left-color: rgba(139,92,246,0.55); }
+.wine-chip.chip-tinto:hover, .wine-chip.chip-tinto.chip-active { background: rgba(139,92,246,0.05); }
+.wine-chip.chip-dulce { border-left-color: rgba(251,146,60,0.6); }
+.wine-chip.chip-dulce:hover, .wine-chip.chip-dulce.chip-active { background: rgba(251,146,60,0.05); }
+.wine-chip.chip-premium { border-left-color: rgba(212,175,55,0.7); }
+.wine-chip.chip-premium:hover, .wine-chip.chip-premium.chip-active { background: rgba(212,175,55,0.06); }
 .wine-chip.chip-active { padding-bottom: 12px; }
 .wine-chip-detail { margin-top: 10px; padding-top: 10px; border-top: 0.5px solid rgba(255,255,255,0.08); animation: panelIn 0.25s cubic-bezier(0.34,1.1,0.64,1) both; cursor: auto; }
 .wine-chip-detail .wine-section { margin-bottom: 0.75rem; }
@@ -985,11 +972,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .chk-section-tab[data-divider-before]::before { content:''; position:absolute; left:-8px; top:20%; bottom:20%; width:0.5px; background:var(--border); }
 
 .chk-phase-chips { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1rem; }
-.chk-phase-chip { background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:999px; padding:6px 14px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; color:var(--text-secondary); cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:8px; }
+.chk-phase-chip { background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:999px; padding:8px 16px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; color:var(--text-secondary); cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:8px; }
 .chk-phase-chip:hover { border-color:rgba(192,125,42,0.4); color:#c07d2a; }
 .chk-phase-chip.selected { background:rgba(192,125,42,0.12); border-color:rgba(192,125,42,0.6); color:#c07d2a; }
 .chk-phase-chip .chk-active-dot { width:6px; height:6px; border-radius:50%; background:#c07d2a; animation:staffShiftPulse 1800ms ease-in-out infinite; }
-.chk-phase-chip .chk-active-label { font-size:9px; opacity:0.7; letter-spacing:0.1em; }
+.chk-phase-chip .chk-active-label { font-size:9.5px; opacity:0.7; letter-spacing:0.1em; }
 
 .chk-meta-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.5rem; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; flex-wrap:wrap; }
 .chk-meta { color:var(--text-tertiary); }
@@ -997,8 +984,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* E · Progress bar — slim gold fill below the meta row, animates as marks
    change. Reads as the "this is how much of the service you've covered"
    beat of the checklist. */
-.chk-progress-bar { width:100%; height:3px; background:rgba(192,125,42,0.1); border-radius:2px; overflow:hidden; margin-bottom:1.2rem; }
+.chk-progress-bar { width:100%; height:4px; background:rgba(192,125,42,0.1); border-radius:2px; overflow:hidden; margin-bottom:1.2rem; }
 .chk-progress-fill { height:100%; background:#c07d2a; border-radius:2px; transition:width .45s cubic-bezier(0.4,0,0.2,1); width:0; }
+.chk-progress-fill.complete { box-shadow:0 0 8px rgba(192,125,42,0.45); }
 /* C · Carry-over collapsed when empty — single muted line instead of a
    full panel. The full panel only renders when there's actual carry. */
 .chk-carryover-empty-inline { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.08em; color:rgba(192,125,42,0.55); margin:0 0 1rem; padding:0; text-transform:lowercase; }
@@ -1012,12 +1000,10 @@ body.in-checklist .desserts-strip { display:none; }
 body.in-checklist .staffing-panel { margin-bottom:0; }
 body.in-checklist .staffing-panel .staffing-row { display:none; }
 body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
-/* G · Hide the language toggle until the program actually uses other
-   languages. Keep the dict and setLang intact in case it's reactivated. */
-.lang-toggle { display:none !important; }
+/* G · Language toggle visible; dict and setLang stay intact. */
 
 .chk-carryover { background:rgba(192,125,42,0.06); border:0.5px solid rgba(192,125,42,0.3); border-radius:10px; padding:12px 14px; margin-bottom:1.25rem; }
-.chk-carryover-title { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.12em; color:#c07d2a; text-transform:uppercase; margin-bottom:8px; }
+.chk-carryover-title { font-family:'Courier Prime','Courier New',monospace; font-size:12px; letter-spacing:0.12em; color:#c07d2a; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:5px; }
 .chk-carryover-empty { font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-tertiary); }
 
 .chk-task-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }
@@ -1028,17 +1014,17 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .chk-task:last-child { border-bottom:0; }
 .chk-task:hover { border-color:rgba(192,125,42,0.3); }
 .chk-task.done { background:none; opacity:0.5; }
-.chk-task.done .chk-task-label { text-decoration:line-through; color:var(--text-tertiary); }
+.chk-task.done .chk-task-label { color:var(--text-tertiary); }
 .chk-task.carryover { padding-left:10px; border-left:0.5px solid rgba(192,125,42,0.4); }
-.chk-task.pending-prominent { background:none; }
+.chk-task.pending-prominent { background:none; padding-left:10px; border-left:2px solid rgba(192,125,42,0.4); }
 /* B · Lighter checkbox (1px instead of 2px), warmer hover */
-.chk-checkbox { flex-shrink:0; width:20px; height:20px; border-radius:4px; border:1px solid rgba(192,125,42,0.4); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; color:transparent; transition:all .15s; margin-top:3px; }
+.chk-checkbox { flex-shrink:0; width:24px; height:24px; border-radius:6px; border:1px solid rgba(192,125,42,0.4); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:15px; color:transparent; transition:all .15s; margin-top:2px; }
 .chk-checkbox:hover { background:rgba(192,125,42,0.1); }
 .chk-task.done .chk-checkbox { background:#c07d2a; border-color:#c07d2a; color:#fff; }
 .chk-task-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
 .chk-task-body.tappable { cursor:pointer; }
 .chk-task-label { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.35; color:var(--text-primary); }
-.chk-task-meta { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:var(--text-tertiary); }
+.chk-task-meta { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.08em; color:var(--text-tertiary); }
 .chk-task-meta .chk-carry-tag { color:#c07d2a; }
 .chk-task-comment { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:13px; color:var(--text-secondary); margin-top:4px; padding:4px 8px; background:rgba(255,255,255,0.02); border-left:2px solid rgba(192,125,42,0.4); border-radius:0 4px 4px 0; }
 /* Reference image attached to a task. Full width of the task body so it
@@ -2672,6 +2658,17 @@ function cycleLang(dir) {
 document.addEventListener('keydown', function(e) {
   const tag = document.activeElement?.tagName;
   const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+  // PIN gate — consume all keys while open; digit keys feed the buffer directly
+  // so the supervisor can type the code without touching the mouse/numpad buttons.
+  if (CHK_EDIT_GATE_OPEN) {
+    if (e.key === 'Escape')    { e.preventDefault(); chkCloseEditGate(); return; }
+    if (e.key === 'Backspace') { e.preventDefault(); chkPinPress('back'); return; }
+    if (e.key === 'Delete')    { e.preventDefault(); chkPinPress('clear'); return; }
+    if (/^[0-9]$/.test(e.key)){ e.preventDefault(); chkPinPress(e.key); return; }
+    e.preventDefault(); // block all other shortcuts while PIN gate is open
+    return;
+  }
 
   if (e.key === 'Tab' && !typing && CHK_LANG_CYCLING_ENABLED) {
     e.preventDefault();
@@ -8375,11 +8372,12 @@ function chkRender(){
   // (5/15) lives in the same row as the meta so the user sees context +
   // progress at a glance, and the bar visualises completion.
   const pct = activeTasks.length ? Math.round((doneCount / activeTasks.length) * 100) : 0;
+  const progressLabel = (pct === 100 && activeTasks.length > 0) ? `${doneCount}/${activeTasks.length} ✓` : `${doneCount}/${activeTasks.length}`;
   html += `<div class="chk-meta-row">
     <span class="chk-meta">${metaInfo}</span>
-    <span class="chk-progress">${doneCount}/${activeTasks.length}</span>
+    <span class="chk-progress">${progressLabel}</span>
   </div>
-  <div class="chk-progress-bar"><div class="chk-progress-fill" style="width:${pct}%"></div></div>`;
+  <div class="chk-progress-bar"><div class="chk-progress-fill${pct === 100 ? ' complete' : ''}" style="width:${pct}%"></div></div>`;
 
   html += chkRenderCarryover(visible);
 
@@ -8426,8 +8424,9 @@ function chkRenderCarryover(phase){
   if (!prevWasOpened || !carry.length){
     return `<p class="chk-carryover-empty-inline">✓ ${chkEscapeHtml(t('chkCarryoverEmpty'))}</p>`;
   }
+  const carryArrow = `<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;flex-shrink:0;" aria-hidden="true"><path d="M2 7h10M8 3l4 4-4 4"/></svg>`;
   let html = `<div class="chk-carryover">
-    <div class="chk-carryover-title">${chkEscapeHtml(t('chkCarryoverTitle'))} · ${chkEscapeHtml(chkMomentLabel(srcDef))}</div>
+    <div class="chk-carryover-title">${carryArrow}${chkEscapeHtml(t('chkCarryoverTitle'))} · ${chkEscapeHtml(chkMomentLabel(srcDef))}</div>
     <ul class="chk-task-list">`;
   carry.forEach(task => {
     const taskRun = prev.tasks && prev.tasks[task.id];
