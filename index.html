@@ -498,13 +498,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .lang-btn:last-child { border-right: none; }
 .lang-btn.active { color: #c07d2a; background: transparent; }
 
-/* Reference tabs: fixed 3×2 grid so the row reads symmetric on every
-   viewport. Was flex+wrap, which let chip widths follow their text and
-   produced an asymmetric 4+2 layout on iPhone (reported 2026-05-25). */
-.main-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 8px; margin-bottom: 1.5rem; }
+/* Reference tabs: fila horizontal scrollable con underline dorado — el mismo
+   sistema visual que los section-tabs del Checklist, así no hay nada nuevo
+   que aprender. La cuadrícula 3×2 con fondo violeta (--wine-red) rompía la
+   identidad editorial del header; esto la recupera. La última tab (Rol) cae
+   fuera del borde derecho y se descubre al hacer scroll — lo que permite
+   quitarle el PIN gate (menos fricción, ver módulo Rol). El scroll horizontal
+   de este strip aborta el gesto global de idioma (ver touchstart) para no
+   cambiar idioma al arrastrar las tabs. */
+.main-tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; border-bottom: 0.5px solid var(--border); }
+.main-tabs::-webkit-scrollbar { display: none; }
+/* .tab base (look "card") la siguen usando los filtros de vino (.wine-filter-tabs);
+   por eso NO se toca acá — los overrides van scopeados a .main-tabs más abajo. */
 .tab { padding: 8px 6px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; text-align: center; }
 .tab:hover { background: var(--bg-secondary); }
 .tab.active { background: var(--wine-red); color: white; border-color: var(--wine-red); font-weight: 500; }
+/* Override scopeado: las tabs principales son editoriales (underline), no tarjetas. */
+.main-tabs .tab { flex: 0 0 auto; background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 11px 13px 9px; font-family: 'Courier Prime','Courier New',monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-secondary); white-space: nowrap; }
+.main-tabs .tab:hover { background: none; color: #c07d2a; }
+.main-tabs .tab.active { background: none; border-color: transparent; border-bottom-color: #c07d2a; color: #c07d2a; font-weight: 400; box-shadow: none; }
 /* Wine sub-tab that opens a different VIEW (general pairings), not a wine
    filter. A subtle gold halo signals "this isn't a category — it's another
    kind of content". Visible at all times so the distinction is obvious. */
@@ -1537,9 +1549,13 @@ let COMANDA_LAST_INTERACTION = 0;
 const ROL_ROSTER_PATH   = 'roster';
 const ROL_STAFFING_PATH = 'staffing';
 const ROL_META_PATH     = 'meta/last_update';
+// (2026-06-09): PIN gate del Rol desactivado para reducir fricción — el Rol
+// quedó "oculto" al final del strip de tabs (se descubre al scrollear), y esa
+// obscuridad reemplaza a la clave. ROL_PIN_CODE, rolRenderGate, rolPinPress y
+// rolSubmitPin quedan definidos (no referenciados) para reactivar en una línea.
 const ROL_PIN_CODE      = '2098';
-let ROL_AUTHED            = false;
-let ROL_VIEW              = 'gate';   // 'gate' | 'home'
+let ROL_AUTHED            = true;     // gate desactivado: entra directo a 'home'
+let ROL_VIEW              = 'home';   // 'gate' | 'home'
 let ROL_PIN_BUFFER        = '';
 let ROL_ROSTER_BY_MONTH   = {};       // { 'YYYY-MM': { personaName: { dayN: turnoCode } } }
 let ROL_STAFFING_BY_MONTH = {};       // { 'YYYY-MM': { dayN: { geo_senior_am, … } } }
@@ -2643,12 +2659,14 @@ setLang(currentLang, document.querySelectorAll('.lang-btn')[['es','en','pt'].ind
 })();
 
 // ── LANGUAGE SHORTCUTS ───────────────────────────────────────────────────────
-// G (2026-05-25): the language cycling shortcut and swipe gesture are
-// disabled until the program has a real bilingual/trilingual audience. The
-// LANGS array, cycleLang and setLang stay defined so reactivation is a one-
-// liner — the Tab key handler below simply skips the call.
+// G (2026-05-25): se desactivaron el atajo Tab y el gesto side-scroll de
+// idioma hasta tener audiencia bi/trilingüe real.
+// (2026-06-09): reactivados — el toggle ES/EN/PT volvió a estar visible, así
+// que el gesto side-scroll lo acompaña. El handler de touchstart aborta el
+// gesto cuando arranca sobre .main-tabs (que ahora hace scroll horizontal),
+// para que arrastrar las tabs no dispare un cambio de idioma.
 const LANGS = ['es', 'en', 'pt'];
-const CHK_LANG_CYCLING_ENABLED = false;
+const CHK_LANG_CYCLING_ENABLED = true;
 function cycleLang(dir) {
   const idx = LANGS.indexOf(currentLang);
   const next = LANGS[(idx + dir + LANGS.length) % LANGS.length];
@@ -2712,6 +2730,10 @@ document.addEventListener('keydown', function(e) {
   document.addEventListener('touchstart', function(e) {
     if (busy || e.touches.length > 1) return;
     if (inServiceMode()) { aborted = true; return; }
+    // El strip de tabs (.main-tabs) hace su propio scroll horizontal nativo;
+    // abortamos el gesto de idioma ahí para que arrastrar las tabs (y revelar
+    // Rol al final del strip) no dispare un cambio de idioma.
+    if (e.target.closest && e.target.closest('.main-tabs')) { aborted = true; return; }
     sx = e.touches[0].clientX;
     sy = e.touches[0].clientY;
     tracking = false;
@@ -7127,7 +7149,6 @@ function rolRenderHome(root){
           <div class="eyebrow">${anchorKey}</div>
           <h1 class="rol-title">${t('rolPinTitle')}</h1>
         </div>
-        <button class="rol-exit-btn" onclick="rolLogout()">${t('rolLogout')}</button>
       </div>
       <div class="rol-status">${t('rolEmptyMonth')}</div>`;
     return;
@@ -7171,7 +7192,6 @@ function rolRenderHome(root){
         <div class="rol-subtitle">${t('rolSubtitle')}</div>
         ${updatedChip}
       </div>
-      <button class="rol-exit-btn" onclick="rolLogout()">${t('rolLogout')}</button>
     </div>
 
     <div class="rol-selector">
