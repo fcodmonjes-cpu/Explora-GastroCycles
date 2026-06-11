@@ -25,7 +25,14 @@
 <script defer src="/_vercel/insights/script.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.6; overflow-x: hidden; }
+/* Bloqueo de movimiento lateral de la PÁGINA: solo el scroll vertical navega.
+   overflow-x:hidden en html+body (body solo no basta: el viewport real puede
+   ser html) elimina cualquier scroll horizontal, y overscroll-behavior-x:none
+   mata el rubber-band lateral de iOS durante la ventana de carga. El scroll-x
+   propio de .main-tabs se preserva (no se usa touch-action acá: por la regla de
+   intersección del spec, un pan-y en un ancestro anularía el pan-x de las tabs). */
+html { overflow-x: hidden; overscroll-behavior-x: none; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.6; overflow-x: hidden; overscroll-behavior-x: none; }
 /* (2026-06-09) .app ya no usa will-change:transform — el gesto side-scroll de
    idioma fue reemplazado por el toggle sticky, así que .app nunca se traslada.
    Quitarlo permite que el position:fixed del toggle sea relativo al viewport
@@ -514,7 +521,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    quitarle el PIN gate (menos fricción, ver módulo Rol). El scroll horizontal
    de este strip aborta el gesto global de idioma (ver touchstart) para no
    cambiar idioma al arrastrar las tabs. */
-.main-tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; border-bottom: 0.5px solid var(--border); }
+.main-tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; border-bottom: 0.5px solid var(--border); }
 .main-tabs::-webkit-scrollbar { display: none; }
 /* .tab base (look "card") la siguen usando los filtros de vino (.wine-filter-tabs);
    por eso NO se toca acá — los overrides van scopeados a .main-tabs más abajo. */
