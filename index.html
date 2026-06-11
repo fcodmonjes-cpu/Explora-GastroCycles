@@ -1001,6 +1001,52 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .chk-phase-chip .chk-active-dot { width:6px; height:6px; border-radius:50%; background:#c07d2a; animation:staffShiftPulse 1800ms ease-in-out infinite; }
 .chk-phase-chip .chk-active-label { font-size:9.5px; opacity:0.7; letter-spacing:0.1em; }
 
+/* Station sub-tabs (third level inside a moment). Deliberately subordinate to
+   the moment chips above: a single segmented strip, smaller, no pill outline —
+   reads as "which station of this service" without competing with the moment
+   pills. The active station gets a gold underline (echoing the section tabs)
+   so the three-level hierarchy stays legible: section row → moment pills →
+   station underline. Each tab carries a done/total count so the operator sees
+   per-station progress without entering each one (keeps it from feeling like a
+   labyrinth). */
+.chk-station-tabs { display:flex; gap:2px; flex-wrap:wrap; margin:-0.4rem 0 1rem; padding:3px; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:8px; width:fit-content; max-width:100%; }
+.chk-station-tab { background:none; border:none; border-radius:6px; padding:7px 14px; font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:7px; }
+.chk-station-tab:hover { color:#c07d2a; }
+.chk-station-tab.active { background:rgba(192,125,42,0.14); color:#f3b572; box-shadow:0 0 0 0.5px rgba(192,125,42,0.4) inset; }
+.chk-station-count { font-size:9px; letter-spacing:0.04em; color:var(--text-tertiary); background:rgba(255,255,255,0.04); border-radius:999px; padding:2px 6px; line-height:1; }
+.chk-station-tab.active .chk-station-count { color:#d6904a; background:rgba(192,125,42,0.12); }
+.chk-station-count.complete { color:#7bbf8a; }
+
+/* ── Transversal search ──────────────────────────────────────────────── */
+.chk-search-bar { margin-bottom:1.1rem; }
+.chk-search-bar input { padding-right:34px; }
+.chk-search-clear { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:24px; height:24px; border:none; background:none; color:var(--text-tertiary); font-size:20px; line-height:1; cursor:pointer; display:none; align-items:center; justify-content:center; border-radius:50%; padding:0 0 2px; }
+.chk-search-clear:hover { color:#c07d2a; }
+.chk-search-bar.has-query .chk-search-clear { display:flex; }
+.chk-search-summary { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; color:var(--text-tertiary); margin:0 0 1rem; text-transform:uppercase; }
+/* Result group header = breadcrumb (Sección › Momento › Estación) as an
+   editorial divider, echoing the menu's day/service headings. */
+.chk-search-group { display:flex; align-items:center; gap:10px; margin:1.4rem 0 0.5rem; }
+.chk-search-group:first-of-type { margin-top:0; }
+.chk-search-crumb { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase; color:#c07d2a; white-space:nowrap; }
+.chk-search-crumb .sep { color:var(--text-tertiary); opacity:0.6; margin:0 2px; }
+.chk-search-group .rule { flex:1; height:0.5px; background:var(--border); }
+/* Result row — find & jump. The whole row navigates to the task in context;
+   the photos open the lightbox inline (they stop propagation). */
+.chk-search-row { display:flex; gap:12px; align-items:flex-start; padding:13px 12px; border:0.5px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.015); cursor:pointer; transition:border-color .15s, background .15s; margin-bottom:7px; }
+.chk-search-row:hover { border-color:rgba(192,125,42,0.5); background:rgba(192,125,42,0.04); }
+.chk-search-row-body { flex:1; min-width:0; }
+.chk-search-row-label { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.35; color:var(--text-primary); }
+.chk-search-row-label mark { background:rgba(192,125,42,0.28); color:#f3b572; border-radius:2px; padding:0 1px; }
+.chk-search-row-go { flex-shrink:0; align-self:center; color:var(--text-tertiary); font-size:18px; line-height:1; transition:color .15s, transform .15s; }
+.chk-search-row:hover .chk-search-row-go { color:#c07d2a; transform:translateX(2px); }
+.chk-search-row .chk-task-gallery { margin-top:8px; }
+.chk-search-row .chk-task-image-btn { margin-top:8px; }
+.chk-search-empty { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:16px; color:var(--text-tertiary); padding:2rem 0; text-align:center; }
+/* Brief highlight when a search jump lands on a task. */
+.chk-task.jump-highlight { animation:chkJumpPulse 2.2s ease-out; border-radius:6px; }
+@keyframes chkJumpPulse { 0%,40% { background:rgba(192,125,42,0.16); box-shadow:0 0 0 2px rgba(192,125,42,0.35); } 100% { background:none; box-shadow:none; } }
+
 .chk-meta-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.5rem; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; flex-wrap:wrap; }
 .chk-meta { color:var(--text-tertiary); }
 .chk-progress { color:#c07d2a; }
@@ -1056,12 +1102,24 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .chk-task-image-btn { display:block; width:100%; margin-top:10px; padding:0; background:none; border:0.5px solid var(--border); border-radius:4px; cursor:zoom-in; overflow:hidden; line-height:0; }
 .chk-task-image-btn img { width:100%; height:auto; display:block; transition:opacity .15s; }
 .chk-task-image-btn:hover img { opacity:0.9; }
-/* Extra images beyond the first show as a strip of square thumbs under the
-   lead image. All open the same modal at their index. */
-.chk-task-image-strip { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
-.chk-task-image-thumb { width:54px; height:54px; padding:0; background:none; border:0.5px solid var(--border); border-radius:4px; cursor:zoom-in; overflow:hidden; line-height:0; flex-shrink:0; }
-.chk-task-image-thumb img { width:100%; height:100%; object-fit:cover; display:block; transition:opacity .15s; }
-.chk-task-image-thumb:hover img { opacity:0.85; }
+/* Reference gallery — the spatial organisation of a task's materials.
+   Image[0] reads full-width above as the lead (the main reference, e.g. the
+   finished table setting); the remaining shots arrange into a responsive
+   "contact-sheet" grid below. Tiles share one aspect ratio (object-fit:cover)
+   so a mix of portrait/landscape phone photos lines up as an orderly plate of
+   detail shots. Scales gracefully from 2 photos to many. All tiles open the
+   same swipeable modal at their index. */
+.chk-task-gallery { display:grid; grid-template-columns:repeat(auto-fill, minmax(92px, 1fr)); gap:6px; margin-top:6px; }
+.chk-task-gallery-tile { position:relative; aspect-ratio:4 / 3; padding:0; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:4px; cursor:zoom-in; overflow:hidden; line-height:0; transition:border-color .15s; }
+.chk-task-gallery-tile img { width:100%; height:100%; object-fit:cover; display:block; transition:opacity .2s, transform .25s ease; }
+.chk-task-gallery-tile:hover { border-color:rgba(192,125,42,0.55); }
+.chk-task-gallery-tile:hover img { opacity:0.92; transform:scale(1.04); }
+/* Monospace index in the corner — reads as a figure number in a manual,
+   keeps the operator oriented while swiping the modal. */
+.chk-task-gallery-tile .chk-gallery-idx { position:absolute; bottom:3px; right:4px; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.06em; color:rgba(255,255,255,0.82); line-height:1; padding:2px 4px; background:rgba(0,0,0,0.42); border-radius:3px; pointer-events:none; }
+/* @supports fallback for the rare engine without aspect-ratio (keeps tiles
+   from collapsing to zero height). */
+@supports not (aspect-ratio: 1 / 1) { .chk-task-gallery-tile { height:78px; } }
 /* Fullscreen modal for the reference image. Click outside or × to close. */
 .chk-image-modal { position:fixed; inset:0; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center; z-index:9999; cursor:zoom-out; animation:chkModalFadeIn 0.15s ease-out; }
 .chk-image-modal-img { max-width:92vw; max-height:88vh; border-radius:4px; box-shadow:0 8px 32px rgba(0,0,0,0.5); cursor:default; }
@@ -1083,6 +1141,13 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .chk-edit-img-remove:hover { background:rgba(192,60,40,0.9); }
 .chk-edit-img-add { display:inline-flex; align-items:center; gap:4px; padding:7px 10px; border:0.5px dashed rgba(192,125,42,0.45); border-radius:4px; color:#c07d2a; font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.06em; cursor:pointer; transition:background .15s; height:48px; box-sizing:border-box; }
 .chk-edit-img-add:hover { background:rgba(192,125,42,0.08); }
+/* Per-task station assignment in the editor. A quiet row of small chips; the
+   active one is filled gold. Only shown for moments that have stations. */
+.chk-edit-station-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.chk-edit-station-lbl { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
+.chk-edit-station-chip { padding:4px 11px; border-radius:999px; border:0.5px solid var(--border); background:rgba(255,255,255,0.02); color:var(--text-secondary); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; cursor:pointer; transition:all .15s; }
+.chk-edit-station-chip:hover { border-color:rgba(192,125,42,0.45); color:#c07d2a; }
+.chk-edit-station-chip.active { background:rgba(192,125,42,0.16); border-color:rgba(192,125,42,0.6); color:#f3b572; }
 /* "Última vez: hace X días" sub-label under Transversal tasks. */
 .chk-task-history { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:#c07d2a; margin-top:3px; opacity:0.85; }
 .chk-task-history.chk-task-history-none { color:var(--text-tertiary); opacity:0.55; }
@@ -1148,13 +1213,22 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .chk-struct-eye { flex-shrink:0; background:none; border:none; cursor:pointer; font-size:14px; padding:3px 5px; opacity:0.75; }
 .chk-struct-eye:hover { opacity:1; }
 .chk-struct-note { font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.04em; color:var(--text-tertiary); margin:6px 0 2px 34px; line-height:1.4; opacity:0.8; }
-.chk-struct-moments { display:flex; flex-direction:column; gap:5px; margin:8px 0 0 20px; padding-left:12px; border-left:0.5px solid rgba(192,125,42,0.2); }
-.chk-struct-moment { display:flex; gap:6px; align-items:center; }
-.chk-struct-moment.hidden-item { opacity:0.45; }
+.chk-struct-moments { display:flex; flex-direction:column; gap:8px; margin:8px 0 0 20px; padding-left:12px; border-left:0.5px solid rgba(192,125,42,0.2); }
+.chk-struct-moment { display:flex; flex-direction:column; gap:5px; align-items:stretch; }
+.chk-struct-mom-head { display:flex; gap:6px; align-items:center; }
+.chk-struct-moment.hidden-item > .chk-struct-mom-head { opacity:0.45; }
 .chk-struct-mom-input { flex:1; min-width:0; padding:5px 8px; border-radius:4px; border:0.5px solid var(--border); background:rgba(0,0,0,0.15); color:var(--text-primary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:13px; box-sizing:border-box; }
 .chk-struct-mom-input:focus { outline:none; border-color:rgba(192,125,42,0.5); }
 .chk-struct-add-mom { align-self:flex-start; margin-top:2px; padding:5px 10px; background:none; border:0.5px dashed rgba(192,125,42,0.35); border-radius:5px; color:#c07d2a; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.06em; }
 .chk-struct-add-mom:hover { background:rgba(192,125,42,0.06); }
+/* Stations nested under a moment — one level deeper than moments, lighter rail. */
+.chk-struct-stations { display:flex; flex-direction:column; gap:4px; margin:1px 0 2px 18px; padding-left:11px; border-left:0.5px solid rgba(192,125,42,0.14); }
+.chk-struct-station { display:flex; gap:6px; align-items:center; }
+.chk-struct-station.hidden-item { opacity:0.45; }
+.chk-struct-st-input { flex:1; min-width:0; padding:4px 8px; border-radius:4px; border:0.5px solid var(--border); background:rgba(0,0,0,0.12); color:var(--text-secondary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.04em; box-sizing:border-box; }
+.chk-struct-st-input:focus { outline:none; border-color:rgba(192,125,42,0.5); }
+.chk-struct-add-st { align-self:flex-start; margin-top:1px; padding:4px 9px; background:none; border:0.5px dashed rgba(192,125,42,0.28); border-radius:5px; color:rgba(192,125,42,0.85); cursor:pointer; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.06em; }
+.chk-struct-add-st:hover { background:rgba(192,125,42,0.05); }
 
 /* PIN gate — overlay is appended to <body> at runtime so position:fixed is
    always viewport-relative (bypasses will-change:transform on .app). */
@@ -1361,8 +1435,17 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
     <div class="rol-root" id="rol-root"></div>
   </div>
 
-  <!-- CHECKLIST TAB — GEO pre-service checklists. Renders entirely from JS. -->
+  <!-- CHECKLIST TAB — GEO pre-service checklists. Renders entirely from JS.
+       The search bar lives here (static, outside #chk-root) so typing never
+       loses focus when chkRender rebuilds the list below it — same pattern as
+       the Menú/Vinos search. It searches tasks across every section/moment/
+       station; chkSearchInput() drives it. -->
   <div id="tab-checklist" class="hidden">
+    <div class="search-bar chk-search-bar" id="chk-search-bar">
+      <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+      <input type="text" id="chk-search" placeholder="Buscar tarea, estación o palabra clave..." oninput="chkSearchInput()" autocomplete="off" autocapitalize="off">
+      <button class="chk-search-clear" id="chk-search-clear" onclick="chkSearchClear()" aria-label="Limpiar búsqueda">×</button>
+    </div>
     <div class="chk-root" id="chk-root"></div>
   </div>
 
@@ -1604,10 +1687,11 @@ let ROL_SWIPE             = null;     // active touch-drag state for week swipe
 
 // --- Checklist module state ---------------------------------------------
 // Module: chk — operational pre-service checklists for the GEO team.
-// Today: only "pasillo" section is active (3 phases: post_desayuno,
-// post_almuerzo, post_cena). Montaje / Repaso are placeholders. The active
-// phase is *suggested* by time-of-day but all three are always clickable —
-// UX principle: no walls, fluidity over restriction (see feedback memory).
+// Active sections: Montaje (leads the row — photo-heavy, highest-traffic),
+// Pasillo (clock-driven, 3 phases: post_desayuno/almuerzo/cena) and Bar.
+// Repaso is a placeholder. Pasillo's active phase is *suggested* by
+// time-of-day but all moments are always clickable — UX principle: no walls,
+// fluidity over restriction (see feedback memory).
 //
 // Firebase paths:
 //   checklist_templates/{section}/{phase}  ← editable by supervisor (PIN)
@@ -1660,17 +1744,38 @@ const CHK_SECTION_BEHAVIOR = {
 // Editable structure seed. Labels are stored directly (Spanish — the program
 // is single-language since the i18n cycling was retired). Becomes the initial
 // checklist_structure document the first time the tab loads with none stored.
+// Section order matters: Montaje leads the row (it's the photo-heavy,
+// highest-traffic section for the GEO), Pasillo and Repaso follow, Bar sits
+// last behind the "equipo Bar" divider.
+//
+// Stations are an OPTIONAL third level inside a moment (section → moment →
+// station). A moment with `stations` splits its task list into station
+// sub-tabs (e.g. Desayuno → Mesas / Buffet); a moment without `stations`
+// renders flat as before. Opt-in keeps navigation shallow where it doesn't
+// need depth — only Desayuno and Almuerzo carry a Buffet, so only they get
+// stations. Tasks point at a station via `task.station`; tasks with no station
+// fall into the first station (the default). The transversal search jumps past
+// all three levels, so the extra depth never traps the operator.
+//
+// version history: 1 = initial (Pasillo first, no stations). 2 = Montaje took
+// the lead position. 3 = Montaje gained Mesas/Buffet stations. chkLoadStructure
+// runs chkMigrateStructure on any older persisted doc to reorder + seed-merge
+// stations once, preserving supervisor edits.
 const CHK_STRUCTURE_SEED = {
-  version: 1,
+  version: 3,
   sections: [
+    { key:'montaje', label:'Montaje', active:true, moments:[
+        { key:'desayuno', label:'Desayuno', stations:[
+            { key:'mesas',  label:'Mesas'  },
+            { key:'buffet', label:'Buffet' } ] },
+        { key:'almuerzo', label:'Almuerzo', stations:[
+            { key:'mesas',  label:'Mesas'  },
+            { key:'buffet', label:'Buffet' } ] },
+        { key:'cena',     label:'Cena'     } ] },
     { key:'pasillo', label:'Pasillo', active:true, moments:[
         { key:'post_desayuno', label:'Post-Desayuno' },
         { key:'post_almuerzo', label:'Post-Almuerzo' },
         { key:'post_cena',     label:'Post-Cena'     } ] },
-    { key:'montaje', label:'Montaje', active:true, moments:[
-        { key:'desayuno', label:'Desayuno' },
-        { key:'almuerzo', label:'Almuerzo' },
-        { key:'cena',     label:'Cena'     } ] },
     { key:'repaso', label:'Repaso', active:false, moments:[] },
     { key:'bar', label:'Bar', active:true, moments:[
         { key:'apertura',    label:'Apertura'      },
@@ -1692,6 +1797,10 @@ function chkBuildSections(structure){
       const out = { key:m.key, label:m.label };
       const win = beh.windows && beh.windows[m.key];
       if (win){ out.startMin = win.startMin; out.endMin = win.endMin; }
+      // Stations (optional third level). Soft-deleted ones (hidden) drop out
+      // of the runtime list but stay in the structure doc.
+      const stations = (m.stations || []).filter(st => !st.hidden).map(st => ({ key:st.key, label:st.label }));
+      if (stations.length) out.stations = stations;
       return out;
     });
     return {
@@ -1705,12 +1814,68 @@ function chkBuildSections(structure){
     };
   });
 }
+// One-shot structure migration. If the stored structure predates the seed
+// version, return a copy that (1) reorders sections to follow the seed's key
+// order and (2) seed-merges stations into any moment that has none. The version
+// is bumped to the seed version so it never re-runs. Both steps are additive
+// and preserve supervisor edits (labels, hidden flags, custom stations). Keys
+// not in the seed keep their relative order at the end. Returns the SAME object
+// reference when no migration is needed, so the caller can cheaply detect "did
+// anything change?" via identity.
+function chkMigrateStructure(structure){
+  if (!structure || !Array.isArray(structure.sections)) return structure;
+  if ((structure.version || 1) >= CHK_STRUCTURE_SEED.version) return structure;
+  // 1) Reorder sections to the seed's key order.
+  const order = {};
+  CHK_STRUCTURE_SEED.sections.forEach((s, i) => { order[s.key] = i; });
+  const sections = structure.sections.slice().sort((a, b) => {
+    const ai = order[a.key] != null ? order[a.key] : Infinity;
+    const bi = order[b.key] != null ? order[b.key] : Infinity;
+    if (ai === bi) return 0; // both unknown → keep relative order (stable sort)
+    return ai - bi;
+  });
+  // 2) Seed-merge stations. Stations are newer than v2, so a moment persisted
+  //    before they existed gets the seed's stations copied in. Only fills when
+  //    the stored moment has none — never overrides a supervisor's stations.
+  const seedStations = {}; // 'section/moment' → stations[]
+  CHK_STRUCTURE_SEED.sections.forEach(s => (s.moments || []).forEach(m => {
+    if (Array.isArray(m.stations) && m.stations.length){
+      seedStations[s.key + '/' + m.key] = m.stations;
+    }
+  }));
+  const merged = sections.map(s => {
+    const moments = (s.moments || []).map(m => {
+      if (!Array.isArray(m.stations) || !m.stations.length){
+        const seed = seedStations[s.key + '/' + m.key];
+        if (seed) return Object.assign({}, m, { stations: seed.map(x => Object.assign({}, x)) });
+      }
+      return m;
+    });
+    return Object.assign({}, s, { moments });
+  });
+  return Object.assign({}, structure, { sections: merged, version: CHK_STRUCTURE_SEED.version });
+}
 let CHK_STRUCTURE = CHK_STRUCTURE_SEED;            // raw structure doc (Firebase or seed)
 let CHK_SECTIONS  = chkBuildSections(CHK_STRUCTURE); // runtime sections consumed by render
 let CHK_STRUCTURE_PUT_TRIED = false;              // one-shot seed PUT guard (like templates)
-let CHK_SECTION             = 'pasillo';
+let CHK_SECTION             = 'montaje';
 let CHK_PHASE_VIEW          = null;     // user-selected phase ('post_*'); null = follow active
+let CHK_STATION             = null;     // active station within the current moment (null = first defined / "all")
 let CHK_TEMPLATES           = {};       // { 'section/phase': { version, tasks[] } }
+// --- Transversal search --------------------------------------------------
+// A single query box at the top of the tab searches task labels across EVERY
+// section/moment/station at once. It's a "find & jump" finder, not a second
+// place to mark: results show the matching task + its reference photos
+// inline, and tapping a result navigates to that exact context (section →
+// moment → station) so the operator marks/comments where the task lives. This
+// keeps the per-section runs model untouched (no cross-section write paths).
+// To list tasks from sections the user hasn't opened, the search lazily loads
+// every section's templates once into CHK_TEMPLATES (the same store the normal
+// render reads), guarded by CHK_SEARCH_INDEX_LOADED.
+let CHK_SEARCH_QUERY        = '';
+let CHK_SEARCH_INDEX_LOADED = false;    // all-section templates pulled into CHK_TEMPLATES for search
+let CHK_SEARCH_INDEX_LOADING= false;
+let CHK_JUMP_TASK_ID        = null;     // task to briefly highlight after a search jump
 let CHK_RUNS                = {};       // { phase: { meta, tasks{} } } for today (current section)
 let CHK_RUNS_PREV           = {};       // { phase: { tasks{} } } — sources of carry-over
 let CHK_DATE_KEY            = null;     // 'YYYY-MM-DD' for the loaded runs
@@ -1740,6 +1905,8 @@ let CHK_SEED_PUT_TRIED      = {};       // { 'section/moment': bool }
 // through them. null list = closed.
 let CHK_IMAGE_MODAL_LIST    = null;     // array of image srcs (data URLs or paths), or null
 let CHK_IMAGE_MODAL_IDX     = 0;        // index into CHK_IMAGE_MODAL_LIST
+let CHK_IMG_TOUCH_X         = null;     // touchstart X for swipe nav in the modal (mobile)
+let CHK_IMG_TOUCH_Y         = null;     // touchstart Y — used to ignore mostly-vertical drags
 // Reference-image compression. Supervisor-uploaded photos are resized and
 // re-encoded client-side before they ever touch Firebase: a phone photo is
 // 2-4 MB, unusable inside a Realtime DB template. ~1000px long edge + JPEG
@@ -1885,12 +2052,14 @@ const UI = {
     chkCommentSave:'Guardar', chkCommentClose:'Cerrar', chkCommentClear:'Borrar',
     chkCommentPendingHint:'Si quedó sin marcar, deja una nota para el siguiente turno.',
     chkEditBtn:'✎ Editar tareas',
+    chkSearchLoading:'Buscando en todas las secciones…', chkSearchEmpty:'Sin resultados para', chkSearchResult:'resultado', chkSearchResults:'resultados',
+    chkEditStation:'Estación',
     chkEditExitBtn:'✕ Salir de edición',
     chkEditBanner:'Modo edición · los cambios se guardan al pulsar “Guardar cambios”.',
     chkEditAddTask:'+ Añadir tarea',
     chkStructOpen:'Secciones y momentos', chkStructBanner:'Gestiona las secciones y sus momentos. Renombra, reordena, oculta o agrega. Los cambios se guardan al confirmar.',
-    chkStructSecPlaceholder:'Nombre de la sección', chkStructMomPlaceholder:'Nombre del momento',
-    chkStructAddSection:'Añadir sección', chkStructAddMoment:'Añadir momento',
+    chkStructSecPlaceholder:'Nombre de la sección', chkStructMomPlaceholder:'Nombre del momento', chkStructStPlaceholder:'Nombre de la estación',
+    chkStructAddSection:'Añadir sección', chkStructAddMoment:'Añadir momento', chkStructAddStation:'Estación',
     chkStructHide:'Ocultar', chkStructShow:'Mostrar', chkStructDelete:'Eliminar',
     chkStructAutoNote:'Sección automática: el nombre se puede cambiar, pero su lógica de turnos y horarios es fija.',
     chkStructSaveError:'No se pudo guardar la estructura. Revisa las reglas de Firebase (checklist_structure).',
@@ -2016,12 +2185,14 @@ const UI = {
     chkCommentSave:'Save', chkCommentClose:'Close', chkCommentClear:'Clear',
     chkCommentPendingHint:'If left unmarked, leave a note for the next shift.',
     chkEditBtn:'✎ Edit tasks',
+    chkSearchLoading:'Searching every section…', chkSearchEmpty:'No results for', chkSearchResult:'result', chkSearchResults:'results',
+    chkEditStation:'Station',
     chkEditExitBtn:'✕ Exit edit mode',
     chkEditBanner:'Edit mode · changes apply when you press “Save changes”.',
     chkEditAddTask:'+ Add task',
     chkStructOpen:'Sections & moments', chkStructBanner:'Manage sections and their moments. Rename, reorder, hide or add. Changes save on confirm.',
-    chkStructSecPlaceholder:'Section name', chkStructMomPlaceholder:'Moment name',
-    chkStructAddSection:'Add section', chkStructAddMoment:'Add moment',
+    chkStructSecPlaceholder:'Section name', chkStructMomPlaceholder:'Moment name', chkStructStPlaceholder:'Station name',
+    chkStructAddSection:'Add section', chkStructAddMoment:'Add moment', chkStructAddStation:'Station',
     chkStructHide:'Hide', chkStructShow:'Show', chkStructDelete:'Delete',
     chkStructAutoNote:'Automatic section: the name can change, but its shift/clock logic is fixed.',
     chkStructSaveError:'Could not save the structure. Check Firebase rules (checklist_structure).',
@@ -2147,12 +2318,14 @@ const UI = {
     chkCommentSave:'Salvar', chkCommentClose:'Fechar', chkCommentClear:'Apagar',
     chkCommentPendingHint:'Se ficou pendente, deixe uma nota para o próximo turno.',
     chkEditBtn:'✎ Editar tarefas',
+    chkSearchLoading:'Buscando em todas as seções…', chkSearchEmpty:'Sem resultados para', chkSearchResult:'resultado', chkSearchResults:'resultados',
+    chkEditStation:'Estação',
     chkEditExitBtn:'✕ Sair da edição',
     chkEditBanner:'Modo edição · as mudanças se aplicam ao apertar “Salvar alterações”.',
     chkEditAddTask:'+ Adicionar tarefa',
     chkStructOpen:'Seções e momentos', chkStructBanner:'Gerencie as seções e seus momentos. Renomeie, reordene, oculte ou adicione. As alterações são salvas ao confirmar.',
-    chkStructSecPlaceholder:'Nome da seção', chkStructMomPlaceholder:'Nome do momento',
-    chkStructAddSection:'Adicionar seção', chkStructAddMoment:'Adicionar momento',
+    chkStructSecPlaceholder:'Nome da seção', chkStructMomPlaceholder:'Nome do momento', chkStructStPlaceholder:'Nome da estação',
+    chkStructAddSection:'Adicionar seção', chkStructAddMoment:'Adicionar momento', chkStructAddStation:'Estação',
     chkStructHide:'Ocultar', chkStructShow:'Mostrar', chkStructDelete:'Excluir',
     chkStructAutoNote:'Seção automática: o nome pode mudar, mas sua lógica de turnos/horários é fixa.',
     chkStructSaveError:'Não foi possível salvar a estrutura. Verifique as regras do Firebase (checklist_structure).',
@@ -7568,6 +7741,32 @@ function chkVisiblePhase(){
   const first = chkMoments(section)[0];
   return first ? first.key : null;
 }
+// --- Stations (optional third level inside a moment) ---------------------
+// A moment either has no stations (renders flat) or a list of them (renders
+// station sub-tabs + filters its task list by the active station).
+function chkStations(section, phase){
+  const m = chkMomentDef(section, phase);
+  return (m && Array.isArray(m.stations)) ? m.stations : [];
+}
+function chkStationDef(section, phase, key){
+  return chkStations(section, phase).find(st => st.key === key) || null;
+}
+// Resolves the active station for the current section+phase: user override
+// (CHK_STATION) if still valid → first station → null (moment has no stations).
+function chkVisibleStation(){
+  const stations = chkStations(CHK_SECTION, chkVisiblePhase());
+  if (!stations.length) return null;
+  if (CHK_STATION && stations.some(st => st.key === CHK_STATION)) return CHK_STATION;
+  return stations[0].key;
+}
+// The station a task belongs to within a moment that has stations: its own
+// `station` field if set + valid, otherwise the first station (the default
+// bucket, so a task never goes invisible because it lacks an assignment).
+function chkTaskStation(task, stations){
+  if (!stations.length) return null;
+  if (task && task.station && stations.some(st => st.key === task.station)) return task.station;
+  return stations[0].key;
+}
 
 // --- Fetch templates -----------------------------------------------------
 // On HTTP error or network failure we deliberately do NOT overwrite the
@@ -7600,10 +7799,11 @@ async function chkSeedIfMissing(section, phase){
   if (existing && Array.isArray(existing.tasks) && existing.tasks.length) return existing;
   const seedItems = (CHK_SEED[section] || {})[phase] || [];
   if (!seedItems.length) return null;
-  // SEED items can be a plain string (label only) OR an object { label, image }.
-  // The object form is used when the task has a reference image (e.g. table
-  // setup photos for Montaje). Only documented optional field is `image`,
-  // a path relative to the site root (e.g. 'assets/montaje-desayuno-mesa.jpg').
+  // SEED items can be a plain string (label only) OR an object
+  // { label, image?, station? }. The object form carries a reference image
+  // (e.g. table-setup photos for Montaje) and/or a `station` key that places
+  // the task in one of the moment's station sub-tabs (e.g. 'buffet'). Items
+  // with no station fall into the moment's first station at render time.
   const template = {
     version: 1,
     updated_at: Date.now(),
@@ -7614,6 +7814,7 @@ async function chkSeedIfMissing(section, phase){
       const image = isObj ? item.image : undefined;
       const task = { id: chkSlug(label, i), label: label, order: i, active: true };
       if (image) task.image = image;
+      if (isObj && item.station) task.station = item.station;
       return task;
     })
   };
@@ -7676,8 +7877,21 @@ async function chkLoadStructure(){
     if (r.ok){
       const data = chkSafeJson(await r.json());
       if (data && Array.isArray(data.sections)){
-        CHK_STRUCTURE = data;
+        // One-shot order migration: a doc persisted before Montaje took the
+        // lead (version < seed) gets its sections reordered to the seed order
+        // and re-saved once. Labels/moments/hidden flags are preserved — only
+        // the order changes. Idempotent: once persisted at the seed version it
+        // never re-runs, and a later supervisor reorder bumps the version past
+        // the seed so this never reverts their choice.
+        const migrated = chkMigrateStructure(data);
+        CHK_STRUCTURE = migrated;
         CHK_SECTIONS = chkBuildSections(CHK_STRUCTURE);
+        if (migrated !== data && !CHK_STRUCTURE_PUT_TRIED){
+          CHK_STRUCTURE_PUT_TRIED = true;
+          try {
+            await fetch(chkUrl(CHK_STRUCTURE_PATH), { method:'PUT', body: JSON.stringify(migrated) });
+          } catch (e) { console.warn('[chk] structure order migration save failed', e); }
+        }
         return;
       }
     }
@@ -7914,10 +8128,17 @@ function chkClearComment(taskId){
   chkCloseComment();
 }
 
-// --- Phase override / section switch -------------------------------------
+// --- Phase override / section / station switch ---------------------------
 function chkSelectPhase(phase){
   if (CHK_EDIT_MODE) return;
   CHK_PHASE_VIEW = phase;
+  CHK_STATION = null; // new moment → fall back to its first station
+  CHK_COMMENT_OPEN_ID = null;
+  chkRender();
+}
+function chkSelectStation(station){
+  if (CHK_EDIT_MODE) return;
+  CHK_STATION = station;
   CHK_COMMENT_OPEN_ID = null;
   chkRender();
 }
@@ -7941,6 +8162,7 @@ function chkSelectSection(section){
   }
   CHK_SECTION = section;
   CHK_PHASE_VIEW = null;
+  CHK_STATION = null; // new section → fall back to its first station
   CHK_EDIT_MODE = false;
   CHK_STRUCT_EDIT = false;
   CHK_COMMENT_OPEN_ID = null;
@@ -7949,6 +8171,170 @@ function chkSelectSection(section){
   } else {
     chkRender();
   }
+}
+
+// --- Transversal search --------------------------------------------------
+// Accent/case-insensitive fold so "cafe" matches "café", etc.
+function chkFold(s){ return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+function chkSearchInput(){
+  const el = document.getElementById('chk-search');
+  CHK_SEARCH_QUERY = el ? el.value.trim() : '';
+  // Pull every section's templates into memory the first time a query runs, so
+  // results span sections the user hasn't opened. Cheap + one-shot.
+  if (CHK_SEARCH_QUERY && !CHK_SEARCH_INDEX_LOADED && !CHK_SEARCH_INDEX_LOADING){
+    chkLoadSearchIndex().then(() => { if (CHK_SEARCH_QUERY) chkRender(); });
+  }
+  chkRender();
+}
+function chkSearchClear(){
+  CHK_SEARCH_QUERY = '';
+  const el = document.getElementById('chk-search');
+  if (el){ el.value = ''; el.focus(); }
+  chkRender();
+}
+// Loads templates for every active section/moment into CHK_TEMPLATES (the same
+// store the normal render reads), so the search can list tasks the user hasn't
+// navigated to. Seeds any moment that comes back empty. One-shot per session.
+async function chkLoadSearchIndex(){
+  if (CHK_SEARCH_INDEX_LOADED || CHK_SEARCH_INDEX_LOADING) return;
+  CHK_SEARCH_INDEX_LOADING = true;
+  try {
+    await Promise.all(CHK_SECTIONS.filter(s => s.active).map(async s => {
+      await Promise.all(chkMoments(s.key).map(async m => {
+        await chkFetchTemplate(s.key, m.key);
+        await chkSeedIfMissing(s.key, m.key);
+      }));
+    }));
+    CHK_SEARCH_INDEX_LOADED = true;
+  } catch (e) {
+    console.warn('[chk] search index load failed', e);
+  } finally {
+    CHK_SEARCH_INDEX_LOADING = false;
+  }
+}
+// Builds the transversal results view. Walks every active section → moment →
+// (station) and collects tasks whose label matches ALL query tokens. Each hit
+// renders as a "find & jump" row: photos open inline, tapping navigates to the
+// task in its own section/moment/station to mark or comment it.
+function chkRenderSearchResults(){
+  const tokens = chkFold(CHK_SEARCH_QUERY).split(/\s+/).filter(Boolean);
+  const matches = (label) => { const f = chkFold(label); return tokens.every(tk => f.includes(tk)); };
+  let groupsHtml = '';
+  let total = 0;
+  CHK_SECTIONS.filter(s => s.active).forEach(s => {
+    chkMoments(s.key).forEach(m => {
+      const tpl = CHK_TEMPLATES[chkTplKey(s.key, m.key)] || { tasks: [] };
+      const stations = (m.stations && m.stations.length) ? m.stations : null;
+      const tasks = (tpl.tasks || []).filter(x => x.active !== false && matches(x.label));
+      if (!tasks.length) return;
+      // Sub-group by station so the breadcrumb is precise.
+      const buckets = {};
+      tasks.forEach(task => {
+        const stKey = stations ? chkTaskStation(task, stations) : '__none';
+        (buckets[stKey] = buckets[stKey] || []).push(task);
+      });
+      const stOrder = stations ? stations.map(st => st.key) : ['__none'];
+      stOrder.forEach(stKey => {
+        const list = buckets[stKey];
+        if (!list || !list.length) return;
+        const stDef = stations ? stations.find(st => st.key === stKey) : null;
+        const crumb = [chkSectionLabel(chkSectionDef(s.key)), chkMomentLabel(m)]
+          .concat(stDef ? [stDef.label] : [])
+          .map(chkEscapeHtml).join('<span class="sep">›</span>');
+        groupsHtml += `<div class="chk-search-group"><span class="chk-search-crumb">${crumb}</span><span class="rule"></span></div>`;
+        list.forEach(task => { groupsHtml += chkRenderSearchRow(task, s.key, m.key, stDef ? stDef.key : null); total++; });
+      });
+    });
+  });
+  let html = '';
+  if (CHK_SEARCH_INDEX_LOADING && !CHK_SEARCH_INDEX_LOADED){
+    html += `<div class="chk-search-summary">${chkEscapeHtml(t('chkSearchLoading'))}</div>`;
+  }
+  if (!total){
+    html += `<div class="chk-search-empty">${chkEscapeHtml(t('chkSearchEmpty'))} “${chkEscapeHtml(CHK_SEARCH_QUERY)}”</div>`;
+    return html;
+  }
+  html += `<div class="chk-search-summary">${total} ${chkEscapeHtml(total === 1 ? t('chkSearchResult') : t('chkSearchResults'))}</div>` + groupsHtml;
+  return html;
+}
+function chkRenderSearchRow(task, section, phase, station){
+  // Highlight matched tokens in the label.
+  const tokens = chkFold(CHK_SEARCH_QUERY).split(/\s+/).filter(Boolean);
+  const label = chkHighlight(task.label, tokens);
+  // Photos: same gallery component as the task list. Registered under a
+  // composite key so ids never collide across sections.
+  const imgs = chkTaskImages(task);
+  let gallery = '';
+  if (imgs.length){
+    const listKey = section + '/' + phase + '/' + task.id;
+    CHK_IMG_LISTS[listKey] = imgs;
+    const open = (idx) => `event.stopPropagation(); chkOpenImageModal(CHK_IMG_LISTS['${listKey}'], ${idx})`;
+    gallery = `<button class="chk-task-image-btn" onclick="${open(0)}" aria-label="${chkEscapeHtml(t('chkImageRefAlt'))}"><img src="${chkEscapeHtml(imgs[0])}" alt="" onerror="this.parentElement.style.display='none'"></button>`;
+    if (imgs.length > 1){
+      gallery += `<div class="chk-task-gallery">` + imgs.slice(1).map((src, i) =>
+        `<button class="chk-task-gallery-tile" onclick="${open(i + 1)}" aria-label="${chkEscapeHtml(t('chkImageRefAlt'))} ${i + 2}"><img src="${chkEscapeHtml(src)}" alt="" onerror="this.parentElement.style.display='none'"><span class="chk-gallery-idx">${i + 2}</span></button>`
+      ).join('') + `</div>`;
+    }
+  }
+  const jump = `chkJumpTo('${section}','${phase}',${station ? `'${station}'` : 'null'},'${task.id}')`;
+  return `<div class="chk-search-row" onclick="${jump}">
+    <div class="chk-search-row-body">
+      <div class="chk-search-row-label">${label}</div>
+      ${gallery}
+    </div>
+    <span class="chk-search-row-go" aria-hidden="true">›</span>
+  </div>`;
+}
+// Wraps matched tokens in <mark>. Escapes first, then highlights on the escaped
+// string using folded comparison so accents don't break the match boundaries.
+function chkHighlight(label, tokens){
+  const esc = chkEscapeHtml(label);
+  if (!tokens.length) return esc;
+  // Build a regex of the raw tokens (escaped for regex) and highlight on the
+  // ORIGINAL text, then escape segments individually to stay XSS-safe.
+  const safeTokens = tokens.map(tk => tk.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean);
+  if (!safeTokens.length) return esc;
+  // Operate on the folded/original pair: split original by matches on a folded copy.
+  let out = '';
+  const raw = label;
+  const folded = chkFold(label);
+  let i = 0;
+  const foldedRe = new RegExp(safeTokens.join('|'), 'g');
+  let mm;
+  let segments = [];
+  while ((mm = foldedRe.exec(folded)) !== null){
+    if (mm.index > i) segments.push({ t: raw.slice(i, mm.index), hit:false });
+    segments.push({ t: raw.slice(mm.index, mm.index + mm[0].length), hit:true });
+    i = mm.index + mm[0].length;
+    if (mm[0].length === 0) foldedRe.lastIndex++;
+  }
+  if (i < raw.length) segments.push({ t: raw.slice(i), hit:false });
+  segments.forEach(seg => { out += seg.hit ? `<mark>${chkEscapeHtml(seg.t)}</mark>` : chkEscapeHtml(seg.t); });
+  return out;
+}
+// Navigate from a search result to the task in its own context, then clear the
+// query so the operator lands in the normal (markable) list and the row pulses.
+function chkJumpTo(section, phase, station, taskId){
+  CHK_SEARCH_QUERY = '';
+  const el = document.getElementById('chk-search'); if (el) el.value = '';
+  CHK_SECTION = section;
+  CHK_PHASE_VIEW = phase;
+  CHK_STATION = station || null;
+  CHK_JUMP_TASK_ID = taskId;
+  CHK_COMMENT_OPEN_ID = null;
+  CHK_EDIT_MODE = false;
+  chkLoadAll().then(() => {
+    chkRender();
+    chkScrollToTask(taskId);
+    // Drop the highlight after the pulse so a later poll re-render is clean.
+    setTimeout(() => { if (CHK_JUMP_TASK_ID === taskId){ CHK_JUMP_TASK_ID = null; chkRender(); } }, 2300);
+  });
+}
+function chkScrollToTask(taskId){
+  setTimeout(() => {
+    const row = document.querySelector('#chk-root [data-task-id="' + (window.CSS && CSS.escape ? CSS.escape(taskId) : taskId) + '"]');
+    if (row) row.scrollIntoView({ behavior:'smooth', block:'center' });
+  }, 60);
 }
 
 // --- Edit mode (supervisor) ----------------------------------------------
@@ -8039,6 +8425,15 @@ function chkEditToggleActive(id){
   chkEditFlushInputs();
   const task = CHK_EDIT_DRAFT.tasks.find(x => x.id === id);
   if (task){ task.active = task.active === false ? true : false; chkRender(); }
+}
+// Assign a task to one of the moment's stations (only relevant when the moment
+// has stations). Persists as task.station on save; tasks with no station fall
+// into the first station at render time.
+function chkEditUpdateStation(id, key){
+  if (!CHK_EDIT_DRAFT) return;
+  chkEditFlushInputs();
+  const task = CHK_EDIT_DRAFT.tasks.find(x => x.id === id);
+  if (task){ task.station = key; chkRender(); }
 }
 function chkEditDeleteTask(id){
   if (!CHK_EDIT_DRAFT) return;
@@ -8173,6 +8568,10 @@ function chkStructFlushInputs(){
     (s.moments || []).forEach(m => {
       const mi = document.getElementById('chk-struct-mom-' + s.key + '-' + m.key);
       if (mi) m.label = mi.value;
+      (m.stations || []).forEach(st => {
+        const sti = document.getElementById('chk-struct-st-' + s.key + '-' + m.key + '-' + st.key);
+        if (sti) st.label = sti.value;
+      });
     });
   });
 }
@@ -8242,6 +8641,45 @@ function chkStructDeleteMoment(sectionKey, momentKey){
   s.moments = s.moments.filter(x => x.key !== momentKey);
   chkRender();
 }
+// Stations (same lifecycle as moments: built-ins hide, _new hard-delete).
+function chkStructFindMoment(sectionKey, momentKey){
+  const s = chkStructFindSection(sectionKey);
+  return s ? (s.moments || []).find(m => m.key === momentKey) : null;
+}
+function chkStructAddStation(sectionKey, momentKey){
+  if (!CHK_STRUCT_DRAFT) return;
+  chkStructFlushInputs();
+  const m = chkStructFindMoment(sectionKey, momentKey); if (!m) return;
+  if (!Array.isArray(m.stations)) m.stations = [];
+  m.stations.push({ key: chkStructGenKey('st'), label:'', _new:true });
+  chkRender();
+}
+function chkStructMoveStation(sectionKey, momentKey, stationKey, dir){
+  if (!CHK_STRUCT_DRAFT) return;
+  chkStructFlushInputs();
+  const m = chkStructFindMoment(sectionKey, momentKey); if (!m) return;
+  const arr = m.stations || [];
+  const i = arr.findIndex(st => st.key === stationKey); if (i < 0) return;
+  const j = i + dir; if (j < 0 || j >= arr.length) return;
+  const [x] = arr.splice(i, 1); arr.splice(j, 0, x);
+  chkRender();
+}
+function chkStructToggleHideStation(sectionKey, momentKey, stationKey){
+  if (!CHK_STRUCT_DRAFT) return;
+  chkStructFlushInputs();
+  const m = chkStructFindMoment(sectionKey, momentKey); if (!m) return;
+  const st = (m.stations || []).find(x => x.key === stationKey); if (st) st.hidden = !st.hidden;
+  chkRender();
+}
+function chkStructDeleteStation(sectionKey, momentKey, stationKey){
+  if (!CHK_STRUCT_DRAFT) return;
+  const m = chkStructFindMoment(sectionKey, momentKey); if (!m) return;
+  const st = (m.stations || []).find(x => x.key === stationKey);
+  if (!st || !st._new) return; // existing stations are hidden, not deleted
+  chkStructFlushInputs();
+  m.stations = m.stations.filter(x => x.key !== stationKey);
+  chkRender();
+}
 async function chkStructSave(){
   if (!CHK_STRUCT_DRAFT) return;
   chkStructFlushInputs();
@@ -8251,7 +8689,16 @@ async function chkStructSave(){
   CHK_STRUCT_DRAFT.sections.forEach(s => {
     s.label = (s.label || '').trim();
     s.moments = (s.moments || []).filter(m => !(m._new && !(m.label||'').trim()));
-    s.moments.forEach(m => { m.label = (m.label || '').trim(); delete m._new; });
+    s.moments.forEach(m => {
+      m.label = (m.label || '').trim();
+      // Same lifecycle for stations: drop brand-new blanks, trim, clear _new.
+      if (Array.isArray(m.stations)){
+        m.stations = m.stations.filter(st => !(st._new && !(st.label||'').trim()));
+        m.stations.forEach(st => { st.label = (st.label || '').trim(); delete st._new; });
+        if (!m.stations.length) delete m.stations; // moment with no stations renders flat
+      }
+      delete m._new;
+    });
     delete s._new;
   });
   const ok = await chkSaveStructure(CHK_STRUCT_DRAFT);
@@ -8334,6 +8781,35 @@ function chkImageModalNav(dir){
   CHK_IMAGE_MODAL_IDX = (CHK_IMAGE_MODAL_IDX + dir + n) % n;
   chkRender();
 }
+// Keyboard nav (desktop): ←/→ step through, Esc closes. Registered once
+// globally; no-ops unless the modal is open. Stops propagation so the key
+// doesn't also reach other listeners while the lightbox owns the screen.
+function chkImageModalKeydown(e){
+  if (!CHK_IMAGE_MODAL_LIST) return;
+  if (e.key === 'ArrowRight'){ chkImageModalNav(1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft'){ chkImageModalNav(-1); e.preventDefault(); }
+  else if (e.key === 'Escape'){ chkCloseImageModal(); e.preventDefault(); }
+}
+// Swipe nav (mobile): record the touch start, and on release step left/right
+// if the gesture was mostly-horizontal and beyond the threshold. A mostly
+// vertical drag (scroll-y intent) is ignored so the lightbox doesn't fight
+// the user. Inline on the modal element via chkRenderImageModal.
+const CHK_SWIPE_MIN = 45; // px
+function chkImgTouchStart(e){
+  const tch = e.changedTouches && e.changedTouches[0];
+  if (!tch){ CHK_IMG_TOUCH_X = null; return; }
+  CHK_IMG_TOUCH_X = tch.clientX; CHK_IMG_TOUCH_Y = tch.clientY;
+}
+function chkImgTouchEnd(e){
+  if (CHK_IMG_TOUCH_X == null) return;
+  const tch = e.changedTouches && e.changedTouches[0];
+  if (!tch){ CHK_IMG_TOUCH_X = null; return; }
+  const dx = tch.clientX - CHK_IMG_TOUCH_X;
+  const dy = tch.clientY - CHK_IMG_TOUCH_Y;
+  CHK_IMG_TOUCH_X = null; CHK_IMG_TOUCH_Y = null;
+  if (Math.abs(dx) < CHK_SWIPE_MIN || Math.abs(dx) < Math.abs(dy)) return;
+  chkImageModalNav(dx < 0 ? 1 : -1); // swipe left → next, swipe right → prev
+}
 function chkRenderImageModal(){
   if (!CHK_IMAGE_MODAL_LIST || !CHK_IMAGE_MODAL_LIST.length) return '';
   const n = CHK_IMAGE_MODAL_LIST.length;
@@ -8343,7 +8819,7 @@ function chkRenderImageModal(){
     <button class="chk-image-modal-nav prev" onclick="event.stopPropagation(); chkImageModalNav(-1)" aria-label="prev">‹</button>
     <button class="chk-image-modal-nav next" onclick="event.stopPropagation(); chkImageModalNav(1)" aria-label="next">›</button>
     <div class="chk-image-modal-count">${idx + 1} / ${n}</div>` : '';
-  return `<div class="chk-image-modal" onclick="chkCloseImageModal()">
+  return `<div class="chk-image-modal" onclick="chkCloseImageModal()" ontouchstart="chkImgTouchStart(event)" ontouchend="chkImgTouchEnd(event)">
     <img class="chk-image-modal-img" src="${src}" alt="${chkEscapeHtml(t('chkImageRefAlt'))}" onclick="event.stopPropagation()">
     <button class="chk-image-modal-close" onclick="chkCloseImageModal()" aria-label="${chkEscapeHtml(t('chkImageClose'))}">×</button>
     ${nav}
@@ -8460,6 +8936,25 @@ function chkRender(){
   if (currentTab !== 'checklist') return;
 
   CHK_IMG_LISTS = {}; // repopulated by chkRenderTaskRow for this render
+
+  // Search bar (static HTML above #chk-root): hide while editing, and toggle
+  // the clear-button via a class on the bar.
+  const searchBar = document.getElementById('chk-search-bar');
+  if (searchBar){
+    searchBar.style.display = CHK_EDIT_MODE ? 'none' : '';
+    searchBar.classList.toggle('has-query', !!CHK_SEARCH_QUERY);
+  }
+  // Transversal search replaces the section/moment/station nav with a flat
+  // results list spanning every section. Edit mode takes precedence.
+  if (CHK_SEARCH_QUERY && !CHK_EDIT_MODE){
+    root.innerHTML = chkRenderSearchResults();
+    chkSyncBodyOverlays();
+    if (!CHK_SEARCH_INDEX_LOADED && !CHK_SEARCH_INDEX_LOADING){
+      chkLoadSearchIndex().then(() => { if (CHK_SEARCH_QUERY && currentTab === 'checklist') chkRender(); });
+    }
+    return;
+  }
+
   const section = CHK_SECTION;
   const sectionDef = chkSectionDef(section);
   let html = '';
@@ -8511,9 +9006,29 @@ function chkRender(){
 
   // Meta + progress
   const tpl = CHK_TEMPLATES[chkTplKey(section, visible)] || { tasks: [] };
-  const activeTasks = (tpl.tasks || []).filter(x => x.active !== false);
   const run = CHK_RUNS[visible] || { tasks: {} };
-  const doneCount = activeTasks.filter(x => run.tasks && run.tasks[x.id] && run.tasks[x.id].done).length;
+  // Stations (optional third level). When the visible moment has stations, the
+  // task list is filtered to the active one and a row of station sub-tabs is
+  // shown (each carrying its own done/total count for at-a-glance progress).
+  // Progress + meta then describe the active STATION, not the whole moment.
+  const stations = chkStations(section, visible);
+  const visibleStation = chkVisibleStation();
+  const isDoneTask = (taskId) => !!(run.tasks && run.tasks[taskId] && run.tasks[taskId].done);
+  if (stations.length){
+    html += `<div class="chk-station-tabs">`;
+    stations.forEach(st => {
+      const stTasks = (tpl.tasks || []).filter(x => x.active !== false && chkTaskStation(x, stations) === st.key);
+      const stDone = stTasks.filter(x => isDoneTask(x.id)).length;
+      const countCls = (stTasks.length && stDone === stTasks.length) ? ' complete' : '';
+      const count = stTasks.length ? `<span class="chk-station-count${countCls}">${stDone}/${stTasks.length}</span>` : '';
+      html += `<button class="chk-station-tab ${st.key === visibleStation ? 'active' : ''}" onclick="chkSelectStation('${st.key}')">${chkEscapeHtml(st.label)}${count}</button>`;
+    });
+    html += `</div>`;
+  }
+  const activeTasks = (tpl.tasks || []).filter(x =>
+    x.active !== false && (!stations.length || chkTaskStation(x, stations) === visibleStation)
+  );
+  const doneCount = activeTasks.filter(x => isDoneTask(x.id)).length;
   const todayLabel = chkDateKey(new Date());
   let metaInfo = `${chkEscapeHtml(t('chkMetaPrefix'))} · ${todayLabel}`;
   let viaj = (run.meta && run.meta.viajeros != null) ? run.meta.viajeros : null;
@@ -8601,7 +9116,8 @@ function chkRenderTaskRow(task, taskRun, phase, opts){
   const cls = 'chk-task'
     + (isDone ? ' done' : '')
     + (opts.carryover ? ' carryover' : '')
-    + (pendingProminent ? ' pending-prominent' : '');
+    + (pendingProminent ? ' pending-prominent' : '')
+    + ((!opts.carryover && CHK_JUMP_TASK_ID === task.id) ? ' jump-highlight' : '');
   const checkboxClick = opts.carryover
     ? `onclick="chkToggleCarryover('${task.id}','${opts.carryoverPhase}')"`
     : `onclick="chkToggle('${task.id}')"`;
@@ -8633,8 +9149,11 @@ function chkRenderTaskRow(task, taskRun, phase, opts){
     const lead = `<button class="chk-task-image-btn" onclick="${open(0)}" aria-label="${chkEscapeHtml(t('chkImageRefAlt'))}"><img src="${chkEscapeHtml(imgs[0])}" alt="${chkEscapeHtml(t('chkImageRefAlt'))}" onerror="this.parentElement.style.display='none'"></button>`;
     let extras = '';
     if (imgs.length > 1){
-      extras = `<div class="chk-task-image-strip">` + imgs.slice(1).map((src, i) =>
-        `<button class="chk-task-image-thumb" onclick="${open(i + 1)}" aria-label="${chkEscapeHtml(t('chkImageRefAlt'))}"><img src="${chkEscapeHtml(src)}" alt="" onerror="this.parentElement.style.display='none'"></button>`
+      // Lead photo stays full-width; the rest become an orderly contact-sheet
+      // grid. Each tile carries its modal index so the operator can open any
+      // shot directly and swipe from there.
+      extras = `<div class="chk-task-gallery">` + imgs.slice(1).map((src, i) =>
+        `<button class="chk-task-gallery-tile" onclick="${open(i + 1)}" aria-label="${chkEscapeHtml(t('chkImageRefAlt'))} ${i + 2}"><img src="${chkEscapeHtml(src)}" alt="" onerror="this.parentElement.style.display='none'"><span class="chk-gallery-idx">${i + 2}</span></button>`
       ).join('') + `</div>`;
     }
     imageThumb = lead + extras;
@@ -8666,7 +9185,7 @@ function chkRenderTaskRow(task, taskRun, phase, opts){
     : `onclick="chkToggle('${task.id}')"`;
   const bodyClass = 'chk-task-body tappable';
 
-  return `<li class="${cls}">
+  return `<li class="${cls}" data-task-id="${chkEscapeHtml(task.id)}">
     <button class="chk-checkbox" ${checkboxClick} aria-label="toggle">${isDone ? '✓' : ''}</button>
     <div class="${bodyClass}" ${bodyClick}>
       <div class="chk-task-label">${chkEscapeHtml(task.label)}</div>
@@ -8708,9 +9227,21 @@ function chkRenderEditMode(){
   html += `</div>`;
   html += `<div class="chk-edit-list">`;
   const tasks = (CHK_EDIT_DRAFT && CHK_EDIT_DRAFT.tasks) || [];
+  const editStations = chkStations(CHK_SECTION, CHK_EDIT_PHASE);
   tasks.forEach((task, i) => {
     const inactiveCls = task.active === false ? ' inactive' : '';
     const total = tasks.length;
+    // Station assignment chips (only when the moment has stations). The chip
+    // matching the task's current station is highlighted; tapping reassigns.
+    let stationRow = '';
+    if (editStations.length){
+      const cur = chkTaskStation(task, editStations);
+      stationRow = `<div class="chk-edit-station-row"><span class="chk-edit-station-lbl">${chkEscapeHtml(t('chkEditStation'))}</span>`
+        + editStations.map(st =>
+            `<button class="chk-edit-station-chip ${st.key === cur ? 'active' : ''}" onclick="chkEditUpdateStation('${task.id}','${st.key}')">${chkEscapeHtml(st.label)}</button>`
+          ).join('')
+        + `</div>`;
+    }
     // Image management strip: a "+ foto" button (opens camera/gallery) plus a
     // thumbnail per attached image, each with a remove (×) overlay.
     const imgs = chkTaskImages(task);
@@ -8733,6 +9264,7 @@ function chkRenderEditMode(){
             <input type="file" accept="image/*" multiple onchange="chkEditAddImage('${task.id}', this)" hidden>
           </label>
         </div>
+        ${stationRow}
       </div>
       <button class="chk-edit-toggle ${task.active === false ? '' : 'on'}" onclick="chkEditToggleActive('${task.id}')">${task.active === false ? chkEscapeHtml(t('chkEditToggleInactive')) : chkEscapeHtml(t('chkEditToggleActive'))}</button>
       <button class="chk-edit-delete" onclick="chkEditDeleteTask('${task.id}')" title="delete">✕</button>
@@ -8778,14 +9310,34 @@ function chkStructRender(){
     moments.forEach((m, mi) => {
       const mh = m.hidden ? ' hidden-item' : '';
       html += `<div class="chk-struct-moment${mh}">
-        <div class="chk-edit-order">
-          <button onclick="chkStructMoveMoment('${s.key}','${m.key}',-1)" ${mi===0?'disabled':''}>▲</button>
-          <button onclick="chkStructMoveMoment('${s.key}','${m.key}',1)" ${mi===moments.length-1?'disabled':''}>▼</button>
-        </div>
-        <input id="chk-struct-mom-${s.key}-${m.key}" class="chk-struct-mom-input" type="text" value="${chkEscapeHtml(m.label||'')}" placeholder="${chkEscapeHtml(t('chkStructMomPlaceholder'))}" />
-        <button class="chk-struct-eye" onclick="chkStructToggleHideMoment('${s.key}','${m.key}')" title="${chkEscapeHtml(m.hidden?t('chkStructShow'):t('chkStructHide'))}">${m.hidden?'🚫':'👁'}</button>
-        ${m._new ? `<button class="chk-edit-delete" onclick="chkStructDeleteMoment('${s.key}','${m.key}')" title="${chkEscapeHtml(t('chkStructDelete'))}">✕</button>` : ''}
-      </div>`;
+        <div class="chk-struct-mom-head">
+          <div class="chk-edit-order">
+            <button onclick="chkStructMoveMoment('${s.key}','${m.key}',-1)" ${mi===0?'disabled':''}>▲</button>
+            <button onclick="chkStructMoveMoment('${s.key}','${m.key}',1)" ${mi===moments.length-1?'disabled':''}>▼</button>
+          </div>
+          <input id="chk-struct-mom-${s.key}-${m.key}" class="chk-struct-mom-input" type="text" value="${chkEscapeHtml(m.label||'')}" placeholder="${chkEscapeHtml(t('chkStructMomPlaceholder'))}" />
+          <button class="chk-struct-eye" onclick="chkStructToggleHideMoment('${s.key}','${m.key}')" title="${chkEscapeHtml(m.hidden?t('chkStructShow'):t('chkStructHide'))}">${m.hidden?'🚫':'👁'}</button>
+          ${m._new ? `<button class="chk-edit-delete" onclick="chkStructDeleteMoment('${s.key}','${m.key}')" title="${chkEscapeHtml(t('chkStructDelete'))}">✕</button>` : ''}
+        </div>`;
+      // Stations (optional). A moment can hold none or several; the supervisor
+      // adds them here. A moment with no stations renders flat in the app.
+      const stations = m.stations || [];
+      html += `<div class="chk-struct-stations">`;
+      stations.forEach((st, sti) => {
+        const sth = st.hidden ? ' hidden-item' : '';
+        html += `<div class="chk-struct-station${sth}">
+          <div class="chk-edit-order">
+            <button onclick="chkStructMoveStation('${s.key}','${m.key}','${st.key}',-1)" ${sti===0?'disabled':''}>▲</button>
+            <button onclick="chkStructMoveStation('${s.key}','${m.key}','${st.key}',1)" ${sti===stations.length-1?'disabled':''}>▼</button>
+          </div>
+          <input id="chk-struct-st-${s.key}-${m.key}-${st.key}" class="chk-struct-st-input" type="text" value="${chkEscapeHtml(st.label||'')}" placeholder="${chkEscapeHtml(t('chkStructStPlaceholder'))}" />
+          <button class="chk-struct-eye" onclick="chkStructToggleHideStation('${s.key}','${m.key}','${st.key}')" title="${chkEscapeHtml(st.hidden?t('chkStructShow'):t('chkStructHide'))}">${st.hidden?'🚫':'👁'}</button>
+          ${st._new ? `<button class="chk-edit-delete" onclick="chkStructDeleteStation('${s.key}','${m.key}','${st.key}')" title="${chkEscapeHtml(t('chkStructDelete'))}">✕</button>` : ''}
+        </div>`;
+      });
+      html += `<button class="chk-struct-add-st" onclick="chkStructAddStation('${s.key}','${m.key}')">＋ ${chkEscapeHtml(t('chkStructAddStation'))}</button>`;
+      html += `</div>`; // stations
+      html += `</div>`; // moment
     });
     html += `<button class="chk-struct-add-mom" onclick="chkStructAddMoment('${s.key}')">＋ ${chkEscapeHtml(t('chkStructAddMoment'))}</button>`;
     html += `</div>`; // moments
@@ -8873,6 +9425,8 @@ async function chkEnter(){
   }, { passive: true, capture: true });
 });
 onI18nChange(() => { if (currentTab === 'checklist') chkRender(); });
+// Lightbox keyboard nav — global, no-ops unless the modal is open.
+document.addEventListener('keydown', chkImageModalKeydown);
 
 // --- Seed data ------------------------------------------------------------
 // Hard-coded initial Pasillo lists. Written to Firebase as version=1 the
@@ -8948,18 +9502,20 @@ const CHK_SEED = {
       { label: 'Limpiar mesas y poner chilewitch con etiqueta hacia abajo. Montaje: servilleta al centro (2 dedos sobre el borde), tenedor a la izquierda alineado, cuchillo a la derecha seguido por cuchara, taza en la esquina superior diagonal derecha de la servilleta. Guiarse por imagen de referencia entregada por GES.',
         image: 'assets/montaje-desayuno-mesa.jpg' },
       'Todas las mesas deben tener azucarero, endulzante y sal en el centro (saleros piedra prioridad mesas 50’s y 40’s). De izquierda a derecha: sal, endulzante y azucarero con la cuchara hacia la derecha.',
-      'Dejar preparados los porta menú con los menús de desayuno en el sector de buffet.',
-      'Montar ambos mesones con el buffet de desayuno, todo con sus respectivas pinzas y carteles. Seguir imagen de referencia enviada por GES.',
+      // Estación Buffet: tareas con station:'buffet' caen en la sub-pestaña
+      // Buffet del momento (el resto, sin station, cae en Mesas por defecto).
+      { label: 'Dejar preparados los porta menú con los menús de desayuno en el sector de buffet.', station:'buffet' },
+      { label: 'Montar ambos mesones con el buffet de desayuno, todo con sus respectivas pinzas y carteles. Seguir imagen de referencia enviada por GES.', station:'buffet' },
       'Cerrar cavas, apagar ventiladores y cerrar puertas.'
     ],
     almuerzo: [
       'Montar terraza de almuerzo según la distribución de mesas que indica reporte "comedor", siempre montar al menos 2 mesas extras.',
       'Limpiar mesas y poner chilewitch con etiqueta hacia abajo. Montaje: servilleta al centro (2 dedos sobre el borde), tenedor a la izquierda alineado, cuchillo a la derecha seguido por cuchara, plato de pan a la izquierda (la mitad fuera del borde izquierdo del chilewitch), menú a la derecha 2 dedos bajo la servilleta, vaso de agua en la esquina superior diagonal derecha. Guiarse por imagen de referencia entregada por GES.',
-      'Limpiar ambos mesones de buffet y poner chilewitchs largos.',
-      'Montaje Buffet: seguir imagen de referencia entregada por GES; corroborar bases de madera para ensalada, aderezos, proteínas y crudo. Verificar cantidad y tipo de pinza correcta, porta pinza, nombre de platos de buffet, platos de sopa suficientes, cucharas y agua para la olla de sopa.',
+      { label: 'Limpiar ambos mesones de buffet y poner chilewitchs largos.', station:'buffet' },
+      { label: 'Montaje Buffet: seguir imagen de referencia entregada por GES; corroborar bases de madera para ensalada, aderezos, proteínas y crudo. Verificar cantidad y tipo de pinza correcta, porta pinza, nombre de platos de buffet, platos de sopa suficientes, cucharas y agua para la olla de sopa.', station:'buffet' },
       'Dejar preparados los porta menús con el menú del día correspondiente (4 menús rotativos) más menús de postres y niños si aplica. También montar menús de vinos de la casa y premium, bebestibles y carta de bar.',
       'Preparar litos para estación de vinos, servilletas para montaje y para los siguientes servicios. LAS SERVILLETAS EN BUEN ESTADO SON PARA MONTAJE; SEPARAR LAS NO PRESENTABLES PARA REPASO.',
-      'Sobre 50 pax en el almuerzo y con la confirmación de cocina, montar buffet espejo. La estación de vinos, cubiertos, copas, etc., pasa a prepararse en el sector de las mesas 30’.',
+      { label: 'Sobre 50 pax en el almuerzo y con la confirmación de cocina, montar buffet espejo. La estación de vinos, cubiertos, copas, etc., pasa a prepararse en el sector de las mesas 30’.', station:'buffet' },
       'Dejar repuestos los vasos del desayuno.',
       'Verificar que salón de desayuno quedó limpio y desconchado, máquinas de desayuno limpias, semillas y cereales del buffet repuestos.'
     ],
