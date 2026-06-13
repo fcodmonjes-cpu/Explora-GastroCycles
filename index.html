@@ -1252,22 +1252,14 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
    llegaron — coordinado en el boot, con mínimo elegante y tope de seguridad. */
 #intro-curtain { position:fixed; inset:0; z-index:9990; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:13px; padding:1rem; transform:translateY(0); transition:transform 1s cubic-bezier(0.7,0,0.2,1); will-change:transform; }
 #intro-curtain.intro-lift { transform:translateY(-100%); }
-/* Lámina editorial: una plancha encuadernada sobre el título. Marco fino en el
-   acento cálido + viñeta que funde los bordes en el fondo oscuro, para que la
-   pintura no compita con el resto y se lea como ilustración de portada. */
-.intro-plate { position:relative; width:min(72vw,300px); border-radius:9px; overflow:hidden; border:0.5px solid rgba(192,125,42,0.32); box-shadow:0 22px 55px -24px rgba(0,0,0,0.75), 0 2px 8px rgba(0,0,0,0.3); opacity:0; transform:translateY(14px) scale(0.985); animation:introPlate 0.75s cubic-bezier(0.2,0.7,0.2,1) 0.02s forwards; }
-.intro-plate img { display:block; width:100%; height:auto; filter:saturate(0.9) brightness(0.95) contrast(1.02); }
-.intro-plate::after { content:''; position:absolute; inset:0; box-shadow:inset 0 0 34px rgba(15,15,16,0.5), inset 0 0 0 1px rgba(255,255,255,0.025); pointer-events:none; }
-@keyframes introPlate { to { opacity:1; transform:translateY(0) scale(1); } }
-.intro-mark { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:31px; color:var(--text); letter-spacing:0.005em; opacity:0; transform:translateY(10px); animation:introRise 0.55s cubic-bezier(0.2,0.7,0.2,1) 0.34s forwards; }
+.intro-mark { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:31px; color:var(--text); letter-spacing:0.005em; opacity:0; transform:translateY(10px); animation:introRise 0.55s cubic-bezier(0.2,0.7,0.2,1) 0.08s forwards; }
 .intro-mark .ata { color:#c75c2a; font-weight:700; letter-spacing:0.04em; }
-.intro-rule { width:0; height:0.5px; background:rgba(192,125,42,0.6); animation:introRule 0.5s cubic-bezier(0.6,0,0.2,1) 0.58s forwards; }
-.intro-tagline { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-tertiary); opacity:0; animation:introFade 0.45s ease 0.7s forwards; }
+.intro-rule { width:0; height:0.5px; background:rgba(192,125,42,0.6); animation:introRule 0.5s cubic-bezier(0.6,0,0.2,1) 0.34s forwards; }
+.intro-tagline { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-tertiary); opacity:0; animation:introFade 0.45s ease 0.46s forwards; }
 @keyframes introRise { to { opacity:1; transform:translateY(0); } }
 @keyframes introRule { to { width:96px; } }
 @keyframes introFade { to { opacity:1; } }
 @media (prefers-reduced-motion: reduce) {
-  .intro-plate { animation:none; opacity:1; transform:none; }
   .intro-mark, .intro-tagline { animation:none; opacity:1; transform:none; }
   .intro-rule { animation:none; width:96px; }
   #intro-curtain { transition:opacity .45s ease; }
@@ -1297,7 +1289,6 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
      Se levanta deslizándose hacia arriba cuando los datos del header llegaron
      (ver boot). Vive en el HTML para pintar sin flash, antes de cualquier JS. -->
 <div id="intro-curtain" aria-hidden="true">
-  <div class="intro-plate"><img src="curtain.webp" alt="" fetchpriority="high" decoding="async"></div>
   <div class="intro-mark">The <span class="ata">ATA</span> Handbook</div>
   <div class="intro-rule"></div>
   <div class="intro-tagline">El detalle, a mano.</div>
@@ -5384,8 +5375,8 @@ function cfMarkDone(id){
   if (!curtain){ staffingFetch(); dessertsFetch(); return; }
   const clock = () => (window.performance && performance.now) ? performance.now() : Date.now();
   const START = clock();
-  const MIN_MS = 1250;  // deja cerrar el reveal coreografiado (lámina→título→filete→tagline, ~1.15s) antes de levantar
-  const MAX_MS = 2400;  // red de seguridad: levanta aunque los datos no lleguen
+  const MIN_MS = 900;   // deja cerrar la animación de entrada (~0.9s) antes de levantar
+  const MAX_MS = 2200;  // red de seguridad: levanta aunque los datos no lleguen
   let lifted = false;
   function lift(){
     if (lifted) return; lifted = true;
