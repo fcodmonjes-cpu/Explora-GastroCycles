@@ -17,3 +17,6 @@ firebase-rules.json
 # Reference images attached to checklist tasks (montaje, etc.) live in assets/
 # and are versioned regardless of extension.
 !assets/**
+
+# Notas de versión (documento vivo): el PDF de docs/ sí se versiona.
+!docs/notas-de-version.pdf
