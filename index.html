@@ -235,13 +235,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-cat-btn.active { background:var(--wine-red); border-color:var(--wine-red); color:white; }
 
 /* Item catalog */
-.cmd-cat-panel { background:rgba(255,255,255,0.015); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:8px 10px; margin-bottom:1rem; max-height:46vh; overflow-y:auto; }
-.cmd-cat-group { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); padding:8px 4px 4px; border-top:0.5px solid var(--border); }
-.cmd-cat-group:first-child { border-top:none; padding-top:2px; }
-.cmd-item-btn { display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left; padding:9px 6px; border-radius:6px; background:transparent; border:none; color:var(--text); font-size:13px; font-family:inherit; cursor:pointer; transition:background .12s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; line-height:1.3; }
-.cmd-item-btn:hover { background:rgba(202,138,4,0.06); }
-.cmd-item-btn:active { background:rgba(202,138,4,0.14); }
-.cmd-item-name { flex:1; min-width:0; }
+.cmd-cat-panel { background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:6px 10px 10px; margin-bottom:1rem; max-height:50vh; overflow-y:auto; }
+/* Encabezado de marca/curso: etiqueta cálida con tilde dorada, sin línea dura */
+.cmd-cat-group { display:flex; align-items:center; gap:8px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); padding:12px 2px 6px; }
+.cmd-cat-group::before { content:''; flex:0 0 auto; width:14px; height:1.5px; background:var(--gold); opacity:0.55; border-radius:1px; }
+/* Catálogo como grilla de chips: todo visible, tap targets grandes, menos scroll */
+.cmd-cat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); gap:6px; }
+.cmd-item-btn { display:flex; align-items:center; justify-content:center; text-align:center; min-height:50px; padding:8px 10px; border-radius:10px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text); font-size:13px; font-family:inherit; cursor:pointer; transition:background .12s, border-color .12s, transform .07s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; line-height:1.2; }
+.cmd-item-btn:hover { border-color:rgba(186,117,23,0.5); }
+.cmd-item-btn:active { background:rgba(186,117,23,0.16); border-color:var(--gold); transform:scale(0.97); }
+.cmd-item-name { min-width:0; }
 .cmd-item-allergen { font-size:14px; color:#e07b3a; cursor:help; flex-shrink:0; }
 .cmd-item-allergen-tip { font-size:10px; color:#e07b3a; opacity:0.75; }
 
@@ -298,8 +301,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-tally-qty { flex:0 0 auto; min-width:44px; text-align:right; font-family:'Courier Prime','Courier New',monospace; font-size:21px; font-weight:700; color:var(--gold); line-height:1; }
 .cmd-tally-qty small { font-size:12px; font-weight:400; opacity:0.6; margin-left:1px; }
 .cmd-tally-name { flex:1; font-size:15px; color:var(--text); line-height:1.25; }
-/* Comodín "Otra/Otro" — se lee distinto del resto del catálogo */
-.cmd-item-other { color:var(--text-tertiary); font-style:italic; }
+/* Comodín "Otra/Otro / Special Request" — chip punteado, se lee como comodín */
+.cmd-item-other { background:transparent; border-style:dashed; color:var(--text-secondary); font-style:italic; }
+.cmd-item-other:active { background:rgba(186,117,23,0.12); }
 .cmd-item-other .cmd-item-name::before { content:'✎ '; font-style:normal; opacity:0.7; }
 
 /* ── Rol module (weekly shift schedule) ──────────────────────────────── */
@@ -1377,7 +1381,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
     <button class="tab" onclick="setTab('vinos',this)">Vinos</button>
     <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
-    <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">Comandera</button>
+    <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">Comande</button>
     <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol">Rol</button>
   </div>
 
@@ -2016,7 +2020,7 @@ const UI = {
     rolUpdatedMinutes:'actualizado hace minutos',
     rolUpdatedHours:'actualizado hace {n} h',
     rolUpdatedOn:'actualizado el {date}',
-    tabComandera:'Comandera',
+    tabComandera:'Comande',
     cmdPinTitle:'Comandera', cmdPinSub:'Código de acceso', cmdPinError:'Código incorrecto',
     cmdHomeTitle:'Mesas activas', cmdHomeEmpty:'No hay mesas abiertas',
     cmdNewMesaBtn:'+ Nueva mesa',
@@ -2149,7 +2153,7 @@ const UI = {
     rolUpdatedMinutes:'updated minutes ago',
     rolUpdatedHours:'updated {n} h ago',
     rolUpdatedOn:'updated on {date}',
-    tabComandera:'Comandera',
+    tabComandera:'Comande',
     cmdPinTitle:'Order pad', cmdPinSub:'Access code', cmdPinError:'Wrong code',
     cmdHomeTitle:'Active tables', cmdHomeEmpty:'No tables open',
     cmdNewMesaBtn:'+ New table',
@@ -2282,7 +2286,7 @@ const UI = {
     rolUpdatedMinutes:'atualizado há minutos',
     rolUpdatedHours:'atualizado há {n} h',
     rolUpdatedOn:'atualizado em {date}',
-    tabComandera:'Comandera',
+    tabComandera:'Comande',
     cmdPinTitle:'Comanda', cmdPinSub:'Código de acesso', cmdPinError:'Código incorreto',
     cmdHomeTitle:'Mesas ativas', cmdHomeEmpty:'Sem mesas abertas',
     cmdNewMesaBtn:'+ Nova mesa',
@@ -5907,7 +5911,12 @@ function comandaNewMesaPress(key){
   if (key === 'del')      COMANDA_NEW_MESA_BUF = COMANDA_NEW_MESA_BUF.slice(0,-1);
   else if (key === 'clr') COMANDA_NEW_MESA_BUF = '';
   else if (COMANDA_NEW_MESA_BUF.length < 4) COMANDA_NEW_MESA_BUF += key;
-  comandaRender();
+  // Patch in place para que el numpad se sienta instantáneo (sin re-render).
+  const buf  = COMANDA_NEW_MESA_BUF;
+  const disp = document.getElementById('cmd-new-display');
+  if (disp){ disp.textContent = buf || t('cmdMesaNumLabel'); disp.classList.toggle('empty', !buf); }
+  const okBtn = document.getElementById('cmd-new-confirm');
+  if (okBtn) okBtn.disabled = !buf;
 }
 function comandaNewMesaDinerStep(delta){
   COMANDA_NEW_DINERS = Math.max(1, Math.min(20, COMANDA_NEW_DINERS + delta));
@@ -6719,7 +6728,7 @@ function comandaRenderNew(root){
     <div class="cmd-new-title">${t('cmdNewMesaTitle')}</div>
     <div class="cmd-new-section">
       <span class="cmd-new-label">${t('cmdMesaNumLabel')}</span>
-      <div class="cmd-new-mesa-display ${dispClass}">${dispMesa}</div>
+      <div class="cmd-new-mesa-display ${dispClass}" id="cmd-new-display">${dispMesa}</div>
       <div class="cmd-numpad" style="max-width:240px;margin:0 auto">
         <div class="cmd-numpad-grid">
           ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="cmd-numpad-key" onclick="comandaNewMesaPress('${n}')">${n}</button>`).join('')}
@@ -6739,7 +6748,7 @@ function comandaRenderNew(root){
     </div>
     <div class="cmd-form-actions">
       <button class="cmd-btn" onclick="comandaBackToHome()">${t('cmdBack')}</button>
-      <button class="cmd-btn primary" onclick="comandaCreateMesa()" ${buf?'':'disabled'}>${t('cmdContinue')}</button>
+      <button class="cmd-btn primary" id="cmd-new-confirm" onclick="comandaCreateMesa()" ${buf?'':'disabled'}>${t('cmdContinue')}</button>
     </div>`;
 }
 
@@ -6815,7 +6824,7 @@ function comandaRenderActive(root){
             const otherCls = it.note ? ' cmd-item-other' : '';
             return `<button class="cmd-item-btn${otherCls}" onclick="${fn}('${activeSrc.key}', ${it.sourceId?`'${it.sourceId}'`:'null'}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${allergensJson}"><span class="cmd-item-name">${it.name}</span></button>`;
           }).join('');
-          return `<div class="cmd-cat-group">${gName}</div>${itemsHtml}`;
+          return `<div class="cmd-cat-group">${gName}</div><div class="cmd-cat-grid">${itemsHtml}</div>`;
         }).join('');
         catalogHtml = `<div class="cmd-cat-panel">${groupHtml || `<div class="cmd-empty-state">—</div>`}</div>`;
       } catch(e){
@@ -6938,7 +6947,7 @@ function comandaRenderChangeMesaModal(){
         <div class="cmd-modal-title">${t('cmdChangeMesaTitle')}</div>
         <div class="cmd-new-section">
           <span class="cmd-new-label">${t('cmdMesaPrefix')} ${c.mesa} →</span>
-          <div class="cmd-new-mesa-display ${dispClass}">${dispMesa}</div>
+          <div class="cmd-new-mesa-display ${dispClass}" id="cmd-change-display">${dispMesa}</div>
           <div class="cmd-numpad" style="max-width:240px;margin:0 auto">
             <div class="cmd-numpad-grid">
               ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="cmd-numpad-key" onclick="comandaChangeMesaPress('${n}')">${n}</button>`).join('')}
@@ -6947,11 +6956,11 @@ function comandaRenderChangeMesaModal(){
               <button class="cmd-numpad-key cmd-nk-del" onclick="comandaChangeMesaPress('clr')">✕</button>
             </div>
           </div>
-          <div class="cmd-change-err">${errMsg}</div>
+          <div class="cmd-change-err" id="cmd-change-err">${errMsg}</div>
         </div>
         <div class="cmd-modal-actions">
           <button class="cmd-btn" onclick="comandaChangeMesaCancel()">${t('cmdBack')}</button>
-          <button class="cmd-btn primary" onclick="comandaChangeMesaConfirm()" ${buf && buf !== c.mesa ? '' : 'disabled'}>${t('cmdContinue')}</button>
+          <button class="cmd-btn primary" id="cmd-change-confirm" onclick="comandaChangeMesaConfirm()" ${buf && buf !== c.mesa ? '' : 'disabled'}>${t('cmdContinue')}</button>
         </div>
       </div>
     </div>`;
@@ -6974,7 +6983,17 @@ function comandaChangeMesaPress(key){
   else if (key === 'clr') COMANDA_CHANGE_MESA_BUF = '';
   else if (COMANDA_CHANGE_MESA_BUF.length < 4) COMANDA_CHANGE_MESA_BUF += key;
   COMANDA_CHANGE_MESA_ERR = '';
-  comandaRender();
+  // Patch in place — un comandaRender() completo por cada dígito reconstruía
+  // toda la vista activa (catálogo incluido) y producía el stutter. Acá solo
+  // tocamos el display, el error y el botón Continuar.
+  const c   = COMANDA_ACTIVE_DATA;
+  const buf = COMANDA_CHANGE_MESA_BUF;
+  const disp = document.getElementById('cmd-change-display');
+  if (disp){ disp.textContent = buf || '—'; disp.classList.toggle('empty', !buf); }
+  const errEl = document.getElementById('cmd-change-err');
+  if (errEl) errEl.textContent = '';
+  const okBtn = document.getElementById('cmd-change-confirm');
+  if (okBtn) okBtn.disabled = !(buf && c && buf !== c.mesa);
 }
 async function comandaChangeMesaConfirm(){
   if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_ID) return;
