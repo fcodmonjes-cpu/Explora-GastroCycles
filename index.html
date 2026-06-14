@@ -169,6 +169,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Home view — list of open mesas */
 .cmd-home-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:1rem; }
 .cmd-home-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); }
+.cmd-home-sub { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); margin-top:2px; }
 .cmd-exit-btn { background:transparent; border:none; color:var(--text-tertiary); font-size:11px; text-decoration:underline; cursor:pointer; padding:0; }
 .cmd-mesa-card { display:flex; gap:14px; align-items:center; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:8px; cursor:pointer; transition:border-color .15s, background .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
 .cmd-mesa-card:hover { background:var(--bg-secondary); border-color:var(--gold); }
@@ -285,6 +286,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-full-diner { margin-bottom:1.1rem; padding-bottom:0.85rem; border-bottom:0.5px solid var(--border); }
 .cmd-full-diner:last-of-type { border-bottom:none; }
 .cmd-full-diner-head { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#9ec9ff; margin-bottom:7px; }
+/* Comanda completa — toggle Resumen / Por comensal */
+.cmd-full-toggle { display:flex; gap:6px; margin-bottom:1rem; }
+.cmd-full-tab { flex:1; padding:7px 10px; border-radius:8px; background:transparent; border:0.5px solid var(--border); color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:background .15s, color .15s, border-color .15s; -webkit-tap-highlight-color:transparent; }
+.cmd-full-tab.active { background:rgba(202,138,4,0.12); border-color:rgba(202,138,4,0.5); color:var(--gold); }
+/* Comanda completa — vista Resumen (conteo por producto) */
+.cmd-tally-total { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); text-align:right; margin-bottom:6px; }
+.cmd-tally-block { margin-bottom:0.9rem; }
+.cmd-tally-row { display:flex; align-items:baseline; gap:14px; padding:8px 4px; border-bottom:0.5px solid rgba(255,255,255,0.045); }
+.cmd-tally-row:last-child { border-bottom:none; }
+.cmd-tally-qty { flex:0 0 auto; min-width:44px; text-align:right; font-family:'Courier Prime','Courier New',monospace; font-size:21px; font-weight:700; color:var(--gold); line-height:1; }
+.cmd-tally-qty small { font-size:12px; font-weight:400; opacity:0.6; margin-left:1px; }
+.cmd-tally-name { flex:1; font-size:15px; color:var(--text); line-height:1.25; }
+/* Comodín "Otra/Otro" — se lee distinto del resto del catálogo */
+.cmd-item-other { color:var(--text-tertiary); font-style:italic; }
+.cmd-item-other .cmd-item-name::before { content:'✎ '; font-style:normal; opacity:0.7; }
 
 /* ── Rol module (weekly shift schedule) ──────────────────────────────── */
 .rol-root {
@@ -1361,7 +1377,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
     <button class="tab" onclick="setTab('vinos',this)">Vinos</button>
     <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
-    <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">E-Check</button>
+    <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">Comandera</button>
     <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol">Rol</button>
   </div>
 
@@ -1645,6 +1661,7 @@ let COMANDA_NEW_MESA_BUF    = '';
 let COMANDA_NEW_DINERS      = 2;
 let COMANDA_NOTE_EDIT_ID    = null;     // item id whose note dialog is open
 let COMANDA_FULL_OPEN       = false;    // "ver comanda completa" modal
+let COMANDA_FULL_MODE       = 'resumen';// 'resumen' (conteo por producto) | 'comensal'
 let COMANDA_CHANGE_MESA_OPEN= false;    // "cambiar n° de mesa" modal flag
 let COMANDA_CHANGE_MESA_BUF = '';       // numpad buffer for new table #
 let COMANDA_CHANGE_MESA_ERR = '';       // 'taken' when collision detected
@@ -1999,7 +2016,7 @@ const UI = {
     rolUpdatedMinutes:'actualizado hace minutos',
     rolUpdatedHours:'actualizado hace {n} h',
     rolUpdatedOn:'actualizado el {date}',
-    tabComandera:'E-Check',
+    tabComandera:'Comandera',
     cmdPinTitle:'Comandera', cmdPinSub:'Código de acceso', cmdPinError:'Código incorrecto',
     cmdHomeTitle:'Mesas activas', cmdHomeEmpty:'No hay mesas abiertas',
     cmdNewMesaBtn:'+ Nueva mesa',
@@ -2132,7 +2149,7 @@ const UI = {
     rolUpdatedMinutes:'updated minutes ago',
     rolUpdatedHours:'updated {n} h ago',
     rolUpdatedOn:'updated on {date}',
-    tabComandera:'E-Check',
+    tabComandera:'Comandera',
     cmdPinTitle:'Order pad', cmdPinSub:'Access code', cmdPinError:'Wrong code',
     cmdHomeTitle:'Active tables', cmdHomeEmpty:'No tables open',
     cmdNewMesaBtn:'+ New table',
@@ -2265,7 +2282,7 @@ const UI = {
     rolUpdatedMinutes:'atualizado há minutos',
     rolUpdatedHours:'atualizado há {n} h',
     rolUpdatedOn:'atualizado em {date}',
-    tabComandera:'E-Check',
+    tabComandera:'Comandera',
     cmdPinTitle:'Comanda', cmdPinSub:'Código de acesso', cmdPinError:'Código incorreto',
     cmdHomeTitle:'Mesas ativas', cmdHomeEmpty:'Sem mesas abertas',
     cmdNewMesaBtn:'+ Nova mesa',
@@ -5411,6 +5428,65 @@ function cfMarkDone(id){
 // Adding a new product family later (juices, empanadas) is two lines:
 //   1. Add the data array (e.g., const JUICES = [...])
 //   2. Push an entry here with a resolver
+// ── Catálogos de bar para el E-Check ──────────────────────────────────────
+// Marcas con sub-productos (Coca-Cola, Austral, Tropera, Twinings…): el campo
+// `group` actúa como ENCABEZADO de marca dentro de la categoría, así todo
+// queda visible de un vistazo — acceso rápido, cero sub-menús que pinchar.
+// Un item con `note:true` es el comodín "Otra/Otro": al tocarlo agrega la
+// línea y abre de inmediato la nota para anotar el detalle en los comentarios.
+// Para sumar productos a futuro: agregar una línea más al array que toque.
+const COMANDA_BEBIDAS = [
+  { id:'beb-coca',     name:'Coca regular', group:'Bebidas' },
+  { id:'beb-cocalt',   name:'Coca light',   group:'Bebidas' },
+  { id:'beb-cocazero', name:'Coca zero',    group:'Bebidas' },
+  { id:'beb-ginbeer',  name:'Ginger beer',  group:'Bebidas' },
+  { id:'beb-tonica',   name:'Agua tónica',  group:'Bebidas' },
+  { id:'beb-fanta',    name:'Fanta',        group:'Bebidas' },
+  { id:'beb-sprite',   name:'Sprite',       group:'Bebidas' },
+  { id:'beb-spritez',  name:'Sprite zero',  group:'Bebidas' },
+  { id:'beb-ginale',   name:'Ginger ale',   group:'Bebidas' },
+  { id:'beb-otra',     name:'Otra',         group:'Bebidas', note:true }
+];
+const COMANDA_JUGOS = [
+  { id:'jugo-chirimoya',  name:'Chirimoya',           group:'Jugos naturales' },
+  { id:'jugo-mango',      name:'Mango',               group:'Jugos naturales' },
+  { id:'jugo-maracuya',   name:'Maracuyá',            group:'Jugos naturales' },
+  { id:'jugo-frutilla',   name:'Frutilla',            group:'Jugos naturales' },
+  { id:'jugo-frambuesa',  name:'Frambuesa',           group:'Jugos naturales' },
+  { id:'jugo-pina',       name:'Piña',                group:'Jugos naturales' },
+  { id:'jugo-limonada',   name:'Limonada',            group:'Jugos naturales' },
+  { id:'jugo-limmenta',   name:'Limonada menta',      group:'Jugos naturales' },
+  { id:'jugo-limmentajen',name:'Limonada menta-jengibre', group:'Jugos naturales' },
+  { id:'jugo-otro',       name:'Otro',                group:'Jugos naturales', note:true }
+];
+const COMANDA_CERVEZAS = [
+  { id:'cerv-austral-lager',    name:'Austral Lager',     group:'Austral' },
+  { id:'cerv-austral-calafate', name:'Calafate',          group:'Austral' },
+  { id:'cerv-tropera-strong',   name:'Strong Ale',        group:'Tropera' },
+  { id:'cerv-tropera-blonde',   name:'Blonde Ale',        group:'Tropera' },
+  { id:'cerv-otra',             name:'Otra',              group:'Otras', note:true }
+];
+// Té & infusiones. Twinings es una marca con muchas variedades; las
+// infusiones naturales van en su propio bloque. El café (espresso & co.)
+// se toma directo del manual de la Tab Café — lo que esté ahí aparece aquí.
+const COMANDA_TES_TWININGS = [
+  { id:'te-tw-breakfast', name:'English Breakfast', group:'Té · Twinings' },
+  { id:'te-tw-earlgrey',  name:'Earl Grey',         group:'Té · Twinings' },
+  { id:'te-tw-chai',      name:'Indian Chai',       group:'Té · Twinings' },
+  { id:'te-tw-ceylan',    name:'Ceylan Tea',        group:'Té · Twinings' },
+  { id:'te-tw-rojos',     name:'Frutos Rojos',      group:'Té · Twinings' },
+  { id:'te-tw-naranja',   name:'Naranja y Canela',  group:'Té · Twinings' }
+];
+const COMANDA_INFUSIONES = [
+  { id:'inf-manzanilla', name:'Manzanilla',  group:'Infusiones naturales' },
+  { id:'inf-melisa',     name:'Melisa',      group:'Infusiones naturales' },
+  { id:'inf-cedron',     name:'Cedrón',      group:'Infusiones naturales' },
+  { id:'inf-digestivo',  name:'Digestivo (manzanilla, menta y caléndula)', group:'Infusiones naturales' },
+  { id:'inf-menta',      name:'Menta',       group:'Infusiones naturales' },
+  { id:'inf-ricarica',   name:'Rica Rica',   group:'Infusiones naturales' },
+  { id:'inf-coca',       name:'Hoja de coca',group:'Infusiones naturales' }
+];
+
 const COMANDA_SOURCES = [
   {
     key: 'dishes', labelKey: 'cmdSourceDishes', icon: '🍽',
@@ -5449,6 +5525,10 @@ const COMANDA_SOURCES = [
           { sourceId:'gen-fruta',  name:'Fruta del día', group:'Postre', allergens:[] }
         );
       }
+      // Comodín "Special Request" — siempre disponible (incluso fuera de
+      // horario de servicio): agrega la línea y abre la nota para detallar
+      // peticiones fuera del menú.
+      list.push({ sourceId:'plato-special', name:'Special Request', group:'Pedido especial', note:true, allergens:[] });
       return list;
     }
   },
@@ -5470,6 +5550,35 @@ const COMANDA_SOURCES = [
       ...MOCKTAILS.map(c => ({ sourceId: c.name, name: c.name, group: 'Mocktails', allergens: [] })),
       ...COCKTAILS.map(c => ({ sourceId: c.name, name: c.name, group: 'Cocktails', allergens: [] }))
     ]
+  },
+  {
+    key: 'drinks', label: 'Jugos & Bebidas', icon: '🥤',
+    items: () => [...COMANDA_BEBIDAS, ...COMANDA_JUGOS].map(b => ({
+      sourceId: b.id, name: b.name, group: b.group, note: !!b.note, allergens: []
+    }))
+  },
+  {
+    key: 'beers', label: 'Cervezas', icon: '🍺',
+    items: () => COMANDA_CERVEZAS.map(b => ({
+      sourceId: b.id, name: b.name, group: b.group, note: !!b.note, allergens: []
+    }))
+  },
+  {
+    key: 'coffee', label: 'Café', icon: '☕',
+    items: () => {
+      // El café se nutre del manual de la Tab Café (lo que esté ahí, aparece
+      // aquí). Luego el comodín "Otro" y los bloques de té & infusiones.
+      const cd = (typeof COFFEE_DATA !== 'undefined') ? (COFFEE_DATA[currentLang] || COFFEE_DATA.es) : null;
+      const cafes = (cd && cd.drinks ? cd.drinks : []).map((d, i) => ({
+        sourceId: 'cafe-' + i, name: d.name, group: 'Café', allergens: []
+      }));
+      cafes.push({ sourceId:'cafe-otro', name:'Otro', group:'Café', note:true, allergens:[] });
+      return [
+        ...cafes,
+        ...COMANDA_TES_TWININGS.map(x => ({ sourceId:x.id, name:x.name, group:x.group, allergens:[] })),
+        ...COMANDA_INFUSIONES.map(x => ({ sourceId:x.id, name:x.name, group:x.group, allergens:[] }))
+      ];
+    }
   },
   {
     key: 'custom', labelKey: 'cmdSourceCustom', icon: '✎',
@@ -5876,15 +5985,21 @@ function comandaGroupOf(it){
   if (it.source === 'dishes') return it.group || '';
   if (it.source === 'wines')  return 'Vinos';
   if (it.source === 'cocktails' || it.source === 'mocktails') return 'Bebidas';
+  if (it.source === 'drinks') return 'Jugos & Bebidas';
+  if (it.source === 'beers')  return 'Cervezas';
+  if (it.source === 'coffee') return 'Café & Té';
   return 'Otros';
 }
 function comandaGroupRank(group){
   const idx = COMANDA_SERVICE_ORDER.indexOf(group);
   if (idx >= 0) return idx;
   // Drinks and others come after dishes
-  if (group === 'Vinos')   return 10;
-  if (group === 'Bebidas') return 11;
-  return 12;
+  if (group === 'Vinos')           return 10;
+  if (group === 'Bebidas')         return 11;
+  if (group === 'Jugos & Bebidas') return 12;
+  if (group === 'Cervezas')        return 13;
+  if (group === 'Café & Té')       return 14;
+  return 15;
 }
 
 function comandaAddItem(source, sourceId, name, allergens, group){
@@ -5929,6 +6044,12 @@ function comandaAddItem(source, sourceId, name, allergens, group){
   // lose data.
   comandaRender();
   comandaPersist({ items });
+  return item;
+}
+// Comodín "Otra/Otro": agrega el item y abre su nota para anotar el detalle.
+function comandaAddItemNote(source, sourceId, name, allergens, group){
+  const item = comandaAddItem(source, sourceId, name, allergens, group);
+  if (item) comandaOpenNote(item.id);
 }
 function comandaRemoveItem(itemId){
   if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
@@ -6092,6 +6213,29 @@ function comandaHasActiveInput(){
 // --- Full-view modal -------------------------------------------------------
 function comandaShowFullView(){ COMANDA_FULL_OPEN = true;  comandaRender(); }
 function comandaHideFullView(){ COMANDA_FULL_OPEN = false; comandaRender(); }
+function comandaSetFullMode(mode){ COMANDA_FULL_MODE = mode; comandaRender(); }
+
+// Conteo agregado de toda la mesa: junta los items (no cancelados) por
+// producto sumando cantidades, y los ordena por bloque de servicio. Devuelve
+// [ [grupo, [{name, qty}, …]], … ] listo para una vista "¿cuántos de cada uno?".
+function comandaTally(items){
+  const rows = new Map(); // clave: grupo \0 nombre
+  (items || []).forEach(it => {
+    if (it.status === 'cancelled') return;
+    const grp = comandaGroupOf(it) || 'Otros';
+    const key = grp + '\u0000' + it.name;
+    if (!rows.has(key)) rows.set(key, { group: grp, name: it.name, qty: 0 });
+    rows.get(key).qty += (it.qty || 1);
+  });
+  const groups = new Map();
+  rows.forEach(r => {
+    if (!groups.has(r.group)) groups.set(r.group, []);
+    groups.get(r.group).push(r);
+  });
+  const ordered = [...groups.entries()].sort((a,b) => comandaGroupRank(a[0]) - comandaGroupRank(b[0]));
+  ordered.forEach(([, list]) => list.sort((a,b) => b.qty - a.qty || a.name.localeCompare(b.name)));
+  return ordered;
+}
 
 // --- History modal (tap a closed mesa to review or reopen) ----------------
 function comandaShowHistoryItem(id){
@@ -6492,7 +6636,10 @@ function comandaRenderHome(root){
 
   root.innerHTML = `
     <div class="cmd-home-header">
-      <div class="cmd-home-title">${t('cmdHomeTitle')}</div>
+      <div>
+        <div class="cmd-home-title">Comandera Smart</div>
+        <div class="cmd-home-sub">${t('cmdHomeTitle')}</div>
+      </div>
     </div>
     ${activeCards}
     <button class="cmd-btn primary" style="width:100%;margin-top:1rem" onclick="comandaShowNewMesa()">${t('cmdNewMesaBtn')}</button>
@@ -6625,7 +6772,7 @@ function comandaRenderActive(root){
   // Category buttons
   const catBtns = COMANDA_SOURCES.map(src => {
     const cls = (src.key === COMANDA_ACTIVE_CATEGORY) ? 'active' : '';
-    return `<button class="cmd-cat-btn ${cls}" onclick="comandaSetCategory('${src.key}')">${src.icon} ${t(src.labelKey)}</button>`;
+    return `<button class="cmd-cat-btn ${cls}" onclick="comandaSetCategory('${src.key}')">${src.icon} ${src.label || t(src.labelKey)}</button>`;
   }).join('');
 
   // Catalog panel content
@@ -6663,7 +6810,10 @@ function comandaRenderActive(root){
             const safeGroup = String(it.group||'').replace(/'/g,'\\\'').replace(/"/g,'&quot;');
             // Allergens preserved in data model for future use, but not rendered.
             const allergensJson = JSON.stringify(it.allergens||[]).replace(/"/g,'&quot;');
-            return `<button class="cmd-item-btn" onclick="comandaAddItem('${activeSrc.key}', ${it.sourceId?`'${it.sourceId}'`:'null'}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${allergensJson}"><span class="cmd-item-name">${it.name}</span></button>`;
+            // Comodín "Otra/Otro": agrega la línea y abre la nota para el detalle.
+            const fn = it.note ? 'comandaAddItemNote' : 'comandaAddItem';
+            const otherCls = it.note ? ' cmd-item-other' : '';
+            return `<button class="cmd-item-btn${otherCls}" onclick="${fn}('${activeSrc.key}', ${it.sourceId?`'${it.sourceId}'`:'null'}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${allergensJson}"><span class="cmd-item-name">${it.name}</span></button>`;
           }).join('');
           return `<div class="cmd-cat-group">${gName}</div>${itemsHtml}`;
         }).join('');
@@ -6876,11 +7026,24 @@ function comandaRenderNoteModal(){
     </div>`;
 }
 
-function comandaRenderFullModal(){
-  const c = COMANDA_ACTIVE_DATA;
-  if (!c) return '';
-  const items = c.items || [];
-  const diners = c.diners || 1;
+// Vista "Resumen": conteo agregado de toda la mesa por producto. Responde de
+// un vistazo "¿cuántos ceviches?, ¿cuántas copas de vino?" sin leer comensal
+// por comensal. Ordenado por bloque de servicio, mayor cantidad arriba.
+function comandaRenderFullResumen(items){
+  const tally = comandaTally(items);
+  if (!tally.length) return `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
+  const total = tally.reduce((s,[,rows]) => s + rows.reduce((a,r)=>a+r.qty,0), 0);
+  const blocks = tally.map(([grp, rows]) => {
+    const rowsHtml = rows.map(r =>
+      `<div class="cmd-tally-row"><span class="cmd-tally-qty">${r.qty}<small>×</small></span><span class="cmd-tally-name">${r.name}</span></div>`
+    ).join('');
+    return `<div class="cmd-tally-block"><div class="cmd-course-divider"><span>${grp}</span></div>${rowsHtml}</div>`;
+  }).join('');
+  return `<div class="cmd-tally-total">${total} ${total===1?'producto':'productos'} en la mesa</div>${blocks}`;
+}
+
+// Vista "Por comensal": el desglose clásico, persona por persona y por envío.
+function comandaRenderFullByDiner(items, diners){
   const sections = [];
   for (let n = 1; n <= diners; n++){
     const its = items.filter(it => it.dinerN === n);
@@ -6911,11 +7074,27 @@ function comandaRenderFullModal(){
     }
     sections.push(`<div class="cmd-full-diner"><div class="cmd-full-diner-head">#${n}</div>${lines}</div>`);
   }
+  return sections.join('');
+}
+
+function comandaRenderFullModal(){
+  const c = COMANDA_ACTIVE_DATA;
+  if (!c) return '';
+  const items = c.items || [];
+  const diners = c.diners || 1;
+  const isResumen = COMANDA_FULL_MODE !== 'comensal';
+  const body = isResumen
+    ? comandaRenderFullResumen(items)
+    : comandaRenderFullByDiner(items, diners);
   return `
     <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaHideFullView()">
       <div class="cmd-modal-panel">
         <div class="cmd-modal-title">${t('cmdFullViewTitle')} · ${t('cmdMesaPrefix')} ${c.mesa}</div>
-        ${sections.join('')}
+        <div class="cmd-full-toggle">
+          <button class="cmd-full-tab ${isResumen?'active':''}" onclick="comandaSetFullMode('resumen')">Resumen</button>
+          <button class="cmd-full-tab ${!isResumen?'active':''}" onclick="comandaSetFullMode('comensal')">Por comensal</button>
+        </div>
+        ${body}
         <div class="cmd-modal-actions">
           <button class="cmd-btn primary" onclick="comandaHideFullView()">OK</button>
         </div>
