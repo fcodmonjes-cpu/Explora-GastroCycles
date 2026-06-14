@@ -5498,6 +5498,20 @@ const COMANDA_INFUSIONES = [
   { id:'inf-boldo',      name:'Boldo',       group:'Infusiones naturales' },
   { id:'inf-coca',       name:'Hoja de coca',group:'Infusiones naturales' }
 ];
+// Snack Bar — en construcción, se irá completando estos días. Marcas/tipos con
+// variantes (Pizza, Empanadas) van agrupados; agregar más es una línea acá.
+const COMANDA_SNACKS = [
+  { id:'snk-pizza-margarita', name:'Margarita',         group:'Pizza' },
+  { id:'snk-pizza-pepperoni', name:'Pepperoni',         group:'Pizza' },
+  { id:'snk-emp-carnequeso',  name:'Carne-queso',       group:'Empanadas' },
+  { id:'snk-emp-champqueso',  name:'Champiñón-queso',   group:'Empanadas' },
+  { id:'snk-emp-queso',       name:'Queso',             group:'Empanadas' },
+  { id:'snk-burger-signature',name:'Burger Signature',  group:'Hamburguesas' },
+  { id:'snk-burger-cheese',   name:'Cheeseburger',      group:'Hamburguesas' },
+  { id:'snk-burger-veggie',   name:'Burger Vegetariana',group:'Hamburguesas' },
+  { id:'snk-ensalada-bar',    name:'Ensalada Bar',      group:'Ensaladas' },
+  { id:'snk-otro',            name:'Otro',              group:'Otros', note:true }
+];
 
 const COMANDA_SOURCES = [
   {
@@ -5537,30 +5551,39 @@ const COMANDA_SOURCES = [
           { sourceId:'gen-fruta',  name:'Fruta del día', group:'Postre', allergens:[] }
         );
       }
-      // Comodín "Special Request" — siempre disponible (incluso fuera de
-      // horario de servicio): agrega la línea y abre la nota para detallar
-      // peticiones fuera del menú.
-      list.push({ sourceId:'plato-special', name:'Special Request', group:'Pedido especial', note:true, allergens:[] });
+      // Comodín "Special Request" por tiempo — siempre disponible (incluso
+      // fuera de horario de servicio). Cada uno se agrupa con su curso, así el
+      // pedido fuera de menú cae en el lugar correcto (Entrada/Principal/Postre)
+      // tanto en el catálogo como en el desglose de la comanda.
+      list.push(
+        { sourceId:'plato-special-ent', name:'Special Request', group:'Entrada',        note:true, allergens:[] },
+        { sourceId:'plato-special-pri', name:'Special Request', group:'Plato principal', note:true, allergens:[] },
+        { sourceId:'plato-special-pos', name:'Special Request', group:'Postre',          note:true, allergens:[] }
+      );
       return list;
     }
   },
   {
     key: 'wines', labelKey: 'cmdSourceWines', icon: '🍷',
-    items: () => WINES.map(w => ({
-      sourceId: w.id, name: w.name,
-      group: (function(){
-        const ti = (w.type || '').toLowerCase();
-        const map = { espumante:'lbl_espumante', blanco:'lbl_blanco', rosado:'lbl_rosado', tinto:'lbl_tinto', dulce:'lbl_dulce', premium:'lbl_premium' };
-        return map[ti] ? t(map[ti]) : (w.type || '—');
-      })(),
-      allergens: []
-    }))
+    items: () => [
+      ...WINES.map(w => ({
+        sourceId: w.id, name: w.name,
+        group: (function(){
+          const ti = (w.type || '').toLowerCase();
+          const map = { espumante:'lbl_espumante', blanco:'lbl_blanco', rosado:'lbl_rosado', tinto:'lbl_tinto', dulce:'lbl_dulce', premium:'lbl_premium' };
+          return map[ti] ? t(map[ti]) : (w.type || '—');
+        })(),
+        allergens: []
+      })),
+      { sourceId:'wine-otro', name:'Otro', group:'Otros', note:true, allergens:[] }
+    ]
   },
   {
     key: 'cocktails', labelKey: 'cmdSourceCocktails', icon: '🍸',
     items: () => [
       ...MOCKTAILS.map(c => ({ sourceId: c.name, name: c.name, group: 'Mocktails', allergens: [] })),
-      ...COCKTAILS.map(c => ({ sourceId: c.name, name: c.name, group: 'Cocktails', allergens: [] }))
+      ...COCKTAILS.map(c => ({ sourceId: c.name, name: c.name, group: 'Cocktails', allergens: [] })),
+      { sourceId:'cocktail-otro', name:'Otro', group:'Otros', note:true, allergens:[] }
     ]
   },
   {
@@ -5591,6 +5614,12 @@ const COMANDA_SOURCES = [
         ...COMANDA_INFUSIONES.map(x => ({ sourceId:x.id, name:x.name, group:x.group, allergens:[] }))
       ];
     }
+  },
+  {
+    key: 'snacks', label: 'Snack Bar', icon: '🍕',
+    items: () => COMANDA_SNACKS.map(s => ({
+      sourceId: s.id, name: s.name, group: s.group, note: !!s.note, allergens: []
+    }))
   },
   {
     key: 'custom', labelKey: 'cmdSourceCustom', icon: '✎',
@@ -6002,6 +6031,7 @@ function comandaGroupOf(it){
   if (it.source === 'dishes') return it.group || '';
   if (it.source === 'wines')  return 'Vinos';
   if (it.source === 'cocktails' || it.source === 'mocktails') return 'Bebidas';
+  if (it.source === 'snacks') return 'Snack Bar';
   if (it.source === 'drinks') return 'Jugos & Bebidas';
   if (it.source === 'beers')  return 'Cervezas';
   if (it.source === 'coffee') return 'Café & Té';
@@ -6010,7 +6040,8 @@ function comandaGroupOf(it){
 function comandaGroupRank(group){
   const idx = COMANDA_SERVICE_ORDER.indexOf(group);
   if (idx >= 0) return idx;
-  // Drinks and others come after dishes
+  // Snacks (comida) después de los cursos del menú; bebidas al final.
+  if (group === 'Snack Bar')       return 5;
   if (group === 'Vinos')           return 10;
   if (group === 'Bebidas')         return 11;
   if (group === 'Jugos & Bebidas') return 12;
