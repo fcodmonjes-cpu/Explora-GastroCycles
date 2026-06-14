@@ -20,6 +20,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,700&display=swap" rel="stylesheet">
+<!-- Caveat — manuscrita recatada para acentos tipo "invitación escrita a mano"
+     (subtítulo de la Comandera). Cuaderno cuidado, no marketing. -->
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&display=swap" rel="stylesheet">
 <!-- Vercel Analytics -->
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
@@ -169,7 +172,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Home view — list of open mesas */
 .cmd-home-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:1rem; }
 .cmd-home-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); }
-.cmd-home-sub { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); margin-top:2px; }
+/* Firma manuscrita "Comande Smart" — invitación recatada, escrita a mano */
+.cmd-home-script { font-family:'Caveat',cursive; font-size:22px; font-weight:500; line-height:1; color:var(--text-secondary); opacity:0.92; margin-bottom:1px; }
 .cmd-exit-btn { background:transparent; border:none; color:var(--text-tertiary); font-size:11px; text-decoration:underline; cursor:pointer; padding:0; }
 .cmd-mesa-card { display:flex; gap:14px; align-items:center; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:8px; cursor:pointer; transition:border-color .15s, background .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
 .cmd-mesa-card:hover { background:var(--bg-secondary); border-color:var(--gold); }
@@ -229,10 +233,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-adding-to strong { color:#9ec9ff; font-weight:500; }
 
 /* Category tabs */
-.cmd-cats { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:0.85rem; }
-.cmd-cat-btn { background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:7px 12px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
-.cmd-cat-btn:hover { color:var(--text-secondary); }
-.cmd-cat-btn.active { background:var(--wine-red); border-color:var(--wine-red); color:white; }
+/* Tags de categoría: grilla uniforme (columnas iguales, alineadas) en vez de
+   pills de ancho dispar que se veían ragueadas al envolver. */
+.cmd-cats { display:grid; grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); gap:6px; margin-bottom:0.85rem; }
+.cmd-cat-btn { display:flex; align-items:center; justify-content:center; gap:7px; min-height:46px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:9px 10px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; transition:background .15s, border-color .15s, color .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cmd-cat-btn:hover { color:var(--text-secondary); border-color:rgba(186,117,23,0.4); }
+.cmd-cat-btn.active { background:rgba(186,117,23,0.16); border-color:var(--gold); color:var(--gold); box-shadow:0 0 0 1px rgba(186,117,23,0.35); }
 
 /* Item catalog */
 .cmd-cat-panel { background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:6px 10px 10px; margin-bottom:1rem; max-height:50vh; overflow-y:auto; }
@@ -1664,6 +1670,7 @@ let COMANDA_ACTIVE_CATEGORY = 'dishes';
 let COMANDA_NEW_MESA_BUF    = '';
 let COMANDA_NEW_DINERS      = 2;
 let COMANDA_NOTE_EDIT_ID    = null;     // item id whose note dialog is open
+let COMANDA_NOTE_PENDING_ID = null;     // comodín recién agregado, sin confirmar: cancelar lo descarta
 let COMANDA_FULL_OPEN       = false;    // "ver comanda completa" modal
 let COMANDA_FULL_MODE       = 'resumen';// 'resumen' (conteo por producto) | 'comensal'
 let COMANDA_CHANGE_MESA_OPEN= false;    // "cambiar n° de mesa" modal flag
@@ -5488,6 +5495,7 @@ const COMANDA_INFUSIONES = [
   { id:'inf-digestivo',  name:'Digestivo (manzanilla, menta y caléndula)', group:'Infusiones naturales' },
   { id:'inf-menta',      name:'Menta',       group:'Infusiones naturales' },
   { id:'inf-ricarica',   name:'Rica Rica',   group:'Infusiones naturales' },
+  { id:'inf-boldo',      name:'Boldo',       group:'Infusiones naturales' },
   { id:'inf-coca',       name:'Hoja de coca',group:'Infusiones naturales' }
 ];
 
@@ -5568,7 +5576,7 @@ const COMANDA_SOURCES = [
     }))
   },
   {
-    key: 'coffee', label: 'Café', icon: '☕',
+    key: 'coffee', label: 'Café & Té', icon: '☕',
     items: () => {
       // El café se nutre del manual de la Tab Café (lo que esté ahí, aparece
       // aquí). Luego el comodín "Otro" y los bloques de té & infusiones.
@@ -6056,9 +6064,15 @@ function comandaAddItem(source, sourceId, name, allergens, group){
   return item;
 }
 // Comodín "Otra/Otro": agrega el item y abre su nota para anotar el detalle.
+// Queda PROVISIONAL hasta "Guardar" — si el usuario cancela (o toca fuera), se
+// descarta. Así "Guardar" es el único botón que graba el pedido (evita
+// accidentes sin agregar fricción).
 function comandaAddItemNote(source, sourceId, name, allergens, group){
   const item = comandaAddItem(source, sourceId, name, allergens, group);
-  if (item) comandaOpenNote(item.id);
+  if (item){
+    COMANDA_NOTE_PENDING_ID = item.id;
+    comandaOpenNote(item.id);
+  }
 }
 function comandaRemoveItem(itemId){
   if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
@@ -6182,13 +6196,26 @@ function comandaOpenNote(itemId){
   setTimeout(()=>{ const ta = document.getElementById('cmd-note-input'); if (ta) ta.focus(); }, 50);
 }
 function comandaCloseNote(){
+  // Si la nota era de un comodín recién agregado y no se confirmó, se descarta
+  // el item — cancelar nunca debe dejar un pedido grabado.
+  const pendingId = COMANDA_NOTE_PENDING_ID;
+  COMANDA_NOTE_PENDING_ID = null;
   COMANDA_NOTE_EDIT_ID = null;
+  if (pendingId && COMANDA_ACTIVE_DATA && COMANDA_ACTIVE_DATA.items){
+    // Comodín nunca confirmado → hard delete siempre (jamás soft-cancel, no
+    // debe quedar ni una línea tachada). "Guardar" es lo único que graba.
+    COMANDA_ACTIVE_DATA.items = COMANDA_ACTIVE_DATA.items.filter(it => it.id !== pendingId);
+    comandaRender();
+    comandaPersist({ items: COMANDA_ACTIVE_DATA.items });
+    return;
+  }
   comandaRender();
 }
 function comandaSaveNote(){
   const ta = document.getElementById('cmd-note-input');
   const note = ta ? ta.value.trim() : '';
   const id = COMANDA_NOTE_EDIT_ID;
+  COMANDA_NOTE_PENDING_ID = null; // confirmado por "Guardar"
   if (id) comandaUpdateNote(id, note);
   COMANDA_NOTE_EDIT_ID = null;
   comandaRender();
@@ -6321,6 +6348,19 @@ async function comandaTimerToggle(){
   }
 }
 
+// Firma determinista de una comanda (sin id) — para detectar si un poll trae
+// un cambio real antes de re-renderizar. Orden de claves fijo: mismo contenido
+// ⇒ misma string, sin importar de dónde vino el objeto.
+function comandaDocSig(d){
+  if (!d) return '';
+  return JSON.stringify({
+    mesa: d.mesa, diners: d.diners, items: d.items || [],
+    timerStartedAt: d.timerStartedAt || 0, closedAt: d.closedAt || 0,
+    lastSentAt: d.lastSentAt || 0, recibidorSeenAt: d.recibidorSeenAt || 0,
+    mesaHistory: d.mesaHistory || []
+  });
+}
+
 // --- Polling for cross-device sync ---------------------------------------
 function comandaStartPolling(){
   comandaStopPolling();
@@ -6345,7 +6385,12 @@ function comandaStartPolling(){
       const resp = await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID));
       const data = await resp.json();
       if (!data) return;
+      // Only re-render if something actually changed in remoto. Sin esto, cada
+      // tick de sync reconstruía #cmd-root y reseteaba el scroll del catálogo
+      // al tope mientras el usuario solo estaba mirando la lista (bug visible).
+      const prevSig = comandaDocSig(COMANDA_ACTIVE_DATA);
       COMANDA_ACTIVE_DATA = { id: COMANDA_ACTIVE_ID, ...data, items: data.items || [] };
+      if (comandaDocSig(COMANDA_ACTIVE_DATA) === prevSig) return;
       // One more check before render — the user may have started typing
       // during the await window.
       if (comandaHasActiveInput()) return;
@@ -6646,8 +6691,8 @@ function comandaRenderHome(root){
   root.innerHTML = `
     <div class="cmd-home-header">
       <div>
-        <div class="cmd-home-title">Comandera Smart</div>
-        <div class="cmd-home-sub">${t('cmdHomeTitle')}</div>
+        <div class="cmd-home-script">Comande Smart</div>
+        <div class="cmd-home-title">${t('cmdHomeTitle')}</div>
       </div>
     </div>
     ${activeCards}
