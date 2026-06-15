@@ -1013,6 +1013,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    reference tabs (menu, wines, cocktails…) that it doesn't get lost in the
    row, but coherent with the program's palette (gold accent, monospace) so
    it doesn't feel pasted in. */
+/* Oculto en producción hasta que el módulo Checklist esté listo para el
+   staff. El código JS/HTML del módulo queda latente (igual que los gates
+   de Rol/E-Check): inalcanzable porque nadie puede gatillar setTab('checklist').
+   Reactivar = borrar esta única regla. */
+#tab-btn-checklist { display:none; }
+
 .checklist-feature-btn {
   display:flex; align-items:center; justify-content:center; gap:10px;
   width:100%; box-sizing:border-box;
@@ -1343,13 +1349,13 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 <div id="intro-curtain" aria-hidden="true">
   <div class="intro-mark">The <span class="ata">ATA</span> Handbook</div>
   <div class="intro-rule"></div>
-  <div class="intro-tagline">El detalle, a mano.</div>
+  <div class="intro-tagline">Detail, at hand.</div>
 </div>
 <div class="app">
   <div class="header">
     <div class="header-text">
       <h1 id="app-title">The <em class="ata-emphasis">ATA</em> Handbook</h1>
-      <p id="app-subtitle">El detalle, a mano.</p>
+      <p id="app-subtitle">Detail, at hand.</p>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
       <!-- Logo temporalmente oculto para impresión de stickers QR — restaurar
@@ -2023,7 +2029,7 @@ let _CHK_META_WRITE_QUEUE   = {};       // { 'section/phase': meta patch }
 // ── UI STRINGS ──────────────────────────────────────────────────────────────
 const UI = {
   es: {
-    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'El detalle, a mano.',
+    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'Detail, at hand.',
     tabMenus:'Menú', tabWines:'Vinos', tabGuiones:'Maridajes generales', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
     wineFilterPremium:'Vinos Premium', wineFilterPairings:'Maridajes generales',
     momentAllDay:'Todo el día', momentPreDinner:'Pre Dinner · Aperitivos', momentAfterDinner:'After Dinner', momentNotice:'Próximamente · Esta carta aún no está disponible en el bar',
@@ -2157,7 +2163,7 @@ const UI = {
     chkPinError:'Código incorrecto', chkPinClose:'Cerrar'
   },
   en: {
-    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'The detail, at hand.',
+    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'Detail, at hand.',
     tabMenus:'Menu', tabWines:'Wines', tabGuiones:'General pairings', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Coffee',
     wineFilterPremium:'Premium Wines', wineFilterPairings:'General pairings',
     momentAllDay:'All Day', momentPreDinner:'Before Dinner · Aperitifs', momentAfterDinner:'After Dinner', momentNotice:'Coming Soon · This menu is not yet available at the bar',
@@ -2291,7 +2297,7 @@ const UI = {
     chkPinError:'Wrong code', chkPinClose:'Close'
   },
   pt: {
-    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'O detalhe, à mão.',
+    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'Detail, at hand.',
     tabMenus:'Menu', tabWines:'Vinhos', tabGuiones:'Harmonizações gerais', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
     wineFilterPremium:'Vinhos Premium', wineFilterPairings:'Harmonizações gerais',
     momentAllDay:'Todo o dia', momentPreDinner:'Antes do Jantar · Aperitivos', momentAfterDinner:'Após o Jantar', momentNotice:'Em breve · Este cardápio ainda não está disponível no bar',
