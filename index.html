@@ -1013,11 +1013,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    reference tabs (menu, wines, cocktails…) that it doesn't get lost in the
    row, but coherent with the program's palette (gold accent, monospace) so
    it doesn't feel pasted in. */
-/* Oculto en producción hasta que el módulo Checklist esté listo para el
-   staff. El código JS/HTML del módulo queda latente (igual que los gates
-   de Rol/E-Check): inalcanzable porque nadie puede gatillar setTab('checklist').
-   Reactivar = borrar esta única regla. */
+/* Acceso al Checklist & Protocolos: oculto POR DEFECTO (evita cualquier
+   flash en producción) y revelado solo en hosts de desarrollo —staging,
+   previews de Vercel y local— vía la clase body.chk-access-on que pone el
+   boot (ver el gate por host más abajo). En producción (los dominios de
+   main: gastrocycles.vercel.app / .company) queda oculto y el módulo sigue
+   latente e inalcanzable. Cuando el módulo esté listo para el staff,
+   publicar = borrar el gate de host del boot y dejarlo siempre visible. */
 #tab-btn-checklist { display:none; }
+body.chk-access-on #tab-btn-checklist { display:flex; }
 
 .checklist-feature-btn {
   display:flex; align-items:center; justify-content:center; gap:10px;
@@ -2952,6 +2956,21 @@ function openWineFromGuion(wid) {
 // initial renderDishes() / renderWines() internally, so this call replaces
 // the explicit render calls that used to live here.
 setLang(currentLang, document.querySelectorAll('.lang-btn')[['es','en','pt'].indexOf(currentLang)]);
+
+// Acceso al Checklist & Protocolos: visible solo FUERA de producción
+// mientras el módulo está en desarrollo. Producción = los dominios a los
+// que despliega main (gastrocycles.vercel.app / gastrocycles.company);
+// staging, previews de Vercel y localhost lo muestran. Sesgo seguro: si el
+// host no se reconoce como dev, queda oculto (el módulo sin terminar nunca
+// se filtra a huéspedes/staff en prod). Publicar = quitar este gate.
+(function(){
+  const h = location.hostname;
+  const isDev = h === '' || h === 'localhost' || h === '127.0.0.1'
+             || h.endsWith('.local')
+             || /-git-/.test(h)                                    // deploys por branch de Vercel (incl. staging)
+             || (/\.vercel\.app$/.test(h) && h !== 'gastrocycles.vercel.app'); // previews de Vercel, nunca prod
+  if (isDev) document.body.classList.add('chk-access-on');
+})();
 
 // Auto-highlight today's menu cycle day
 (function() {
