@@ -2957,18 +2957,21 @@ function openWineFromGuion(wid) {
 // the explicit render calls that used to live here.
 setLang(currentLang, document.querySelectorAll('.lang-btn')[['es','en','pt'].indexOf(currentLang)]);
 
-// Acceso al Checklist & Protocolos: visible solo FUERA de producción
-// mientras el módulo está en desarrollo. Producción = los dominios a los
-// que despliega main (gastrocycles.vercel.app / gastrocycles.company);
-// staging, previews de Vercel y localhost lo muestran. Sesgo seguro: si el
-// host no se reconoce como dev, queda oculto (el módulo sin terminar nunca
-// se filtra a huéspedes/staff en prod). Publicar = quitar este gate.
+// Acceso al Checklist & Protocolos: visible solo en hosts de DESARROLLO
+// mientras el módulo está en construcción. Allowlist estricto (no blocklist):
+// se muestra únicamente en local, en la URL de staging y en deploys por
+// branch de Vercel. Cualquier otro host —incluida producción, sea cual sea
+// su dominio— queda OCULTO. Así el módulo sin terminar nunca se filtra a
+// prod aunque el dominio de producción cambie. Publicar = quitar este gate.
 (function(){
   const h = location.hostname;
-  const isDev = h === '' || h === 'localhost' || h === '127.0.0.1'
-             || h.endsWith('.local')
-             || /-git-/.test(h)                                    // deploys por branch de Vercel (incl. staging)
-             || (/\.vercel\.app$/.test(h) && h !== 'gastrocycles.vercel.app'); // previews de Vercel, nunca prod
+  const CHK_DEV_HOSTS = [
+    'localhost', '127.0.0.1',
+    'explora-gastro-cycles-q2o3.vercel.app'   // staging (QA iPhone de Bruno)
+  ];
+  const isDev = h === '' || h.endsWith('.local')
+             || CHK_DEV_HOSTS.includes(h)
+             || /-git-/.test(h);              // deploys por branch de Vercel (feature/fix/staging)
   if (isDev) document.body.classList.add('chk-access-on');
 })();
 
