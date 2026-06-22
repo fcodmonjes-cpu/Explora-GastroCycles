@@ -133,26 +133,16 @@ paréntesis (son los ganchos no obvios):
 
 ## NO REPETIR
 
-Estos hechos ya están en la app; aporta ángulos distintos (al 2026-06-22):
-
-1. Talinay sobre roca caliza, 12 km del Pacífico.
-2. El Malleco se creó como apelación en torno al SOLdeSOL.
-3. Menta y eucalipto del Don Melchor = firma del Maipo Andes.
-4. Almaviva: 18-20 meses en barrica francesa casi 100% nueva (Concha y Toro + Mouton).
-5. Seña: biodinámico certificado, primer joint venture de élite de Chile.
-6. Pierre Péters: Blanc de Blancs Grand Cru sobre tiza de Le Mesnil-sur-Oger.
-7. Rukumilla: 10-15 años en botella antes de salir.
-8. Blancos a 10-12 °C; muy frío esconde la fruta del Chardonnay.
-9. Glup Cinsault mejor a ~14 °C que a temperatura ambiente.
-10. Carmenère: pimentón asado = madurez; pimiento verde = falta de sol.
-11. Erasmo Late Harvest: uva sobremadurada en la planta.
-12. Garage rosé: viñas viejas en cabeza, a caballo, secano del Maule.
-13. Maipo Andes: día caluroso, noche fría; madurez y acidez juntas.
-14. Talinay, SOLdeSOL y Champagne comparten suelo de caliza fría.
-15. Azur: espumante orgánico del Limarí, método tradicional, extra brut.
-16. Syrah Clos de Luz: criado en concreto y tinaja de greda.
-17. Un tinto joven y cerrado se abre con 15 minutos de aire.
-18. Pérez Cruz: único viñedo del Maipo Andes en manejo sustentable certificado.
+La **fuente de verdad** es el array `WINE_TIPS` en `index.html` (al 2026-06-22 son
+68 tips). Antes de pedir un lote nuevo, copia aquí —o pega junto a este prompt— la
+lista actual de campos `es` para que el modelo no repita ángulos ya cubiertos.
+Cubren: las 15 botellas, sus cepas (Carmenère/Merlot 1994, Syrah=Shiraz, País,
+Petit Verdot, Malbec, Cariñena, Torontel…), los valles (Limarí, Casablanca,
+Malleco, Itata, Maipo/Puente Alto, Aconcagua, Cachapoal), viticultura (filoxera,
+secano, viñas en cabeza, biodinámica, maloláctica, bâtonnage, tinaja) y mundo/
+servicio/mitos (Récoltant-Manipulant, Grand Cru, solera, Mouton 1855, decantar,
+lágrimas, corchado). **Empuja a lo aún no cubierto**: añadas concretas, maridajes
+con platos puntuales de la carta, profundizar Borgoña/Burdeos, cata técnica.
 
 ## TAREA
 
