@@ -23,7 +23,7 @@ que es operacional (turnos, postres, pedidos, comandas).
 - Manual de coctelería (con o sin alcohol)
 - Manual de café + sistema mesero ↔ barista para pedidos al espresso
 - Comandera de mesa (E-Check) PIN-gateada para registrar pedidos
-- Panel operativo (roster del turno + postres del servicio del día)
+- Panel operativo (roster del turno + ventana viva de tips de vino)
 
 **Lo que la hace diferente de una "página web informativa".**
 
@@ -59,7 +59,8 @@ La complejidad la maneja la disciplina de patrones, no la dependencia.
 
 Header común arriba (título + subtítulo + selector de idioma + logo).
 Debajo, un wrapper "ops-strip" con el panel de staffing (turno activo,
-viajeros) y el strip de postres del día. Después, la fila de tabs:
+viajeros) y una **ventana viva de tips de vino** (módulo `winetips`, que
+reemplazó al strip de Postres/86 el 2026-06-22). Después, la fila de tabs:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -71,7 +72,8 @@ viajeros) y el strip de postres del día. Después, la fila de tabs:
 │  Comedor Nicolás · Sebastián · Diego · Viviana              │
 │  Apoyo   Victor                                              │
 │                                                              │
-│  H · durazno   S · frutilla   F · tuna, melón   N · choco   │
+│  TERROIR  ·····························  (rota cada 15s) ···· │
+│  Talinay: viñas casi sobre roca caliza, a 12 km del mar.    │
 ├─────────────────────────────────────────────────────────────┤
 │ [Menú] [Vinos] [Cocktails] [Café] [E-Check]                 │
 └─────────────────────────────────────────────────────────────┘
@@ -87,8 +89,9 @@ viajeros) y el strip de postres del día. Después, la fila de tabs:
 | **E-Check** | Comandera por mesa | Firebase `/comandas/{date}/{id}` | 666 |
 
 Los datos del Café (módulo Service Mode) y los del E-Check tienen su
-propia capa de Firebase. Los módulos del header (staffing, desserts)
-también escriben/leen Firebase.
+propia capa de Firebase. Del header, **staffing** escribe/lee Firebase; la
+**ventana de tips de vino** es 100% estática (sin Firebase). Los módulos
+**Postres/86** quedaron latentes el 2026-06-22 (ver §4).
 
 ---
 
@@ -105,9 +108,11 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
 │       └── {dia} → { viajeros, geo_senior_am, geo_senior_pm,
 │                     geos_am, geos_pm, apoyo_am, apoyo_pm }
 │
-├── desserts/                      ← postres rotativos por servicio
+├── desserts/                      ← postres rotativos por servicio (LATENTE 2026-06-22)
 │   └── {YYYY-MM-DD} → { helado, sorbet, fruta[], ninos, enteredAt }
-│       (auto-purge >4h)
+│       (auto-purge >4h · ya no se escribe/lee desde la UI: el módulo y su
+│        strip se retiraron al poner los tips de vino; código intacto, igual
+│        que /eightysix, reactivable según comentarios "LATENTE Postres/86")
 │
 ├── orders/                        ← cola viva del café (mesero → barista)
 │   └── {auto-id} → { items[], table, timestamp, status:'pending', lang }
@@ -255,6 +260,7 @@ estado abierto/cerrado, y evita el "flash" que destruye gestos.
 | Cada módulo abre con un comentario de contrato | Path en Firebase, shape del documento, ciclo de vida. Cuando vuelvas en 6 meses, no tienes que grep para entender. |
 | Reuso de componentes entre módulos | El numpad del PIN del Café se reusa en E-Check. Los modales (note edit, full view) comparten estilos. Los timers de "elapsed time" del barista y del E-Check usan la misma lógica de color (gold → naranja → rojo). |
 | Acentos de color como lenguaje visual | Gold = bebida principal · Azul = modifier seleccionado (leche, comensal activo) · Verde = sin alcohol (mocktails) · Rojo claro = "coming soon" (Momentos) · Sienna (`#c75c2a`) = brand mark (ATA) |
+| `overflow-x: clip` (no `hidden`) en html+body para matar el side-scroll en iOS | Bug real (2026-06-22): `hidden` no impide el paneo lateral en iOS Safari cuando un descendiente desborda por pocos px. `clip` no crea contenedor scrolleable ni admite pan táctil. Se deja `hidden` antes como fallback. El scroll-x propio de `.main-tabs` (su `overflow-x:auto`) no se ve afectado. |
 
 ---
 
@@ -434,7 +440,8 @@ Mapa de regiones aproximadas (los rangos cambian a medida que crece;
 | Render principal | 2400-2700 | renderDishes, renderWines, renderCocktails, etc. |
 | Módulo Café | 2700-3700 | COFFEE_DATA + manual + modo servicio (waiter+barista+history) |
 | Módulo Staffing | 3700-3800 | Fetch + render del roster |
-| Módulo Desserts | 3800-3900 | Strip + form de postres |
+| Módulo Desserts / 86 | 3800-3900 | Strip + form de postres/86 — **latente** desde 2026-06-22 (markup en `<template id="latent-postres-86">`, activadores JS comentados) |
+| Módulo Wine tips | — | `winetips` en la ops-strip: rota `WINE_TIPS` (68, trilingüe, estático) cada 15s en orden barajado; reemplazó a Postres/86 |
 | Módulo Comandera | 3900-4200 | Gate + home + new + active + drag + history |
 | Módulo Rol | 5500-6260 | PIN gate + lectura semanal del roster |
 | Módulo Checklist | 6260-6940 | Sub-secciones + fases + carry-over + edit mode supervisor |
