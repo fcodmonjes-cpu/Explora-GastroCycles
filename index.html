@@ -6054,37 +6054,6 @@ function cfMarkDone(id){
   setTimeout(lift, MAX_MS);
 })();
 
-// ── DIAGNÓSTICO TEMPORAL de side-scroll — quitar antes del merge a main ──────
-// Se activa SOLO con el hash #ofx en la URL (no corre en uso normal). Recorre
-// el DOM y lista los elementos cuyo borde derecho se sale del ancho del viewport
-// (el clip los oculta, pero esto revela CUÁL desborda para arreglarlo en origen).
-(function(){
-  if (!location.hash || location.hash.toLowerCase().indexOf('ofx') === -1) return;
-  function scan(){
-    const vw = document.documentElement.clientWidth;
-    const offenders = [];
-    document.querySelectorAll('*').forEach(el=>{
-      const r = el.getBoundingClientRect();
-      if (r.width === 0 && r.height === 0) return;
-      const over = Math.round(r.right - vw);
-      if (over > 1){
-        offenders.push({ over, el, w: Math.round(r.width),
-          sel: el.tagName.toLowerCase() + (el.id?('#'+el.id):'') + (el.className && typeof el.className==='string'?('.'+el.className.trim().split(/\s+/).join('.')):'') });
-      }
-    });
-    offenders.sort((a,b)=>b.over-a.over);
-    const box = document.createElement('div');
-    box.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;max-height:55vh;overflow:auto;background:#111;color:#0f0;font:11px/1.4 monospace;padding:10px;border-top:2px solid #0f0;white-space:pre-wrap;';
-    box.textContent = 'VIEWPORT: ' + vw + 'px · documentEl.scrollWidth: ' + document.documentElement.scrollWidth +
-      '\nElementos que se salen por la derecha (top 15):\n\n' +
-      (offenders.length ? offenders.slice(0,15).map(o=>'+'+o.over+'px  ['+o.w+'px]  '+o.sel.slice(0,90)).join('\n')
-                        : '(ninguno se sale — el scroll-x no viene de un elemento ancho)');
-    document.body.appendChild(box);
-  }
-  if (document.readyState === 'complete') setTimeout(scan, 600);
-  else window.addEventListener('load', ()=>setTimeout(scan, 600));
-})();
-
 // ── Comandera module ────────────────────────────────────────────────────
 // PIN-gated order pad. Path: /comandas/{YYYY-MM-DD}/{auto-id}
 // Shape:
