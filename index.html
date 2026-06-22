@@ -175,9 +175,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Cross-fade de opacidad al cambiar de tip; sin desplazamiento, calmo. */
 .winetips-fade { transition: opacity .34s ease; }
 .winetips.is-swapping .winetips-fade { opacity: 0; }
-/* Hilo de progreso apenas perceptible — marca el ritmo de 10s sin pedir atención. */
+/* Hilo de progreso apenas perceptible — marca el ritmo de 15s sin pedir atención. */
 .winetips-thread { position: absolute; left: 0; bottom: -1px; height: 1px; width: 0; background: var(--gold); opacity: 0.18; }
-.winetips-thread.run { animation: winetipsThread 10s linear forwards; }
+.winetips-thread.run { animation: winetipsThread 15s linear forwards; }
 @keyframes winetipsThread { from { width: 0; } to { width: 100%; } }
 @media (prefers-reduced-motion: reduce){
   .winetips-fade { transition: none; }
@@ -1829,7 +1829,7 @@ let EIGHTYSIX_FORM_OPEN     = false;
 // Module: winetips — ventana viva sobre las tabs que rota tips de vino
 // (reemplazó a Postres/86). Contenido estático trilingüe en WINE_TIPS, sin
 // Firebase. Solo índice actual + handle del timer; el render parcha texto.
-const WINETIPS_INTERVAL_MS  = 10000;  // 10s por tip
+const WINETIPS_INTERVAL_MS  = 15000;  // 15s por tip
 let WINETIPS_INDEX          = 0;
 let WINETIPS_TIMER          = null;
 
