@@ -29,13 +29,18 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 /* Bloqueo de movimiento lateral de la PÁGINA: solo el scroll vertical navega.
-   overflow-x:hidden en html+body (body solo no basta: el viewport real puede
-   ser html) elimina cualquier scroll horizontal, y overscroll-behavior-x:none
-   mata el rubber-band lateral de iOS durante la ventana de carga. El scroll-x
-   propio de .main-tabs se preserva (no se usa touch-action acá: por la regla de
+   overflow-x:hidden en html+body NO basta en iOS Safari: si un descendiente
+   desborda por pocos px (sombra, redondeo de %, etc.), el viewport real (html)
+   igual deja "panear" lateralmente. overflow-x:clip sí lo mata: no crea un
+   contenedor scrolleable ni admite paneo táctil, así que el desborde se recorta
+   y la página no se mueve. Se deja overflow-x:hidden ANTES como fallback para
+   navegadores sin soporte de clip (orden = la última gana donde clip existe).
+   overscroll-behavior-x:none mata el rubber-band lateral. El scroll-x propio de
+   .main-tabs se preserva: vive en su propio contenedor (overflow-x:auto), que
+   clip en html/body no afecta. (No se usa touch-action acá: por la regla de
    intersección del spec, un pan-y en un ancestro anularía el pan-x de las tabs). */
-html { overflow-x: hidden; overscroll-behavior-x: none; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.6; overflow-x: hidden; overscroll-behavior-x: none; }
+html { overflow-x: hidden; overflow-x: clip; overscroll-behavior-x: none; max-width: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.6; overflow-x: hidden; overflow-x: clip; overscroll-behavior-x: none; max-width: 100%; position: relative; }
 /* (2026-06-09) .app ya no usa will-change:transform — el gesto side-scroll de
    idioma fue reemplazado por el toggle sticky, así que .app nunca se traslada.
    Quitarlo permite que el position:fixed del toggle sea relativo al viewport
@@ -6047,6 +6052,37 @@ function cfMarkDone(id){
     setTimeout(lift, Math.max(0, MIN_MS - (clock() - START)));
   });
   setTimeout(lift, MAX_MS);
+})();
+
+// ── DIAGNÓSTICO TEMPORAL de side-scroll — quitar antes del merge a main ──────
+// Se activa SOLO con el hash #ofx en la URL (no corre en uso normal). Recorre
+// el DOM y lista los elementos cuyo borde derecho se sale del ancho del viewport
+// (el clip los oculta, pero esto revela CUÁL desborda para arreglarlo en origen).
+(function(){
+  if (!location.hash || location.hash.toLowerCase().indexOf('ofx') === -1) return;
+  function scan(){
+    const vw = document.documentElement.clientWidth;
+    const offenders = [];
+    document.querySelectorAll('*').forEach(el=>{
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) return;
+      const over = Math.round(r.right - vw);
+      if (over > 1){
+        offenders.push({ over, el, w: Math.round(r.width),
+          sel: el.tagName.toLowerCase() + (el.id?('#'+el.id):'') + (el.className && typeof el.className==='string'?('.'+el.className.trim().split(/\s+/).join('.')):'') });
+      }
+    });
+    offenders.sort((a,b)=>b.over-a.over);
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;max-height:55vh;overflow:auto;background:#111;color:#0f0;font:11px/1.4 monospace;padding:10px;border-top:2px solid #0f0;white-space:pre-wrap;';
+    box.textContent = 'VIEWPORT: ' + vw + 'px · documentEl.scrollWidth: ' + document.documentElement.scrollWidth +
+      '\nElementos que se salen por la derecha (top 15):\n\n' +
+      (offenders.length ? offenders.slice(0,15).map(o=>'+'+o.over+'px  ['+o.w+'px]  '+o.sel.slice(0,90)).join('\n')
+                        : '(ninguno se sale — el scroll-x no viene de un elemento ancho)');
+    document.body.appendChild(box);
+  }
+  if (document.readyState === 'complete') setTimeout(scan, 600);
+  else window.addEventListener('load', ()=>setTimeout(scan, 600));
 })();
 
 // ── Comandera module ────────────────────────────────────────────────────
