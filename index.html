@@ -158,6 +158,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .eightysix-empty-btn { width: 100%; box-sizing: border-box; text-align: center; }
 .desserts-strip:not(.has-data) .desserts-empty-btn { width: 100%; box-sizing: border-box; text-align: center; }
 
+/* ── Wine tips — "el cuaderno que respira" ─────────────────────────────────
+   Reemplazó a Postres/86 en la ops-strip (2026-06-22). Una sola ventana viva
+   sobre las tabs: el DOMINIO de conocimiento como eyebrow mono dorado
+   (Acidez · Terroir · Tanino…) y el tip en Cormorant itálica, como una nota
+   escrita a mano en el handbook. Rota cada 20s con cross-fade; un hilo dorado
+   se va llenando para marcar el ritmo (mismo lenguaje que el pulso del turno).
+   Tap = siguiente tip. Contenido en WINE_TIPS/TIP_TOPICS; estado en STATE TOP. */
+.winetips { position: relative; min-height: 48px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+/* Línea discreta entre Datos Turno y los tips, igual que tenían los servicios. */
+.staffing-panel:not(:empty) + .winetips { border-top: 0.5px solid var(--border); padding-top: 0.85rem; }
+.winetips-topic { font-family: 'Courier Prime','Courier New',monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); opacity: 0.92; }
+.winetips-body  { font-family: 'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style: italic; font-weight: 500; font-size: 17px; line-height: 1.34; color: var(--text-secondary); margin-top: 3px; max-width: 62ch; }
+/* Cross-fade al cambiar de tip: el bloque se va y vuelve, sin saltar de alto. */
+.winetips-fade { transition: opacity .34s ease, transform .34s ease; }
+.winetips.is-swapping .winetips-fade { opacity: 0; transform: translateY(4px); }
+/* Hilo dorado que se llena en 20s — señal "vivo" discreta, no grita. */
+.winetips-thread { position: absolute; left: 0; bottom: -2px; height: 1px; width: 0; background: linear-gradient(90deg, rgba(202,138,4,0) 0%, var(--gold) 100%); opacity: 0.5; }
+.winetips-thread.run { animation: winetipsThread 20s linear forwards; }
+@keyframes winetipsThread { from { width: 0; } to { width: 100%; } }
+@media (prefers-reduced-motion: reduce){
+  .winetips-fade { transition: none; }
+  .winetips.is-swapping .winetips-fade { opacity: 1; transform: none; }
+  .winetips-thread.run { animation: none; }
+}
+
 /* ── Comandera module ────────────────────────────────────────────────────── */
 .cmd-root {
   font-family: 'Courier Prime','Courier New',monospace;
@@ -1134,7 +1159,7 @@ body.chk-access-on #tab-btn-checklist { display:flex; }
    desserts strip get hidden. The other tabs (Menú, Vinos, …) keep the full
    strip because they're reference-y and benefit from the roster.
    Click on the panel re-expands (handled in JS as a toggle, optional). */
-body.in-checklist .ops-services { display:none; }
+body.in-checklist .winetips { display:none; }
 body.in-checklist .staffing-panel { margin-bottom:0; }
 body.in-checklist .staffing-panel .staffing-row { display:none; }
 body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
@@ -1382,8 +1407,25 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
   <div class="ops-strip">
     <!-- Shift roster — populated from /staffing/{YYYY-MM}/{day} on Firebase. -->
     <div class="staffing-panel" id="staffing-panel"></div>
-    <!-- Servicios: Postres (/desserts, 4h) y 86 (/eightysix, sin purga). Vacíos
-         se justifican lado a lado; con datos se apilan con líneas discretas. -->
+    <!-- Wine tips — ventana viva que reemplazó a Postres/86 (2026-06-22).
+         Estructura fija: winetipsRender() solo parcha el texto (tópico + cuerpo)
+         y reinicia el hilo, sin re-render. Tap en la tarjeta = siguiente tip. -->
+    <div class="winetips" id="winetips" role="button" tabindex="0"
+         aria-label="Tip de vino" onclick="winetipsTap()"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();winetipsTap();}">
+      <div class="winetips-fade">
+        <div class="winetips-topic" id="winetips-topic"></div>
+        <div class="winetips-body"  id="winetips-body"></div>
+      </div>
+      <div class="winetips-thread" id="winetips-thread"></div>
+    </div>
+
+    <!-- LATENTE — Postres (/desserts, 4h) y 86 (/eightysix). Retirados de
+         pantalla el 2026-06-22; el markup queda inerte dentro del <template>
+         (no se renderiza, no interfiere). Reactivar: sacar este contenido del
+         template y descomentar los activadores JS marcados "LATENTE Postres/86"
+         (fetch/intervals/hooks de los módulos desserts y 86). -->
+    <template id="latent-postres-86">
     <div class="ops-services" id="ops-services">
       <div class="desserts-strip" id="desserts-strip"></div>
       <div class="eightysix-strip" id="eightysix-strip"></div>
@@ -1422,6 +1464,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
         <button class="desserts-form-btn primary" id="e86-save"   onclick="eightysixSubmitForm()">Guardar</button>
       </div>
     </div>
+    </template>
   </div>
 
   <!-- Checklist & Protocolos: lives above the main tabs row, as a destacado.
@@ -1629,6 +1672,116 @@ const GUIONES = [
   {title:'Postres y cierre de experiencia',text:'«La mayoría de los postres son dulces y cremosos. La mejor combinación suele ser un café o una infusión. Si quieren maridarlo con vino, tenemos un Late Harvest de Torontel del Maule, que va muy bien con tres leches, cheesecake o la degustación de chañar. Si prefieren un cierre más fresco y menos dulce, el espumante seco es ideal con postres de fruta o helado.»',wines:['erasmo','azur']}
 ];
 
+// ── Wine tips — contenido de la ventana viva (reemplazó a Postres/86) ────────
+// Dos principios de curaduría:
+//   1) Coherencia con la carta de Explora: cada tip aterriza en un vino real
+//      de WINES (Talinay, SOLdeSOL, Azur, Pérez Cruz, Don Melchor, Erasmo…).
+//   2) El 20% que ayuda a entender el otro 80% (marco WSET / Court of Master
+//      Sommelier): acidez, tanino, cuerpo, clima, terroir, mineralidad, crianza
+//      sobre lías, método tradicional, las reglas de maridaje, temperatura de
+//      servicio, cepas patrimoniales, Viejo/Nuevo Mundo, ensamblaje, cata.
+// Extensible: agregar un tip = un objeto más en WINE_TIPS (topic + es/en/pt).
+// El "topic" es la etiqueta-dominio del eyebrow; sus 3 idiomas viven en
+// TIP_TOPICS. Texto sugerido: 10-20 palabras, una idea por tip.
+const TIP_TOPICS = {
+  acidez:     { es:'Acidez',      en:'Acidity',    pt:'Acidez' },
+  tanino:     { es:'Tanino',      en:'Tannin',     pt:'Tanino' },
+  cuerpo:     { es:'Cuerpo',      en:'Body',       pt:'Corpo' },
+  clima:      { es:'Clima',       en:'Climate',    pt:'Clima' },
+  terroir:    { es:'Terroir',     en:'Terroir',    pt:'Terroir' },
+  mineral:    { es:'Mineralidad', en:'Minerality', pt:'Mineralidade' },
+  crianza:    { es:'Crianza',     en:'Ageing',     pt:'Estágio' },
+  burbuja:    { es:'Burbuja',     en:'Bubbles',    pt:'Espumante' },
+  maridaje:   { es:'Maridaje',    en:'Pairing',    pt:'Harmonização' },
+  servicio:   { es:'Servicio',    en:'Service',    pt:'Serviço' },
+  cepa:       { es:'Cepa',        en:'Grape',      pt:'Casta' },
+  ensamblaje: { es:'Ensamblaje',  en:'Blend',      pt:'Corte' },
+  dulces:     { es:'Dulces',      en:'Sweet',      pt:'Doce' },
+  cata:       { es:'Cata',        en:'Tasting',    pt:'Prova' }
+};
+const WINE_TIPS = [
+  { topic:'acidez',
+    es:"La acidez hace agua la boca y corta la grasa: por eso el Talinay, cítrico y salino, limpia un ceviche.",
+    en:"Acidity makes your mouth water and cuts fat — that's why citric, saline Talinay refreshes a ceviche.",
+    pt:"A acidez dá água na boca e corta a gordura: por isso o Talinay, cítrico e salino, limpa um ceviche." },
+  { topic:'clima',
+    es:"Clima frío: más acidez, menos alcohol, fruta tensa. Es la firma de la costa del Limarí y del Malleco.",
+    en:"Cool climate means more acidity, less alcohol, tense fruit — the signature of coastal Limarí and Malleco.",
+    pt:"Clima frio: mais acidez, menos álcool, fruta tensa. É a assinatura da costa do Limarí e do Malleco." },
+  { topic:'tanino',
+    es:"El tanino seca la boca y da agarre; viene de la piel y la barrica. La grasa de un asado lo suaviza.",
+    en:"Tannin dries the mouth and grips — it comes from skins and oak. The fat of grilled meat softens it.",
+    pt:"O tanino seca a boca e dá aderência; vem da casca e do carvalho. A gordura de um assado o suaviza." },
+  { topic:'maridaje',
+    es:"Regla de oro: el peso del vino debe igualar el peso del plato. Plato liviano, vino liviano.",
+    en:"Golden rule: match the weight of the wine to the weight of the dish. Light plate, light wine.",
+    pt:"Regra de ouro: o peso do vinho deve igualar o peso do prato. Prato leve, vinho leve." },
+  { topic:'dulces',
+    es:"Con postres, el vino debe ser más dulce que el plato: por eso el Late Harvest Erasmo brilla con un tres leches.",
+    en:"With dessert, the wine must be sweeter than the plate — that's why Erasmo Late Harvest shines with tres leches.",
+    pt:"Na sobremesa, o vinho deve ser mais doce que o prato: por isso o Late Harvest Erasmo brilha com um tres leches." },
+  { topic:'terroir',
+    es:"El Talinay crece casi sobre roca calcárea, a 12 km del mar: de ahí su tensión y su dejo salino.",
+    en:"Talinay grows almost on bare limestone, 12 km from the sea — hence its tension and saline echo.",
+    pt:"O Talinay cresce quase sobre rocha calcária, a 12 km do mar: daí sua tensão e seu toque salino." },
+  { topic:'burbuja',
+    es:"El método tradicional hace la segunda fermentación dentro de la botella: burbuja fina, como en el Azur o el Pierre Péters.",
+    en:"The traditional method runs the second fermentation inside the bottle — fine bubbles, as in Azur or Pierre Péters.",
+    pt:"O método tradicional faz a segunda fermentação dentro da garrafa: bolha fina, como no Azur ou no Pierre Péters." },
+  { topic:'crianza',
+    es:"La crianza sobre lías da textura cremosa y notas de pan tostado: es lo que redondea al SOLdeSOL.",
+    en:"Lees ageing brings creamy texture and toasted-bread notes — it's what rounds out SOLdeSOL.",
+    pt:"O estágio sobre borras dá textura cremosa e notas de pão tostado: é o que arredonda o SOLdeSOL." },
+  { topic:'servicio',
+    es:"Casi todos los blancos se sirven demasiado fríos. A 10-12 °C la fruta del Chardonnay respira mejor.",
+    en:"Most whites are served too cold. At 10-12 °C the Chardonnay's fruit breathes better.",
+    pt:"Quase todos os brancos são servidos gelados demais. A 10-12 °C a fruta do Chardonnay respira melhor." },
+  { topic:'servicio',
+    es:"Un tinto ligero como el Glup Cinsault gana servido algo fresco, cerca de 14 °C.",
+    en:"A light red like Glup Cinsault is better served slightly chilled, around 14 °C.",
+    pt:"Um tinto leve como o Glup Cinsault ganha servido um pouco fresco, perto de 14 °C." },
+  { topic:'cepa',
+    es:"Cinsault y País del secano chileno dan tintos ligeros, frescos y muy bebibles, sin peso de barrica.",
+    en:"Cinsault and País from Chile's dry-farmed vineyards make light, fresh, very drinkable reds, without heavy oak.",
+    pt:"Cinsault e País do sequeiro chileno dão tintos leves, frescos e muito bebíveis, sem peso de carvalho." },
+  { topic:'cepa',
+    es:"Carmenère maduro huele a pimentón asado y especia dulce; verde, a pimiento crudo. El Pérez Cruz lo muestra maduro.",
+    en:"Ripe Carmenère smells of roasted pepper and sweet spice; underripe, of raw green pepper. Pérez Cruz shows it ripe.",
+    pt:"Carmenère maduro cheira a pimentão assado e especiaria doce; verde, a pimentão cru. O Pérez Cruz mostra-o maduro." },
+  { topic:'maridaje',
+    es:"El tanino choca con la sal y el picante, pero ama la proteína: un Cabernet pide carne, no ceviche.",
+    en:"Tannin clashes with salt and spice but loves protein — a Cabernet calls for red meat, not ceviche.",
+    pt:"O tanino briga com sal e pimenta, mas ama a proteína: um Cabernet pede carne, não ceviche." },
+  { topic:'mineral',
+    es:"Esa sensación a piedra mojada nace de suelos calcáreos fríos: la comparten Talinay, SOLdeSOL y el Champagne.",
+    en:"That wet-stone sensation comes from cool limestone soils — shared by Talinay, SOLdeSOL and Champagne.",
+    pt:"Aquela sensação de pedra molhada nasce de solos calcários frios: dividida por Talinay, SOLdeSOL e Champagne." },
+  { topic:'clima',
+    es:"En el Maipo Andes el día caluroso madura la fruta y la noche fría guarda la acidez: el equilibrio del Don Melchor.",
+    en:"In Maipo Andes warm days ripen the fruit and cold nights preserve acidity — the balance behind Don Melchor.",
+    pt:"No Maipo Andes o dia quente amadurece a fruta e a noite fria guarda a acidez: o equilíbrio do Don Melchor." },
+  { topic:'cuerpo',
+    es:"Un rosado seco como el Garage es casi un tinto claro: fruta roja y acidez para frituras y platos con picor.",
+    en:"A dry rosé like Garage is almost a pale red: red fruit and acidity for fried and spicy dishes.",
+    pt:"Um rosé seco como o Garage é quase um tinto claro: fruta vermelha e acidez para fritos e pratos picantes." },
+  { topic:'cepa',
+    es:"El Viejo Mundo nombra el lugar, Champagne; el Nuevo Mundo, la cepa, Cabernet. La carta de Explora usa ambos.",
+    en:"The Old World names the place, Champagne; the New World, the grape, Cabernet. Explora's list uses both.",
+    pt:"O Velho Mundo nomeia o lugar, Champagne; o Novo Mundo, a casta, Cabernet. A carta da Explora usa os dois." },
+  { topic:'ensamblaje',
+    es:"Ensamblaje bordelés: Cabernet, Carmenère, Malbec, Cabernet Franc y Petit Verdot juntos. Es el alma de Seña y Almaviva.",
+    en:"A Bordeaux blend: Cabernet, Carmenère, Malbec, Cabernet Franc and Petit Verdot together — the soul of Seña and Almaviva.",
+    pt:"Corte bordalês: Cabernet, Carmenère, Malbec, Cabernet Franc e Petit Verdot juntos. É a alma do Seña e do Almaviva." },
+  { topic:'cata',
+    es:"Catar es ver, girar, oler, probar y pensar. Girar la copa despierta los aromas antes del primer sorbo.",
+    en:"Tasting is look, swirl, smell, sip, reflect. Swirling the glass wakes the aromas before the first sip.",
+    pt:"Provar é ver, girar, cheirar, provar e pensar. Girar a taça desperta os aromas antes do primeiro gole." },
+  { topic:'maridaje',
+    es:"Acidez llama a acidez: un plato con limón pide un vino igual de fresco, como el Sauvignon de Talinay.",
+    en:"Acidity loves acidity: a dish with lemon wants a wine just as fresh, like Talinay Sauvignon.",
+    pt:"Acidez chama acidez: um prato com limão pede um vinho igualmente fresco, como o Sauvignon do Talinay." }
+];
+
 const COURSE_ORDER = ['Entrada','Plato principal','Postre'];
 const SERVICE_ORDER = ['Almuerzo','Cena','Almuerzo y Cena'];
 
@@ -1688,6 +1841,14 @@ let DESSERTS_FORM_OPEN      = false;
 const EIGHTYSIX_PATH        = 'eightysix';
 let EIGHTYSIX_DATA          = null;   // { items:[...], updatedAt } | null
 let EIGHTYSIX_FORM_OPEN     = false;
+
+// --- Wine tips state -----------------------------------------------------
+// Module: winetips — ventana viva sobre las tabs que rota tips de vino
+// (reemplazó a Postres/86). Contenido estático trilingüe en WINE_TIPS, sin
+// Firebase. Solo índice actual + handle del timer; el render parcha texto.
+const WINETIPS_INTERVAL_MS  = 20000;  // 20s por tip
+let WINETIPS_INDEX          = 0;
+let WINETIPS_TIMER          = null;
 
 // --- Comandera module state ----------------------------------------------
 // Module: comanda — table-by-table order pad. Path /comandas/{YYYY-MM-DD}/
@@ -4484,27 +4645,25 @@ async function dessertsSubmitForm(){
 // Tick: every 60s, freshness check + render. If we have data that just went
 // stale, the next fetch deletes it server-side. If we have nothing or it's
 // stale already, re-fetch in case another device just entered new data.
-setInterval(()=>{
-  if (!DESSERTS_DATA || dessertsIsStale(DESSERTS_DATA)){
-    dessertsFetch();
-  } else {
-    // Fresh data — re-render is essentially a no-op but keeps the freshness
-    // boundary aligned to the real wall clock
-    dessertsRender();
-  }
-}, 60000);
-document.addEventListener('visibilitychange', ()=>{
-  if (document.visibilityState === 'visible'){
-    // Refetch whenever the user comes back to the tab, so edits made
-    // elsewhere propagate as soon as the staff returns to the page
-    const newKey = dessertsDateKey(new Date());
-    if (newKey !== DESSERTS_DATE_KEY || !DESSERTS_DATA || dessertsIsStale(DESSERTS_DATA)){
-      dessertsFetch();
-    }
-  }
-});
-
-onI18nChange(dessertsRender);
+// LATENTE Postres/86 — tick e i18n hook del módulo Postres desactivados el
+// 2026-06-22 al retirar el strip de pantalla. Funciones intactas; reactivar es
+// descomentar esto + sacar el markup del <template id="latent-postres-86">.
+// setInterval(()=>{
+//   if (!DESSERTS_DATA || dessertsIsStale(DESSERTS_DATA)){
+//     dessertsFetch();
+//   } else {
+//     dessertsRender();
+//   }
+// }, 60000);
+// document.addEventListener('visibilitychange', ()=>{
+//   if (document.visibilityState === 'visible'){
+//     const newKey = dessertsDateKey(new Date());
+//     if (newKey !== DESSERTS_DATE_KEY || !DESSERTS_DATA || dessertsIsStale(DESSERTS_DATA)){
+//       dessertsFetch();
+//     }
+//   }
+// });
+// onI18nChange(dessertsRender);
 
 // ── 86 module (items temporarily unavailable) ───────────────────────────────
 // Path:    /eightysix   (UN solo doc, sin fecha)
@@ -4603,13 +4762,74 @@ async function eightysixSubmitForm(){
   }
 }
 
-// Sin auto-purga: el tick solo re-fetchea para sync entre dispositivos, y se
-// salta si el form está abierto para no pisar lo que se está escribiendo.
-setInterval(()=>{ if (!EIGHTYSIX_FORM_OPEN) eightysixFetch(); }, 60000);
-document.addEventListener('visibilitychange', ()=>{
-  if (document.visibilityState === 'visible' && !EIGHTYSIX_FORM_OPEN) eightysixFetch();
-});
-onI18nChange(eightysixRender);
+// LATENTE Postres/86 — activadores del módulo 86 desactivados el 2026-06-22 al
+// retirar el strip de pantalla. Las funciones quedan intactas; reactivar es
+// descomentar esto + sacar el markup del <template id="latent-postres-86">.
+// setInterval(()=>{ if (!EIGHTYSIX_FORM_OPEN) eightysixFetch(); }, 60000);
+// document.addEventListener('visibilitychange', ()=>{
+//   if (document.visibilityState === 'visible' && !EIGHTYSIX_FORM_OPEN) eightysixFetch();
+// });
+// onI18nChange(eightysixRender);
+
+// ── Wine tips module ─────────────────────────────────────────────────────
+// Ventana viva sobre las tabs (reemplazó a Postres/86). Rota un tip de vino
+// cada WINETIPS_INTERVAL_MS con cross-fade y un hilo dorado que marca el ritmo.
+// Contenido: WINE_TIPS / TIP_TOPICS (estático, trilingüe, sin Firebase).
+// Estado (WINETIPS_INDEX, WINETIPS_TIMER, WINETIPS_INTERVAL_MS) vive en STATE TOP.
+// Patrón in-place: render solo parcha textContent del tópico y el cuerpo; nunca
+// reescribe la estructura, así el cross-fade y el hilo no saltan. Tap/Enter en
+// la tarjeta = siguiente tip (reinicia el contador). Hooked a i18n para que el
+// texto siga el idioma activo.
+function winetipsReduceMotion(){
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+function winetipsRender(){
+  const root = document.getElementById('winetips');
+  if (!root || !WINE_TIPS.length) return;
+  const tip   = WINE_TIPS[WINETIPS_INDEX % WINE_TIPS.length];
+  const topic = (TIP_TOPICS[tip.topic] && TIP_TOPICS[tip.topic][currentLang]) || tip.topic;
+  const body  = tip[currentLang] || tip.es;
+  const elT = document.getElementById('winetips-topic');
+  const elB = document.getElementById('winetips-body');
+  if (elT) elT.textContent = topic;
+  if (elB) elB.textContent = body;
+  root.setAttribute('aria-label', body);
+}
+function winetipsRestartThread(){
+  const thread = document.getElementById('winetips-thread');
+  if (!thread || winetipsReduceMotion()) return;
+  thread.classList.remove('run');
+  void thread.offsetWidth;        // reflow para reiniciar la animación del hilo
+  thread.classList.add('run');
+}
+function winetipsShow(idx){
+  const root = document.getElementById('winetips');
+  if (!root || !WINE_TIPS.length) return;
+  WINETIPS_INDEX = ((idx % WINE_TIPS.length) + WINE_TIPS.length) % WINE_TIPS.length;
+  if (winetipsReduceMotion()){ winetipsRender(); winetipsRestartThread(); return; }
+  root.classList.add('is-swapping');               // fade-out
+  setTimeout(()=>{
+    winetipsRender();                              // swap del texto al mínimo de opacidad
+    root.classList.remove('is-swapping');          // fade-in
+    winetipsRestartThread();
+  }, 340);                                         // == .winetips-fade transition
+}
+function winetipsNext(){ winetipsShow(WINETIPS_INDEX + 1); }
+function winetipsArm(){
+  if (WINETIPS_TIMER) clearInterval(WINETIPS_TIMER);
+  WINETIPS_TIMER = setInterval(winetipsNext, WINETIPS_INTERVAL_MS);
+}
+function winetipsTap(){ winetipsNext(); winetipsArm(); }   // avanzar reinicia el contador
+function winetipsStart(){
+  if (!WINE_TIPS.length) return;
+  // Arranca en un tip al azar para que no sea siempre el mismo al abrir la app.
+  WINETIPS_INDEX = Math.floor(Math.random() * WINE_TIPS.length);
+  winetipsRender();
+  winetipsRestartThread();
+  winetipsArm();
+}
+onI18nChange(winetipsRender);
+winetipsStart();
 
 // ── History helpers ──────────────────────────────────────────────────────────
 // Date bucket key in local time: 'YYYY-MM-DD'. The "Hoy/Ayer" boundary is
@@ -5597,7 +5817,7 @@ function cfMarkDone(id){
 // tarda o está offline. Los fetches se disparan exactamente una vez acá.
 (function(){
   const curtain = document.getElementById('intro-curtain');
-  if (!curtain){ staffingFetch(); dessertsFetch(); eightysixFetch(); return; }
+  if (!curtain){ staffingFetch(); return; }   // LATENTE Postres/86: fetches retirados 2026-06-22
   const clock = () => (window.performance && performance.now) ? performance.now() : Date.now();
   const START = clock();
   const MIN_MS = 900;   // deja cerrar la animación de entrada (~0.9s) antes de levantar
@@ -5608,7 +5828,7 @@ function cfMarkDone(id){
     curtain.classList.add('intro-lift');
     setTimeout(() => { if (curtain.parentNode) curtain.parentNode.removeChild(curtain); }, 1100);
   }
-  Promise.allSettled([staffingFetch(), dessertsFetch(), eightysixFetch()]).then(() => {
+  Promise.allSettled([staffingFetch()]).then(() => {   // LATENTE Postres/86: fetches retirados 2026-06-22
     setTimeout(lift, Math.max(0, MIN_MS - (clock() - START)));
   });
   setTimeout(lift, MAX_MS);
