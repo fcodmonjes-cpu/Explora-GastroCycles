@@ -2043,6 +2043,7 @@ let EIGHTYSIX_FORM_OPEN     = false;
 const WINETIPS_INTERVAL_MS  = 15000;  // 15s por tip
 let WINETIPS_INDEX          = 0;
 let WINETIPS_TIMER          = null;
+let WINETIPS_QUEUE          = [];     // mazo barajado de índices pendientes
 
 // --- Comandera module state ----------------------------------------------
 // Module: comanda — table-by-table order pad. Path /comandas/{YYYY-MM-DD}/
@@ -5008,7 +5009,26 @@ function winetipsShow(idx){
     winetipsRestartThread();
   }, 340);                                         // == .winetips-fade transition
 }
-function winetipsNext(){ winetipsShow(WINETIPS_INDEX + 1); }
+// Baraja (Fisher-Yates) de índices: el orden es aleatorio en cada apertura y
+// recorre TODOS los tips sin repetir hasta agotar el mazo. Así nunca se ve el
+// mismo dos veces seguido y da la sensación de un mazo mucho más grande.
+function winetipsShuffle(avoid){
+  const deck = WINE_TIPS.map((_, i) => i);
+  for (let i = deck.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  // Evita que el primero del mazo nuevo repita el tip recién mostrado.
+  if (avoid != null && deck.length > 1 && deck[0] === avoid){
+    [deck[0], deck[1]] = [deck[1], deck[0]];
+  }
+  return deck;
+}
+function winetipsDrawNext(){
+  if (!WINETIPS_QUEUE.length) WINETIPS_QUEUE = winetipsShuffle(WINETIPS_INDEX);
+  return WINETIPS_QUEUE.shift();
+}
+function winetipsNext(){ winetipsShow(winetipsDrawNext()); }
 function winetipsArm(){
   if (WINETIPS_TIMER) clearInterval(WINETIPS_TIMER);
   WINETIPS_TIMER = setInterval(winetipsNext, WINETIPS_INTERVAL_MS);
@@ -5016,8 +5036,9 @@ function winetipsArm(){
 function winetipsTap(){ winetipsNext(); winetipsArm(); }   // avanzar reinicia el contador
 function winetipsStart(){
   if (!WINE_TIPS.length) return;
-  // Arranca en un tip al azar para que no sea siempre el mismo al abrir la app.
-  WINETIPS_INDEX = Math.floor(Math.random() * WINE_TIPS.length);
+  // Baraja fresca en cada carga → distinto orden cada vez que se abre el handbook.
+  WINETIPS_QUEUE = winetipsShuffle();
+  WINETIPS_INDEX = winetipsDrawNext();
   winetipsRender();
   winetipsRestartThread();
   winetipsArm();
