@@ -165,21 +165,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    escrita a mano en el handbook. Rota cada 20s con cross-fade; un hilo dorado
    se va llenando para marcar el ritmo (mismo lenguaje que el pulso del turno).
    Tap = siguiente tip. Contenido en WINE_TIPS/TIP_TOPICS; estado en STATE TOP. */
-.winetips { position: relative; min-height: 48px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.winetips { position: relative; min-height: 52px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 /* Línea discreta entre Datos Turno y los tips, igual que tenían los servicios. */
-.staffing-panel:not(:empty) + .winetips { border-top: 0.5px solid var(--border); padding-top: 0.85rem; }
-.winetips-topic { font-family: 'Courier Prime','Courier New',monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); opacity: 0.92; }
-.winetips-body  { font-family: 'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style: italic; font-weight: 500; font-size: 17px; line-height: 1.34; color: var(--text-secondary); margin-top: 3px; max-width: 62ch; }
-/* Cross-fade al cambiar de tip: el bloque se va y vuelve, sin saltar de alto. */
-.winetips-fade { transition: opacity .34s ease, transform .34s ease; }
-.winetips.is-swapping .winetips-fade { opacity: 0; transform: translateY(4px); }
-/* Hilo dorado que se llena en 20s — señal "vivo" discreta, no grita. */
-.winetips-thread { position: absolute; left: 0; bottom: -2px; height: 1px; width: 0; background: linear-gradient(90deg, rgba(202,138,4,0) 0%, var(--gold) 100%); opacity: 0.5; }
-.winetips-thread.run { animation: winetipsThread 20s linear forwards; }
+.staffing-panel:not(:empty) + .winetips { border-top: 0.5px solid var(--border); padding-top: 0.8rem; }
+/* Mismo lenguaje mono y discreto que el resto de la ops-strip (staffing): el tip
+   no debe destacar más que un dato de turno. Dominio en gris tenue, no dorado. */
+.winetips-topic { font-family: 'Courier Prime','Courier New',monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); }
+.winetips-body  { font-family: 'Courier Prime','Courier New',monospace; font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-top: 4px; max-width: 60ch; }
+/* Cross-fade de opacidad al cambiar de tip; sin desplazamiento, calmo. */
+.winetips-fade { transition: opacity .34s ease; }
+.winetips.is-swapping .winetips-fade { opacity: 0; }
+/* Hilo de progreso apenas perceptible — marca el ritmo de 10s sin pedir atención. */
+.winetips-thread { position: absolute; left: 0; bottom: -1px; height: 1px; width: 0; background: var(--gold); opacity: 0.18; }
+.winetips-thread.run { animation: winetipsThread 10s linear forwards; }
 @keyframes winetipsThread { from { width: 0; } to { width: 100%; } }
 @media (prefers-reduced-motion: reduce){
   .winetips-fade { transition: none; }
-  .winetips.is-swapping .winetips-fade { opacity: 1; transform: none; }
+  .winetips.is-swapping .winetips-fade { opacity: 1; }
   .winetips-thread.run { animation: none; }
 }
 
@@ -1673,113 +1675,94 @@ const GUIONES = [
 ];
 
 // ── Wine tips — contenido de la ventana viva (reemplazó a Postres/86) ────────
-// Dos principios de curaduría:
-//   1) Coherencia con la carta de Explora: cada tip aterriza en un vino real
-//      de WINES (Talinay, SOLdeSOL, Azur, Pérez Cruz, Don Melchor, Erasmo…).
-//   2) El 20% que ayuda a entender el otro 80% (marco WSET / Court of Master
-//      Sommelier): acidez, tanino, cuerpo, clima, terroir, mineralidad, crianza
-//      sobre lías, método tradicional, las reglas de maridaje, temperatura de
-//      servicio, cepas patrimoniales, Viejo/Nuevo Mundo, ensamblaje, cata.
+// Tono: datos de colega, NO lecciones. El equipo ya sabe lo básico, así que
+// nada de "el tanino pide carne". Cada tip es un hecho puntual y no obvio de
+// una botella real de la carta (terroir, crianza, origen, método de la casa).
+// Breve: una idea, ~8-15 palabras. Trilingüe (ES/EN/PT), sigue el idioma activo.
 // Extensible: agregar un tip = un objeto más en WINE_TIPS (topic + es/en/pt).
-// El "topic" es la etiqueta-dominio del eyebrow; sus 3 idiomas viven en
-// TIP_TOPICS. Texto sugerido: 10-20 palabras, una idea por tip.
+// El "topic" es la etiqueta-dominio (eyebrow); sus 3 idiomas viven en TIP_TOPICS.
 const TIP_TOPICS = {
-  acidez:     { es:'Acidez',      en:'Acidity',    pt:'Acidez' },
-  tanino:     { es:'Tanino',      en:'Tannin',     pt:'Tanino' },
-  cuerpo:     { es:'Cuerpo',      en:'Body',       pt:'Corpo' },
-  clima:      { es:'Clima',       en:'Climate',    pt:'Clima' },
-  terroir:    { es:'Terroir',     en:'Terroir',    pt:'Terroir' },
-  mineral:    { es:'Mineralidad', en:'Minerality', pt:'Mineralidade' },
-  crianza:    { es:'Crianza',     en:'Ageing',     pt:'Estágio' },
-  burbuja:    { es:'Burbuja',     en:'Bubbles',    pt:'Espumante' },
-  maridaje:   { es:'Maridaje',    en:'Pairing',    pt:'Harmonização' },
-  servicio:   { es:'Servicio',    en:'Service',    pt:'Serviço' },
-  cepa:       { es:'Cepa',        en:'Grape',      pt:'Casta' },
-  ensamblaje: { es:'Ensamblaje',  en:'Blend',      pt:'Corte' },
-  dulces:     { es:'Dulces',      en:'Sweet',      pt:'Doce' },
-  cata:       { es:'Cata',        en:'Tasting',    pt:'Prova' }
+  terroir:  { es:'Terroir',  en:'Terroir',  pt:'Terroir' },
+  cepa:     { es:'Cepa',     en:'Grape',    pt:'Casta' },
+  crianza:  { es:'Crianza',  en:'Ageing',   pt:'Estágio' },
+  metodo:   { es:'Método',   en:'Method',   pt:'Método' },
+  clima:    { es:'Clima',    en:'Climate',  pt:'Clima' },
+  servicio: { es:'Servicio', en:'Service',  pt:'Serviço' },
+  origen:   { es:'Origen',   en:'Origin',   pt:'Origem' }
 };
 const WINE_TIPS = [
-  { topic:'acidez',
-    es:"La acidez hace agua la boca y corta la grasa: por eso el Talinay, cítrico y salino, limpia un ceviche.",
-    en:"Acidity makes your mouth water and cuts fat — that's why citric, saline Talinay refreshes a ceviche.",
-    pt:"A acidez dá água na boca e corta a gordura: por isso o Talinay, cítrico e salino, limpa um ceviche." },
-  { topic:'clima',
-    es:"Clima frío: más acidez, menos alcohol, fruta tensa. Es la firma de la costa del Limarí y del Malleco.",
-    en:"Cool climate means more acidity, less alcohol, tense fruit — the signature of coastal Limarí and Malleco.",
-    pt:"Clima frio: mais acidez, menos álcool, fruta tensa. É a assinatura da costa do Limarí e do Malleco." },
-  { topic:'tanino',
-    es:"El tanino seca la boca y da agarre; viene de la piel y la barrica. La grasa de un asado lo suaviza.",
-    en:"Tannin dries the mouth and grips — it comes from skins and oak. The fat of grilled meat softens it.",
-    pt:"O tanino seca a boca e dá aderência; vem da casca e do carvalho. A gordura de um assado o suaviza." },
-  { topic:'maridaje',
-    es:"Regla de oro: el peso del vino debe igualar el peso del plato. Plato liviano, vino liviano.",
-    en:"Golden rule: match the weight of the wine to the weight of the dish. Light plate, light wine.",
-    pt:"Regra de ouro: o peso do vinho deve igualar o peso do prato. Prato leve, vinho leve." },
-  { topic:'dulces',
-    es:"Con postres, el vino debe ser más dulce que el plato: por eso el Late Harvest Erasmo brilla con un tres leches.",
-    en:"With dessert, the wine must be sweeter than the plate — that's why Erasmo Late Harvest shines with tres leches.",
-    pt:"Na sobremesa, o vinho deve ser mais doce que o prato: por isso o Late Harvest Erasmo brilha com um tres leches." },
   { topic:'terroir',
-    es:"El Talinay crece casi sobre roca calcárea, a 12 km del mar: de ahí su tensión y su dejo salino.",
-    en:"Talinay grows almost on bare limestone, 12 km from the sea — hence its tension and saline echo.",
-    pt:"O Talinay cresce quase sobre rocha calcária, a 12 km do mar: daí sua tensão e seu toque salino." },
-  { topic:'burbuja',
-    es:"El método tradicional hace la segunda fermentación dentro de la botella: burbuja fina, como en el Azur o el Pierre Péters.",
-    en:"The traditional method runs the second fermentation inside the bottle — fine bubbles, as in Azur or Pierre Péters.",
-    pt:"O método tradicional faz a segunda fermentação dentro da garrafa: bolha fina, como no Azur ou no Pierre Péters." },
+    es:"Talinay: viñas plantadas casi sobre roca caliza, a 12 km del Pacífico.",
+    en:"Talinay: vines grown almost on bare limestone, 12 km from the Pacific.",
+    pt:"Talinay: vinhas quase sobre rocha calcária, a 12 km do Pacífico." },
+  { topic:'origen',
+    es:"El Valle del Malleco se creó como apelación en torno al SOLdeSOL; antes no existía.",
+    en:"The Malleco Valley was created as an appellation around SOLdeSOL; it didn't exist before.",
+    pt:"O Valle del Malleco nasceu como apelação em torno do SOLdeSOL; antes não existia." },
+  { topic:'cepa',
+    es:"La menta y el eucalipto del Don Melchor son la firma del Maipo Andes.",
+    en:"The mint and eucalyptus in Don Melchor are the signature of Maipo Andes.",
+    pt:"A menta e o eucalipto do Don Melchor são a assinatura do Maipo Andes." },
   { topic:'crianza',
-    es:"La crianza sobre lías da textura cremosa y notas de pan tostado: es lo que redondea al SOLdeSOL.",
-    en:"Lees ageing brings creamy texture and toasted-bread notes — it's what rounds out SOLdeSOL.",
-    pt:"O estágio sobre borras dá textura cremosa e notas de pão tostado: é o que arredonda o SOLdeSOL." },
+    es:"Almaviva: 18 a 20 meses en barrica francesa casi 100% nueva. Concha y Toro con Mouton Rothschild.",
+    en:"Almaviva: 18 to 20 months in nearly 100% new French oak. Concha y Toro with Mouton Rothschild.",
+    pt:"Almaviva: 18 a 20 meses em barrica francesa quase 100% nova. Concha y Toro com Mouton Rothschild." },
+  { topic:'origen',
+    es:"Seña: biodinámico certificado y el primer joint venture de élite de Chile.",
+    en:"Seña: certified biodynamic and Chile's first elite joint venture.",
+    pt:"Seña: biodinâmico certificado e o primeiro joint venture de elite do Chile." },
+  { topic:'metodo',
+    es:"Pierre Péters: Blanc de Blancs Grand Cru sobre tiza pura de Le Mesnil-sur-Oger.",
+    en:"Pierre Péters: Blanc de Blancs Grand Cru on the pure chalk of Le Mesnil-sur-Oger.",
+    pt:"Pierre Péters: Blanc de Blancs Grand Cru sobre giz puro de Le Mesnil-sur-Oger." },
+  { topic:'crianza',
+    es:"Rukumilla duerme 10 a 15 años en botella antes de salir: el tiempo reemplaza la barrica nueva.",
+    en:"Rukumilla rests 10 to 15 years in bottle before release: time replaces new oak.",
+    pt:"O Rukumilla descansa 10 a 15 anos em garrafa antes de sair: o tempo substitui o carvalho novo." },
   { topic:'servicio',
-    es:"Casi todos los blancos se sirven demasiado fríos. A 10-12 °C la fruta del Chardonnay respira mejor.",
-    en:"Most whites are served too cold. At 10-12 °C the Chardonnay's fruit breathes better.",
-    pt:"Quase todos os brancos são servidos gelados demais. A 10-12 °C a fruta do Chardonnay respira melhor." },
+    es:"Blancos a 10-12 °C: demasiado frío esconde la fruta del Chardonnay.",
+    en:"Whites at 10-12 °C: too cold buries the Chardonnay's fruit.",
+    pt:"Brancos a 10-12 °C: frio demais esconde a fruta do Chardonnay." },
   { topic:'servicio',
-    es:"Un tinto ligero como el Glup Cinsault gana servido algo fresco, cerca de 14 °C.",
-    en:"A light red like Glup Cinsault is better served slightly chilled, around 14 °C.",
-    pt:"Um tinto leve como o Glup Cinsault ganha servido um pouco fresco, perto de 14 °C." },
+    es:"El Glup Cinsault va mejor a ~14 °C, algo fresco, que a temperatura ambiente.",
+    en:"Glup Cinsault is better at ~14 °C, slightly chilled, than at room temperature.",
+    pt:"O Glup Cinsault vai melhor a ~14 °C, um pouco fresco, que à temperatura ambiente." },
   { topic:'cepa',
-    es:"Cinsault y País del secano chileno dan tintos ligeros, frescos y muy bebibles, sin peso de barrica.",
-    en:"Cinsault and País from Chile's dry-farmed vineyards make light, fresh, very drinkable reds, without heavy oak.",
-    pt:"Cinsault e País do sequeiro chileno dão tintos leves, frescos e muito bebíveis, sem peso de carvalho." },
-  { topic:'cepa',
-    es:"Carmenère maduro huele a pimentón asado y especia dulce; verde, a pimiento crudo. El Pérez Cruz lo muestra maduro.",
-    en:"Ripe Carmenère smells of roasted pepper and sweet spice; underripe, of raw green pepper. Pérez Cruz shows it ripe.",
-    pt:"Carmenère maduro cheira a pimentão assado e especiaria doce; verde, a pimentão cru. O Pérez Cruz mostra-o maduro." },
-  { topic:'maridaje',
-    es:"El tanino choca con la sal y el picante, pero ama la proteína: un Cabernet pide carne, no ceviche.",
-    en:"Tannin clashes with salt and spice but loves protein — a Cabernet calls for red meat, not ceviche.",
-    pt:"O tanino briga com sal e pimenta, mas ama a proteína: um Cabernet pede carne, não ceviche." },
-  { topic:'mineral',
-    es:"Esa sensación a piedra mojada nace de suelos calcáreos fríos: la comparten Talinay, SOLdeSOL y el Champagne.",
-    en:"That wet-stone sensation comes from cool limestone soils — shared by Talinay, SOLdeSOL and Champagne.",
-    pt:"Aquela sensação de pedra molhada nasce de solos calcários frios: dividida por Talinay, SOLdeSOL e Champagne." },
+    es:"En el Carmenère, el pimentón asado es madurez; el pimiento verde, falta de sol.",
+    en:"In Carmenère, roasted pepper is ripeness; green pepper is lack of sun.",
+    pt:"No Carmenère, o pimentão assado é maturação; o pimentão verde, falta de sol." },
+  { topic:'metodo',
+    es:"El Late Harvest Erasmo sobremadura la uva en la planta; el azúcar se concentra solo.",
+    en:"Erasmo Late Harvest over-ripens the grape on the vine; the sugar concentrates on its own.",
+    pt:"O Late Harvest Erasmo sobreamadurece a uva na planta; o açúcar se concentra sozinho." },
+  { topic:'terroir',
+    es:"El Garage rosé nace de viñas viejas en cabeza, trabajadas a caballo, en secano del Maule.",
+    en:"Garage rosé comes from old bush vines, worked by horse, in dry-farmed Maule.",
+    pt:"O rosé Garage nasce de vinhas velhas em taça, trabalhadas a cavalo, no sequeiro do Maule." },
   { topic:'clima',
-    es:"En el Maipo Andes el día caluroso madura la fruta y la noche fría guarda la acidez: el equilibrio del Don Melchor.",
-    en:"In Maipo Andes warm days ripen the fruit and cold nights preserve acidity — the balance behind Don Melchor.",
-    pt:"No Maipo Andes o dia quente amadurece a fruta e a noite fria guarda a acidez: o equilíbrio do Don Melchor." },
-  { topic:'cuerpo',
-    es:"Un rosado seco como el Garage es casi un tinto claro: fruta roja y acidez para frituras y platos con picor.",
-    en:"A dry rosé like Garage is almost a pale red: red fruit and acidity for fried and spicy dishes.",
-    pt:"Um rosé seco como o Garage é quase um tinto claro: fruta vermelha e acidez para fritos e pratos picantes." },
+    es:"Maipo Andes: día caluroso y noche fría; madurez y acidez en el mismo racimo.",
+    en:"Maipo Andes: hot days, cold nights — ripeness and acidity in the same bunch.",
+    pt:"Maipo Andes: dia quente e noite fria; maturação e acidez no mesmo cacho." },
+  { topic:'terroir',
+    es:"Talinay, SOLdeSOL y el Champagne comparten una raíz: suelo de caliza fría.",
+    en:"Talinay, SOLdeSOL and Champagne share one root: cool limestone soil.",
+    pt:"Talinay, SOLdeSOL e o Champagne dividem uma raiz: solo de calcário frio." },
+  { topic:'metodo',
+    es:"Azur: espumante orgánico del Limarí, método tradicional, extra brut.",
+    en:"Azur: organic Limarí sparkling, traditional method, extra brut.",
+    pt:"Azur: espumante orgânico do Limarí, método tradicional, extra brut." },
+  { topic:'crianza',
+    es:"El Syrah de Clos de Luz se cría en concreto y tinaja de greda: fruta y frescor, no madera.",
+    en:"Clos de Luz Syrah is raised in concrete and clay amphora: fruit and freshness, not oak.",
+    pt:"O Syrah da Clos de Luz é criado em concreto e talha de barro: fruta e frescor, não madeira." },
+  { topic:'servicio',
+    es:"Un tinto joven y cerrado se abre con 15 minutos de aire en la copa.",
+    en:"A young, closed red opens up with 15 minutes of air in the glass.",
+    pt:"Um tinto jovem e fechado se abre com 15 minutos de ar na taça." },
   { topic:'cepa',
-    es:"El Viejo Mundo nombra el lugar, Champagne; el Nuevo Mundo, la cepa, Cabernet. La carta de Explora usa ambos.",
-    en:"The Old World names the place, Champagne; the New World, the grape, Cabernet. Explora's list uses both.",
-    pt:"O Velho Mundo nomeia o lugar, Champagne; o Novo Mundo, a casta, Cabernet. A carta da Explora usa os dois." },
-  { topic:'ensamblaje',
-    es:"Ensamblaje bordelés: Cabernet, Carmenère, Malbec, Cabernet Franc y Petit Verdot juntos. Es el alma de Seña y Almaviva.",
-    en:"A Bordeaux blend: Cabernet, Carmenère, Malbec, Cabernet Franc and Petit Verdot together — the soul of Seña and Almaviva.",
-    pt:"Corte bordalês: Cabernet, Carmenère, Malbec, Cabernet Franc e Petit Verdot juntos. É a alma do Seña e do Almaviva." },
-  { topic:'cata',
-    es:"Catar es ver, girar, oler, probar y pensar. Girar la copa despierta los aromas antes del primer sorbo.",
-    en:"Tasting is look, swirl, smell, sip, reflect. Swirling the glass wakes the aromas before the first sip.",
-    pt:"Provar é ver, girar, cheirar, provar e pensar. Girar a taça desperta os aromas antes do primeiro gole." },
-  { topic:'maridaje',
-    es:"Acidez llama a acidez: un plato con limón pide un vino igual de fresco, como el Sauvignon de Talinay.",
-    en:"Acidity loves acidity: a dish with lemon wants a wine just as fresh, like Talinay Sauvignon.",
-    pt:"Acidez chama acidez: um prato com limão pede um vinho igualmente fresco, como o Sauvignon do Talinay." }
+    es:"Pérez Cruz: el único viñedo del Maipo Andes en manejo sustentable certificado.",
+    en:"Pérez Cruz: the only Maipo Andes vineyard under certified sustainable management.",
+    pt:"Pérez Cruz: o único vinhedo do Maipo Andes em manejo sustentável certificado." }
 ];
 
 const COURSE_ORDER = ['Entrada','Plato principal','Postre'];
@@ -1846,7 +1829,7 @@ let EIGHTYSIX_FORM_OPEN     = false;
 // Module: winetips — ventana viva sobre las tabs que rota tips de vino
 // (reemplazó a Postres/86). Contenido estático trilingüe en WINE_TIPS, sin
 // Firebase. Solo índice actual + handle del timer; el render parcha texto.
-const WINETIPS_INTERVAL_MS  = 20000;  // 20s por tip
+const WINETIPS_INTERVAL_MS  = 10000;  // 10s por tip
 let WINETIPS_INDEX          = 0;
 let WINETIPS_TIMER          = null;
 
