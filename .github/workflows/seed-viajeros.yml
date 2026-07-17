@@ -1,11 +1,22 @@
 name: Seed Viajeros (placeholder)
 
-# Manual-only: puebla /viajeros/current en Firebase con el seed placeholder
-# del módulo Viajeros. Se dispara desde la UI de Actions mientras el Excel
-# real (Dietas + Reporte Geos) no está disponible. Cuando llegue la fase 2,
-# este workflow gana un cron horario como sync-rol.yml.
+# Puebla /viajeros/current en Firebase con el seed placeholder del módulo
+# Viajeros, mientras el Excel real (Dietas + Reporte Geos) no está disponible.
+# Cuando llegue la fase 2, este workflow gana un cron horario como sync-rol.yml.
+#
+# Triggers:
+#   · workflow_dispatch — botón "Run workflow" (visible en la UI de Actions
+#     recién cuando este archivo llegue a main; la UI solo lista workflows
+#     del branch default).
+#   · push a staging/feature que toque el seed o este archivo — permite
+#     re-sembrar desde QA sin pasar por main: editar SEED_ROWS y pushear.
 on:
   workflow_dispatch:
+  push:
+    branches: [staging, 'feature/viajeros']
+    paths:
+      - 'scripts/sync_viajeros.py'
+      - '.github/workflows/seed-viajeros.yml'
 
 jobs:
   seed:
