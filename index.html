@@ -1373,6 +1373,107 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .chk-pin-error { font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:#d9534f; margin-top:0.75rem; min-height:14px; text-align:center; letter-spacing:0.05em; }
 .chk-pin-close { background:none; border:none; color:var(--text-tertiary); font-size:18px; cursor:pointer; float:right; padding:0; line-height:1; margin-top:-8px; margin-right:-4px; }
 .chk-pin-close:hover { color:#c07d2a; }
+
+/* ── Viajeros ────────────────────────────────────────────────────────────────
+   El corcho digital: dietas/alergias por hab. Lenguaje de color heredado:
+   rojo (coral) = alergia · gold = dieta/preferencia · azul (wine) = condición
+   · verde (teal) = niño / sin restricciones. Todo mobile-first. */
+.staffing-viajeros-link { cursor:pointer; -webkit-user-select:none; user-select:none; transition:color .15s; }
+.staffing-viajeros-link:hover, .staffing-viajeros-link:focus-visible { color:var(--gold); outline:none; }
+
+.vj-head { margin-bottom:0.4rem; }
+.vj-title-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.7rem; }
+.vj-subtitle { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:19px; color:var(--text-secondary); }
+.vj-updated { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); white-space:nowrap; }
+
+/* Stat-chips: contadores tappeables que a la vez son filtros. */
+.vj-stats { display:flex; gap:8px; margin-bottom:0.9rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.vj-stats::-webkit-scrollbar { display:none; }
+.vj-stat { flex:0 0 auto; min-width:74px; background:var(--bg-secondary); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:7px 12px 6px; text-align:center; cursor:pointer; transition:border-color .15s; -webkit-user-select:none; user-select:none; }
+.vj-stat-num { display:block; font-family:'Courier Prime','Courier New',monospace; font-size:19px; line-height:1.15; color:var(--text); }
+.vj-stat-label { display:block; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-top:2px; }
+.vj-stat.ninos    .vj-stat-num { color:var(--teal); }
+.vj-stat.alergias .vj-stat-num { color:#e08663; }
+.vj-stat.dietas   .vj-stat-num { color:#cfa14a; }
+.vj-stat.salenhoy .vj-stat-num { color:var(--text-secondary); }
+.vj-stat.active { border-color:var(--gold); background:var(--gold-light); }
+
+/* Chips de filtro por tag — solo los presentes en la data de hoy. */
+.vj-chips { display:flex; flex-wrap:wrap; gap:6px; margin:0.8rem 0 1rem; }
+.vj-chip { font-size:11px; letter-spacing:0.03em; padding:4px 11px; border-radius:999px; border:0.5px solid var(--border-md); background:transparent; color:var(--text-secondary); cursor:pointer; transition:all .15s; -webkit-user-select:none; user-select:none; }
+.vj-chip .vj-chip-n { font-family:'Courier Prime','Courier New',monospace; font-size:10px; opacity:0.75; margin-left:4px; }
+.vj-chip.alergia { color:#e08663; border-color:rgba(216,90,48,0.45); }
+.vj-chip.dieta   { color:#cfa14a; border-color:rgba(186,117,23,0.45); }
+.vj-chip.cond    { color:var(--wine-red-dark); border-color:rgba(127,119,221,0.45); }
+.vj-chip.alergia.active { background:var(--coral-light); }
+.vj-chip.dieta.active   { background:var(--gold-light); }
+.vj-chip.cond.active    { background:var(--wine-red-light); }
+
+/* Grilla de habitaciones (vista general). */
+.vj-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+.vj-hab-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:10px 12px 9px; cursor:pointer; transition:border-color .15s; }
+.vj-hab-card:hover { border-color:var(--border-md); }
+.vj-hab-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.vj-hab-num { font-family:'Courier Prime','Courier New',monospace; font-size:20px; color:var(--text); letter-spacing:0.04em; }
+.vj-hab-grupo { font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.vj-av-row { display:flex; flex-wrap:wrap; gap:4px; margin:8px 0 7px; }
+.vj-av { width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-family:'Courier Prime','Courier New',monospace; font-size:10px; color:var(--text); border:0.5px solid var(--border-md); flex:0 0 auto; overflow:hidden; }
+.vj-av img { width:100%; height:100%; object-fit:cover; }
+.vj-av-0 { background:var(--gold-light); }
+.vj-av-1 { background:var(--wine-red-light); }
+.vj-av-2 { background:var(--teal-light); }
+.vj-av-3 { background:var(--coral-light); }
+.vj-av-4 { background:var(--bg-secondary); }
+.vj-hab-flags { display:flex; flex-wrap:wrap; gap:4px 10px; min-height:14px; align-items:baseline; }
+.vj-flag { font-size:9px; letter-spacing:0.08em; text-transform:uppercase; }
+.vj-flag.alergia { color:#e08663; }
+.vj-flag.dieta   { color:#cfa14a; }
+.vj-flag.cond    { color:var(--wine-red-dark); }
+.vj-flag.nino    { color:var(--teal); }
+.vj-flag.out     { color:var(--text-secondary); }
+
+/* Vista por personas (cuando hay filtro o búsqueda activa). */
+.vj-person { display:flex; align-items:center; gap:11px; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:9px 12px; margin-bottom:8px; cursor:pointer; transition:border-color .15s; }
+.vj-person:hover { border-color:var(--border-md); }
+.vj-person .vj-av { width:32px; height:32px; font-size:11px; }
+.vj-person-main { flex:1 1 auto; min-width:0; }
+.vj-person-name { font-size:14px; color:var(--text); line-height:1.3; }
+.vj-age { font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-tertiary); margin-left:6px; }
+.vj-nino-badge { font-size:8px; letter-spacing:0.1em; text-transform:uppercase; color:var(--teal); border:0.5px solid rgba(29,158,117,0.45); border-radius:4px; padding:1px 5px; margin-left:6px; vertical-align:1px; }
+.vj-person-tags { margin-top:2px; }
+.vj-person-hab { font-family:'Courier Prime','Courier New',monospace; font-size:13px; color:var(--text-secondary); flex:0 0 auto; }
+
+/* Tags (chips no interactivos dentro de tarjetas y detalle). */
+.vj-tag { display:inline-block; font-size:10px; letter-spacing:0.03em; padding:2px 8px; border-radius:999px; margin:2px 5px 0 0; }
+.vj-tag.alergia { background:var(--coral-light); color:#e6906b; }
+.vj-tag.dieta   { background:var(--gold-light); color:#d4a24c; }
+.vj-tag.cond    { background:var(--wine-red-light); color:var(--wine-red-dark); }
+.vj-tag.ok      { background:var(--teal-light); color:var(--teal); }
+.vj-out-chip { display:inline-block; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary); border:0.5px solid var(--border-md); border-radius:4px; padding:1px 6px; margin:2px 0 0 0; }
+
+/* Modal de detalle de hab — bottom sheet en móvil, centrado en pantallas anchas. */
+.vj-modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:80; display:flex; align-items:flex-end; justify-content:center; }
+.vj-modal { background:var(--bg-secondary); border:0.5px solid var(--border-md); border-radius:16px 16px 0 0; width:100%; max-width:560px; max-height:82vh; overflow-y:auto; padding:1rem 1.15rem 1.3rem; }
+@media (min-width:600px){
+  .vj-modal-backdrop { align-items:center; }
+  .vj-modal { border-radius:16px; }
+}
+.vj-modal-head { display:flex; align-items:baseline; gap:12px; padding-bottom:0.6rem; border-bottom:0.5px solid var(--border); margin-bottom:0.2rem; }
+.vj-modal-head .vj-hab-num { font-size:24px; }
+.vj-modal-head .vj-hab-grupo { flex:1 1 auto; font-size:10px; }
+.vj-modal-close { background:none; border:none; color:var(--text-tertiary); font-size:20px; cursor:pointer; padding:0 2px; line-height:1; }
+.vj-modal-close:hover { color:var(--gold); }
+.vj-detail-person { display:flex; gap:12px; padding:13px 0; border-bottom:0.5px solid var(--border); }
+.vj-detail-person:last-child { border-bottom:none; }
+.vj-detail-person .vj-av { width:38px; height:38px; font-size:12px; margin-top:2px; }
+.vj-detail-main { flex:1 1 auto; min-width:0; }
+.vj-detail-name { font-size:15px; color:var(--text); line-height:1.3; }
+.vj-detail-meta { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.05em; color:var(--text-tertiary); margin-top:2px; }
+.vj-detail-meta .vj-meta-out-today { color:#e08663; }
+.vj-detail-tags { margin-top:5px; }
+.vj-detail-obs { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-secondary); margin-top:5px; line-height:1.4; }
+
+.vj-empty { font-family:'Courier Prime','Courier New',monospace; font-size:12px; color:var(--text-tertiary); text-align:center; padding:2.5rem 1rem; line-height:1.8; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -1490,6 +1591,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
     <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">Comande</button>
     <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol">Rol</button>
+    <button class="tab" onclick="setTab('viajeros',this)" id="tab-btn-viajeros">Viajeros</button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -1566,6 +1668,12 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
   <!-- ROL TAB — gated weekly shift reader. Renders entirely from JS. -->
   <div id="tab-rol" class="hidden">
     <div class="rol-root" id="rol-root"></div>
+  </div>
+
+  <!-- VIAJEROS TAB — dietas y restricciones por hab (el corcho digital).
+       Renders entirely from JS; datos read-only desde /viajeros/current. -->
+  <div id="tab-viajeros" class="hidden">
+    <div class="vj-root" id="vj-root"></div>
   </div>
 
   <!-- CHECKLIST TAB — GEO pre-service checklists. Renders entirely from JS.
@@ -2385,6 +2493,46 @@ let _CHK_WRITE_QUEUE        = {};       // { 'section/phase/taskId': patch } pen
 let _CHK_WRITE_INFLIGHT     = false;
 let _CHK_META_WRITE_QUEUE   = {};       // { 'section/phase': meta patch }
 
+// --- Viajeros module state -----------------------------------------------
+// Module: viajeros — dietas/alergias/restricciones por hab (el corcho de
+// tarjetas, digitalizado). Solo lectura: /viajeros/current lo escribe
+// scripts/sync_viajeros.py (seed hoy, Excel Dietas+Geos en fase 2).
+// Sin PIN (decisión 2026-07-17, misma lógica de fricción que Rol/E-Check).
+const VIAJEROS_PATH        = 'viajeros/current';
+const VIAJEROS_NINO_MAX    = 12;             // edad ≤ 12 cuenta como "niño"
+const VIAJEROS_STALE_MS    = 5 * 60 * 1000;  // re-fetch al abrir la tab si la data es más vieja
+// Taxonomía canónica de tags — mismos slugs que emite el script Python.
+// cls colorea (alergia=rojo · dieta=gold · cond=azul); key apunta al
+// diccionario UI. Tags desconocidos degradan a su prefijo + slug legible.
+const VJ_TAGS = {
+  'alergia-mariscos':      { cls:'alergia', key:'vjTagMariscos' },
+  'alergia-gluten':        { cls:'alergia', key:'vjTagGluten' },
+  'alergia-lactosa':       { cls:'alergia', key:'vjTagLactosa' },
+  'alergia-sesamo':        { cls:'alergia', key:'vjTagSesamo' },
+  'alergia-pescado':       { cls:'alergia', key:'vjTagPescado' },
+  'alergia-ajo':           { cls:'alergia', key:'vjTagAjo' },
+  'alergia-frutos-secos':  { cls:'alergia', key:'vjTagFrutosSecos' },
+  'alergia-frutillas':     { cls:'alergia', key:'vjTagFrutillas' },
+  'dieta-vegetariana':     { cls:'dieta',   key:'vjTagVegetariana' },
+  'dieta-vegana':          { cls:'dieta',   key:'vjTagVegana' },
+  'dieta-sin-gluten':      { cls:'dieta',   key:'vjTagSinGluten' },
+  'dieta-sin-lactosa':     { cls:'dieta',   key:'vjTagSinLactosa' },
+  'dieta-sin-cerdo':       { cls:'dieta',   key:'vjTagSinCerdo' },
+  'dieta-sin-carnes-rojas':{ cls:'dieta',   key:'vjTagSinCarnesRojas' },
+  'dieta-sin-cordero':     { cls:'dieta',   key:'vjTagSinCordero' },
+  'dieta-sin-mariscos':    { cls:'dieta',   key:'vjTagSinMariscos' },
+  'dieta-sin-pescado':     { cls:'dieta',   key:'vjTagSinPescado' },
+  'dieta-sin-fritura':     { cls:'dieta',   key:'vjTagSinFritura' },
+  'cond-diabetico':        { cls:'cond',    key:'vjTagDiabetico' },
+  'cond-embarazada':       { cls:'cond',    key:'vjTagEmbarazada' }
+};
+let VIAJEROS_DATA          = null;   // { date, updatedAt, source, habs:{} } | null
+let VIAJEROS_FETCHED_AT    = 0;      // ms del último fetch (para el re-fetch por staleness)
+let VIAJEROS_LOAD_ERROR    = false;
+let VIAJEROS_FILTER        = null;   // null | 'ninos'|'alergias'|'dietas'|'salenhoy' | tag slug
+let VIAJEROS_SEARCH        = '';
+let VIAJEROS_HAB_OPEN      = null;   // hab abierta en el modal de detalle
+
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
 // ════════════════════════════════════════════════════════════════════════════
@@ -2524,7 +2672,22 @@ const UI = {
     chkEditDeleteConfirm:'¿Eliminar esta tarea?',
     chkEditSave:'Guardar cambios', chkEditCancel:'Descartar',
     chkPinTitle:'Modo edición', chkPinSub:'Introduce el código del supervisor',
-    chkPinError:'Código incorrecto', chkPinClose:'Cerrar'
+    chkPinError:'Código incorrecto', chkPinClose:'Cerrar',
+    // Viajeros module
+    tabViajeros:'Viajeros',
+    vjSubtitle:'Dietas y restricciones por habitación',
+    vjReportOf:'Reporte del',
+    vjStatViajeros:'viajeros', vjStatNinos:'niños', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'salen hoy',
+    vjSearchPh:'Buscar viajero, hab o grupo...',
+    vjEmpty:'Aún no hay datos de viajeros. Corre "Seed Viajeros" desde GitHub Actions para poblar Firebase.',
+    vjError:'No se pudieron cargar los viajeros. Se reintenta al volver a abrir la tab.',
+    vjHab:'Hab', vjYears:'años', vjNino:'niño',
+    vjSaleHoy:'sale hoy', vjSaleManana:'sale mañana', vjLlegaHoy:'llegó hoy',
+    vjSinRestriccion:'Sin restricciones',
+    vjNoResults:'Sin resultados para este filtro',
+    vjTagMariscos:'Mariscos', vjTagGluten:'Gluten', vjTagLactosa:'Lactosa', vjTagSesamo:'Sésamo', vjTagPescado:'Pescado', vjTagAjo:'Ajo', vjTagFrutosSecos:'Frutos secos', vjTagFrutillas:'Frutillas',
+    vjTagVegetariana:'Vegetariano', vjTagVegana:'Vegano', vjTagSinGluten:'Sin gluten', vjTagSinLactosa:'Sin lactosa', vjTagSinCerdo:'Sin cerdo', vjTagSinCarnesRojas:'Sin carnes rojas', vjTagSinCordero:'Sin cordero', vjTagSinMariscos:'Sin mariscos', vjTagSinPescado:'Sin pescado', vjTagSinFritura:'Sin fritura',
+    vjTagDiabetico:'Diabético', vjTagEmbarazada:'Embarazada'
   },
   en: {
     appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'Detail, at hand.',
@@ -2658,7 +2821,22 @@ const UI = {
     chkEditDeleteConfirm:'Delete this task?',
     chkEditSave:'Save changes', chkEditCancel:'Discard',
     chkPinTitle:'Edit mode', chkPinSub:'Enter the supervisor code',
-    chkPinError:'Wrong code', chkPinClose:'Close'
+    chkPinError:'Wrong code', chkPinClose:'Close',
+    // Viajeros module
+    tabViajeros:'Guests',
+    vjSubtitle:'Diets & restrictions by room',
+    vjReportOf:'Report of',
+    vjStatViajeros:'guests', vjStatNinos:'children', vjStatAlergias:'allergies', vjStatDietas:'diets', vjStatSalenHoy:'leave today',
+    vjSearchPh:'Search guest, room or group...',
+    vjEmpty:'No guest data yet. Run "Seed Viajeros" from GitHub Actions to populate Firebase.',
+    vjError:'Could not load guests. Will retry next time the tab opens.',
+    vjHab:'Room', vjYears:'yrs', vjNino:'child',
+    vjSaleHoy:'leaves today', vjSaleManana:'leaves tomorrow', vjLlegaHoy:'arrived today',
+    vjSinRestriccion:'No restrictions',
+    vjNoResults:'No matches for this filter',
+    vjTagMariscos:'Shellfish', vjTagGluten:'Gluten', vjTagLactosa:'Lactose', vjTagSesamo:'Sesame', vjTagPescado:'Fish', vjTagAjo:'Garlic', vjTagFrutosSecos:'Tree nuts', vjTagFrutillas:'Strawberries',
+    vjTagVegetariana:'Vegetarian', vjTagVegana:'Vegan', vjTagSinGluten:'Gluten-free', vjTagSinLactosa:'Lactose-free', vjTagSinCerdo:'No pork', vjTagSinCarnesRojas:'No red meat', vjTagSinCordero:'No lamb', vjTagSinMariscos:'No shellfish', vjTagSinPescado:'No fish', vjTagSinFritura:'No fried food',
+    vjTagDiabetico:'Diabetic', vjTagEmbarazada:'Pregnant'
   },
   pt: {
     appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'Detail, at hand.',
@@ -2792,7 +2970,22 @@ const UI = {
     chkEditDeleteConfirm:'Excluir esta tarefa?',
     chkEditSave:'Salvar alterações', chkEditCancel:'Descartar',
     chkPinTitle:'Modo edição', chkPinSub:'Insira o código do supervisor',
-    chkPinError:'Código incorreto', chkPinClose:'Fechar'
+    chkPinError:'Código incorreto', chkPinClose:'Fechar',
+    // Viajeros module
+    tabViajeros:'Viajantes',
+    vjSubtitle:'Dietas e restrições por quarto',
+    vjReportOf:'Relatório de',
+    vjStatViajeros:'viajantes', vjStatNinos:'crianças', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'saem hoje',
+    vjSearchPh:'Buscar viajante, quarto ou grupo...',
+    vjEmpty:'Ainda não há dados de viajantes. Rode "Seed Viajeros" no GitHub Actions para popular o Firebase.',
+    vjError:'Não foi possível carregar os viajantes. Nova tentativa ao reabrir a aba.',
+    vjHab:'Quarto', vjYears:'anos', vjNino:'criança',
+    vjSaleHoy:'sai hoje', vjSaleManana:'sai amanhã', vjLlegaHoy:'chegou hoje',
+    vjSinRestriccion:'Sem restrições',
+    vjNoResults:'Sem resultados para este filtro',
+    vjTagMariscos:'Frutos do mar', vjTagGluten:'Glúten', vjTagLactosa:'Lactose', vjTagSesamo:'Gergelim', vjTagPescado:'Peixe', vjTagAjo:'Alho', vjTagFrutosSecos:'Oleaginosas', vjTagFrutillas:'Morangos',
+    vjTagVegetariana:'Vegetariano', vjTagVegana:'Vegano', vjTagSinGluten:'Sem glúten', vjTagSinLactosa:'Sem lactose', vjTagSinCerdo:'Sem porco', vjTagSinCarnesRojas:'Sem carnes vermelhas', vjTagSinCordero:'Sem cordeiro', vjTagSinMariscos:'Sem frutos do mar', vjTagSinPescado:'Sem peixe', vjTagSinFritura:'Sem fritura',
+    vjTagDiabetico:'Diabético', vjTagEmbarazada:'Grávida'
   }
 };
 function t(k){ return UI[currentLang][k] || UI.es[k]; }
@@ -3027,6 +3220,8 @@ function setLang(lang, el) {
   if (cmdBtn) cmdBtn.textContent = t('tabComandera');
   const rolBtn = document.getElementById('tab-btn-rol');
   if (rolBtn) rolBtn.textContent = t('tabRol');
+  const vjBtn = document.getElementById('tab-btn-viajeros');
+  if (vjBtn) vjBtn.textContent = t('tabViajeros');
   // The Checklist button has internal structure (icon + label spans), so we
   // can't just overwrite its textContent — that would drop the icon. Update
   // the .checklist-feature-label span instead.
@@ -3058,7 +3253,7 @@ function setTab(tab, el) {
   // Checklist — the operator wants the task list above the fold, not the
   // staffing roster that they already know.
   document.body.classList.toggle('in-checklist', tab === 'checklist');
-  ['menus','vinos','cocktails','cafe','comandera','rol','checklist'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  ['menus','vinos','cocktails','cafe','comandera','rol','viajeros','checklist'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'cocktails'){
     renderCocktails();
     if (cocktailsShowingMomentos) renderMomentos();
@@ -3066,6 +3261,7 @@ function setTab(tab, el) {
   if (tab === 'cafe') renderCafeTab();
   if (tab === 'comandera') comandaEnter();
   if (tab === 'rol') rolEnter();
+  if (tab === 'viajeros') viajerosEnter();
   if (tab === 'checklist') chkEnter();
   else {
     // The checklist PIN/image overlays live on <body> (not inside chk-root),
@@ -4647,10 +4843,15 @@ function staffingRender(){
   const senior = (dayData[`geo_senior_${shift}`] || []).map(staffingFirstName).filter(Boolean);
   const geos   = (dayData[`geos_${shift}`]       || []).map(staffingFirstName).filter(Boolean);
   const apoyo  = (dayData[`apoyo_${shift}`]      || []).map(staffingFirstName).filter(Boolean);
+  // El contador de viajeros es la puerta rápida al módulo Viajeros (dietas
+  // por hab) — un tap y estás en el corcho digital, sin buscar la tab.
   let html = `
     <div class="staffing-head">
       <span class="staffing-shift">${shift.toUpperCase()}</span>
-      <span class="staffing-viajeros">${dayData.viajeros ?? '—'} ${t('staffViajeros')}</span>
+      <span class="staffing-viajeros staffing-viajeros-link" role="button" tabindex="0"
+            onclick="setTab('viajeros', document.getElementById('tab-btn-viajeros'))"
+            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setTab('viajeros', document.getElementById('tab-btn-viajeros'));}"
+            >${dayData.viajeros ?? '—'} ${t('staffViajeros')} ›</span>
     </div>`;
   if (senior.length) html += `<div class="staffing-row"><span class="staffing-label">${t('staffSenior')}</span><span class="staffing-names">${senior.join(' · ')}</span></div>`;
   if (geos.length)   html += `<div class="staffing-row"><span class="staffing-label">${t('staffComedor')}</span><span class="staffing-names">${geos.join(' · ')}</span></div>`;
@@ -5050,6 +5251,274 @@ function winetipsStart(){
 }
 onI18nChange(winetipsRender);
 winetipsStart();
+
+// ── Viajeros module ──────────────────────────────────────────────────────────
+// El corcho de tarjetas de huéspedes, digitalizado. Vista general por hab +
+// filtros por tag (alergias/dietas/condiciones) + drill-down por habitación.
+// Path:  /viajeros/current (un solo doc, sobrescrito por cada sync)
+// Shape: { date:'YYYY-MM-DD', updatedAt, source, habs:{ '01':[traveler…] } }
+// Traveler: { id, nombre, edad, nac, grupo, in, out, tags[], obs, foto? }
+// Escribe solo scripts/sync_viajeros.py (seed hoy; Excel Dietas+Geos fase 2).
+// Read-only en la app, sin PIN. Estado y VJ_TAGS viven en STATE TOP.
+// "Niño" se deriva de edad ≤ VIAJEROS_NINO_MAX; "sale hoy" compara out con
+// la fecha local del dispositivo (no con la fecha del reporte).
+
+function viajerosUrl(){ return `${CF_FIREBASE_CONFIG.databaseURL}/${VIAJEROS_PATH}.json`; }
+
+async function viajerosFetch(){
+  try {
+    const resp = await fetch(viajerosUrl());
+    const raw  = await resp.json();
+    VIAJEROS_DATA = (raw && raw.habs) ? raw : null;
+    VIAJEROS_LOAD_ERROR = false;
+  } catch(e){
+    VIAJEROS_LOAD_ERROR = true;
+  }
+  VIAJEROS_FETCHED_AT = Date.now();
+  viajerosRender();
+}
+
+// Entrada por tab: re-fetch solo si la data está vieja (el sync es horario;
+// no hace falta polling — mismo criterio que staffing con visibilitychange).
+function viajerosEnter(){
+  if (!VIAJEROS_DATA || Date.now() - VIAJEROS_FETCHED_AT > VIAJEROS_STALE_MS) viajerosFetch();
+  else viajerosRender();
+}
+
+// ── Helpers puros ──
+function vjEsc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function vjIsoLocal(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function vjTodayIso(){ return vjIsoLocal(new Date()); }
+function vjTomorrowIso(){ return vjIsoLocal(new Date(Date.now() + 86400000)); }
+function vjShortDate(iso){ return (iso && iso.length >= 10) ? `${iso.slice(8,10)}-${iso.slice(5,7)}` : (iso || ''); }
+function vjFold(s){ return String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+function vjInitials(nombre){
+  const p = String(nombre || '').trim().split(/\s+/);
+  return (((p[0] || '')[0] || '') + ((p.length > 1 ? p[p.length-1][0] : '') || '')).toUpperCase();
+}
+// Color de avatar estable por grupo: mismo grupo = mismo fondo, así una
+// familia se lee como unidad aunque esté repartida en dos habs.
+function vjAvatarClass(grupo){
+  let h = 0;
+  const s = String(grupo || '');
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return 'vj-av-' + (h % 5);
+}
+function vjAvatarEl(tr, extra){
+  if (tr.foto) return `<span class="vj-av ${extra||''}"><img src="${vjEsc(tr.foto)}" alt=""></span>`;
+  return `<span class="vj-av ${vjAvatarClass(tr.grupo)} ${extra||''}">${vjEsc(vjInitials(tr.nombre))}</span>`;
+}
+function vjIsNino(tr){ return typeof tr.edad === 'number' && tr.edad <= VIAJEROS_NINO_MAX; }
+function vjHasAlergia(tr){ return (tr.tags || []).some(x => x.indexOf('alergia-') === 0); }
+function vjHasDieta(tr){ return (tr.tags || []).some(x => x.indexOf('dieta-') === 0); }
+function vjTagCls(tag){ return (VJ_TAGS[tag] && VJ_TAGS[tag].cls) || tag.split('-')[0]; }
+function vjTagLabel(tag){
+  const m = VJ_TAGS[tag];
+  if (m) return t(m.key);
+  // Tag futuro que la app aún no conoce: degradar a slug legible.
+  return tag.replace(/^(alergia|dieta|cond)-/,'').replace(/-/g,' ');
+}
+// Lista plana [{...traveler, hab}] ordenada por hab — base de todo el render.
+function vjAll(){
+  const habs = (VIAJEROS_DATA && VIAJEROS_DATA.habs) || {};
+  const out = [];
+  Object.keys(habs).sort().forEach(h => (habs[h] || []).forEach(tr => out.push(Object.assign({ hab: h }, tr))));
+  return out;
+}
+function vjMatchesFilter(tr){
+  const f = VIAJEROS_FILTER;
+  if (!f) return true;
+  if (f === 'ninos')    return vjIsNino(tr);
+  if (f === 'alergias') return vjHasAlergia(tr);
+  if (f === 'dietas')   return vjHasDieta(tr);
+  if (f === 'salenhoy') return tr.out === vjTodayIso();
+  return (tr.tags || []).indexOf(f) >= 0;
+}
+function vjMatchesSearch(tr){
+  const q = vjFold(VIAJEROS_SEARCH.trim());
+  if (!q) return true;
+  return vjFold(tr.nombre).indexOf(q) >= 0 || vjFold(tr.grupo).indexOf(q) >= 0 || String(tr.hab).indexOf(q) >= 0;
+}
+
+// ── Interacción ──
+function vjSetFilter(f){
+  VIAJEROS_FILTER = (VIAJEROS_FILTER === f) ? null : f;
+  VIAJEROS_HAB_OPEN = null;
+  vjRenderStats(); vjRenderChips(); vjRenderBody();
+}
+function vjSearchInput(v){
+  VIAJEROS_SEARCH = v;
+  vjRenderBody();   // el input vive en el shell estático: no pierde el foco
+}
+function vjOpenHab(hab){ VIAJEROS_HAB_OPEN = hab; vjRenderBody(); }
+function vjCloseHab(){ VIAJEROS_HAB_OPEN = null; vjRenderBody(); }
+
+// ── Render ──
+// Shell estático (subtítulo + stats + búsqueda + chips) construido una vez;
+// vjRenderBody() reescribe solo la grilla/lista. Mismo patrón que el search
+// del Menú/Checklist: el input nunca se re-crea mientras se tipea.
+function viajerosRender(){
+  const root = document.getElementById('vj-root');
+  if (!root) return;
+  if (!VIAJEROS_DATA){
+    root.innerHTML = `<div class="vj-empty">${t(VIAJEROS_LOAD_ERROR ? 'vjError' : 'vjEmpty')}</div>`;
+    return;
+  }
+  if (!document.getElementById('vj-body')){
+    root.innerHTML = `
+      <div class="vj-head">
+        <div class="vj-title-row">
+          <span class="vj-subtitle" id="vj-subtitle"></span>
+          <span class="vj-updated" id="vj-updated"></span>
+        </div>
+        <div class="vj-stats" id="vj-stats"></div>
+        <div class="search-bar vj-search-bar">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+          <input type="text" id="vj-search" oninput="vjSearchInput(this.value)" autocomplete="off" autocapitalize="off">
+        </div>
+        <div class="vj-chips" id="vj-chips"></div>
+      </div>
+      <div id="vj-body"></div>`;
+  }
+  document.getElementById('vj-subtitle').textContent = t('vjSubtitle');
+  document.getElementById('vj-updated').textContent  = `${t('vjReportOf')} ${vjShortDate(VIAJEROS_DATA.date)}`;
+  document.getElementById('vj-search').placeholder   = t('vjSearchPh');
+  vjRenderStats(); vjRenderChips(); vjRenderBody();
+}
+
+function vjRenderStats(){
+  const el = document.getElementById('vj-stats');
+  if (!el) return;
+  const all   = vjAll();
+  const today = vjTodayIso();
+  const stats = [
+    { f:null,       n:all.length,                                cls:'',         label:t('vjStatViajeros') },
+    { f:'ninos',    n:all.filter(vjIsNino).length,               cls:'ninos',    label:t('vjStatNinos') },
+    { f:'alergias', n:all.filter(vjHasAlergia).length,           cls:'alergias', label:t('vjStatAlergias') },
+    { f:'dietas',   n:all.filter(vjHasDieta).length,             cls:'dietas',   label:t('vjStatDietas') },
+    { f:'salenhoy', n:all.filter(tr => tr.out === today).length, cls:'salenhoy', label:t('vjStatSalenHoy') }
+  ];
+  el.innerHTML = stats.map(s => `
+    <div class="vj-stat ${s.cls} ${VIAJEROS_FILTER === s.f && s.f ? 'active' : ''}"
+         onclick="${s.f ? `vjSetFilter('${s.f}')` : 'vjSetFilter(null)'}">
+      <span class="vj-stat-num">${s.n}</span>
+      <span class="vj-stat-label">${s.label}</span>
+    </div>`).join('');
+}
+
+function vjRenderChips(){
+  const el = document.getElementById('vj-chips');
+  if (!el) return;
+  const counts = {};
+  vjAll().forEach(tr => (tr.tags || []).forEach(tag => { counts[tag] = (counts[tag] || 0) + 1; }));
+  const rank = { alergia:0, dieta:1, cond:2 };
+  const tags = Object.keys(counts).sort((a,b) =>
+    (rank[vjTagCls(a)] ?? 3) - (rank[vjTagCls(b)] ?? 3) || counts[b] - counts[a] || a.localeCompare(b));
+  el.innerHTML = tags.map(tag => `
+    <button class="vj-chip ${vjTagCls(tag)} ${VIAJEROS_FILTER === tag ? 'active' : ''}"
+            onclick="vjSetFilter('${tag}')">${vjEsc(vjTagLabel(tag))}<span class="vj-chip-n">${counts[tag]}</span></button>`).join('');
+}
+
+function vjOutChip(tr){
+  if (tr.out === vjTodayIso())    return `<span class="vj-out-chip">${t('vjSaleHoy')}</span>`;
+  if (tr.out === vjTomorrowIso()) return `<span class="vj-out-chip">${t('vjSaleManana')}</span>`;
+  return '';
+}
+function vjTagChips(tr){
+  const chips = (tr.tags || []).map(tag => `<span class="vj-tag ${vjTagCls(tag)}">${vjEsc(vjTagLabel(tag))}</span>`);
+  if (!chips.length && !(tr.obs || '').trim()) chips.push(`<span class="vj-tag ok">${t('vjSinRestriccion')}</span>`);
+  return chips.join('');
+}
+
+function vjRenderBody(){
+  const el = document.getElementById('vj-body');
+  if (!el) return;
+  const filtered = VIAJEROS_FILTER || VIAJEROS_SEARCH.trim();
+  let html = filtered ? vjRenderPersonas() : vjRenderHabs();
+  if (VIAJEROS_HAB_OPEN) html += vjRenderHabModal();
+  el.innerHTML = html;
+}
+
+// Vista general: una tarjeta por hab. Compacta a propósito — el detalle
+// completo vive un tap más adentro; acá solo lo que orienta de un vistazo.
+function vjRenderHabs(){
+  const habs = VIAJEROS_DATA.habs;
+  const keys = Object.keys(habs).sort();
+  const today = vjTodayIso();
+  return `<div class="vj-grid">` + keys.map(h => {
+    const list = habs[h] || [];
+    const grupo = (list[0] && list[0].grupo) || '';
+    const nAl = list.filter(vjHasAlergia).length;
+    const nDi = list.filter(vjHasDieta).length;
+    const nCo = list.filter(tr => (tr.tags || []).some(x => x.indexOf('cond-') === 0)).length;
+    const nNi = list.filter(vjIsNino).length;
+    const sale = list.some(tr => tr.out === today);
+    const flags = [];
+    if (nAl) flags.push(`<span class="vj-flag alergia">● ${nAl}</span>`);
+    if (nDi) flags.push(`<span class="vj-flag dieta">● ${nDi}</span>`);
+    if (nCo) flags.push(`<span class="vj-flag cond">● ${nCo}</span>`);
+    if (nNi) flags.push(`<span class="vj-flag nino">${nNi} ${t('vjNino')}${nNi > 1 ? 's' : ''}</span>`);
+    if (sale) flags.push(`<span class="vj-flag out">${t('vjSaleHoy')}</span>`);
+    return `
+      <div class="vj-hab-card" onclick="vjOpenHab('${h}')">
+        <div class="vj-hab-top"><span class="vj-hab-num">${vjEsc(h)}</span><span class="vj-hab-grupo">${vjEsc(grupo)}</span></div>
+        <div class="vj-av-row">${list.map(tr => vjAvatarEl(tr)).join('')}</div>
+        <div class="vj-hab-flags">${flags.join('')}</div>
+      </div>`;
+  }).join('') + `</div>`;
+}
+
+// Vista filtrada: tarjetas de persona — responde "¿quiénes son?" sin abrir
+// cada hab. Tap en la tarjeta lleva al detalle de su habitación.
+function vjRenderPersonas(){
+  const list = vjAll().filter(tr => vjMatchesFilter(tr) && vjMatchesSearch(tr));
+  if (!list.length) return `<div class="vj-empty">${t('vjNoResults')}</div>`;
+  return list.map(tr => `
+    <div class="vj-person" onclick="vjOpenHab('${vjEsc(tr.hab)}')">
+      ${vjAvatarEl(tr)}
+      <div class="vj-person-main">
+        <div class="vj-person-name">${vjEsc(tr.nombre)}<span class="vj-age">${tr.edad ?? ''}</span>${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
+        <div class="vj-person-tags">${vjTagChips(tr)}${vjOutChip(tr)}</div>
+      </div>
+      <span class="vj-person-hab">${t('vjHab')} ${vjEsc(tr.hab)}</span>
+    </div>`).join('');
+}
+
+// Detalle de hab: la "tarjeta del corcho" completa, por viajero.
+function vjRenderHabModal(){
+  const hab  = VIAJEROS_HAB_OPEN;
+  const list = (VIAJEROS_DATA.habs[hab] || []);
+  const grupo = (list[0] && list[0].grupo) || '';
+  const today = vjTodayIso();
+  const rows = list.map(tr => {
+    const outCls  = tr.out === today ? 'vj-meta-out-today' : '';
+    const inToday = tr.in === today ? ` · ${t('vjLlegaHoy')}` : '';
+    return `
+      <div class="vj-detail-person">
+        ${vjAvatarEl(tr)}
+        <div class="vj-detail-main">
+          <div class="vj-detail-name">${vjEsc(tr.nombre)}${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
+          <div class="vj-detail-meta">${tr.edad ?? '—'} ${t('vjYears')} · ${vjEsc(tr.nac || '')} · IN ${vjShortDate(tr.in)} → <span class="${outCls}">OUT ${vjShortDate(tr.out)}${tr.out === today ? ` · ${t('vjSaleHoy')}` : ''}</span>${inToday}</div>
+          <div class="vj-detail-tags">${vjTagChips(tr)}</div>
+          ${(tr.obs || '').trim() ? `<div class="vj-detail-obs">${vjEsc(tr.obs)}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+  return `
+    <div class="vj-modal-backdrop" onclick="vjCloseHab()">
+      <div class="vj-modal" onclick="event.stopPropagation()">
+        <div class="vj-modal-head">
+          <span class="vj-hab-num">${t('vjHab')} ${vjEsc(hab)}</span>
+          <span class="vj-hab-grupo">${vjEsc(grupo)}</span>
+          <button class="vj-modal-close" onclick="vjCloseHab()" aria-label="Cerrar">×</button>
+        </div>
+        ${rows}
+      </div>
+    </div>`;
+}
+
+onI18nChange(viajerosRender);
+viajerosFetch();   // boot: no gatea el telón de intro — el módulo vive detrás de su tab
 
 // ── History helpers ──────────────────────────────────────────────────────────
 // Date bucket key in local time: 'YYYY-MM-DD'. The "Hoy/Ayer" boundary is
