@@ -6,7 +6,34 @@ Este documento explica, en lenguaje claro, las mejoras que vienen en el paquete
 que está en QA en staging y que aún no pasa a producción. La fuente editable es
 `docs/notas-de-version.md`; el PDF se regenera con `docs/build_notas.py`.
 
-## Paquete actual - 14 de junio de 2026
+## Paquete actual - 17 de julio de 2026
+
+### Viajeros: el corcho de tarjetas, digitalizado
+
+Nueva pestaña **Viajeros** (también se entra tocando el contador de viajeros
+del panel de turno). Reemplaza el corcho físico de tarjetas de huéspedes con
+una vista pensada para el servicio y los pases de turno:
+
+- **Respuestas de un vistazo.** Contadores tocables arriba: viajeros totales,
+  niños, alergias, dietas y quiénes salen hoy. Tocar un contador filtra la
+  lista y muestra **quiénes son**, con nombre y habitación.
+- **Filtros por restricción.** Chips de colores generados desde los datos del
+  día (rojo = alergia, dorado = dieta/preferencia, azul = condición):
+  "Mariscos (5)", "Sin cerdo (6)", etc. Solo aparecen los que existen hoy.
+- **Vista general por habitación.** Grilla compacta de las ~50 habs con las
+  iniciales de sus viajeros (color estable por familia/grupo) y marcas de
+  alergia/dieta/niño/sale hoy. Buscador por nombre, hab o grupo.
+- **Detalle por hab.** Tocar una habitación abre la "tarjeta del corcho"
+  completa: edad, nacionalidad, fechas IN→OUT (con aviso de salida hoy o
+  mañana), restricciones y la observación original del reporte. Preparado
+  para mostrar foto tipo cédula cuando la fuente la incluya.
+- **Datos.** Por ahora carga un set de prueba coherente con los reportes de
+  Dietas y Geos (se puebla con el workflow "Seed Viajeros" en GitHub
+  Actions). La fase 2 conecta el Excel real con sincronización automática,
+  igual que el Rol.
+- Trilingüe ES/EN/PT y sin clave, como el Rol.
+
+## Paquete anterior - 14 de junio de 2026
 
 ### 1. Comandera, ahora "Comande Smart"
 

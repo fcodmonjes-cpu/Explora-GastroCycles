@@ -24,6 +24,8 @@ que es operacional (turnos, postres, pedidos, comandas).
 - Manual de café + sistema mesero ↔ barista para pedidos al espresso
 - Comandera de mesa (E-Check) PIN-gateada para registrar pedidos
 - Panel operativo (roster del turno + ventana viva de tips de vino)
+- Corcho digital de viajeros: dietas, alergias y restricciones por
+  habitación, con filtros y contadores (módulo `viajeros`)
 
 **Lo que la hace diferente de una "página web informativa".**
 
@@ -87,6 +89,7 @@ reemplazó al strip de Postres/86 el 2026-06-22). Después, la fila de tabs:
 | **Cocktails** | Mocktails (halo verde) + Cocktails + sub-banner Momentos | Estático (`COCKTAILS`, `MOCKTAILS`) | — |
 | **Café** | Manual de bebidas + modo servicio (mesero / barista) | Estático (`COFFEE_DATA`) + Firebase `/orders` | 555 (mesero) · 999 (barista) |
 | **E-Check** | Comandera por mesa | Firebase `/comandas/{date}/{id}` | 666 |
+| **Viajeros** | Dietas/alergias/restricciones por hab + filtros y contadores | Firebase `/viajeros/current` (read-only; escribe `scripts/sync_viajeros.py`) | — |
 
 Los datos del Café (módulo Service Mode) y los del E-Check tienen su
 propia capa de Firebase. Del header, **staffing** escribe/lee Firebase; la
@@ -113,6 +116,15 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
 │       (auto-purge >4h · ya no se escribe/lee desde la UI: el módulo y su
 │        strip se retiraron al poner los tips de vino; código intacto, igual
 │        que /eightysix, reactivable según comentarios "LATENTE Postres/86")
+│
+├── viajeros/                      ← dietas y restricciones por habitación
+│   └── current → { date, updatedAt, source,
+│                   habs: { "01": [ { id, nombre, edad, nac, grupo,
+│                                     in, out, tags[], obs, foto? } ] } }
+│       (un solo doc sobrescrito por cada sync; lo escribe
+│        scripts/sync_viajeros.py — seed manual vía workflow_dispatch hoy,
+│        Excel Dietas+Geos con cron en fase 2. Read-only en la app, sin PIN.
+│        Tags canónicos alergia-*/dieta-*/cond-* compartidos script ↔ VJ_TAGS)
 │
 ├── orders/                        ← cola viva del café (mesero → barista)
 │   └── {auto-id} → { items[], table, timestamp, status:'pending', lang }
@@ -541,7 +553,7 @@ Cuando el owner pida "retomemos lo de X":
 - **Trilingüe (ES/EN/PT):** cualquier string visible al usuario debe existir en los 3 idiomas del diccionario `UI`. Si falta un idioma para un módulo nuevo, consultar al owner antes de traducir automáticamente.
 - **Comentarios:** en español, salvo cuando se refieran a APIs/términos técnicos universales.
 - **Paleta y tipografías:** Cormorant Garamond + Courier Prime, dark amber. No introducir colores nuevos sin avisar.
-- **Convención de PINs:** 555 (mesero), 999 (barista), 9876 (supervisor Checklist). Gates desactivados el 2026-06-09 para reducir fricción: **Rol** (tenía 2098 — ahora entra directo; quedó "oculto" al final del strip scrollable y esa obscuridad reemplaza la clave) y **E-Check/comandera** (tenía 666 waiter / 777 recibidor — ahora entra directo como waiter; reimaginada como herramienta personal + intercom entre meseros). El código de ambos gates queda latente para reactivar en una línea (`ROL_PIN_CODE`/`rolRenderGate`/… y `COMANDA_PIN_CODE`/`COMANDA_RECIBIDOR_PIN`/`comandaRenderGate`/…). Nuevos PINs deben ir aquí cuando se agreguen.
+- **Convención de PINs:** 555 (mesero), 999 (barista), 9876 (supervisor Checklist). Gates desactivados el 2026-06-09 para reducir fricción: **Rol** (tenía 2098 — ahora entra directo; quedó "oculto" al final del strip scrollable y esa obscuridad reemplaza la clave) y **E-Check/comandera** (tenía 666 waiter / 777 recibidor — ahora entra directo como waiter; reimaginada como herramienta personal + intercom entre meseros). El código de ambos gates queda latente para reactivar en una línea (`ROL_PIN_CODE`/`rolRenderGate`/… y `COMANDA_PIN_CODE`/`COMANDA_RECIBIDOR_PIN`/`comandaRenderGate`/…). El módulo **Viajeros** (2026-07-17) nació sin gate por la misma lógica. Nuevos PINs deben ir aquí cuando se agreguen.
 
 ### Lo que NO se hace
 
