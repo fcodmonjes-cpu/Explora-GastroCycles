@@ -1,0 +1,26 @@
+name: Seed Viajeros (placeholder)
+
+# Manual-only: puebla /viajeros/current en Firebase con el seed placeholder
+# del módulo Viajeros. Se dispara desde la UI de Actions mientras el Excel
+# real (Dietas + Reporte Geos) no está disponible. Cuando llegue la fase 2,
+# este workflow gana un cron horario como sync-rol.yml.
+on:
+  workflow_dispatch:
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install requests google-auth
+
+      - name: Ejecutar seed
+        run: python scripts/sync_viajeros.py --seed
+        env:
+          FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
