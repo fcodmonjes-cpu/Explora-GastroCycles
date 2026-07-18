@@ -123,8 +123,11 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
 │                                     in, out, tags[], obs, foto? } ] } }
 │       (un solo doc sobrescrito por cada sync; lo escribe
 │        scripts/sync_viajeros.py — seed manual vía workflow_dispatch hoy,
-│        Excel Dietas+Geos con cron en fase 2. Read-only en la app, sin PIN.
-│        Tags canónicos alergia-*/dieta-*/cond-* compartidos script ↔ VJ_TAGS)
+│        Excel Dietas+Geos en fase 2: el plumbing `--from-excel` (descarga
+│        SharePoint + build_doc) ya está listo; falta el link (secret
+│        VIAJEROS_SHAREPOINT_URL) + mapear columnas en parse_excel() — ver la
+│        cabecera del script. Read-only en la app, sin PIN. Tags canónicos
+│        alergia-*/dieta-*/cond-* compartidos script ↔ VJ_TAGS)
 │
 ├── orders/                        ← cola viva del café (mesero → barista)
 │   └── {auto-id} → { items[], table, timestamp, status:'pending', lang }
@@ -429,8 +432,8 @@ Hay decisiones conscientes de prototipo. Listarlas explícitas:
 
 ## 10. Anatomía del archivo
 
-`index.html` es **el único archivo** de la app (~6900 líneas tras el
-módulo Checklist). Antes existía un duplicado `explora_atacama_app.V2.html`
+`index.html` es **el único archivo** de la app (~7400 líneas tras los
+módulos Checklist y Viajeros). Antes existía un duplicado `explora_atacama_app.V2.html`
 como fuente de verdad mientras `index.html` quedaba como copia desplegada
 — esa convención fue retirada el 2026-05-22 cuando la arquitectura de
 branches (sección 12) reemplazó la necesidad de mantener dos versiones
@@ -455,6 +458,7 @@ Mapa de regiones aproximadas (los rangos cambian a medida que crece;
 | Módulo Desserts / 86 | 3800-3900 | Strip + form de postres/86 — **latente** desde 2026-06-22 (markup en `<template id="latent-postres-86">`, activadores JS comentados) |
 | Módulo Wine tips | — | `winetips` en la ops-strip: rota `WINE_TIPS` (68, trilingüe, estático) cada 15s en orden barajado; reemplazó a Postres/86 |
 | Módulo Comandera | 3900-4200 | Gate + home + new + active + drag + history |
+| Módulo Viajeros | ~5260-5525 (+ CSS ~1377, STATE TOP ~2500, UI ~2682) | Corcho de dietas por hab: stats/chips filtrantes, búsqueda con teclado numérico plegable, grilla con roster (primer nombre + bandera `VJ_NAC` en vez de esferas de iniciales), modal por hab. Read-only `/viajeros/current` |
 | Módulo Rol | 5500-6260 | PIN gate + lectura semanal del roster |
 | Módulo Checklist | 6260-6940 | Sub-secciones + fases + carry-over + edit mode supervisor |
 | Boot | dispersos | setLang(currentLang) + fetches iniciales |
@@ -525,6 +529,15 @@ está en exploración** — y cada una tiene su URL de Vercel distinta.
 - Editar `index.html` directamente (no hay archivo paralelo desde 2026-05-22).
 - Probar localmente con `py -m http.server 3000` y `http://localhost:3000/index.html`.
 - Para módulos que tocan Firebase, considerar monkey-patch del `fetch` durante el desarrollo para no contaminar la base de producción con datos de prueba.
+
+**Toolkit de validación local** (sin instalar dependencias — todo ya disponible en el entorno; sirve igual con cualquier modelo):
+
+1. **Paridad de backticks:** `py -c "print(open('index.html',encoding='utf-8').read().count(chr(96))%2)"` → debe dar `0`. Un impar = template-literal sin cerrar = script halteado por TDZ (§5).
+2. **Bytes NUL:** contar `b'\x00'` sobre el archivo en binario → debe dar `0` (la herramienta de edición a veces mete un NUL literal; ensucia el repo y rompe ripgrep).
+3. **Syntax-check real con Node** (`node v24` está instalado): extraer los `<script>` inline (regex `/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi`) y `node --check` sobre el resultado. Atrapa errores de sintaxis sin ejecutar el DOM.
+4. **Screenshot de render real con Chrome/Edge headless** (ambos instalados en `Program Files`): como los módulos viven detrás de una tab + Firebase, armar un *harness* que reuse el `<style>` real del `index.html` + markup estático que replique lo que emiten las funciones de render, y capturarlo: `chrome.exe --headless=new --disable-gpu --window-size=390,H --screenshot=out.png harness.html`. Atrapa errores de CSS/layout/overflow que el syntax-check no ve. **Caveat:** los emoji de bandera (indicadores regionales) **no renderizan en Windows** (salen como letras `BR`/`CL`); ese detalle solo se valida en iPhone.
+5. **Scripts Python (`sync_*.py`):** correr con `PYTHONUTF8=1` en consola Windows — sin eso, los `print` con `≤`/`·`/`ñ` tiran `UnicodeEncodeError` (cp1252). En CI ubuntu corren sin el flag. Validar el pipeline con `--debug` (no escribe Firebase).
+6. La **prueba real** sigue siendo cargar la página (server local o preview de Vercel) y, para lo que solo se ve en iOS, el QA del owner desde iPhone en la URL fija de staging.
 
 **Al cerrar:**
 

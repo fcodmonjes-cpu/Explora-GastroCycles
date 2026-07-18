@@ -40,9 +40,11 @@ Secrets requeridos solo para escribir (GitHub → Settings → Secrets → Actio
   FIREBASE_KEY → contenido completo del JSON de la service account
 
 Modos:
-  python scripts/sync_viajeros.py --seed              → escribe el seed en Firebase
-  python scripts/sync_viajeros.py --debug             → imprime resumen, no escribe
+  python scripts/sync_viajeros.py --seed               → escribe el seed en Firebase
+  python scripts/sync_viajeros.py --from-excel         → baja el Excel real y escribe (fase 2)
+  python scripts/sync_viajeros.py --debug              → imprime resumen, no escribe
   python scripts/sync_viajeros.py --emit-json out.json → dump del doc (dev local)
+  (combinables: --from-excel --debug valida el Excel sin tocar Firebase)
 """
 
 import json, os, re, sys, datetime, unicodedata
@@ -265,17 +267,77 @@ def build_doc(rows, date_str, source):
     }
 
 
-# ── Fase 2 (stub) — parseo del Excel real ────────────────────────────────────
+# ── Fase 2 — parseo del Excel real (Dietas + Reporte Geos) ───────────────────
+# El PLUMBING ya está listo: download_excel() baja el xlsx desde SharePoint,
+# main() --from-excel lo carga con openpyxl y llama a parse_excel(wb), y el
+# resultado pasa por build_doc(source="excel") igual que el seed. Lo único que
+# falta cuando llegue el link es MAPEAR LAS COLUMNAS dentro de parse_excel().
+#
+# Activar la fase 2 (cuando el owner consiga el link de descarga):
+#   1. Agregar el secret VIAJEROS_SHAREPOINT_URL en GitHub → Settings → Secrets
+#      → Actions (link directo de descarga del Excel Dietas/Geos). Es un secret
+#      DISTINTO al SHAREPOINT_URL del rol.
+#   2. Llenar parse_excel() con el mapeo de columnas real (ver spec abajo).
+#   3. Validar sin escribir:  VIAJEROS_SHAREPOINT_URL=<url> \
+#        python scripts/sync_viajeros.py --from-excel --debug
+#   4. Cuando el resumen se vea bien: --from-excel (escribe /viajeros/current).
+#   5. En seed-viajeros.yml: agregar un cron horario que corra --from-excel con
+#      el nuevo secret (hoy el workflow solo corre --seed on-dispatch/on-push).
+
+VIAJEROS_XLSX_ENV = "VIAJEROS_SHAREPOINT_URL"   # secret propio del Excel de dietas
+
+
+def norm_key(s):
+    """Texto sin tildes en minúscula — para cruzar Dietas ↔ Geos por nombre."""
+    return unicodedata.normalize("NFD", str(s)).encode("ascii", "ignore").decode().lower().strip()
+
+
+def download_excel():
+    """Baja el xlsx desde SharePoint. Espejo de download_excel() de sync_rol.py."""
+    import io, requests
+    url = os.environ.get(VIAJEROS_XLSX_ENV)
+    if not url:
+        raise SystemExit(
+            f"Falta el secret/variable {VIAJEROS_XLSX_ENV} (link de descarga del "
+            "Excel Dietas/Geos). Agrégalo en GitHub Actions o expórtalo local."
+        )
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"},
+                     allow_redirects=True, timeout=30)
+    r.raise_for_status()
+    if r.content[:2] != b"PK":
+        raise ValueError(
+            f"La respuesta no es un xlsx ({len(r.content)} bytes). "
+            "¿Expiró el link de SharePoint?"
+        )
+    return io.BytesIO(r.content)
+
 
 def parse_excel(wb):
     """
-    Pendiente hasta que el Excel original esté disponible. Debe leer las dos
-    hojas/fuentes (Dietas + Reporte Geos), cruzar por hab+nombre (norm sin
-    tildes, como norm_key de sync_rol.py), y retornar la lista de filas en el
-    mismo formato de SEED_ROWS para pasar por build_doc(). La descarga será
-    idéntica a download_excel() de sync_rol.py (SharePoint + secret).
+    Cruza las dos fuentes y devuelve filas en el MISMO formato que SEED_ROWS
+    (hab, nombre, edad, nac, grupo, in, out, obs) para pasar por build_doc().
+    obs_to_tags() y build_doc() ya hacen el resto sin cambios.
+
+    Flujo previsto (llenar contra el Excel real; detectar columnas leyendo la
+    fila de encabezado, no hardcodear índices — ver find_sheet/get_day_cols en
+    sync_rol.py como referencia de la técnica):
+
+      1. Hoja "Dietas": una fila por viajero → hab, nombre, edad, nac, grupo,
+         observación libre. Indexar por norm_key(nombre) (o hab+nombre si hay
+         homónimos entre grupos).
+      2. Hoja "Reporte Geos" (diaria): una fila por viajero → IN/OUT (y hab, que
+         manda si difiere de Dietas). Cruzar por el mismo norm_key para pegar
+         las fechas IN/OUT sobre cada viajero de Dietas.
+      3. Emitir la lista de tuplas en el orden de columnas de SEED_ROWS.
+
+    Los `nac` nuevos que aparezcan hay que sumarlos al mapa VJ_NAC de index.html
+    (nacionalidad → bandera) o caen a texto sin bandera.
     """
-    raise NotImplementedError("Fase 2 — el Excel de Dietas/Geos aún no está disponible")
+    raise NotImplementedError(
+        "Fase 2 — falta mapear columnas del Excel Dietas/Geos. El plumbing "
+        "(download_excel, --from-excel, build_doc) ya está listo; ver el "
+        "comentario de arriba para los pasos de activación."
+    )
 
 
 # ── Firebase (mismo mecanismo que sync_rol.py) ───────────────────────────────
@@ -324,7 +386,14 @@ def print_summary(doc):
 
 
 def main():
-    doc = build_doc(SEED_ROWS, REPORT_DATE, "seed")
+    from_excel = "--from-excel" in sys.argv
+    if from_excel:
+        import openpyxl
+        print("[sync-viajeros] Descargando Excel Dietas/Geos...")
+        wb = openpyxl.load_workbook(download_excel(), read_only=True, data_only=True)
+        doc = build_doc(parse_excel(wb), datetime.date.today().isoformat(), "excel")
+    else:
+        doc = build_doc(SEED_ROWS, REPORT_DATE, "seed")
 
     if "--emit-json" in sys.argv:
         out_path = sys.argv[sys.argv.index("--emit-json") + 1]
@@ -339,8 +408,8 @@ def main():
         print("[sync-viajeros] Modo debug — Firebase no modificado.")
         return
 
-    if "--seed" not in sys.argv:
-        print("[sync-viajeros] Nada que hacer: usa --seed, --debug o --emit-json.")
+    if not from_excel and "--seed" not in sys.argv:
+        print("[sync-viajeros] Nada que hacer: usa --seed, --from-excel, --debug o --emit-json.")
         return
 
     print("[sync-viajeros] Autenticando con Firebase...")
