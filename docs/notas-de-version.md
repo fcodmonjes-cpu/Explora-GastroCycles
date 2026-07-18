@@ -105,6 +105,12 @@ Cocktails con el lenguaje editorial del programa.
 
 - El botón **86** requiere una regla de Firebase para el path `/eightysix`
   (ya aplicada).
+- El módulo **Viajeros** requiere una regla de Firebase para el path
+  `/viajeros`: `".read": true, ".write": false`. La escritura queda cerrada
+  al cliente porque el único escritor es `scripts/sync_viajeros.py` vía
+  service account (acceso admin, no pasa por reglas) — mismo criterio que
+  staffing/roster. Sin esta regla la app muestra "Aún no hay datos" aunque
+  el seed esté cargado.
 - Todo el paquete está **en revisión desde iPhone** antes de aprobarse para
   producción.
 
