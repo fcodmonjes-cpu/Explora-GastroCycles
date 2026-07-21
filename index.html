@@ -350,6 +350,34 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-item-allergen { font-size:14px; color:#e07b3a; cursor:help; flex-shrink:0; }
 .cmd-item-allergen-tip { font-size:10px; color:#e07b3a; opacity:0.75; }
 
+/* Buscador transversal + teclado en pantalla — reusa tokens; sin paleta nueva */
+.cmd-search-panel { margin-bottom:0.85rem; animation:panelIn 0.22s cubic-bezier(0.34,1.1,0.64,1) both; }
+.cmd-search-bar { display:flex; align-items:center; gap:8px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:9px 12px; margin-bottom:8px; }
+.cmd-search-icon { color:var(--text-tertiary); font-size:16px; flex-shrink:0; }
+.cmd-search-q { flex:1; min-width:0; font-size:17px; letter-spacing:0.02em; color:var(--text); min-height:22px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cmd-search-ph { color:var(--text-tertiary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; letter-spacing:0; }
+.cmd-search-clear { flex-shrink:0; width:24px; height:24px; border:none; background:transparent; color:var(--text-tertiary); font-size:14px; cursor:pointer; border-radius:6px; -webkit-tap-highlight-color:transparent; }
+.cmd-search-clear:hover { color:var(--gold); }
+.cmd-search-results { max-height:40vh; overflow-y:auto; -webkit-overflow-scrolling:touch; margin-bottom:8px; }
+.cmd-search-row { display:flex; align-items:center; gap:10px; width:100%; text-align:left; min-height:46px; padding:8px 11px; margin-bottom:5px; border-radius:10px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text); font-family:inherit; cursor:pointer; transition:background .12s, border-color .12s, transform .07s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.cmd-search-row:active { background:rgba(186,117,23,0.16); border-color:var(--gold); transform:scale(0.99); }
+.cmd-search-row-icon { flex-shrink:0; font-size:16px; width:22px; text-align:center; }
+.cmd-search-row-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.cmd-search-row-name { font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cmd-search-al { font-size:10px; color:#e07b3a; letter-spacing:0.04em; }
+.cmd-search-row-group { flex-shrink:0; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
+.cmd-search-hint { text-align:center; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); padding:8px 0; }
+.cmd-search-otro { width:100%; padding:9px; margin-bottom:10px; border:0.5px dashed var(--border-md); border-radius:var(--radius-md); background:transparent; color:var(--text-tertiary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:15px; cursor:pointer; transition:border-color .15s, color .15s; -webkit-tap-highlight-color:transparent; }
+.cmd-search-otro:hover { border-color:var(--gold); color:var(--gold); }
+.cmd-kbd { display:flex; flex-direction:column; gap:5px; }
+.cmd-kbd-row { display:flex; gap:5px; justify-content:center; }
+.cmd-kbd-key { flex:1 1 0; min-width:0; padding:13px 0; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text); font-size:16px; text-transform:uppercase; font-family:'Courier Prime','Courier New',monospace; cursor:pointer; transition:background .12s, border-color .12s, opacity .12s; touch-action:manipulation; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+.cmd-kbd-key:active { background:var(--gold-light); border-color:rgba(192,125,42,0.5); }
+.cmd-kbd-key.dim { opacity:0.22; pointer-events:none; }
+.cmd-kbd-key.cmd-kbd-del { flex:0 0 15%; color:var(--text-tertiary); font-size:15px; }
+.cmd-search-mode { width:100%; margin-top:10px; padding:8px; border:none; background:transparent; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:color .15s; -webkit-tap-highlight-color:transparent; }
+.cmd-search-mode:hover { color:var(--gold); }
+
 /* Custom item inline form */
 .cmd-custom-form { padding:10px 12px; background:rgba(202,138,4,0.04); border:0.5px solid rgba(202,138,4,0.2); border-radius:var(--radius-md); margin-bottom:1rem; animation:panelIn 0.22s cubic-bezier(0.34,1.1,0.64,1) both; }
 .cmd-custom-row { margin-bottom:8px; }
@@ -2287,6 +2315,12 @@ let COMANDA_ACTIVE_ID       = null;
 let COMANDA_ACTIVE_DATA     = null;
 let COMANDA_ACTIVE_DINER    = 1;
 let COMANDA_ACTIVE_CATEGORY = 'dishes';
+// Buscador transversal de ítems (teclado en pantalla propio, sin teclado iOS).
+// El catálogo tiene dos modos: 'search' (default, teclea y filtra todo) y
+// 'browse' (la grilla de categorías de siempre). Ver módulo Comanda.
+let COMANDA_CATALOG_MODE    = 'search'; // 'search' | 'browse'
+let COMANDA_SEARCH_QUERY    = '';       // buffer del teclado en pantalla
+let COMANDA_SEARCH_INDEX    = null;     // índice plano del catálogo (rebuild al abrir mesa)
 let COMANDA_NEW_MESA_BUF    = '';
 let COMANDA_NEW_DINERS      = 2;
 let COMANDA_NOTE_EDIT_ID    = null;     // item id whose note dialog is open
@@ -2737,6 +2771,8 @@ const UI = {
     cmdRoomsEmpty:'Sin habitación vinculada — tocá para añadir',
     cmdRoomNoData:'Sin datos de dietas para esta hab',
     cmdRoomDietTitle:'Dietas de la mesa', cmdRoomRemove:'Desvincular',
+    cmdSearchPlaceholder:'Buscar ítem', cmdSearchToday:'Del día', cmdSearchNoResults:'Sin resultados',
+    cmdSearchOtro:'Otro / pedido especial', cmdSearchBrowse:'Explorar por categoría', cmdSearchFind:'Buscar',
     cmdFreshChip:'nuevo',
     cmdPendingBatch:'Por enviar', cmdSentBatch:'Enviado',
     cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
@@ -2896,6 +2932,8 @@ const UI = {
     cmdRoomsEmpty:'No room linked — tap to add',
     cmdRoomNoData:'No dietary data for this room',
     cmdRoomDietTitle:'Table diets', cmdRoomRemove:'Unlink',
+    cmdSearchPlaceholder:'Search item', cmdSearchToday:'Today', cmdSearchNoResults:'No results',
+    cmdSearchOtro:'Other / special request', cmdSearchBrowse:'Browse by category', cmdSearchFind:'Search',
     cmdFreshChip:'new',
     cmdPendingBatch:'To send', cmdSentBatch:'Sent',
     cmdSendBtn:'Send', cmdSendBtnCount:'Send ({n})',
@@ -3055,6 +3093,8 @@ const UI = {
     cmdRoomsEmpty:'Sem quarto vinculado — toque para adicionar',
     cmdRoomNoData:'Sem dados de dieta para este quarto',
     cmdRoomDietTitle:'Dietas da mesa', cmdRoomRemove:'Desvincular',
+    cmdSearchPlaceholder:'Buscar item', cmdSearchToday:'Do dia', cmdSearchNoResults:'Sem resultados',
+    cmdSearchOtro:'Outro / pedido especial', cmdSearchBrowse:'Explorar por categoria', cmdSearchFind:'Buscar',
     cmdFreshChip:'novo',
     cmdPendingBatch:'A enviar', cmdSentBatch:'Enviado',
     cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
@@ -7270,6 +7310,7 @@ async function comandaCreateMesa(){
     COMANDA_ACTIVE_DATA = { id, ...payload };
     COMANDA_ACTIVE_DINER = 1;
     COMANDA_ACTIVE_CATEGORY = 'dishes';
+    comandaResetSearch();
     COMANDA_VIEW = 'active';
     comandaStartTimerInterval();
     comandaStartPolling();
@@ -7287,6 +7328,7 @@ async function comandaOpenMesa(id){
     COMANDA_ACTIVE_DATA = { id, ...data, items: data.items || [] };
     COMANDA_ACTIVE_DINER = 1;
     COMANDA_ACTIVE_CATEGORY = 'dishes';
+    comandaResetSearch();
     COMANDA_VIEW = 'active';
     comandaStartTimerInterval();
     comandaStartPolling();
@@ -7308,6 +7350,154 @@ function comandaAddDiner(){
 function comandaSetCategory(key){
   COMANDA_ACTIVE_CATEGORY = key;
   COMANDA_CUSTOM_OPEN = (key === 'custom');
+  comandaRender();
+}
+
+// ── Buscador transversal de ítems ────────────────────────────────────────
+// Índice plano de TODO el catálogo (todas las fuentes de COMANDA_SOURCES) para
+// teclear 2-3 letras y saltar las categorías. Teclado en pantalla propio: las
+// teclas mutan un buffer, nunca .focus() → el teclado del iPhone no aparece.
+function comandaResetSearch(){
+  COMANDA_CATALOG_MODE = 'search';
+  COMANDA_SEARCH_QUERY = '';
+  COMANDA_SEARCH_INDEX = null;   // rebuild lazy: depende del día D1-D4 y del servicio
+}
+function comandaBuildSearchIndex(){
+  const idx = [];
+  COMANDA_SOURCES.forEach(src => {
+    if (typeof src.items !== 'function') return;   // salta el sentinel 'custom'
+    let list;
+    try { list = src.items() || []; } catch(e){ return; }
+    const icon = src.icon || '';
+    list.forEach(it => {
+      if (it.note) return;   // comodines "Otro" viven como acción fija, no en el índice
+      idx.push({
+        srcKey: src.key, sourceId: it.sourceId || null,
+        name: it.name || '', group: it.group || '',
+        allergens: it.allergens || [], icon
+      });
+    });
+  });
+  return idx;
+}
+function comandaSearchIndex(){
+  if (!COMANDA_SEARCH_INDEX) COMANDA_SEARCH_INDEX = comandaBuildSearchIndex();
+  return COMANDA_SEARCH_INDEX;
+}
+// Iniciales de palabra: "Pisco Sour" → "ps"
+function comandaInitials(name){
+  return vjFold(name).split(/[^a-z0-9]+/).filter(Boolean).map(w => w[0]).join('');
+}
+// Resultados rankeados para la query (usa vjFold para acento-insensible).
+function comandaSearchResults(q){
+  const query = vjFold((q || '').trim());
+  if (!query) return [];
+  const scored = [];
+  comandaSearchIndex().forEach(it => {
+    const n = vjFold(it.name);
+    let score = -1;
+    if (n.startsWith(query)) score = 0;
+    else if (n.split(/[^a-z0-9]+/).some(w => w.startsWith(query))) score = 1;
+    else if (n.indexOf(query) >= 0) score = 2;
+    else if (comandaInitials(it.name).startsWith(query)) score = 3;
+    if (score >= 0) scored.push({ it, score });
+  });
+  scored.sort((a,b) => a.score - b.score || a.it.name.length - b.it.name.length || a.it.name.localeCompare(b.it.name));
+  return scored.map(s => s.it);
+}
+// Letras que, agregadas a la query, aún dan ≥1 resultado (para atenuar el resto).
+function comandaLiveKeys(q){
+  const live = new Set();
+  for (const ch of 'abcdefghijklmnopqrstuvwxyz'){
+    if (comandaSearchResults((q || '') + ch).length) live.add(ch);
+  }
+  return live;
+}
+
+function comandaSearchRow(srcKey, sourceId, name, group, allergens, icon){
+  const safeName  = String(name||'').replace(/'/g,'\\\'').replace(/"/g,'&quot;');
+  const safeGroup = String(group||'').replace(/'/g,'\\\'').replace(/"/g,'&quot;');
+  const alJson    = JSON.stringify(allergens||[]).replace(/"/g,'&quot;');
+  const sid       = sourceId ? `'${String(sourceId).replace(/'/g,'\\\'')}'` : 'null';
+  const alHint    = (allergens && allergens.length) ? `<span class="cmd-search-al">⚠ ${vjEsc(allergens.join(', '))}</span>` : '';
+  return `<button class="cmd-search-row" onclick="comandaSearchAdd('${srcKey}', ${sid}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${alJson}"><span class="cmd-search-row-icon">${icon||''}</span><span class="cmd-search-row-main"><span class="cmd-search-row-name">${vjEsc(name)}</span>${alHint}</span>${group?`<span class="cmd-search-row-group">${vjEsc(group)}</span>`:''}</button>`;
+}
+function comandaSearchResultsHtml(q){
+  if (!(q || '').trim()){
+    // Zero-state: los platos/postres del día (la fuente dishes ya filtra día+servicio).
+    const dishesSrc = COMANDA_SOURCES.find(s => s.key === 'dishes');
+    let day = [];
+    try { day = (dishesSrc && typeof dishesSrc.items === 'function' && dishesSrc.items()) || []; } catch(e){ day = []; }
+    day = day.filter(it => !it.note);
+    if (!day.length) return `<div class="cmd-search-hint">${t('cmdSearchPlaceholder')}</div>`;
+    const icon = (dishesSrc && dishesSrc.icon) || '🍽';
+    return `<div class="cmd-search-hint">${t('cmdSearchToday')}</div>` +
+      day.map(it => comandaSearchRow('dishes', it.sourceId, it.name, it.group, it.allergens, icon)).join('');
+  }
+  const results = comandaSearchResults(q).slice(0, 12);
+  if (!results.length) return `<div class="cmd-search-hint">${t('cmdSearchNoResults')}</div>`;
+  return results.map(it => comandaSearchRow(it.srcKey, it.sourceId, it.name, it.group, it.allergens, it.icon)).join('');
+}
+function comandaRenderSearch(){
+  const q = COMANDA_SEARCH_QUERY;
+  const kbdHtml = ['qwertyuiop','asdfghjkl','zxcvbnm'].map((row, ri) => {
+    const live = comandaLiveKeys(q);
+    let keys = row.split('').map(ch => `<button class="cmd-kbd-key${live.has(ch)?'':' dim'}" data-k="${ch}" onclick="comandaKbdPress('${ch}')">${ch}</button>`).join('');
+    if (ri === 2) keys += `<button class="cmd-kbd-key cmd-kbd-del" onclick="comandaKbdPress('del')" aria-label="${t('vjDelete')}">⌫</button>`;
+    return `<div class="cmd-kbd-row">${keys}</div>`;
+  }).join('');
+  const qDisp = q ? vjEsc(q) : `<span class="cmd-search-ph">${t('cmdSearchPlaceholder')}</span>`;
+  return `
+    <div class="cmd-search-panel">
+      <div class="cmd-search-bar">
+        <span class="cmd-search-icon">⌕</span>
+        <span class="cmd-search-q" id="cmd-search-q">${qDisp}</span>
+        ${q ? `<button class="cmd-search-clear" onclick="comandaKbdPress('clr')" aria-label="${t('vjClear')}">✕</button>` : ''}
+      </div>
+      <div class="cmd-search-results" id="cmd-search-results">${comandaSearchResultsHtml(q)}</div>
+      <button class="cmd-search-otro" onclick="comandaSearchOtro()">✎ ${t('cmdSearchOtro')}</button>
+      <div class="cmd-kbd" id="cmd-kbd">${kbdHtml}</div>
+      <button class="cmd-search-mode" onclick="comandaSetCatalogMode('browse')">${t('cmdSearchBrowse')} ▾</button>
+    </div>`;
+}
+// Teclado: parcha SOLO el panel de búsqueda (sin comandaRender completo, para no
+// reconstruir la vista activa por cada tecla — mismo motivo que change-mesa).
+function comandaKbdPress(k){
+  if (k === 'del')      COMANDA_SEARCH_QUERY = COMANDA_SEARCH_QUERY.slice(0,-1);
+  else if (k === 'clr') COMANDA_SEARCH_QUERY = '';
+  else if (COMANDA_SEARCH_QUERY.length < 24) COMANDA_SEARCH_QUERY += k;
+  const q = COMANDA_SEARCH_QUERY;
+  const qEl = document.getElementById('cmd-search-q');
+  if (qEl) qEl.innerHTML = q ? vjEsc(q) : `<span class="cmd-search-ph">${t('cmdSearchPlaceholder')}</span>`;
+  const resEl = document.getElementById('cmd-search-results');
+  if (resEl) resEl.innerHTML = comandaSearchResultsHtml(q);
+  const live = comandaLiveKeys(q);
+  const kbd = document.getElementById('cmd-kbd');
+  if (kbd) kbd.querySelectorAll('.cmd-kbd-key[data-k]').forEach(btn => btn.classList.toggle('dim', !live.has(btn.getAttribute('data-k'))));
+  // Botón limpiar: aparece/desaparece según haya query.
+  const bar = qEl && qEl.parentElement;
+  if (bar){
+    const clr = bar.querySelector('.cmd-search-clear');
+    if (q && !clr){
+      const b = document.createElement('button');
+      b.className = 'cmd-search-clear'; b.textContent = '✕';
+      b.setAttribute('onclick', "comandaKbdPress('clr')");
+      b.setAttribute('aria-label', t('vjClear'));
+      bar.appendChild(b);
+    } else if (!q && clr){ clr.remove(); }
+  }
+}
+function comandaSearchAdd(srcKey, sourceId, name, allergens, group){
+  COMANDA_SEARCH_QUERY = '';   // limpiar antes del render optimista de comandaAddItem
+  comandaAddItem(srcKey, sourceId, name, allergens, group);   // hace comandaRender()
+}
+function comandaSearchOtro(){
+  // Escape hatch de texto libre: cae al form custom existente (modo explorar).
+  COMANDA_CATALOG_MODE = 'browse';
+  comandaSetCategory('custom');
+}
+function comandaSetCatalogMode(mode){
+  COMANDA_CATALOG_MODE = mode;
   comandaRender();
 }
 
@@ -8326,6 +8516,14 @@ function comandaRenderActive(root){
     }
   }
 
+  // Zona de selección de ítem: buscador transversal (default) o la grilla de
+  // categorías de siempre (a un tap vía el toggle "explorar"). Ver módulo Comanda.
+  const catalogSection = (COMANDA_CATALOG_MODE === 'browse')
+    ? `<button class="cmd-search-mode" onclick="comandaSetCatalogMode('search')">⌕ ${t('cmdSearchFind')}</button>
+       <div class="cmd-cats">${catBtns}</div>
+       ${catalogHtml}`
+    : comandaRenderSearch();
+
   // Active diner's items, partitioned into batches (Por enviar / Enviado).
   // Within each batch, course dividers still group by Entrada/Plato/Postre.
   // Sent items lose the drag grip and dim slightly; pending items keep the
@@ -8411,9 +8609,7 @@ function comandaRenderActive(root){
 
     <div class="cmd-seat-panel-head">${t('cmdSeat')} <strong>${COMANDA_ACTIVE_DINER}</strong>${seatCfg.hasHead && COMANDA_ACTIVE_DINER===1 ? ' ♛' : ''}</div>
 
-    <div class="cmd-cats">${catBtns}</div>
-
-    ${catalogHtml}
+    ${catalogSection}
 
     <div class="cmd-diner-summary">
       ${dinerSummary}
