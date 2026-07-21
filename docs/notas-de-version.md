@@ -6,6 +6,29 @@ Este documento explica, en lenguaje claro, las mejoras que vienen en el paquete
 que está en QA en staging y que aún no pasa a producción. La fuente editable es
 `docs/notas-de-version.md`; el PDF se regenera con `docs/build_notas.py`.
 
+## Paquete - 20 de julio de 2026
+
+### Comande: mapa de mesa y una sola comanda para leer
+
+El módulo **Comande** se rediseñó para tomar pedidos con menos vueltas y ver
+todo el detalle de un vistazo.
+
+- **Mapa de la mesa.** En vez de elegir al comensal por un número chico en una
+  lista, ahora tocás su **asiento en un plano de la mesa**. Cada asiento muestra
+  cuántos productos lleva pedidos, así ubicás de un vistazo quién falta.
+- **Forma de mesa a tu gusto.** Con el botón **⚙** cambiás la forma
+  (rectangular, redonda o pareja) y marcás la **cabecera** si la hay. La
+  numeración sigue una lógica clara: la cabecera es el asiento 1 (o, si no hay,
+  el de tu izquierda), y de ahí en sentido horario.
+- **Una sola vista de comanda.** El botón **"Comanda"** abre una única pantalla
+  con los **totales de la mesa** (cuántos de cada producto, para cocina) arriba y
+  el **detalle por asiento** abajo - con **todas las notas y pedidos especiales
+  siempre a la vista**. Se terminó el saltar entre "Resumen" y "Por comensal"
+  para pasar el pedido.
+- **Menos cosas en pantalla.** La hora de envío ya no ocupa espacio por defecto
+  (la cocina la sigue viendo en Recibidor), y se sacó la fila de números y el
+  cambio de modo. Más pantalla para lo que importa.
+
 ## Paquete actual - 14 de junio de 2026
 
 ### 1. Comandera, ahora "Comande Smart"

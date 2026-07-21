@@ -86,12 +86,25 @@ reemplazó al strip de Postres/86 el 2026-06-22). Después, la fila de tabs:
 | **Vinos** | Ficha por vino + sub-vista "Maridajes generales" | Estático (`WINES`, `GUIONES`) | — |
 | **Cocktails** | Mocktails (halo verde) + Cocktails + sub-banner Momentos | Estático (`COCKTAILS`, `MOCKTAILS`) | — |
 | **Café** | Manual de bebidas + modo servicio (mesero / barista) | Estático (`COFFEE_DATA`) + Firebase `/orders` | 555 (mesero) · 999 (barista) |
-| **E-Check** | Comandera por mesa | Firebase `/comandas/{date}/{id}` | 666 |
+| **E-Check** | Comandera por mesa · **mapa espacial de asientos** | Firebase `/comandas/{date}/{id}` | 666 |
 
 Los datos del Café (módulo Service Mode) y los del E-Check tienen su
 propia capa de Firebase. Del header, **staffing** escribe/lee Firebase; la
 **ventana de tips de vino** es 100% estática (sin Firebase). Los módulos
 **Postres/86** quedaron latentes el 2026-06-22 (ver §4).
+
+**Mapa de mesa (E-Check).** La pantalla activa de la comandera es un
+**diagrama espacial**: los comensales se eligen tocando su asiento en un
+plano de la mesa, no una fila de números. `seatConfig = { shape, hasHead }`
+en cada mesa define la forma (`rect` / `round` / `couple`) y si hay
+cabecera; se ajusta en vivo desde el ⚙ del mapa. La geometría la calcula
+`comandaSeatLayout(diners, shape, hasHead)` (coordenadas 0–100 %):
+numeración horaria con asiento 1 = cabecera (si hay) o el de tu izquierda.
+**El n° de asiento ES el `dinerN`** — el mapa solo cambia la presentación,
+no la identidad del item, así que el motor de pedidos/batches/tally queda
+intacto. La "comanda completa" es ahora una **vista única** (sin toggle):
+tira de totales por producto para cocina + detalle por asiento con las
+notas/pedidos especiales siempre visibles y sin hora de envío.
 
 ---
 
