@@ -391,6 +391,37 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-full-diner { margin-bottom:1.1rem; padding-bottom:0.85rem; border-bottom:0.5px solid var(--border); }
 .cmd-full-diner:last-of-type { border-bottom:none; }
 .cmd-full-diner-head { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#9ec9ff; margin-bottom:7px; }
+
+/* Habitaciones ↔ dietas (integración Viajeros) — reutiliza tokens y las
+   clases .vj-detail-* globales para el contenido de la ficha. Sin paleta nueva. */
+.cmd-rooms-panel { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:10px 12px; margin-bottom:12px; animation:panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
+.cmd-rooms-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.cmd-rooms-head-toggle { cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.cmd-rooms-title { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); display:inline-flex; align-items:center; gap:7px; }
+.cmd-rooms-count { display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:rgba(202,138,4,0.16); color:var(--gold); font-size:10px; }
+.cmd-rooms-chevron { color:var(--text-tertiary); font-size:12px; }
+.cmd-rooms-empty { display:block; width:100%; margin-top:8px; padding:11px; border:0.5px dashed var(--border); border-radius:var(--radius-md); background:transparent; color:var(--text-tertiary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:15px; text-align:center; cursor:pointer; transition:border-color .15s, color .15s; -webkit-tap-highlight-color:transparent; }
+.cmd-rooms-empty:hover { border-color:var(--gold); color:var(--text-secondary); }
+.cmd-rooms-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.cmd-room-chip { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; color:var(--text-secondary); background:var(--bg-secondary); border:0.5px solid var(--border); border-radius:6px; padding:3px 8px; }
+.cmd-room-card { margin-top:10px; padding-top:9px; border-top:0.5px solid var(--border); }
+.cmd-rooms-panel .cmd-room-card:first-of-type { border-top:none; padding-top:2px; }
+.cmd-room-card-head { display:flex; align-items:center; gap:8px; margin-bottom:2px; }
+.cmd-room-num { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:18px; color:var(--gold); }
+.cmd-room-grupo { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
+.cmd-room-remove { margin-left:auto; width:24px; height:24px; border:none; background:transparent; color:var(--text-tertiary); font-size:17px; line-height:1; cursor:pointer; border-radius:6px; transition:color .15s, background .15s; -webkit-tap-highlight-color:transparent; }
+.cmd-room-remove:hover { color:#ff8a80; background:rgba(255,138,128,0.1); }
+.cmd-room-nodata { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-tertiary); padding:6px 0 9px; }
+.cmd-rooms-actions { margin-top:10px; }
+.cmd-room-add { width:100%; padding:8px; border:0.5px solid var(--border); border-radius:var(--radius-md); background:transparent; color:var(--gold); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:background .15s, border-color .15s; -webkit-tap-highlight-color:transparent; }
+.cmd-rooms-head .cmd-room-add { width:auto; padding:5px 10px; }
+.cmd-room-add:hover { background:rgba(202,138,4,0.1); border-color:rgba(202,138,4,0.5); }
+/* Chip 🏠 en las tarjetas de mesa (home / historial) */
+.cmd-mesa-rooms { margin-left:7px; padding-left:7px; border-left:0.5px solid var(--border); color:var(--gold); letter-spacing:0.04em; }
+/* Resumen de dietas en "Comanda completa" */
+.cmd-full-rooms { margin-bottom:1.1rem; padding-bottom:0.85rem; border-bottom:0.5px solid var(--border); }
+.cmd-full-rooms-title { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); margin-bottom:7px; }
+
 /* Comanda completa — toggle Resumen / Por comensal */
 .cmd-full-toggle { display:flex; gap:6px; margin-bottom:1rem; }
 .cmd-full-tab { flex:1; padding:7px 10px; border-radius:8px; background:transparent; border:0.5px solid var(--border); color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:background .15s, color .15s, border-color .15s; -webkit-tap-highlight-color:transparent; }
@@ -2266,6 +2297,12 @@ let COMANDA_SHAPE_CTL_OPEN  = false;    // popover ⚙ de forma de mesa abierto 
 let COMANDA_CHANGE_MESA_OPEN= false;    // "cambiar n° de mesa" modal flag
 let COMANDA_CHANGE_MESA_BUF = '';       // numpad buffer for new table #
 let COMANDA_CHANGE_MESA_ERR = '';       // 'taken' when collision detected
+// Habitaciones vinculadas a la mesa (integración con Viajeros): el doc de la
+// comanda guarda rooms:string[] (habs de los comensales); el panel lee las
+// dietas del global VIAJEROS_DATA (read-only) sin salir de Comande.
+let COMANDA_ROOM_ADD_OPEN   = false;    // modal numpad de "vincular habitación" abierto
+let COMANDA_ROOM_BUF        = '';       // buffer del numpad de hab
+let COMANDA_ROOMS_COLLAPSED = false;    // panel de dietas colapsado (default: expandido)
 let COMANDA_ROLE            = 'waiter'; // 'waiter' (666) | 'recibidor' (777)
 let COMANDA_RECIBIDOR_LIST  = [];       // mesas with sent items, for recibidor home
 let COMANDA_RECIBIDOR_VIEW_ID = null;   // mesa currently open in recibidor detail
@@ -2696,6 +2733,10 @@ const UI = {
     cmdItemRemove:'Quitar',
     cmdChangeMesa:'Cambiar mesa', cmdChangeMesaTitle:'Cambiar n° de mesa',
     cmdMesaTaken:'Esa mesa ya está abierta',
+    cmdRoomsTitle:'Habitaciones', cmdRoomAdd:'+ hab', cmdRoomAddTitle:'Vincular habitación',
+    cmdRoomsEmpty:'Sin habitación vinculada — tocá para añadir',
+    cmdRoomNoData:'Sin datos de dietas para esta hab',
+    cmdRoomDietTitle:'Dietas de la mesa', cmdRoomRemove:'Desvincular',
     cmdFreshChip:'nuevo',
     cmdPendingBatch:'Por enviar', cmdSentBatch:'Enviado',
     cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
@@ -2851,6 +2892,10 @@ const UI = {
     cmdItemRemove:'Remove',
     cmdChangeMesa:'Change table', cmdChangeMesaTitle:'Change table #',
     cmdMesaTaken:'That table is already open',
+    cmdRoomsTitle:'Rooms', cmdRoomAdd:'+ room', cmdRoomAddTitle:'Link room',
+    cmdRoomsEmpty:'No room linked — tap to add',
+    cmdRoomNoData:'No dietary data for this room',
+    cmdRoomDietTitle:'Table diets', cmdRoomRemove:'Unlink',
     cmdFreshChip:'new',
     cmdPendingBatch:'To send', cmdSentBatch:'Sent',
     cmdSendBtn:'Send', cmdSendBtnCount:'Send ({n})',
@@ -3006,6 +3051,10 @@ const UI = {
     cmdItemRemove:'Remover',
     cmdChangeMesa:'Mudar mesa', cmdChangeMesaTitle:'Mudar n° de mesa',
     cmdMesaTaken:'Essa mesa já está aberta',
+    cmdRoomsTitle:'Quartos', cmdRoomAdd:'+ quarto', cmdRoomAddTitle:'Vincular quarto',
+    cmdRoomsEmpty:'Sem quarto vinculado — toque para adicionar',
+    cmdRoomNoData:'Sem dados de dieta para este quarto',
+    cmdRoomDietTitle:'Dietas da mesa', cmdRoomRemove:'Desvincular',
     cmdFreshChip:'novo',
     cmdPendingBatch:'A enviar', cmdSentBatch:'Enviado',
     cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
@@ -5554,6 +5603,24 @@ function vjTagChips(tr){
   if (!chips.length && !(tr.obs || '').trim()) chips.push(`<span class="vj-tag ok">${t('vjSinRestriccion')}</span>`);
   return chips.join('');
 }
+// Ficha completa de un viajero (avatar + nombre + meta + chips + obs). Fuente
+// única: la usa el modal por hab de Viajeros y también el panel de dietas del
+// Comande, para que la tarjeta se vea idéntica en ambas tabs.
+function vjTravelerRow(tr, today){
+  today = today || vjTodayIso();
+  const outCls  = tr.out === today ? 'vj-meta-out-today' : '';
+  const inToday = tr.in === today ? ` · ${t('vjLlegaHoy')}` : '';
+  return `
+    <div class="vj-detail-person">
+      ${vjAvatarEl(tr)}
+      <div class="vj-detail-main">
+        <div class="vj-detail-name">${vjEsc(tr.nombre)}${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
+        <div class="vj-detail-meta">${tr.edad ?? '—'} ${t('vjYears')} · ${vjFlag(tr.nac) ? vjFlag(tr.nac) + ' ' : ''}${vjEsc(tr.nac || '')} · IN ${vjShortDate(tr.in)} → <span class="${outCls}">OUT ${vjShortDate(tr.out)}${tr.out === today ? ` · ${t('vjSaleHoy')}` : ''}</span>${inToday}</div>
+        <div class="vj-detail-tags">${vjTagChips(tr)}</div>
+        ${(tr.obs || '').trim() ? `<div class="vj-detail-obs">${vjEsc(tr.obs)}</div>` : ''}
+      </div>
+    </div>`;
+}
 
 function vjRenderBody(){
   const el = document.getElementById('vj-body');
@@ -5615,20 +5682,7 @@ function vjRenderHabModal(){
   const list = (VIAJEROS_DATA.habs[hab] || []);
   const grupo = (list[0] && list[0].grupo) || '';
   const today = vjTodayIso();
-  const rows = list.map(tr => {
-    const outCls  = tr.out === today ? 'vj-meta-out-today' : '';
-    const inToday = tr.in === today ? ` · ${t('vjLlegaHoy')}` : '';
-    return `
-      <div class="vj-detail-person">
-        ${vjAvatarEl(tr)}
-        <div class="vj-detail-main">
-          <div class="vj-detail-name">${vjEsc(tr.nombre)}${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
-          <div class="vj-detail-meta">${tr.edad ?? '—'} ${t('vjYears')} · ${vjFlag(tr.nac) ? vjFlag(tr.nac) + ' ' : ''}${vjEsc(tr.nac || '')} · IN ${vjShortDate(tr.in)} → <span class="${outCls}">OUT ${vjShortDate(tr.out)}${tr.out === today ? ` · ${t('vjSaleHoy')}` : ''}</span>${inToday}</div>
-          <div class="vj-detail-tags">${vjTagChips(tr)}</div>
-          ${(tr.obs || '').trim() ? `<div class="vj-detail-obs">${vjEsc(tr.obs)}</div>` : ''}
-        </div>
-      </div>`;
-  }).join('');
+  const rows = list.map(tr => vjTravelerRow(tr, today)).join('');
   return `
     <div class="vj-modal-backdrop" onclick="vjCloseHab()">
       <div class="vj-modal" onclick="event.stopPropagation()">
@@ -7715,7 +7769,7 @@ function comandaDocSig(d){
     mesa: d.mesa, diners: d.diners, items: d.items || [],
     timerStartedAt: d.timerStartedAt || 0, closedAt: d.closedAt || 0,
     lastSentAt: d.lastSentAt || 0, recibidorSeenAt: d.recibidorSeenAt || 0,
-    mesaHistory: d.mesaHistory || []
+    mesaHistory: d.mesaHistory || [], rooms: d.rooms || []
   });
 }
 
@@ -8021,7 +8075,7 @@ function comandaRenderHome(root){
           <div class="cmd-mesa-card" onclick="comandaOpenMesa('${c.id}')">
             <div class="cmd-mesa-num">${c.mesa}</div>
             <div class="cmd-mesa-info">
-              <div class="cmd-mesa-meta">${c.diners} ${c.diners === 1 ? t('cmdComensal') : t('cmdComensales')}</div>
+              <div class="cmd-mesa-meta">${c.diners} ${c.diners === 1 ? t('cmdComensal') : t('cmdComensales')}${comandaRoomChip(c)}</div>
               <div class="cmd-mesa-summary">${summary}</div>
             </div>
             <div class="cmd-mesa-elapsed ${cls}">${comandaFmtMsCompact(elapsedMs)}</div>
@@ -8036,7 +8090,7 @@ function comandaRenderHome(root){
       <div class="cmd-mesa-card cmd-mesa-card-closed" onclick="comandaShowHistoryItem('${c.id}')">
         <div class="cmd-mesa-num">${c.mesa}</div>
         <div class="cmd-mesa-info">
-          <div class="cmd-mesa-meta">${c.diners} ${c.diners === 1 ? t('cmdComensal') : t('cmdComensales')} · ${itemCount} ítem${itemCount===1?'':'s'}</div>
+          <div class="cmd-mesa-meta">${c.diners} ${c.diners === 1 ? t('cmdComensal') : t('cmdComensales')} · ${itemCount} ítem${itemCount===1?'':'s'}${comandaRoomChip(c)}</div>
           <div class="cmd-mesa-summary">${t('cmdClosedAgo')} ${closedAgo}</div>
         </div>
       </div>`;
@@ -8099,6 +8153,7 @@ function comandaRenderHistoryModal(){
     <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaHideHistoryItem()">
       <div class="cmd-modal-panel">
         <div class="cmd-modal-title">${t('cmdMesaPrefix')} ${c.mesa} · ${t('cmdLasted')} ${lasted}</div>
+        ${comandaRenderFullRooms(c)}
         ${sections.join('')}
         <div class="cmd-modal-actions">
           <button class="cmd-btn" onclick="comandaReopenMesa('${c.id}')">${t('cmdReopen')}</button>
@@ -8158,6 +8213,7 @@ function comandaRenderNew(root){
 function comandaRenderActive(root){
   const c = COMANDA_ACTIVE_DATA;
   if (!c){ COMANDA_VIEW = 'home'; comandaRender(); return; }
+  cmdEnsureViajeros();   // warm de dietas (read-only, guardado por staleness)
   const items = c.items || [];
   const diners = c.diners || 1;
 
@@ -8351,6 +8407,8 @@ function comandaRenderActive(root){
 
     ${tableMap}
 
+    ${comandaRenderRoomsPanel(c)}
+
     <div class="cmd-seat-panel-head">${t('cmdSeat')} <strong>${COMANDA_ACTIVE_DINER}</strong>${seatCfg.hasHead && COMANDA_ACTIVE_DINER===1 ? ' ♛' : ''}</div>
 
     <div class="cmd-cats">${catBtns}</div>
@@ -8369,7 +8427,8 @@ function comandaRenderActive(root){
 
     ${COMANDA_NOTE_EDIT_ID ? comandaRenderNoteModal() : ''}
     ${COMANDA_FULL_OPEN ? comandaRenderFullModal() : ''}
-    ${COMANDA_CHANGE_MESA_OPEN ? comandaRenderChangeMesaModal() : ''}`;
+    ${COMANDA_CHANGE_MESA_OPEN ? comandaRenderChangeMesaModal() : ''}
+    ${COMANDA_ROOM_ADD_OPEN ? comandaRenderRoomAddModal() : ''}`;
 }
 
 function comandaRenderChangeMesaModal(){
@@ -8466,6 +8525,181 @@ async function comandaChangeMesaConfirm(){
   comandaPersist({ mesa: target, mesaHistory: history });
 }
 
+// ── Habitaciones ↔ dietas (integración con Viajeros) ─────────────────────
+// El doc de la comanda guarda rooms:string[]. Las dietas se leen del global
+// VIAJEROS_DATA (read-only, keyed por hab "01".."NN"). Filosofía permisiva: si
+// la hab no está en los datos igual se vincula y se muestra "sin datos".
+function cmdRoomKey(raw){
+  const s = String(raw == null ? '' : raw).trim();
+  if (/^\d+$/.test(s)) return s.length === 1 ? '0' + s : s;   // "4" → "04"
+  return s.toUpperCase();
+}
+function cmdRoomTravelers(hab){
+  const habs = (VIAJEROS_DATA && VIAJEROS_DATA.habs) || null;
+  if (!habs) return null;
+  return habs[cmdRoomKey(hab)] || null;
+}
+// Asegura que VIAJEROS_DATA esté cargado (mismo staleness que la tab Viajeros).
+// Read-only; re-renderiza el Comande solo si realmente trajo datos nuevos.
+async function cmdEnsureViajeros(){
+  const stale = !VIAJEROS_DATA || (Date.now() - VIAJEROS_FETCHED_AT > VIAJEROS_STALE_MS);
+  if (!stale) return;
+  await viajerosFetch();
+  if (currentTab === 'comandera' && COMANDA_VIEW === 'active') comandaRender();
+}
+function comandaRoomChip(c){
+  const rooms = Array.isArray(c.rooms) ? c.rooms : [];
+  if (!rooms.length) return '';
+  return `<span class="cmd-mesa-rooms">🏠 ${rooms.map(vjEsc).join('·')}</span>`;
+}
+
+function comandaRenderRoomsPanel(c){
+  const rooms = Array.isArray(c.rooms) ? c.rooms : [];
+  const addBtn = `<button class="cmd-room-add" onclick="comandaRoomAddShow()">${t('cmdRoomAdd')}</button>`;
+  if (!rooms.length){
+    return `
+      <div class="cmd-rooms-panel">
+        <div class="cmd-rooms-head">
+          <span class="cmd-rooms-title">🏠 ${t('cmdRoomsTitle')}</span>
+          ${addBtn}
+        </div>
+        <button class="cmd-rooms-empty" onclick="comandaRoomAddShow()">${t('cmdRoomsEmpty')}</button>
+      </div>`;
+  }
+  const collapsed = COMANDA_ROOMS_COLLAPSED;
+  const today = vjTodayIso();
+  let bodyHtml;
+  if (collapsed){
+    bodyHtml = `<div class="cmd-rooms-chips">${rooms.map(h => `<span class="cmd-room-chip">${t('vjHab')} ${vjEsc(h)}</span>`).join('')}</div>`;
+  } else {
+    bodyHtml = rooms.map(h => {
+      const list  = cmdRoomTravelers(h);
+      const grupo = (list && list[0] && list[0].grupo) || '';
+      const inner = (list && list.length)
+        ? list.map(tr => vjTravelerRow(tr, today)).join('')
+        : `<div class="cmd-room-nodata">${t('cmdRoomNoData')}</div>`;
+      return `
+        <div class="cmd-room-card">
+          <div class="cmd-room-card-head">
+            <span class="cmd-room-num">${t('vjHab')} ${vjEsc(h)}</span>
+            ${grupo ? `<span class="cmd-room-grupo">${vjEsc(grupo)}</span>` : ''}
+            <button class="cmd-room-remove" onclick="comandaRoomRemove('${vjEsc(h)}')" title="${t('cmdRoomRemove')}" aria-label="${t('cmdRoomRemove')}">×</button>
+          </div>
+          ${inner}
+        </div>`;
+    }).join('');
+  }
+  return `
+    <div class="cmd-rooms-panel">
+      <div class="cmd-rooms-head cmd-rooms-head-toggle" onclick="comandaToggleRoomsPanel()">
+        <span class="cmd-rooms-title">🏠 ${t('cmdRoomsTitle')} <span class="cmd-rooms-count">${rooms.length}</span></span>
+        <span class="cmd-rooms-chevron">${collapsed ? '▸' : '▾'}</span>
+      </div>
+      ${bodyHtml}
+      <div class="cmd-rooms-actions">${addBtn}</div>
+    </div>`;
+}
+
+// Resumen de dietas para la vista "Comanda completa" (cocina/pase).
+function comandaRenderFullRooms(c){
+  const rooms = Array.isArray(c.rooms) ? c.rooms : [];
+  if (!rooms.length) return '';
+  const today = vjTodayIso();
+  const blocks = rooms.map(h => {
+    const list  = cmdRoomTravelers(h);
+    const grupo = (list && list[0] && list[0].grupo) || '';
+    const inner = (list && list.length)
+      ? list.map(tr => vjTravelerRow(tr, today)).join('')
+      : `<div class="cmd-room-nodata">${t('cmdRoomNoData')}</div>`;
+    return `
+      <div class="cmd-room-card">
+        <div class="cmd-room-card-head">
+          <span class="cmd-room-num">${t('vjHab')} ${vjEsc(h)}</span>
+          ${grupo ? `<span class="cmd-room-grupo">${vjEsc(grupo)}</span>` : ''}
+        </div>
+        ${inner}
+      </div>`;
+  }).join('');
+  return `<div class="cmd-full-rooms"><div class="cmd-full-rooms-title">🏠 ${t('cmdRoomDietTitle')}</div>${blocks}</div>`;
+}
+
+function comandaRenderRoomAddModal(){
+  const buf = COMANDA_ROOM_BUF;
+  const dispRoom = buf || '—';
+  const dispClass = buf ? '' : 'empty';
+  return `
+    <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaRoomAddCancel()">
+      <div class="cmd-modal-panel">
+        <div class="cmd-modal-title">${t('cmdRoomAddTitle')}</div>
+        <div class="cmd-new-section">
+          <span class="cmd-new-label">🏠 ${t('cmdRoomsTitle')}</span>
+          <div class="cmd-new-mesa-display ${dispClass}" id="cmd-room-display">${dispRoom}</div>
+          <div class="cmd-numpad" style="max-width:240px;margin:0 auto">
+            <div class="cmd-numpad-grid">
+              ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="cmd-numpad-key" onclick="comandaRoomAddPress('${n}')">${n}</button>`).join('')}
+              <button class="cmd-numpad-key cmd-nk-del" onclick="comandaRoomAddPress('del')">⌫</button>
+              <button class="cmd-numpad-key" onclick="comandaRoomAddPress('0')">0</button>
+              <button class="cmd-numpad-key cmd-nk-del" onclick="comandaRoomAddPress('clr')">✕</button>
+            </div>
+          </div>
+        </div>
+        <div class="cmd-modal-actions">
+          <button class="cmd-btn" onclick="comandaRoomAddCancel()">${t('cmdBack')}</button>
+          <button class="cmd-btn primary" id="cmd-room-confirm" onclick="comandaRoomAddConfirm()" ${buf?'':'disabled'}>${t('cmdContinue')}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function comandaRoomAddShow(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  COMANDA_ROOM_ADD_OPEN = true;
+  COMANDA_ROOM_BUF = '';
+  comandaRender();
+}
+function comandaRoomAddCancel(){
+  COMANDA_ROOM_ADD_OPEN = false;
+  COMANDA_ROOM_BUF = '';
+  comandaRender();
+}
+function comandaRoomAddPress(key){
+  if (key === 'del')      COMANDA_ROOM_BUF = COMANDA_ROOM_BUF.slice(0,-1);
+  else if (key === 'clr') COMANDA_ROOM_BUF = '';
+  else if (COMANDA_ROOM_BUF.length < 4) COMANDA_ROOM_BUF += key;
+  // Patch in place (mismo motivo que change-mesa: un render completo por dígito
+  // reconstruye toda la vista activa y produce stutter).
+  const buf  = COMANDA_ROOM_BUF;
+  const disp = document.getElementById('cmd-room-display');
+  if (disp){ disp.textContent = buf || '—'; disp.classList.toggle('empty', !buf); }
+  const okBtn = document.getElementById('cmd-room-confirm');
+  if (okBtn) okBtn.disabled = !buf;
+}
+function comandaRoomAddConfirm(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  const hab = cmdRoomKey(COMANDA_ROOM_BUF);
+  if (!hab) return;
+  const rooms = Array.isArray(COMANDA_ACTIVE_DATA.rooms) ? COMANDA_ACTIVE_DATA.rooms.slice() : [];
+  if (rooms.indexOf(hab) < 0) rooms.push(hab);   // dedup
+  COMANDA_ACTIVE_DATA.rooms = rooms;
+  COMANDA_ROOM_ADD_OPEN = false;
+  COMANDA_ROOM_BUF = '';
+  COMANDA_ROOMS_COLLAPSED = false;   // recién vinculada → mostrar expandida
+  comandaRender();
+  comandaPersist({ rooms });
+  cmdEnsureViajeros();               // por si la data aún no estaba cargada
+}
+function comandaRoomRemove(hab){
+  if (!COMANDA_ACTIVE_DATA) return;
+  const rooms = (Array.isArray(COMANDA_ACTIVE_DATA.rooms) ? COMANDA_ACTIVE_DATA.rooms : []).filter(h => h !== hab);
+  COMANDA_ACTIVE_DATA.rooms = rooms;
+  comandaRender();
+  comandaPersist({ rooms });
+}
+function comandaToggleRoomsPanel(){
+  COMANDA_ROOMS_COLLAPSED = !COMANDA_ROOMS_COLLAPSED;
+  comandaRender();
+}
+
 function comandaRenderNoteModal(){
   const item = (COMANDA_ACTIVE_DATA && COMANDA_ACTIVE_DATA.items || []).find(it => it.id === COMANDA_NOTE_EDIT_ID);
   if (!item) return '';
@@ -8545,9 +8779,9 @@ function comandaRenderFullModal(){
   const diners = c.diners || 1;
   const seatCfg = comandaSeatConfig(c);
   const hasItems = items.some(it => it.status !== 'cancelled');
-  const body = hasItems
+  const body = comandaRenderFullRooms(c) + (hasItems
     ? comandaRenderFullTotals(items) + comandaRenderFullBySeat(items, diners, seatCfg)
-    : `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
+    : `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`);
   return `
     <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaHideFullView()">
       <div class="cmd-modal-panel">
