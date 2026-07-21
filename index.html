@@ -283,6 +283,47 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-diner-btn.active { background:rgba(78,160,255,0.18); color:#9ec9ff; border-color:#4ea0ff; box-shadow:0 0 0 1px rgba(78,160,255,0.55), 0 0 12px rgba(78,160,255,0.32); }
 .cmd-diner-btn.cmd-diner-add { color:var(--text-tertiary); font-size:18px; }
 
+/* ── Table map — selector espacial de asientos (reemplaza la fila de números).
+   El asiento se ubica por posición en la mesa, no por un número chico en lista.
+   Reusa el acento azul del selector de comensal y el dorado de la marca; sin
+   colores nuevos. */
+.cmd-table-wrap { margin-bottom:1rem; padding-bottom:0.85rem; border-bottom:0.5px solid var(--border); }
+.cmd-table-toolbar { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px; }
+.cmd-table-hint { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; letter-spacing:0.09em; text-transform:uppercase; color:var(--text-tertiary); }
+.cmd-table-tools { display:flex; gap:6px; flex:0 0 auto; }
+.cmd-mini-btn { background:var(--surface); border:0.5px solid var(--border-md); color:var(--text-secondary); border-radius:var(--radius-md); padding:5px 10px; font-size:12px; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; transition:all .15s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.cmd-mini-btn:hover { border-color:var(--gold); color:var(--gold); }
+.cmd-mini-btn.active { border-color:var(--gold); color:var(--gold); background:rgba(186,117,23,0.12); }
+.cmd-shape-ctl { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:8px 0 4px; padding:8px 10px; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:var(--radius-md); animation:panelIn 0.2s ease both; }
+.cmd-shape-opt { flex:1 1 0; min-width:66px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text-secondary); border-radius:var(--radius-md); padding:7px 8px; font-size:12px; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; text-align:center; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.cmd-shape-opt.active { background:rgba(186,117,23,0.16); border-color:var(--gold); color:var(--gold); }
+
+.cmd-table-map { position:relative; width:100%; max-width:380px; margin:6px auto 0; height:clamp(230px, 62vw, 320px); }
+.cmd-table-surface { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; text-align:center; color:var(--gold); background:rgba(202,138,4,0.05); border:0.5px solid rgba(202,138,4,0.32); box-shadow:inset 0 0 22px rgba(202,138,4,0.05); }
+.cmd-table-surface.shape-rect   { width:42%; height:62%; border-radius:16px; }
+.cmd-table-surface.shape-round  { width:52%; height:52%; border-radius:50%; }
+.cmd-table-surface.shape-couple { width:28%; height:28%; border-radius:50%; }
+.cmd-table-name { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.1; }
+.cmd-table-name small { display:block; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); margin-top:3px; }
+.cmd-seat { position:absolute; transform:translate(-50%,-50%); width:46px; height:46px; border-radius:50%; border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:22px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s, border-color .15s, box-shadow .15s, color .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cmd-seat:hover { border-color:rgba(78,160,255,0.5); }
+.cmd-seat.active { background:rgba(78,160,255,0.2); color:#cfe4ff; border-color:#4ea0ff; box-shadow:0 0 0 1px rgba(78,160,255,0.55), 0 0 14px rgba(78,160,255,0.4); z-index:2; }
+.cmd-seat.head { border-color:rgba(202,138,4,0.55); }
+.cmd-seat.head.active { border-color:#4ea0ff; }
+.cmd-seat-crown { position:absolute; top:-10px; left:50%; transform:translateX(-50%); font-size:11px; color:var(--gold); pointer-events:none; }
+.cmd-seat-badge { position:absolute; right:-4px; bottom:-4px; min-width:17px; height:17px; padding:0 3px; box-sizing:border-box; border-radius:9px; background:var(--gold); color:#15110d; font-family:'Courier Prime','Courier New',monospace; font-size:10px; font-weight:700; line-height:17px; text-align:center; pointer-events:none; }
+
+/* Cabecera del panel del asiento seleccionado (bajo el mapa) */
+.cmd-seat-panel-head { display:flex; align-items:baseline; gap:8px; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; }
+.cmd-seat-panel-head strong { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:normal; font-size:18px; letter-spacing:0; text-transform:none; color:#9ec9ff; font-weight:500; }
+
+/* Vista única de comanda — tira de totales para cocina */
+.cmd-totals-strip { font-family:'Courier Prime','Courier New',monospace; font-size:12px; line-height:1.7; color:var(--text-secondary); background:rgba(202,138,4,0.05); border:0.5px solid rgba(202,138,4,0.24); border-radius:var(--radius-md); padding:9px 12px; margin-bottom:14px; }
+.cmd-totals-strip .cmd-totals-label { display:block; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:5px; }
+.cmd-totals-strip b { color:var(--gold); font-weight:700; }
+.cmd-totals-strip .sep { color:var(--text-tertiary); opacity:0.6; margin:0 5px; }
+.cmd-full-diner-head.by-seat { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:17px; text-transform:none; letter-spacing:0; }
+
 /* Adding-to indicator */
 .cmd-adding-to { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; }
 .cmd-adding-to strong { color:#9ec9ff; font-weight:500; }
@@ -2219,8 +2260,9 @@ let COMANDA_NEW_MESA_BUF    = '';
 let COMANDA_NEW_DINERS      = 2;
 let COMANDA_NOTE_EDIT_ID    = null;     // item id whose note dialog is open
 let COMANDA_NOTE_PENDING_ID = null;     // comodín recién agregado, sin confirmar: cancelar lo descarta
-let COMANDA_FULL_OPEN       = false;    // "ver comanda completa" modal
-let COMANDA_FULL_MODE       = 'resumen';// 'resumen' (conteo por producto) | 'comensal'
+let COMANDA_FULL_OPEN       = false;    // "ver comanda completa" modal (vista única)
+let COMANDA_FULL_MODE       = 'resumen';// (legacy, sin uso tras la vista única) — se conserva por compat
+let COMANDA_SHAPE_CTL_OPEN  = false;    // popover ⚙ de forma de mesa abierto en el mapa
 let COMANDA_CHANGE_MESA_OPEN= false;    // "cambiar n° de mesa" modal flag
 let COMANDA_CHANGE_MESA_BUF = '';       // numpad buffer for new table #
 let COMANDA_CHANGE_MESA_ERR = '';       // 'taken' when collision detected
@@ -2641,7 +2683,7 @@ const UI = {
     cmdSourceDishes:'Platos', cmdSourceWines:'Vinos', cmdSourceCocktails:'Cocktails', cmdSourceCustom:'Otro',
     cmdInComanda:'Esta persona', cmdNoOrders:'sin pedidos aún',
     cmdMesasBtn:'← Mesas',
-    cmdViewFull:'Ver comanda completa', cmdCloseMesa:'Cerrar mesa',
+    cmdViewFull:'Comanda', cmdCloseMesa:'Cerrar mesa',
     cmdHistoryTitle:'Historial de hoy', cmdHistoryEmpty:'Sin mesas cerradas hoy',
     cmdReopen:'Reabrir mesa', cmdClosedAgo:'cerrada hace', cmdLasted:'duró',
     cmdCloseMesaConfirm:'¿Cerrar la comanda? Quedará en histórico.',
@@ -2666,6 +2708,11 @@ const UI = {
     cmdCustomAdd:'Agregar', cmdCustomCancel:'Cancelar',
     cmdTimerStart:'Iniciar', cmdTimerReset:'Reiniciar', cmdTimerCancel:'Cancelar',
     cmdFullViewTitle:'Comanda completa',
+    // Mapa de mesa espacial + vista única de comanda
+    cmdSeat:'Asiento', cmdHead:'Cabecera',
+    cmdShapeRect:'Rectangular', cmdShapeRound:'Redonda', cmdShapeCouple:'Pareja',
+    cmdTableShape:'Forma de mesa', cmdTableTotals:'Totales de la mesa', cmdBySeat:'Por asiento',
+    cmdAddSeat:'Agregar comensal', cmdTapSeat:'Tocá un asiento para tomar su pedido',
     cmdServiceUnit:'D', /* short for cycle day */
     // Checklist module
     tabChecklist:'Checklist & Protocolos',
@@ -2791,7 +2838,7 @@ const UI = {
     cmdSourceDishes:'Dishes', cmdSourceWines:'Wines', cmdSourceCocktails:'Cocktails', cmdSourceCustom:'Other',
     cmdInComanda:'This guest', cmdNoOrders:'no orders yet',
     cmdMesasBtn:'← Tables',
-    cmdViewFull:'View full ticket', cmdCloseMesa:'Close table',
+    cmdViewFull:'Full order', cmdCloseMesa:'Close table',
     cmdHistoryTitle:"Today's history", cmdHistoryEmpty:'No tables closed today',
     cmdReopen:'Reopen table', cmdClosedAgo:'closed', cmdLasted:'lasted',
     cmdCloseMesaConfirm:'Close this ticket? It will move to history.',
@@ -2816,6 +2863,11 @@ const UI = {
     cmdCustomAdd:'Add', cmdCustomCancel:'Cancel',
     cmdTimerStart:'Start', cmdTimerReset:'Reset', cmdTimerCancel:'Cancel',
     cmdFullViewTitle:'Full ticket',
+    // Spatial table map + single order view · [EN — revisar]
+    cmdSeat:'Seat', cmdHead:'Head',
+    cmdShapeRect:'Rectangular', cmdShapeRound:'Round', cmdShapeCouple:'Couple',
+    cmdTableShape:'Table shape', cmdTableTotals:'Table totals', cmdBySeat:'By seat',
+    cmdAddSeat:'Add guest', cmdTapSeat:'Tap a seat to take its order',
     cmdServiceUnit:'D',
     // Checklist module
     tabChecklist:'Checklist & Protocols',
@@ -2941,7 +2993,7 @@ const UI = {
     cmdSourceDishes:'Pratos', cmdSourceWines:'Vinhos', cmdSourceCocktails:'Cocktails', cmdSourceCustom:'Outro',
     cmdInComanda:'Esta pessoa', cmdNoOrders:'sem pedidos ainda',
     cmdMesasBtn:'← Mesas',
-    cmdViewFull:'Ver comanda completa', cmdCloseMesa:'Fechar mesa',
+    cmdViewFull:'Comanda', cmdCloseMesa:'Fechar mesa',
     cmdHistoryTitle:'Histórico de hoje', cmdHistoryEmpty:'Sem mesas fechadas hoje',
     cmdReopen:'Reabrir mesa', cmdClosedAgo:'fechada há', cmdLasted:'durou',
     cmdCloseMesaConfirm:'Fechar a comanda? Vai para o histórico.',
@@ -2966,6 +3018,11 @@ const UI = {
     cmdCustomAdd:'Adicionar', cmdCustomCancel:'Cancelar',
     cmdTimerStart:'Iniciar', cmdTimerReset:'Reiniciar', cmdTimerCancel:'Cancelar',
     cmdFullViewTitle:'Comanda completa',
+    // Mapa espacial da mesa + vista única · [PT — revisar]
+    cmdSeat:'Assento', cmdHead:'Cabeceira',
+    cmdShapeRect:'Retangular', cmdShapeRound:'Redonda', cmdShapeCouple:'Casal',
+    cmdTableShape:'Forma da mesa', cmdTableTotals:'Totais da mesa', cmdBySeat:'Por assento',
+    cmdAddSeat:'Adicionar hóspede', cmdTapSeat:'Toque num assento para fazer o pedido',
     cmdServiceUnit:'D',
     // Checklist module
     tabChecklist:'Checklist & Protocolos',
@@ -7139,6 +7196,9 @@ async function comandaCreateMesa(){
     openedAt: Date.now(),
     closedAt: null,
     timerStartedAt: null,
+    // Disposición espacial de la mesa. Default rectangular sin cabecera; se
+    // ajusta en vivo desde el ⚙ del mapa. El n° de asiento ES el dinerN.
+    seatConfig: { shape:'rect', hasHead:false },
     items: []
   };
   try {
@@ -7193,6 +7253,99 @@ function comandaSetCategory(key){
   COMANDA_ACTIVE_CATEGORY = key;
   COMANDA_CUSTOM_OPEN = (key === 'custom');
   comandaRender();
+}
+
+// ── Mapa de mesa: disposición espacial de asientos ───────────────────────
+// El n° de asiento ES el dinerN (identidad estable en items). El mapa solo
+// cambia cómo se muestra/elige al comensal. seatConfig = { shape, hasHead }.
+function comandaSeatConfig(c){
+  const sc = c && c.seatConfig;
+  let shape = (sc && sc.shape) || 'rect';
+  const hasHead = !!(sc && sc.hasHead);
+  // "Pareja" solo tiene sentido con exactamente 2 comensales; si no, rect.
+  if (shape === 'couple' && (c && (c.diners||1) !== 2)) shape = 'rect';
+  return { shape, hasHead };
+}
+function comandaSetShape(shape){
+  if (!COMANDA_ACTIVE_DATA) return;
+  const cur = comandaSeatConfig(COMANDA_ACTIVE_DATA);
+  COMANDA_ACTIVE_DATA.seatConfig = { shape, hasHead: cur.hasHead };
+  comandaPersist({ seatConfig: COMANDA_ACTIVE_DATA.seatConfig });
+  comandaRender();
+}
+function comandaToggleHead(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  const cur = comandaSeatConfig(COMANDA_ACTIVE_DATA);
+  COMANDA_ACTIVE_DATA.seatConfig = { shape: cur.shape, hasHead: !cur.hasHead };
+  comandaPersist({ seatConfig: COMANDA_ACTIVE_DATA.seatConfig });
+  comandaRender();
+}
+function comandaToggleShapeCtl(){
+  COMANDA_SHAPE_CTL_OPEN = !COMANDA_SHAPE_CTL_OPEN;
+  comandaRender();
+}
+
+// Devuelve [{ n, x, y, isHead }] con x,y en 0..100 (% del viewBox del mapa).
+// Numeración (vista de pájaro, el mozo mira desde el borde inferior):
+//   · con cabecera → asiento 1 = la cabecera (arriba-centro), luego horario.
+//   · sin cabecera → asiento 1 = abajo-izquierda (a tu izquierda), horario.
+function comandaSeatLayout(diners, shape, hasHead){
+  const n = Math.max(1, diners|0);
+  const seats = [];
+  // Columnas (lados largos) y límites verticales para la mesa vertical.
+  const LX = 22, RX = 78, TOP = 14, BOT = 86;
+  const col = (x, count, bottomFirst) => {
+    const out = [];
+    for (let i = 0; i < count; i++){
+      const frac = count === 1 ? 0.5 : i / (count - 1);
+      out.push({ x, y: TOP + frac * (BOT - TOP) });
+    }
+    return bottomFirst ? out.reverse() : out;
+  };
+
+  if (n === 1){
+    // Comensal solo: en el borde cercano (abajo), no encima de la mesa.
+    seats.push({ n:1, x:50, y:88, isHead: !!hasHead });
+    return seats;
+  }
+
+  if (shape === 'couple' && n === 2){
+    if (hasHead){ seats.push({n:1,x:50,y:20,isHead:true}); seats.push({n:2,x:50,y:80,isHead:false}); }
+    else        { seats.push({n:1,x:28,y:50,isHead:false}); seats.push({n:2,x:72,y:50,isHead:false}); }
+    return seats;
+  }
+
+  if (shape === 'round'){
+    const R = 37, step = 360 / n;
+    const start = hasHead ? 0 : 225;   // grados horarios desde arriba (12h)
+    for (let k = 0; k < n; k++){
+      const th = (start + k * step) * Math.PI / 180;
+      seats.push({
+        n: k + 1,
+        x: 50 + R * Math.sin(th),
+        y: 50 - R * Math.cos(th),
+        isHead: hasHead && k === 0
+      });
+    }
+    return seats;
+  }
+
+  // rect (default): mesa vertical, asientos en los dos lados largos (+ cabecera).
+  let pts;
+  if (hasHead){
+    pts = [{ x:50, y:8, isHead:true }];
+    const r = n - 1;
+    const rc = Math.ceil(r / 2), lc = r - rc;
+    col(RX, rc, false).forEach(p => pts.push(p));   // baja por la derecha
+    col(LX, lc, true ).forEach(p => pts.push(p));   // sube por la izquierda
+  } else {
+    pts = [];
+    const lc = Math.ceil(n / 2), rc = n - lc;
+    col(LX, lc, true ).forEach(p => pts.push(p));   // 1 abajo-izq, sube
+    col(RX, rc, false).forEach(p => pts.push(p));   // baja por la derecha
+  }
+  pts.forEach((p, i) => seats.push({ n:i+1, x:p.x, y:p.y, isHead: !!p.isHead }));
+  return seats;
 }
 // Service order ranks — used both for auto-inserting new items into the
 // right position within a diner's list and for drawing the course
@@ -8018,13 +8171,46 @@ function comandaRenderActive(root){
     timerChip = `<button class="cmd-timer-btn" id="cmd-timer-btn" onclick="comandaTimerToggle()" title="${t('cmdTimerStart')}">⏱</button>`;
   }
 
-  // Diner buttons
-  const dinerBtns = [];
-  for (let n = 1; n <= diners; n++){
-    const cls = (n === COMANDA_ACTIVE_DINER) ? 'active' : '';
-    dinerBtns.push(`<button class="cmd-diner-btn ${cls}" onclick="comandaSetDiner(${n})">${n}</button>`);
-  }
-  dinerBtns.push(`<button class="cmd-diner-btn cmd-diner-add" onclick="comandaAddDiner()" title="+">+</button>`);
+  // Table map — selector espacial de asientos. seatConfig define forma/cabecera;
+  // el n° de asiento ES el dinerN. Cada asiento lleva un badge con la cantidad
+  // de items (no cancelados) para ubicar de un vistazo quién ya pidió.
+  const seatCfg = comandaSeatConfig(c);
+  const layout  = comandaSeatLayout(diners, seatCfg.shape, seatCfg.hasHead);
+  const seatCount = {};
+  items.forEach(it => {
+    if (it.status === 'cancelled') return;
+    seatCount[it.dinerN] = (seatCount[it.dinerN] || 0) + (it.qty || 1);
+  });
+  const seatsHtml = layout.map(s => {
+    const active = (s.n === COMANDA_ACTIVE_DINER) ? ' active' : '';
+    const head   = s.isHead ? ' head' : '';
+    const cnt    = seatCount[s.n] || 0;
+    const badge  = cnt ? `<span class="cmd-seat-badge">${cnt}</span>` : '';
+    const crown  = s.isHead ? `<span class="cmd-seat-crown">♛</span>` : '';
+    return `<button class="cmd-seat${active}${head}" style="left:${s.x}%;top:${s.y}%" onclick="comandaSetDiner(${s.n})" title="${t('cmdSeat')} ${s.n}">${crown}${s.n}${badge}</button>`;
+  }).join('');
+  const shapeCtl = COMANDA_SHAPE_CTL_OPEN ? `
+      <div class="cmd-shape-ctl">
+        <button class="cmd-shape-opt ${seatCfg.shape==='rect'?'active':''}" onclick="comandaSetShape('rect')">▭ ${t('cmdShapeRect')}</button>
+        <button class="cmd-shape-opt ${seatCfg.shape==='round'?'active':''}" onclick="comandaSetShape('round')">◯ ${t('cmdShapeRound')}</button>
+        ${diners===2 ? `<button class="cmd-shape-opt ${seatCfg.shape==='couple'?'active':''}" onclick="comandaSetShape('couple')">♥ ${t('cmdShapeCouple')}</button>` : ''}
+        <button class="cmd-shape-opt ${seatCfg.hasHead?'active':''}" onclick="comandaToggleHead()">♛ ${t('cmdHead')}</button>
+      </div>` : '';
+  const tableMap = `
+    <div class="cmd-table-wrap">
+      <div class="cmd-table-toolbar">
+        <span class="cmd-table-hint">${t('cmdTapSeat')}</span>
+        <div class="cmd-table-tools">
+          <button class="cmd-mini-btn" onclick="comandaAddDiner()" title="${t('cmdAddSeat')}">＋</button>
+          <button class="cmd-mini-btn ${COMANDA_SHAPE_CTL_OPEN?'active':''}" onclick="comandaToggleShapeCtl()" title="${t('cmdTableShape')}">⚙</button>
+        </div>
+      </div>
+      ${shapeCtl}
+      <div class="cmd-table-map">
+        <div class="cmd-table-surface shape-${seatCfg.shape}"><span class="cmd-table-name">${t('cmdMesaPrefix')} ${c.mesa}<small>${diners} ${diners===1?t('cmdComensal'):t('cmdComensales')}</small></span></div>
+        ${seatsHtml}
+      </div>
+    </div>`;
 
   // Category buttons
   const catBtns = COMANDA_SOURCES.map(src => {
@@ -8092,9 +8278,11 @@ function comandaRenderActive(root){
     const batches = comandaSplitBatches(dinerItems);
     dinerSummary = batches.map(batch => {
       const isPending = batch.kind === 'open';
+      // Hora de envío oculta por defecto en la vista del mozo (solo ocupa
+      // espacio); la cocina/recibidor sí la conserva.
       const header = isPending
         ? `<div class="cmd-batch-divider is-pending"><span class="cmd-batch-label">${t('cmdPendingBatch')}</span></div>`
-        : `<div class="cmd-batch-divider is-sent"><span class="cmd-batch-label">${t('cmdSentBatch')}</span>${batch.sentAt?`<span class="cmd-batch-time">· ${comandaFmtHM(batch.sentAt)}</span>`:''}</div>`;
+        : `<div class="cmd-batch-divider is-sent"><span class="cmd-batch-label">${t('cmdSentBatch')}</span></div>`;
       let prevGroup = null;
       const lines = batch.items.map(it => {
         const grp = comandaGroupOf(it);
@@ -8159,15 +8347,15 @@ function comandaRenderActive(root){
       </div>
     </div>
 
-    <div class="cmd-diner-label">${t('cmdAddingTo')} <strong>#${COMANDA_ACTIVE_DINER}</strong></div>
-    <div class="cmd-diner-row">${dinerBtns.join('')}</div>
+    ${tableMap}
+
+    <div class="cmd-seat-panel-head">${t('cmdSeat')} <strong>${COMANDA_ACTIVE_DINER}</strong>${seatCfg.hasHead && COMANDA_ACTIVE_DINER===1 ? ' ♛' : ''}</div>
 
     <div class="cmd-cats">${catBtns}</div>
 
     ${catalogHtml}
 
     <div class="cmd-diner-summary">
-      <div class="cmd-summary-head">${t('cmdInComanda')} · #${COMANDA_ACTIVE_DINER}</div>
       ${dinerSummary}
     </div>
 
@@ -8293,24 +8481,29 @@ function comandaRenderNoteModal(){
     </div>`;
 }
 
-// Vista "Resumen": conteo agregado de toda la mesa por producto. Responde de
-// un vistazo "¿cuántos ceviches?, ¿cuántas copas de vino?" sin leer comensal
-// por comensal. Ordenado por bloque de servicio, mayor cantidad arriba.
-function comandaRenderFullResumen(items){
-  const tally = comandaTally(items);
-  if (!tally.length) return `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
-  const total = tally.reduce((s,[,rows]) => s + rows.reduce((a,r)=>a+r.qty,0), 0);
-  const blocks = tally.map(([grp, rows]) => {
-    const rowsHtml = rows.map(r =>
-      `<div class="cmd-tally-row"><span class="cmd-tally-qty">${r.qty}<small>×</small></span><span class="cmd-tally-name">${r.name}</span></div>`
-    ).join('');
-    return `<div class="cmd-tally-block"><div class="cmd-course-divider"><span>${grp}</span></div>${rowsHtml}</div>`;
+// Vista única de comanda (para pasar el pedido al POS sin cambiar de modo):
+// arriba una tira de TOTALES por producto (para cocina), abajo el detalle por
+// asiento con TODAS las notas/pedidos especiales visibles. Sin hora de envío.
+
+// Tira de totales: conteo por producto de catálogo. Los comodines/"Otro"
+// (source 'custom') NO cuentan acá — son pedidos especiales y viven completos
+// en el detalle por asiento.
+function comandaRenderFullTotals(items){
+  const tally = comandaTally((items || []).filter(it => it.source !== 'custom'));
+  if (!tally.length) return '';
+  const lines = tally.map(([, rows]) => {
+    const inner = rows.map(r => `<b>${r.qty}</b> ${r.name}`).join('<span class="sep">·</span>');
+    return `<div>${inner}</div>`;
   }).join('');
-  return `<div class="cmd-tally-total">${total} ${total===1?'producto':'productos'} en la mesa</div>${blocks}`;
+  return `<div class="cmd-totals-strip"><span class="cmd-totals-label">${t('cmdTableTotals')}</span>${lines}</div>`;
 }
 
-// Vista "Por comensal": el desglose clásico, persona por persona y por envío.
-function comandaRenderFullByDiner(items, diners){
+// Detalle por asiento: persona por persona, notas siempre visibles, cabecera
+// marcada (♛), sin hora de envío (solo el rótulo Por enviar / Enviado).
+function comandaRenderFullBySeat(items, diners, seatCfg){
+  const layout = comandaSeatLayout(diners, seatCfg.shape, seatCfg.hasHead);
+  const headSet = {};
+  layout.forEach(s => { if (s.isHead) headSet[s.n] = true; });
   const sections = [];
   for (let n = 1; n <= diners; n++){
     const its = items.filter(it => it.dinerN === n);
@@ -8319,9 +8512,7 @@ function comandaRenderFullByDiner(items, diners){
       const batches = comandaSplitBatches(its);
       lines = batches.map(batch => {
         const isPending = batch.kind === 'open';
-        const header = isPending
-          ? `<div class="cmd-batch-divider is-pending"><span class="cmd-batch-label">${t('cmdPendingBatch')}</span></div>`
-          : `<div class="cmd-batch-divider is-sent"><span class="cmd-batch-label">${t('cmdSentBatch')}</span>${batch.sentAt?`<span class="cmd-batch-time">· ${comandaFmtHM(batch.sentAt)}</span>`:''}</div>`;
+        const header = `<div class="cmd-batch-divider ${isPending?'is-pending':'is-sent'}"><span class="cmd-batch-label">${isPending?t('cmdPendingBatch'):t('cmdSentBatch')}</span></div>`;
         let prevGroup = null;
         const inner = batch.items.map(it => {
           const grp = comandaGroupOf(it);
@@ -8339,7 +8530,8 @@ function comandaRenderFullByDiner(items, diners){
     } else {
       lines = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
     }
-    sections.push(`<div class="cmd-full-diner"><div class="cmd-full-diner-head">#${n}</div>${lines}</div>`);
+    const crown = headSet[n] ? ' ♛' : '';
+    sections.push(`<div class="cmd-full-diner"><div class="cmd-full-diner-head by-seat">${t('cmdSeat')} ${n}${crown}</div>${lines}</div>`);
   }
   return sections.join('');
 }
@@ -8349,18 +8541,15 @@ function comandaRenderFullModal(){
   if (!c) return '';
   const items = c.items || [];
   const diners = c.diners || 1;
-  const isResumen = COMANDA_FULL_MODE !== 'comensal';
-  const body = isResumen
-    ? comandaRenderFullResumen(items)
-    : comandaRenderFullByDiner(items, diners);
+  const seatCfg = comandaSeatConfig(c);
+  const hasItems = items.some(it => it.status !== 'cancelled');
+  const body = hasItems
+    ? comandaRenderFullTotals(items) + comandaRenderFullBySeat(items, diners, seatCfg)
+    : `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
   return `
     <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaHideFullView()">
       <div class="cmd-modal-panel">
         <div class="cmd-modal-title">${t('cmdFullViewTitle')} · ${t('cmdMesaPrefix')} ${c.mesa}</div>
-        <div class="cmd-full-toggle">
-          <button class="cmd-full-tab ${isResumen?'active':''}" onclick="comandaSetFullMode('resumen')">Resumen</button>
-          <button class="cmd-full-tab ${!isResumen?'active':''}" onclick="comandaSetFullMode('comensal')">Por comensal</button>
-        </div>
         ${body}
         <div class="cmd-modal-actions">
           <button class="cmd-btn primary" onclick="comandaHideFullView()">OK</button>
