@@ -359,12 +359,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-search-ph { color:var(--text-tertiary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; letter-spacing:0; }
 .cmd-search-clear { flex-shrink:0; width:24px; height:24px; border:none; background:transparent; color:var(--text-tertiary); font-size:14px; cursor:pointer; border-radius:6px; -webkit-tap-highlight-color:transparent; }
 .cmd-search-clear:hover { color:var(--gold); }
-/* Alto FIJO, no max-height: el escenario de resultados nunca cambia de tamaño al
-   teclear, así el teclado de abajo no se corre bajo el dedo. La lista scrollea
-   dentro del marco en vez de empujar la página. */
-.cmd-search-results { height:clamp(180px,38vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch; margin-bottom:8px; overscroll-behavior:contain; }
-/* En captura libre el contenido es corto: se centra en el mismo marco. */
-.cmd-search-results.is-custom { display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
+/* El marco mide lo que hay (nunca espacio en blanco reservado); el tope evita que
+   12 resultados estiren la página. Que el teclado no se corra al crecer/achicar
+   lo resuelve comandaPinKbd() compensando el scroll, no un alto fijo. */
+.cmd-search-results { max-height:clamp(180px,38vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch; margin-bottom:8px; overscroll-behavior:contain; }
 .cmd-search-row { display:flex; align-items:center; gap:10px; width:100%; text-align:left; min-height:46px; padding:8px 11px; margin-bottom:5px; border-radius:10px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text); font-family:inherit; cursor:pointer; transition:background .12s, border-color .12s, transform .07s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 .cmd-search-row:active { background:rgba(186,117,23,0.16); border-color:var(--gold); transform:scale(0.99); }
 .cmd-search-row-icon { flex-shrink:0; font-size:16px; width:22px; text-align:center; }
@@ -2793,7 +2791,7 @@ const UI = {
     cmdRoomDietTitle:'Dietas de la mesa', cmdRoomRemove:'Desvincular',
     cmdSearchPlaceholder:'Buscar ítem', cmdSearchToday:'Del día', cmdSearchNoResults:'Sin resultados',
     cmdSearchOtro:'Otro / pedido especial', cmdSearchBrowse:'Explorar por categoría', cmdSearchFind:'Buscar',
-    cmdSearchOtherDay:'otro día', cmdKbdSpace:'espacio', cmdDrinksDivider:'Bebidas', cmdAddSep:'separador',
+    cmdSearchOtherDay:'otro día', cmdSearchRepeat:'Ya pedido en la mesa', cmdKbdSpace:'espacio', cmdDrinksDivider:'Bebidas', cmdAddSep:'separador',
     cmdFreshChip:'nuevo',
     cmdPendingBatch:'Por enviar', cmdSentBatch:'Enviado',
     cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
@@ -2955,7 +2953,7 @@ const UI = {
     cmdRoomDietTitle:'Table diets', cmdRoomRemove:'Unlink',
     cmdSearchPlaceholder:'Search item', cmdSearchToday:'Today', cmdSearchNoResults:'No results',
     cmdSearchOtro:'Other / special request', cmdSearchBrowse:'Browse by category', cmdSearchFind:'Search',
-    cmdSearchOtherDay:'other day', cmdKbdSpace:'space', cmdDrinksDivider:'Drinks', cmdAddSep:'divider',
+    cmdSearchOtherDay:'other day', cmdSearchRepeat:'Already on this table', cmdKbdSpace:'space', cmdDrinksDivider:'Drinks', cmdAddSep:'divider',
     cmdFreshChip:'new',
     cmdPendingBatch:'To send', cmdSentBatch:'Sent',
     cmdSendBtn:'Send', cmdSendBtnCount:'Send ({n})',
@@ -3117,7 +3115,7 @@ const UI = {
     cmdRoomDietTitle:'Dietas da mesa', cmdRoomRemove:'Desvincular',
     cmdSearchPlaceholder:'Buscar item', cmdSearchToday:'Do dia', cmdSearchNoResults:'Sem resultados',
     cmdSearchOtro:'Outro / pedido especial', cmdSearchBrowse:'Explorar por categoria', cmdSearchFind:'Buscar',
-    cmdSearchOtherDay:'outro dia', cmdKbdSpace:'espaço', cmdDrinksDivider:'Bebidas', cmdAddSep:'separador',
+    cmdSearchOtherDay:'outro dia', cmdSearchRepeat:'Já pedido na mesa', cmdKbdSpace:'espaço', cmdDrinksDivider:'Bebidas', cmdAddSep:'separador',
     cmdFreshChip:'novo',
     cmdPendingBatch:'A enviar', cmdSentBatch:'Enviado',
     cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
@@ -7474,14 +7472,38 @@ function comandaSearchResultsHtml(q){
     let day = [];
     try { day = (dishesSrc && typeof dishesSrc.items === 'function' && dishesSrc.items()) || []; } catch(e){ day = []; }
     day = day.filter(it => !it.note);
-    if (!day.length) return `<div class="cmd-search-hint">${t('cmdSearchPlaceholder')}</div>`;
-    const icon = (dishesSrc && dishesSrc.icon) || '🍽';
-    return `<div class="cmd-search-hint">${t('cmdSearchToday')}</div>` +
-      day.map(it => comandaSearchRow('dishes', it.sourceId, it.name, it.group, it.allergens, icon)).join('');
+    if (day.length){
+      const icon = (dishesSrc && dishesSrc.icon) || '🍽';
+      return `<div class="cmd-search-hint">${t('cmdSearchToday')}</div>` +
+        day.map(it => comandaSearchRow('dishes', it.sourceId, it.name, it.group, it.allergens, icon)).join('');
+    }
+    // Fuera de horario de servicio (o sin menú del día cargado) la lista viene
+    // vacía. En vez de un marco pelado, se ofrece lo que la mesa YA pidió: "otra
+    // vuelta de lo mismo" queda a un tap, que es el caso real a esa hora.
+    return comandaRepeatRowsHtml() || `<div class="cmd-search-hint">${t('cmdSearchPlaceholder')}</div>`;
   }
   const results = comandaSearchResults(q).slice(0, 12);
   if (!results.length) return `<div class="cmd-search-hint">${t('cmdSearchNoResults')}</div>`;
   return results.map(it => comandaSearchRow(it.srcKey, it.sourceId, it.name, it.group, it.allergens, it.icon, it.today)).join('');
+}
+// Lo que la mesa ya pidió, sin repetir nombre, del más reciente al más viejo.
+// Sirve de zero-state cuando no hay menú del día que ofrecer.
+function comandaRepeatRowsHtml(){
+  const items = (COMANDA_ACTIVE_DATA && COMANDA_ACTIVE_DATA.items) || [];
+  const seen = new Set();
+  const rows = [];
+  for (let i = items.length - 1; i >= 0 && rows.length < 8; i--){
+    const it = items[i];
+    if (!it || !it.name || comandaIsSep(it) || it.status === 'cancelled') continue;
+    const key = (it.source || '') + '|' + it.name;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const src = COMANDA_SOURCES.find(s => s.key === it.source);
+    rows.push(comandaSearchRow(it.source || 'custom', it.sourceId, it.name,
+      it.group || '', it.allergens || [], (src && src.icon) || ''));
+  }
+  if (!rows.length) return '';
+  return `<div class="cmd-search-hint">${t('cmdSearchRepeat')}</div>` + rows.join('');
 }
 // Modo captura libre ("Otro / pedido especial"): preview del nombre + botón agregar.
 function comandaCustomPreviewHtml(q){
@@ -7513,7 +7535,7 @@ function comandaRenderSearch(){
         <span class="cmd-search-q" id="cmd-search-q">${qDisp}</span>
         ${q ? `<button class="cmd-search-clear" onclick="comandaKbdPress('clr')" aria-label="${t('vjClear')}">✕</button>` : ''}
       </div>
-      <div class="cmd-search-results${custom?' is-custom':''}" id="cmd-search-results">${body}</div>
+      <div class="cmd-search-results" id="cmd-search-results">${body}</div>
       ${custom ? '' : `<button class="cmd-search-otro" onclick="comandaSearchOtro()">✎ ${t('cmdSearchOtro')}</button>`}
       <div class="cmd-kbd" id="cmd-kbd">${kbdHtml}</div>
       ${custom
@@ -7521,9 +7543,39 @@ function comandaRenderSearch(){
         : `<button class="cmd-search-mode" onclick="comandaSetCatalogMode('browse')">${t('cmdSearchBrowse')} ▾</button>`}
     </div>`;
 }
+// Contenedor que scrollea realmente (el <body> en iOS, pero puede ser un wrapper
+// con overflow). Se busca hacia arriba desde el elemento; null = la ventana.
+function comandaScroller(el){
+  let n = el && el.parentElement;
+  while (n && n !== document.body){
+    const st = getComputedStyle(n);
+    if (/(auto|scroll)/.test(st.overflowY) && n.scrollHeight > n.clientHeight + 1) return n;
+    n = n.parentElement;
+  }
+  return null;
+}
+// Clava el teclado en su posición de pantalla mientras `patch` cambia el alto de
+// lo que tiene ARRIBA (resultados, barra). Mide el Y del teclado antes y después
+// y corrige el scroll en esa diferencia: el marco de resultados puede medir lo
+// que le pida el contenido (cero espacio en blanco) sin mover la tecla que el
+// mozo está por tocar. Lo que se corre es lo de arriba, no el teclado.
+function comandaPinKbd(patch){
+  const kbd = document.getElementById('cmd-kbd');
+  if (!kbd){ patch(); return; }
+  const before = kbd.getBoundingClientRect().top;
+  patch();
+  const delta = kbd.getBoundingClientRect().top - before;
+  if (!delta) return;
+  const sc = comandaScroller(kbd);
+  if (sc) sc.scrollTop += delta;
+  else window.scrollBy(0, delta);
+}
 // Teclado: parcha SOLO el panel de búsqueda (sin comandaRender completo, para no
 // reconstruir la vista activa por cada tecla — mismo motivo que change-mesa).
 function comandaKbdPress(k){
+  comandaPinKbd(() => comandaKbdApply(k));
+}
+function comandaKbdApply(k){
   if (k === 'del')       COMANDA_SEARCH_QUERY = COMANDA_SEARCH_QUERY.slice(0,-1);
   else if (k === 'clr')  COMANDA_SEARCH_QUERY = '';
   else if (k === 'space'){ if (COMANDA_SEARCH_QUERY && COMANDA_SEARCH_QUERY.length < 40 && COMANDA_SEARCH_QUERY.slice(-1) !== ' ') COMANDA_SEARCH_QUERY += ' '; }
@@ -8719,13 +8771,13 @@ function comandaRenderActive(root){
       </div>
     </div>
 
-    ${tableMap}
-
     ${comandaRenderRoomsPanel(c)}
 
     <div class="cmd-seat-panel-head">${t('cmdSeat')} <strong>${COMANDA_ACTIVE_DINER}</strong>${seatCfg.hasHead && COMANDA_ACTIVE_DINER===1 ? ' ♛' : ''}</div>
 
     ${catalogSection}
+
+    ${tableMap}
 
     <div class="cmd-diner-summary">
       ${dinerSummary}
