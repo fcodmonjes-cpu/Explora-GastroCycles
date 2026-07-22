@@ -354,11 +354,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-search-panel { margin-bottom:0.85rem; animation:panelIn 0.22s cubic-bezier(0.34,1.1,0.64,1) both; }
 .cmd-search-bar { display:flex; align-items:center; gap:8px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:9px 12px; margin-bottom:8px; }
 .cmd-search-icon { color:var(--text-tertiary); font-size:16px; flex-shrink:0; }
-.cmd-search-q { flex:1; min-width:0; font-size:17px; letter-spacing:0.02em; color:var(--text); min-height:22px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* min-height 24px = alto del botón ✕: la barra no crece cuando aparece al teclear. */
+.cmd-search-q { flex:1; min-width:0; font-size:17px; letter-spacing:0.02em; color:var(--text); min-height:24px; line-height:24px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .cmd-search-ph { color:var(--text-tertiary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; letter-spacing:0; }
 .cmd-search-clear { flex-shrink:0; width:24px; height:24px; border:none; background:transparent; color:var(--text-tertiary); font-size:14px; cursor:pointer; border-radius:6px; -webkit-tap-highlight-color:transparent; }
 .cmd-search-clear:hover { color:var(--gold); }
-.cmd-search-results { max-height:40vh; overflow-y:auto; -webkit-overflow-scrolling:touch; margin-bottom:8px; }
+/* Alto FIJO, no max-height: el escenario de resultados nunca cambia de tamaño al
+   teclear, así el teclado de abajo no se corre bajo el dedo. La lista scrollea
+   dentro del marco en vez de empujar la página. */
+.cmd-search-results { height:clamp(180px,38vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch; margin-bottom:8px; overscroll-behavior:contain; }
+/* En captura libre el contenido es corto: se centra en el mismo marco. */
+.cmd-search-results.is-custom { display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
 .cmd-search-row { display:flex; align-items:center; gap:10px; width:100%; text-align:left; min-height:46px; padding:8px 11px; margin-bottom:5px; border-radius:10px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text); font-family:inherit; cursor:pointer; transition:background .12s, border-color .12s, transform .07s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 .cmd-search-row:active { background:rgba(186,117,23,0.16); border-color:var(--gold); transform:scale(0.99); }
 .cmd-search-row-icon { flex-shrink:0; font-size:16px; width:22px; text-align:center; }
@@ -7507,7 +7513,7 @@ function comandaRenderSearch(){
         <span class="cmd-search-q" id="cmd-search-q">${qDisp}</span>
         ${q ? `<button class="cmd-search-clear" onclick="comandaKbdPress('clr')" aria-label="${t('vjClear')}">✕</button>` : ''}
       </div>
-      <div class="cmd-search-results" id="cmd-search-results">${body}</div>
+      <div class="cmd-search-results${custom?' is-custom':''}" id="cmd-search-results">${body}</div>
       ${custom ? '' : `<button class="cmd-search-otro" onclick="comandaSearchOtro()">✎ ${t('cmdSearchOtro')}</button>`}
       <div class="cmd-kbd" id="cmd-kbd">${kbdHtml}</div>
       ${custom
