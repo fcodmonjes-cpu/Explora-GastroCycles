@@ -377,6 +377,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-kbd-key.cmd-kbd-del { flex:0 0 15%; color:var(--text-tertiary); font-size:15px; }
 .cmd-search-mode { width:100%; margin-top:10px; padding:8px; border:none; background:transparent; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:color .15s; -webkit-tap-highlight-color:transparent; }
 .cmd-search-mode:hover { color:var(--gold); }
+.cmd-kbd-space { flex:1 1 55%; text-transform:none; font-size:12px; letter-spacing:0.06em; color:var(--text-tertiary); }
+/* Marca sutil "otro día" en resultados fuera del menú del día */
+.cmd-search-row.is-offday { opacity:0.82; }
+.cmd-search-offday { margin-left:7px; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); border:0.5px solid var(--border-md); border-radius:4px; padding:1px 5px; vertical-align:middle; }
+/* Captura "Otro / pedido especial" con el teclado en pantalla */
+.cmd-custom-preview { display:flex; align-items:center; gap:12px; padding:12px; margin-bottom:8px; background:rgba(202,138,4,0.05); border:0.5px solid rgba(202,138,4,0.25); border-radius:var(--radius-md); }
+.cmd-custom-preview-name { flex:1; min-width:0; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:19px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cmd-custom-go { flex-shrink:0; }
+/* Separador manual en el resumen del asiento (línea movible) + botón */
+.cmd-line.cmd-sep-line { background:transparent; border:none; min-height:0; padding:4px 0; }
+.cmd-sep-rule { flex:1; height:0; border-top:1.5px dashed rgba(192,125,42,0.6); margin:0 10px; }
+.cmd-add-sep { display:block; margin:8px auto 0; padding:6px 14px; border:0.5px dashed var(--border-md); border-radius:var(--radius-md); background:transparent; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:border-color .15s, color .15s; -webkit-tap-highlight-color:transparent; }
+.cmd-add-sep:hover { border-color:var(--gold); color:var(--gold); }
 
 /* Custom item inline form */
 .cmd-custom-form { padding:10px 12px; background:rgba(202,138,4,0.04); border:0.5px solid rgba(202,138,4,0.2); border-radius:var(--radius-md); margin-bottom:1rem; animation:panelIn 0.22s cubic-bezier(0.34,1.1,0.64,1) both; }
@@ -2320,6 +2333,7 @@ let COMANDA_ACTIVE_CATEGORY = 'dishes';
 // 'browse' (la grilla de categorías de siempre). Ver módulo Comanda.
 let COMANDA_CATALOG_MODE    = 'search'; // 'search' | 'browse'
 let COMANDA_SEARCH_QUERY    = '';       // buffer del teclado en pantalla
+let COMANDA_SEARCH_CUSTOM   = false;    // captura de texto libre ("Otro / pedido especial")
 let COMANDA_SEARCH_INDEX    = null;     // índice plano del catálogo (rebuild al abrir mesa)
 let COMANDA_NEW_MESA_BUF    = '';
 let COMANDA_NEW_DINERS      = 2;
@@ -2773,6 +2787,7 @@ const UI = {
     cmdRoomDietTitle:'Dietas de la mesa', cmdRoomRemove:'Desvincular',
     cmdSearchPlaceholder:'Buscar ítem', cmdSearchToday:'Del día', cmdSearchNoResults:'Sin resultados',
     cmdSearchOtro:'Otro / pedido especial', cmdSearchBrowse:'Explorar por categoría', cmdSearchFind:'Buscar',
+    cmdSearchOtherDay:'otro día', cmdKbdSpace:'espacio', cmdDrinksDivider:'Bebidas', cmdAddSep:'separador',
     cmdFreshChip:'nuevo',
     cmdPendingBatch:'Por enviar', cmdSentBatch:'Enviado',
     cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
@@ -2934,6 +2949,7 @@ const UI = {
     cmdRoomDietTitle:'Table diets', cmdRoomRemove:'Unlink',
     cmdSearchPlaceholder:'Search item', cmdSearchToday:'Today', cmdSearchNoResults:'No results',
     cmdSearchOtro:'Other / special request', cmdSearchBrowse:'Browse by category', cmdSearchFind:'Search',
+    cmdSearchOtherDay:'other day', cmdKbdSpace:'space', cmdDrinksDivider:'Drinks', cmdAddSep:'divider',
     cmdFreshChip:'new',
     cmdPendingBatch:'To send', cmdSentBatch:'Sent',
     cmdSendBtn:'Send', cmdSendBtnCount:'Send ({n})',
@@ -3095,6 +3111,7 @@ const UI = {
     cmdRoomDietTitle:'Dietas da mesa', cmdRoomRemove:'Desvincular',
     cmdSearchPlaceholder:'Buscar item', cmdSearchToday:'Do dia', cmdSearchNoResults:'Sem resultados',
     cmdSearchOtro:'Outro / pedido especial', cmdSearchBrowse:'Explorar por categoria', cmdSearchFind:'Buscar',
+    cmdSearchOtherDay:'outro dia', cmdKbdSpace:'espaço', cmdDrinksDivider:'Bebidas', cmdAddSep:'separador',
     cmdFreshChip:'novo',
     cmdPendingBatch:'A enviar', cmdSentBatch:'Enviado',
     cmdSendBtn:'Enviar', cmdSendBtnCount:'Enviar ({n})',
@@ -7022,7 +7039,7 @@ function comandaSplitBatches(items){
 // Count items still waiting to be sent (status:'open', not cancelled).
 // Drives the Send button's enabled state and its (N) count.
 function comandaPendingCount(items){
-  return (items || []).filter(it => !it.sentAt && it.status !== 'cancelled').length;
+  return (items || []).filter(it => !it.sentAt && it.status !== 'cancelled' && !comandaIsSep(it)).length;
 }
 // --- Ticket builder --------------------------------------------------------
 // Pure function: given a mesa + a sent batch, return the printable ticket
@@ -7360,10 +7377,12 @@ function comandaSetCategory(key){
 function comandaResetSearch(){
   COMANDA_CATALOG_MODE = 'search';
   COMANDA_SEARCH_QUERY = '';
+  COMANDA_SEARCH_CUSTOM = false;
   COMANDA_SEARCH_INDEX = null;   // rebuild lazy: depende del día D1-D4 y del servicio
 }
 function comandaBuildSearchIndex(){
   const idx = [];
+  const seen = new Set();
   COMANDA_SOURCES.forEach(src => {
     if (typeof src.items !== 'function') return;   // salta el sentinel 'custom'
     let list;
@@ -7371,11 +7390,27 @@ function comandaBuildSearchIndex(){
     const icon = src.icon || '';
     list.forEach(it => {
       if (it.note) return;   // comodines "Otro" viven como acción fija, no en el índice
+      seen.add(src.key + '|' + (it.sourceId || it.name));
       idx.push({
         srcKey: src.key, sourceId: it.sourceId || null,
         name: it.name || '', group: it.group || '',
-        allergens: it.allergens || [], icon
+        allergens: it.allergens || [], icon, today: true
       });
+    });
+  });
+  // Platos de OTROS días/servicios: buscables igual (a veces un huésped pide algo
+  // fuera del menú del día), pero marcados today:false → el ranking los baja sin
+  // ocultarlos. Solo aplica a 'dishes' (las demás fuentes no dependen del día).
+  const dishSrc = COMANDA_SOURCES.find(s => s.key === 'dishes');
+  const dishIcon = (dishSrc && dishSrc.icon) || '🍽';
+  (typeof DISHES !== 'undefined' ? DISHES : []).forEach(d => {
+    const key = 'dishes|' + d.id;
+    if (seen.has(key)) return;
+    seen.add(key);
+    idx.push({
+      srcKey: 'dishes', sourceId: d.id,
+      name: d.name || '', group: d.course || '',
+      allergens: d.allergens || [], icon: dishIcon, today: false
     });
   });
   return idx;
@@ -7402,7 +7437,10 @@ function comandaSearchResults(q){
     else if (comandaInitials(it.name).startsWith(query)) score = 3;
     if (score >= 0) scored.push({ it, score });
   });
-  scored.sort((a,b) => a.score - b.score || a.it.name.length - b.it.name.length || a.it.name.localeCompare(b.it.name));
+  scored.sort((a,b) => a.score - b.score
+    || ((a.it.today?0:1) - (b.it.today?0:1))     // los del día primero, sin ocultar el resto
+    || a.it.name.length - b.it.name.length
+    || a.it.name.localeCompare(b.it.name));
   return scored.map(s => s.it);
 }
 // Letras que, agregadas a la query, aún dan ≥1 resultado (para atenuar el resto).
@@ -7414,13 +7452,14 @@ function comandaLiveKeys(q){
   return live;
 }
 
-function comandaSearchRow(srcKey, sourceId, name, group, allergens, icon){
+function comandaSearchRow(srcKey, sourceId, name, group, allergens, icon, today){
   const safeName  = String(name||'').replace(/'/g,'\\\'').replace(/"/g,'&quot;');
   const safeGroup = String(group||'').replace(/'/g,'\\\'').replace(/"/g,'&quot;');
   const alJson    = JSON.stringify(allergens||[]).replace(/"/g,'&quot;');
   const sid       = sourceId ? `'${String(sourceId).replace(/'/g,'\\\'')}'` : 'null';
   const alHint    = (allergens && allergens.length) ? `<span class="cmd-search-al">⚠ ${vjEsc(allergens.join(', '))}</span>` : '';
-  return `<button class="cmd-search-row" onclick="comandaSearchAdd('${srcKey}', ${sid}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${alJson}"><span class="cmd-search-row-icon">${icon||''}</span><span class="cmd-search-row-main"><span class="cmd-search-row-name">${vjEsc(name)}</span>${alHint}</span>${group?`<span class="cmd-search-row-group">${vjEsc(group)}</span>`:''}</button>`;
+  const offDay    = (today === false) ? `<span class="cmd-search-offday">${t('cmdSearchOtherDay')}</span>` : '';
+  return `<button class="cmd-search-row${today===false?' is-offday':''}" onclick="comandaSearchAdd('${srcKey}', ${sid}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${alJson}"><span class="cmd-search-row-icon">${icon||''}</span><span class="cmd-search-row-main"><span class="cmd-search-row-name">${vjEsc(name)}${offDay}</span>${alHint}</span>${group?`<span class="cmd-search-row-group">${vjEsc(group)}</span>`:''}</button>`;
 }
 function comandaSearchResultsHtml(q){
   if (!(q || '').trim()){
@@ -7436,44 +7475,64 @@ function comandaSearchResultsHtml(q){
   }
   const results = comandaSearchResults(q).slice(0, 12);
   if (!results.length) return `<div class="cmd-search-hint">${t('cmdSearchNoResults')}</div>`;
-  return results.map(it => comandaSearchRow(it.srcKey, it.sourceId, it.name, it.group, it.allergens, it.icon)).join('');
+  return results.map(it => comandaSearchRow(it.srcKey, it.sourceId, it.name, it.group, it.allergens, it.icon, it.today)).join('');
+}
+// Modo captura libre ("Otro / pedido especial"): preview del nombre + botón agregar.
+function comandaCustomPreviewHtml(q){
+  const name = (q || '').trim();
+  return `<div class="cmd-search-hint">${t('cmdSearchOtro')}</div>
+    <div class="cmd-custom-preview">
+      <span class="cmd-custom-preview-name">${name ? vjEsc(name) : '—'}</span>
+      <button class="cmd-btn primary cmd-custom-go" onclick="comandaCustomConfirm()" ${name?'':'disabled'}>${t('cmdCustomAdd')}</button>
+    </div>`;
 }
 function comandaRenderSearch(){
   const q = COMANDA_SEARCH_QUERY;
-  const kbdHtml = ['qwertyuiop','asdfghjkl','zxcvbnm'].map((row, ri) => {
-    const live = comandaLiveKeys(q);
-    let keys = row.split('').map(ch => `<button class="cmd-kbd-key${live.has(ch)?'':' dim'}" data-k="${ch}" onclick="comandaKbdPress('${ch}')">${ch}</button>`).join('');
-    if (ri === 2) keys += `<button class="cmd-kbd-key cmd-kbd-del" onclick="comandaKbdPress('del')" aria-label="${t('vjDelete')}">⌫</button>`;
-    return `<div class="cmd-kbd-row">${keys}</div>`;
-  }).join('');
-  const qDisp = q ? vjEsc(q) : `<span class="cmd-search-ph">${t('cmdSearchPlaceholder')}</span>`;
+  const custom = COMANDA_SEARCH_CUSTOM;
+  const live = custom ? null : comandaLiveKeys(q);   // en custom no se atenúa (texto libre)
+  let kbdHtml = ['qwertyuiop','asdfghjkl','zxcvbnm'].map(row =>
+    `<div class="cmd-kbd-row">${row.split('').map(ch => {
+      const dim = (!custom && !live.has(ch)) ? ' dim' : '';
+      return `<button class="cmd-kbd-key${dim}" data-k="${ch}" onclick="comandaKbdPress('${ch}')">${ch}</button>`;
+    }).join('')}</div>`
+  ).join('');
+  kbdHtml += `<div class="cmd-kbd-row"><button class="cmd-kbd-key cmd-kbd-space" onclick="comandaKbdPress('space')">${t('cmdKbdSpace')}</button><button class="cmd-kbd-key cmd-kbd-del" onclick="comandaKbdPress('del')" aria-label="${t('vjDelete')}">⌫</button></div>`;
+  const ph = custom ? t('cmdSearchOtro') : t('cmdSearchPlaceholder');
+  const qDisp = q ? vjEsc(q) : `<span class="cmd-search-ph">${ph}</span>`;
+  const body = custom ? comandaCustomPreviewHtml(q) : comandaSearchResultsHtml(q);
   return `
     <div class="cmd-search-panel">
       <div class="cmd-search-bar">
-        <span class="cmd-search-icon">⌕</span>
+        <span class="cmd-search-icon">${custom ? '✎' : '⌕'}</span>
         <span class="cmd-search-q" id="cmd-search-q">${qDisp}</span>
         ${q ? `<button class="cmd-search-clear" onclick="comandaKbdPress('clr')" aria-label="${t('vjClear')}">✕</button>` : ''}
       </div>
-      <div class="cmd-search-results" id="cmd-search-results">${comandaSearchResultsHtml(q)}</div>
-      <button class="cmd-search-otro" onclick="comandaSearchOtro()">✎ ${t('cmdSearchOtro')}</button>
+      <div class="cmd-search-results" id="cmd-search-results">${body}</div>
+      ${custom ? '' : `<button class="cmd-search-otro" onclick="comandaSearchOtro()">✎ ${t('cmdSearchOtro')}</button>`}
       <div class="cmd-kbd" id="cmd-kbd">${kbdHtml}</div>
-      <button class="cmd-search-mode" onclick="comandaSetCatalogMode('browse')">${t('cmdSearchBrowse')} ▾</button>
+      ${custom
+        ? `<button class="cmd-search-mode" onclick="comandaCustomCancel()">← ${t('cmdSearchFind')}</button>`
+        : `<button class="cmd-search-mode" onclick="comandaSetCatalogMode('browse')">${t('cmdSearchBrowse')} ▾</button>`}
     </div>`;
 }
 // Teclado: parcha SOLO el panel de búsqueda (sin comandaRender completo, para no
 // reconstruir la vista activa por cada tecla — mismo motivo que change-mesa).
 function comandaKbdPress(k){
-  if (k === 'del')      COMANDA_SEARCH_QUERY = COMANDA_SEARCH_QUERY.slice(0,-1);
-  else if (k === 'clr') COMANDA_SEARCH_QUERY = '';
-  else if (COMANDA_SEARCH_QUERY.length < 24) COMANDA_SEARCH_QUERY += k;
+  if (k === 'del')       COMANDA_SEARCH_QUERY = COMANDA_SEARCH_QUERY.slice(0,-1);
+  else if (k === 'clr')  COMANDA_SEARCH_QUERY = '';
+  else if (k === 'space'){ if (COMANDA_SEARCH_QUERY && COMANDA_SEARCH_QUERY.length < 40 && COMANDA_SEARCH_QUERY.slice(-1) !== ' ') COMANDA_SEARCH_QUERY += ' '; }
+  else if (COMANDA_SEARCH_QUERY.length < 40) COMANDA_SEARCH_QUERY += k;
   const q = COMANDA_SEARCH_QUERY;
+  const custom = COMANDA_SEARCH_CUSTOM;
   const qEl = document.getElementById('cmd-search-q');
-  if (qEl) qEl.innerHTML = q ? vjEsc(q) : `<span class="cmd-search-ph">${t('cmdSearchPlaceholder')}</span>`;
+  if (qEl) qEl.innerHTML = q ? vjEsc(q) : `<span class="cmd-search-ph">${t(custom ? 'cmdSearchOtro' : 'cmdSearchPlaceholder')}</span>`;
   const resEl = document.getElementById('cmd-search-results');
-  if (resEl) resEl.innerHTML = comandaSearchResultsHtml(q);
-  const live = comandaLiveKeys(q);
-  const kbd = document.getElementById('cmd-kbd');
-  if (kbd) kbd.querySelectorAll('.cmd-kbd-key[data-k]').forEach(btn => btn.classList.toggle('dim', !live.has(btn.getAttribute('data-k'))));
+  if (resEl) resEl.innerHTML = custom ? comandaCustomPreviewHtml(q) : comandaSearchResultsHtml(q);
+  if (!custom){   // el atenuado predictivo solo aplica al buscar
+    const live = comandaLiveKeys(q);
+    const kbd = document.getElementById('cmd-kbd');
+    if (kbd) kbd.querySelectorAll('.cmd-kbd-key[data-k]').forEach(btn => btn.classList.toggle('dim', !live.has(btn.getAttribute('data-k'))));
+  }
   // Botón limpiar: aparece/desaparece según haya query.
   const bar = qEl && qEl.parentElement;
   if (bar){
@@ -7489,12 +7548,27 @@ function comandaKbdPress(k){
 }
 function comandaSearchAdd(srcKey, sourceId, name, allergens, group){
   COMANDA_SEARCH_QUERY = '';   // limpiar antes del render optimista de comandaAddItem
+  COMANDA_SEARCH_CUSTOM = false;
   comandaAddItem(srcKey, sourceId, name, allergens, group);   // hace comandaRender()
 }
+// "Otro / pedido especial": captura el nombre con el MISMO teclado en pantalla
+// (sin ir a la vista de botones ni disparar el teclado del iPhone). Semilla: lo
+// que el mozo ya venía tecleando en la búsqueda.
 function comandaSearchOtro(){
-  // Escape hatch de texto libre: cae al form custom existente (modo explorar).
-  COMANDA_CATALOG_MODE = 'browse';
-  comandaSetCategory('custom');
+  COMANDA_SEARCH_CUSTOM = true;
+  comandaRender();
+}
+function comandaCustomConfirm(){
+  const name = (COMANDA_SEARCH_QUERY || '').trim();
+  if (!name) return;
+  const disp = name.charAt(0).toUpperCase() + name.slice(1);   // se tecleó en minúsculas
+  COMANDA_SEARCH_QUERY = '';
+  COMANDA_SEARCH_CUSTOM = false;
+  comandaAddItem('custom', null, disp, [], 'Otros');   // hace comandaRender()
+}
+function comandaCustomCancel(){
+  COMANDA_SEARCH_CUSTOM = false;
+  comandaRender();
 }
 function comandaSetCatalogMode(mode){
   COMANDA_CATALOG_MODE = mode;
@@ -7620,6 +7694,13 @@ function comandaGroupRank(group){
   if (group === 'Café & Té')       return 14;
   return 15;
 }
+// Un separador es un ítem-marca que el mozo inserta a voluntad en el resumen
+// del asiento (línea movible, sin producto). Vive solo en "Por enviar"; se
+// descarta al enviar la tanda. Las vistas de conteo/cocina lo ignoran.
+function comandaIsSep(it){ return !!(it && it.sep); }
+// Bebida = grupo con rank ≥ 10 (Vinos/Bebidas/Jugos/Cervezas/Café & Té). Se usa
+// para el único corte automático que queda: comida ↕ bebidas.
+function comandaIsDrink(it){ return !comandaIsSep(it) && comandaGroupRank(comandaGroupOf(it)) >= 10; }
 
 function comandaAddItem(source, sourceId, name, allergens, group){
   if (!COMANDA_ACTIVE_DATA) return;
@@ -7637,25 +7718,22 @@ function comandaAddItem(source, sourceId, name, allergens, group){
   COMANDA_ACTIVE_DATA.items = COMANDA_ACTIVE_DATA.items || [];
   const items = COMANDA_ACTIVE_DATA.items;
 
-  // Auto-insert by service rank — new dish lands at the end of its course
-  // even if the waiter added Postre before Entrada. Drag overrides this.
-  const newRank = comandaGroupRank(comandaGroupOf(item));
-  let insertAt = items.length;
-  let foundAfter = -1;
-  for (let i = items.length - 1; i >= 0; i--){
+  // Colocación mínima: sin cortes por tiempo (el mozo ordena a mano con drag y
+  // separadores). Único auto: las bebidas quedan bajo la comida. La comida nueva
+  // entra antes de la 1ª bebida del comensal; la bebida nueva, al final. El resto
+  // del orden lo respeta tal cual (inserción / arrastre).
+  const isDrink = comandaIsDrink(item);
+  let firstIdx = -1, lastIdx = -1, firstDrinkIdx = -1;
+  for (let i = 0; i < items.length; i++){
     if (items[i].dinerN !== dinerN) continue;
-    if (comandaGroupRank(comandaGroupOf(items[i])) <= newRank){
-      foundAfter = i;
-      break;
-    }
+    if (firstIdx < 0) firstIdx = i;
+    lastIdx = i;
+    if (firstDrinkIdx < 0 && comandaIsDrink(items[i])) firstDrinkIdx = i;
   }
-  if (foundAfter >= 0){
-    insertAt = foundAfter + 1;
-  } else {
-    for (let i = 0; i < items.length; i++){
-      if (items[i].dinerN === dinerN){ insertAt = i; break; }
-    }
-  }
+  let insertAt;
+  if (firstIdx < 0)        insertAt = items.length;                         // 1er ítem del comensal
+  else if (isDrink)        insertAt = lastIdx + 1;                          // bebida → final del bloque
+  else                     insertAt = (firstDrinkIdx >= 0) ? firstDrinkIdx : lastIdx + 1; // comida → antes de bebidas
   items.splice(insertAt, 0, item);
   // Optimistic UI: render IMMEDIATELY so the tap feels instant. The
   // network write happens fire-and-forget; the queue in comandaPersist
@@ -7664,6 +7742,27 @@ function comandaAddItem(source, sourceId, name, allergens, group){
   comandaRender();
   comandaPersist({ items });
   return item;
+}
+// Separador manual: línea-marca movible que el mozo pone donde quiera en la
+// tanda por-enviar del asiento activo. Se inserta tras su último ítem por-enviar.
+function comandaAddSep(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  const dinerN = COMANDA_ACTIVE_DINER;
+  const items = COMANDA_ACTIVE_DATA.items = COMANDA_ACTIVE_DATA.items || [];
+  const sep = { id: comandaUid(), dinerN, sep:true, addedAt: Date.now(), status:'open' };
+  let lastOpen = -1;
+  for (let i = 0; i < items.length; i++){
+    if (items[i].dinerN === dinerN && !items[i].sentAt) lastOpen = i;
+  }
+  items.splice(lastOpen >= 0 ? lastOpen + 1 : items.length, 0, sep);
+  comandaRender();
+  comandaPersist({ items });
+}
+function comandaRemoveSep(id){
+  if (!COMANDA_ACTIVE_DATA) return;
+  COMANDA_ACTIVE_DATA.items = (COMANDA_ACTIVE_DATA.items || []).filter(it => it.id !== id);
+  comandaRender();
+  comandaPersist({ items: COMANDA_ACTIVE_DATA.items });
 }
 // Comodín "Otra/Otro": agrega el item y abre su nota para anotar el detalle.
 // Queda PROVISIONAL hasta "Guardar" — si el usuario cancela (o toca fuera), se
@@ -7719,7 +7818,9 @@ function comandaSendBatch(){
   if (!COMANDA_ACTIVE_DATA || !COMANDA_ACTIVE_DATA.items) return;
   const now = Date.now();
   let touched = false;
-  const items = COMANDA_ACTIVE_DATA.items.map(it => {
+  // Los separadores son ayuda de armado de la tanda por-enviar: se descartan al
+  // enviar (no viajan a cocina ni quedan en el registro enviado).
+  const items = COMANDA_ACTIVE_DATA.items.filter(it => !comandaIsSep(it)).map(it => {
     if (!it.sentAt && it.status !== 'cancelled'){
       touched = true;
       return { ...it, status:'sent', sentAt: now };
@@ -7859,7 +7960,7 @@ function comandaSetFullMode(mode){ COMANDA_FULL_MODE = mode; comandaRender(); }
 function comandaTally(items){
   const rows = new Map(); // clave: grupo \0 nombre
   (items || []).forEach(it => {
-    if (it.status === 'cancelled') return;
+    if (it.status === 'cancelled' || comandaIsSep(it)) return;
     const grp = comandaGroupOf(it) || 'Otros';
     const key = grp + '\u0000' + it.name;
     if (!rows.has(key)) rows.set(key, { group: grp, name: it.name, qty: 0 });
@@ -8310,7 +8411,7 @@ function comandaRenderHistoryModal(){
   const diners = c.diners || 1;
   const sections = [];
   for (let n = 1; n <= diners; n++){
-    const its = items.filter(it => it.dinerN === n);
+    const its = items.filter(it => it.dinerN === n && !comandaIsSep(it));
     let lines = '';
     if (its.length){
       const batches = comandaSplitBatches(its);
@@ -8319,12 +8420,11 @@ function comandaRenderHistoryModal(){
         const header = isPending
           ? `<div class="cmd-batch-divider is-pending"><span class="cmd-batch-label">${t('cmdPendingBatch')}</span></div>`
           : `<div class="cmd-batch-divider is-sent"><span class="cmd-batch-label">${t('cmdSentBatch')}</span>${batch.sentAt?`<span class="cmd-batch-time">· ${comandaFmtHM(batch.sentAt)}</span>`:''}</div>`;
-        let prevGroup = null;
+        let prevDrink = null;
         const inner = batch.items.map(it => {
-          const grp = comandaGroupOf(it);
-          const showDivider = (grp && grp !== prevGroup);
-          prevGroup = grp;
-          const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
+          const isDrink = comandaIsDrink(it);
+          const div = (isDrink && prevDrink === false) ? `<div class="cmd-course-divider"><span>${t('cmdDrinksDivider')}</span></div>` : '';
+          prevDrink = isDrink;
           const isCancelled = it.status === 'cancelled';
           const isSent = !!it.sentAt && !isCancelled;
           const cls = ['cmd-line', isCancelled?'is-cancelled':'', isSent?'is-sent':''].filter(Boolean).join(' ');
@@ -8426,7 +8526,7 @@ function comandaRenderActive(root){
   const layout  = comandaSeatLayout(diners, seatCfg.shape, seatCfg.hasHead);
   const seatCount = {};
   items.forEach(it => {
-    if (it.status === 'cancelled') return;
+    if (it.status === 'cancelled' || comandaIsSep(it)) return;
     seatCount[it.dinerN] = (seatCount[it.dinerN] || 0) + (it.qty || 1);
   });
   const seatsHtml = layout.map(s => {
@@ -8539,14 +8639,20 @@ function comandaRenderActive(root){
       const header = isPending
         ? `<div class="cmd-batch-divider is-pending"><span class="cmd-batch-label">${t('cmdPendingBatch')}</span></div>`
         : `<div class="cmd-batch-divider is-sent"><span class="cmd-batch-label">${t('cmdSentBatch')}</span></div>`;
-      let prevGroup = null;
+      let prevDrink = null;   // único corte que queda: comida → bebidas
       const lines = batch.items.map(it => {
-        const grp = comandaGroupOf(it);
-        const showDivider = (grp && grp !== prevGroup);
-        prevGroup = grp;
-        const dividerHtml = showDivider
-          ? `<div class="cmd-course-divider"><span>${grp}</span></div>`
+        // Separador manual: línea movible con manija + ✕ (no altera prevDrink).
+        if (comandaIsSep(it)){
+          const sepDrag = isPending
+            ? `ontouchstart="cmdDragStart(event, '${it.id}')" ontouchmove="cmdDragMove(event)" ontouchend="cmdDragEnd(event)" ontouchcancel="cmdDragEnd(event)"`
+            : '';
+          return `<div class="cmd-line cmd-sep-line" data-item-id="${it.id}" ${sepDrag}><div class="cmd-line-grip" aria-label="reorder">⋮⋮</div><div class="cmd-sep-rule"></div><button class="cmd-line-btn cmd-rm" onclick="comandaRemoveSep('${it.id}')" title="${t('cmdItemRemove')}">✕</button></div>`;
+        }
+        const isDrink = comandaIsDrink(it);
+        const dividerHtml = (isDrink && prevDrink === false)
+          ? `<div class="cmd-course-divider"><span>${t('cmdDrinksDivider')}</span></div>`
           : '';
+        prevDrink = isDrink;
         const isCancelled = it.status === 'cancelled';
         const isSent      = !!it.sentAt && !isCancelled;
         const freshCls = isPending ? comandaFreshClass(it) : '';
@@ -8581,6 +8687,10 @@ function comandaRenderActive(root){
   } else {
     dinerSummary = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
   }
+  // "＋ separador": visible cuando el asiento tiene algo por-enviar que dividir.
+  const dinerHasOpen = dinerItems.some(it => !it.sentAt && it.status !== 'cancelled' && !comandaIsSep(it));
+  const addSepBtn = dinerHasOpen
+    ? `<button class="cmd-add-sep" onclick="comandaAddSep()">＋ ${t('cmdAddSep')}</button>` : '';
 
   // Send-batch CTA — visible whenever ANY diner in the mesa has open items
   // (not just the currently-focused one). Counts across the whole mesa so
@@ -8613,6 +8723,7 @@ function comandaRenderActive(root){
 
     <div class="cmd-diner-summary">
       ${dinerSummary}
+      ${addSepBtn}
     </div>
 
     <div class="cmd-footer-actions">
@@ -8938,19 +9049,18 @@ function comandaRenderFullBySeat(items, diners, seatCfg){
   layout.forEach(s => { if (s.isHead) headSet[s.n] = true; });
   const sections = [];
   for (let n = 1; n <= diners; n++){
-    const its = items.filter(it => it.dinerN === n);
+    const its = items.filter(it => it.dinerN === n && !comandaIsSep(it));
     let lines = '';
     if (its.length){
       const batches = comandaSplitBatches(its);
       lines = batches.map(batch => {
         const isPending = batch.kind === 'open';
         const header = `<div class="cmd-batch-divider ${isPending?'is-pending':'is-sent'}"><span class="cmd-batch-label">${isPending?t('cmdPendingBatch'):t('cmdSentBatch')}</span></div>`;
-        let prevGroup = null;
+        let prevDrink = null;
         const inner = batch.items.map(it => {
-          const grp = comandaGroupOf(it);
-          const showDivider = (grp && grp !== prevGroup);
-          prevGroup = grp;
-          const div = showDivider ? `<div class="cmd-course-divider"><span>${grp}</span></div>` : '';
+          const isDrink = comandaIsDrink(it);
+          const div = (isDrink && prevDrink === false) ? `<div class="cmd-course-divider"><span>${t('cmdDrinksDivider')}</span></div>` : '';
+          prevDrink = isDrink;
           const isCancelled = it.status === 'cancelled';
           const isSent = !!it.sentAt && !isCancelled;
           const cls = ['cmd-line', isCancelled?'is-cancelled':'', isSent?'is-sent':''].filter(Boolean).join(' ');
@@ -9027,8 +9137,8 @@ function cmdDragStart(e, itemId){
       CMD_DRAG.active = true;
       CMD_DRAG.startY = CMD_DRAG.lastY; // start from current finger position
       CMD_DRAG.el.classList.add('cmd-line-dragging');
-      if (navigator.vibrate) try { navigator.vibrate(30); } catch(e){}
-    }, 280)
+      if (navigator.vibrate) try { navigator.vibrate(15); } catch(e){}
+    }, 90)   // levantar casi al toque desde la manija (antes 280ms — se sentía trabado)
   };
 }
 
@@ -9038,8 +9148,9 @@ function cmdDragMove(e){
   CMD_DRAG.lastY = touch.clientY;
 
   if (!CMD_DRAG.active){
-    // Cancel long-press if user moved before the timer fired (treats as scroll)
-    if (Math.abs(touch.clientY - CMD_DRAG.startY) > 8){
+    // Cancel long-press if user moved before the timer fired (treats as scroll).
+    // Umbral más holgado (12px) para que un micro-temblor no aborte el agarre.
+    if (Math.abs(touch.clientY - CMD_DRAG.startY) > 12){
       cmdDragReset();
     }
     return;
