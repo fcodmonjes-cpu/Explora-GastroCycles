@@ -12,11 +12,11 @@ Fuentes reales (fase 2, cuando el Excel esté disponible):
   (normalización → doc Firebase) ya es el definitivo.
 
 Fase 1 (actual): SEED_ROWS — transcripción manual de los reportes REALES del
-día (2026-07-21). El roster completo (hab, nombre, edad, nac, grupo, IN/OUT)
-sale del "Reporte Geos" del 21-07; las observaciones de dieta/alergia se cruzan
+día (2026-07-24). El roster completo (hab, nombre, edad, nac, grupo, IN/OUT)
+sale del "Reporte Geos" del 24-07; las observaciones de dieta/alergia se cruzan
 por nombre desde el reporte "Dietas" del mismo día y se pegan verbatim sobre el
 viajero que corresponde. Mientras no llegue el link del Excel (fase 2), este
-bloque se reemplaza a mano con el reporte de cada día. 47 habs · 106 viajeros.
+bloque se reemplaza a mano con el reporte de cada día. 47 habs · 111 viajeros.
 
 Escribe UN solo doc (sobrescrito por cada sync, como staffing):
 
@@ -33,7 +33,7 @@ Escribe UN solo doc (sobrescrito por cada sync, como staffing):
 
 Taxonomía canónica de tags (compartida con la app — ver VJ_TAGS en index.html):
   alergia-{mariscos,gluten,lactosa,sesamo,pescado,ajo,frutos-secos,frutillas,pina,
-           cilantro}
+           cilantro,quinoa}
   dieta-{vegetariana,vegana,pescetariana,sin-gluten,sin-lactosa,sin-cerdo,
          sin-carnes-rojas,sin-cordero,sin-mariscos,sin-pescado,sin-fritura,
          sin-azucar}
@@ -55,7 +55,7 @@ import json, os, re, sys, datetime, unicodedata
 
 DB_URL = "https://explora-cafe-orders-default-rtdb.firebaseio.com"
 
-REPORT_DATE = "2026-07-21"   # fecha nominal del seed (día del Reporte Geos)
+REPORT_DATE = "2026-07-24"   # fecha nominal del seed (día del Reporte Geos)
 
 
 # ── Roster real del día ───────────────────────────────────────────────────────
@@ -67,112 +67,117 @@ REPORT_DATE = "2026-07-21"   # fecha nominal del seed (día del Reporte Geos)
 # fila en Dietas quedan con obs "" (sin restricción alimentaria informada).
 
 SEED_ROWS = [
-    ("01", "Romina Da Pieve", 47, "ARGE", "EXPLORA", "2026-07-20", "2026-07-22", "NO AZÚCAR // NO HARINAS // NO ADEREZOS. Solicita que por favor no se le prepare nada especial, solo que se avise si algo tiene harina para evitarlo. Requerimientos alimentarios: Libre de Gluten - Libre de Azúcar"),
-    ("02", "Livia Farre Bloes", 7, "BRAZ", "BLOES", "2026-07-20", "2026-07-24", ""),
-    ("02", "Vinicius Farre Bloes", 11, "BRAZ", "BLOES", "2026-07-20", "2026-07-24", ""),
-    ("03", "Adriana Czerkes Farre", 44, "BRAZ", "BLOES", "2026-07-20", "2026-07-24", ""),
-    ("03", "Roberto Moreira Bloes", 43, "BRAZ", "BLOES", "2026-07-20", "2026-07-24", ""),
-    ("06", "Josefa Isidora Alarcon Garcia", 7, "CHIL", "ALARCON", "2026-07-20", "2026-07-25", ""),
-    ("06", "Emilia Ignacia Alarcón García", 15, "CHIL", "ALARCON", "2026-07-20", "2026-07-25", ""),
-    ("07", "Karen Fabiola Garcia Astudillo", 46, "CHIL", "ALARCON", "2026-07-20", "2026-07-25", ""),
-    ("07", "Ademar Alejandro Alarcon", 47, "CHIL", "ALARCON", "2026-07-20", "2026-07-25", ""),
-    ("08", "Lucas Baptista Dutra", 44, "BRAZ", "KROEFF", "2026-07-17", "2026-07-21", ""),
-    ("09", "Nicolas Alfredo Tapia Quinteros", 38, "CHIL", "EXPLORA", "2026-07-21", "2026-07-22", ""),
-    ("09", "Marcelo Kroeff", 53, "BRAZ", "KROEFF", "2026-07-17", "2026-07-21", "Requerimientos alimentarios: Libre de Lactosa"),
-    ("09", "Daniel Kroeff", 21, "BRAZ", "KROEFF", "2026-07-17", "2026-07-21", ""),
-    ("09", "Matias Jesus Flores Caceres", 30, "CHIL", "EXPLORA", "2026-07-21", "2026-07-22", ""),
-    ("10", "Por Khampalikit", 35, "THAI", "KHAMPALIKIT", "2026-07-21", "2026-07-25", "ALERGIA A LA OSTRAS. Alergias: Oyster"),
-    ("10", "Nititorn Sura-Bundith", 35, "THAI", "KHAMPALIKIT", "2026-07-21", "2026-07-25", ""),
-    ("11", "Elena Urbano Ruiz", 18, "BRAZ", "URBANO", "2026-07-18", "2026-07-23", "ALERGIA AL CILANTRO"),
-    ("11", "Enrique Urbano Ruiz", 21, "BRAZ", "URBANO", "2026-07-18", "2026-07-23", ""),
-    ("12", "Arnaldo Urbano Ruiz Filho", 56, "BRAZ", "URBANO", "2026-07-18", "2026-07-23", ""),
-    ("12", "Leynalze Lins Ramos Dos Santos Urbano Ruiz", 58, "BRAZ", "URBANO", "2026-07-18", "2026-07-23", ""),
-    ("13", "Julie Mc Farland Hagood", 56, "USA", "MILLER", "2026-07-19", "2026-07-22", ""),
-    ("13", "Robert Miller Hagood", 55, "USA", "MILLER", "2026-07-19", "2026-07-22", ""),
-    ("14", "Ryan Miller Hagood", 18, "USA", "MILLER", "2026-07-19", "2026-07-22", ""),
-    ("14", "Jonathan James Hagood", 20, "USA", "MILLER", "2026-07-19", "2026-07-22", ""),
-    ("15", "Diogo Prist Bergamin", 12, "BRAZ", "PRIST", "2026-07-20", "2026-07-21", "ALERGIA A LOS CAMARONES"),
-    ("15", "Amanda Ribeiro Prist", 43, "BRAZ", "PRIST", "2026-07-20", "2026-07-21", ""),
-    ("15", "Enzo Prist Bergamin", 9, "BRAZ", "PRIST", "2026-07-20", "2026-07-21", ""),
-    ("15", "Fabricio Sanchez Bergamin", 44, "BRAZ", "PRIST", "2026-07-20", "2026-07-21", ""),
-    ("16", "Davi Ribeiro Simao", 17, "BRAZ", "SIMAO", "2026-07-18", "2026-07-24", ""),
-    ("16", "Lais Ribeiro Simao", 7, "BRAZ", "SIMAO", "2026-07-18", "2026-07-24", ""),
-    ("16", "Daniel Ribeiro Simao", 17, "BRAZ", "SIMAO", "2026-07-18", "2026-07-24", ""),
-    ("17", "Lucas Pinto Simao", 41, "BRAZ", "SIMAO", "2026-07-18", "2026-07-24", ""),
-    ("17", "Luana De Carvalho Ribeiro Simão", 43, "BRAZ", "SIMAO", "2026-07-18", "2026-07-24", ""),
-    ("18", "Raimundo Solis Bacigalupo", 22, "CHIL", "SOLIS", "2026-07-16", "2026-07-22", ""),
-    ("18", "Benjamin Solis Bacigalupo", 23, "CHIL", "SOLIS", "2026-07-16", "2026-07-22", ""),
-    ("19", "Oriana Guidi", 57, "ITAL", "GUIDI", "2026-07-19", "2026-07-24", "GLUTEN FREEE - LACTOSE FREE. Requerimientos alimentarios: Libre de Gluten - Libre de Lactosa - Baja en Carbohidratos. Alergias: I am not allergic to Gluten - I am intollerant to Gluten"),
-    ("19", "Blas Moreno", 16, "ARGE", "GUIDI", "2026-07-19", "2026-07-24", ""),
-    ("20", "Antonio Noschese", 10, "BRAZ", "NOSCHESE", "2026-07-17", "2026-07-22", "Requerimientos alimentarios: Libre de Lactosa"),
-    ("20", "Paula Noschese", 58, "BRAZ", "NOSCHESE", "2026-07-17", "2026-07-22", ""),
-    ("21", "Elenice Soares Azevedo", 43, "BRAZ", "SOARES", "2026-07-17", "2026-07-22", ""),
-    ("21", "Gabriela Azevedo Santos", 11, "BRAZ", "SOARES", "2026-07-17", "2026-07-22", ""),
-    ("22", "Maria Luiza De Souza Andrade", 21, "BRAZ", "DE SOUZA", "2026-07-20", "2026-07-23", "Requerimientos alimentarios: Vegetariana"),
-    ("23", "Adriano Aparecido Ribeiro", 55, "BRAZ", "DE SOUZA", "2026-07-20", "2026-07-23", ""),
-    ("23", "Marcia Regina De Souza Andrade", 60, "BRAZ", "DE SOUZA", "2026-07-20", "2026-07-23", ""),
-    ("24", "Isabel Margarita Gonzalez Henriquez", 46, "CHIL", "ALBORNOZ", "2026-07-21", "2026-07-24", "Requerimientos alimentarios: Libre de Lactosa. Alergias: No tengo dietas pero no como cosas con mucho aliño - Alergia a la azitromicina"),
-    ("24", "Daniela Albornoz", 32, "CHIL", "ALBORNOZ", "2026-07-21", "2026-07-24", "NO COME NUECES. Alergias: nueces"),
-    ("25", "Henrique Mc Darby Arouche De Toledo", 19, "BRAZ", "REZENDE", "2026-07-19", "2026-07-24", ""),
-    ("25", "Sophia Mc Darby Arouche De Toledo", 17, "BRAZ", "REZENDE", "2026-07-19", "2026-07-24", ""),
-    ("26", "Luis Henrique Rezende Arouche De Toledo", 55, "BRAZ", "REZENDE", "2026-07-19", "2026-07-24", ""),
-    ("26", "Grace Mc Darby Arouche De Toledo", 52, "BRAZ", "REZENDE", "2026-07-19", "2026-07-24", ""),
-    ("27", "Beatriz Lannes Ozmen Henrique", 11, "BRAZ", "LANNES", "2026-07-21", "2026-07-25", ""),
-    ("27", "Clara Lannes Ozmen Henrique", 14, "BRAZ", "LANNES", "2026-07-21", "2026-07-25", ""),
-    ("27", "Matilda Toro Mckenzie", 15, "CHIL", "MCKENZIE", "2026-07-16", "2026-07-21", ""),
-    ("27", "Lucas Toro Mckenzie", 17, "CHIL", "MCKENZIE", "2026-07-16", "2026-07-21", "Alergia a los frutos secos en general"),
-    ("27", "Amalia Toro Mckenzie", 13, "CHIL", "MCKENZIE", "2026-07-16", "2026-07-21", "Alergia a los camarones"),
-    ("28", "Carolyn Mckenzie", 44, "CHIL", "MCKENZIE", "2026-07-16", "2026-07-21", ""),
-    ("28", "Juan Carlos Toro Ruiz-Tagle", 49, "CHIL", "MCKENZIE", "2026-07-16", "2026-07-21", ""),
-    ("28", "Aylin Lannes Ozmen Henrique", 45, "BRAZ", "LANNES", "2026-07-21", "2026-07-25", ""),
-    ("28", "Laercio Henrique Junior", 45, "BRAZ", "LANNES", "2026-07-21", "2026-07-25", ""),
-    ("29", "Maria Puente Rubio", 26, "MEXI", "FAM Mexico", "2026-07-19", "2026-07-22", "NO LE GUSTA EL CORDERO"),
-    ("29", "Sofia Martin Martinez", 25, "MEXI", "FAM Mexico", "2026-07-19", "2026-07-22", ""),
-    ("30", "Ana Claudia Leal Da Costa Marinho Rodrigues", 52, "BRAZ", "LEAL", "2026-07-17", "2026-07-24", "Alergia a la piña"),
-    ("30", "Tomas Leal Da Costa Marinho Rodrigues", 22, "BRAZ", "LEAL", "2026-07-17", "2026-07-24", ""),
-    ("31", "Isabela Felgueiras Da Silva", 12, "BRAZ", "ZANIN", "2026-07-21", "2026-07-26", ""),
-    ("31", "Maria Eduarda Felgueiras Da Silva", 12, "BRAZ", "ZANIN", "2026-07-21", "2026-07-26", ""),
-    ("32", "Betina Frank Castellanos Alem", 44, "BRAZ", "ALEM", "2026-07-19", "2026-07-23", "NO COME FRUTOS DE MAR"),
-    ("32", "Julia Castellanos Alem", 14, "BRAZ", "ALEM", "2026-07-19", "2026-07-23", "NO COME FRUTOS DE MAR"),
-    ("32", "David Castellanos Alem", 12, "BRAZ", "ALEM", "2026-07-19", "2026-07-23", ""),
-    ("33", "Ana Paula Martinez Bernal", 37, "MEXI", "FAM Mexico", "2026-07-19", "2026-07-22", ""),
-    ("33", "Fabiola Elizabeth Hernandez Garcia", 54, "MEXI", "FAM Mexico", "2026-07-19", "2026-07-22", ""),
-    ("34", "Harris Kupperman", 45, "USA", "MARTINEZ", "2026-07-18", "2026-07-22", ""),
-    ("34", "Norma Martinez", 58, "CHIL", "MARTINEZ", "2026-07-18", "2026-07-22", ""),
-    ("35", "Rodolfo Castillo Walker", 36, "MEXI", "FAM Mexico", "2026-07-19", "2026-07-22", ""),
-    ("35", "Carlos Alberto Fuentes Sanchez", 30, "MEXI", "FAM Mexico", "2026-07-19", "2026-07-22", ""),
-    ("36", "Mariana Gonzalez Niembro", 49, "MEXI", "FAM Mexico", "2026-07-19", "2026-07-22", ""),
-    ("36", "Almudena Sancho Sanchez", 43, "MEXI", "FAM Mexico", "2026-07-19", "2026-07-22", ""),
-    ("37", "Carlos Eduardo Gonzalez Olson", 44, "MEXI", "WOODBURN", "2026-07-21", "2026-07-27", ""),
-    ("37", "Siena Olson Woodburn", 1, "USA", "WOODBURN", "2026-07-21", "2026-07-27", ""),
-    ("37", "Thiago Pretti Pedreira", 42, "BRAZ", "PEDREIRA", "2026-07-16", "2026-07-21", ""),
-    ("37", "Carlos Andres Olson Woodburn", 4, "USA", "WOODBURN", "2026-07-21", "2026-07-27", ""),
-    ("37", "Jennifer Elizabeth Woodburn", 38, "USA", "WOODBURN", "2026-07-21", "2026-07-27", ""),
-    ("37", "Mariana Pedreira", 43, "BRAZ", "PEDREIRA", "2026-07-16", "2026-07-21", ""),
-    ("37", "Antonio Prieto De Andrada Pedreira", 8, "BRAZ", "PEDREIRA", "2026-07-16", "2026-07-21", ""),
-    ("38", "Rose Hartwig", 50, "USA", "HARTWIG", "2026-07-18", "2026-07-22", ""),
-    ("38", "Gavin Hartwig", 20, "USA", "HARTWIG", "2026-07-18", "2026-07-22", ""),
-    ("39", "Jose Benedito Ventura", 46, "BRAZ", "BONESIO", "2026-07-19", "2026-07-24", ""),
-    ("39", "Thelio Bonesio Gonçalves", 37, "BRAZ", "BONESIO", "2026-07-19", "2026-07-24", ""),
-    ("40", "Miguel Bonesio Gonçalves Da Silva", 13, "BRAZ", "BONESIO", "2026-07-19", "2026-07-24", ""),
-    ("40", "Graziella Bonesio Gonçalves", 39, "BRAZ", "BONESIO", "2026-07-19", "2026-07-24", ""),
-    ("41", "Sergio Ernesto Alberto Solis Mateluna", 69, "CHIL", "SOLIS", "2026-07-16", "2026-07-22", "ALERGIA A LOS ERIZOS"),
-    ("41", "Gabriela Bacigalupo Bozzo", 63, "CHIL", "SOLIS", "2026-07-16", "2026-07-22", "ALERGIA AL AJO"),
-    ("43", "Marcel Tadeu Matos Alves Da Silva", 50, "BRAZ", "ZANIN", "2026-07-21", "2026-07-26", ""),
-    ("43", "Carla Zanin Dos Santos Felgueiras", 50, "BRAZ", "ZANIN", "2026-07-21", "2026-07-26", ""),
-    ("44", "Melanie Alexander", 66, "USA", "ALEXANDER", "2026-07-19", "2026-07-22", ""),
-    ("44", "Peter Alexander", 70, "USA", "ALEXANDER", "2026-07-19", "2026-07-22", ""),
-    ("45", "Catherine Hilary Rogers", 49, "USA", "TAN", "2026-07-21", "2026-07-24", ""),
-    ("45", "Miguel Tan", 56, "USA", "TAN", "2026-07-21", "2026-07-24", ""),
-    ("46", "Renata De Luizi Correia", 49, "BRAZ", "DE LUIZI", "2026-07-19", "2026-07-24", "PESCETARIANA. Requerimientos alimentarios: Pescetariana"),
-    ("47", "Claudine Parseghian De Luizi Correia", 53, "BRAZ", "DE LUIZI", "2026-07-19", "2026-07-24", ""),
-    ("47", "André De Luizi Correia", 53, "BRAZ", "DE LUIZI", "2026-07-19", "2026-07-24", ""),
-    ("48", "Henrique Lefon Fulan", 10, "BRAZ", "NOSCHESE", "2026-07-17", "2026-07-22", ""),
-    ("48", "Milena De Castilho Lefon Martins", 45, "BRAZ", "NOSCHESE", "2026-07-17", "2026-07-22", ""),
-    ("49", "Julia Parseghian De Luizi Correia", 17, "BRAZ", "DE LUIZI", "2026-07-19", "2026-07-24", ""),
-    ("49", "Sofia Parseghian De Luizi Correia", 24, "BRAZ", "DE LUIZI", "2026-07-19", "2026-07-24", ""),
-    ("50", "Pamela Wheeler Maxwell", 84, "USA", "MAXWELL", "2026-07-21", "2026-07-24", ""),
-    ("50", "James Leslie Maxwell", 82, "USA", "MAXWELL", "2026-07-21", "2026-07-24", ""),
+    ('01', 'Elaine Benisti', 51, 'BRAZ', 'BENISTI', '2026-07-22', '2026-07-27', ''),
+    ('01', 'Roberto Benisti', 54, 'BRAZ', 'BENISTI', '2026-07-22', '2026-07-27', ''),
+    ('02', 'Livia Farre Bloes', 7, 'BRAZ', 'BLOES', '2026-07-20', '2026-07-24', ''),
+    ('02', 'Vinicius Farre Bloes', 11, 'BRAZ', 'BLOES', '2026-07-20', '2026-07-24', ''),
+    ('03', 'Adriana Czerkes Farre', 44, 'BRAZ', 'BLOES', '2026-07-20', '2026-07-24', ''),
+    ('03', 'Roberto Moreira Bloes', 43, 'BRAZ', 'BLOES', '2026-07-20', '2026-07-24', ''),
+    ('04', 'Nititorn Sura-Bundith', 35, 'THAI', 'KHAMPALIKIT', '2026-07-21', '2026-07-25', ''),
+    ('04', 'Por Khampalikit', 35, 'THAI', 'KHAMPALIKIT', '2026-07-21', '2026-07-25', 'ALERGIA A LA OSTRAS. Alergias: Oyster'),
+    ('05', 'Nicolas Alfredo Tapia Quinteros', 38, 'CHIL', 'EXPLORA', '2026-07-23', '2026-07-24', ''),
+    ('05', 'Matias Jesus Flores Caceres', 30, 'CHIL', 'EXPLORA', '2026-07-23', '2026-07-24', ''),
+    ('06', 'Emilia Ignacia Alarcón García', 15, 'CHIL', 'ALARCON', '2026-07-20', '2026-07-25', ''),
+    ('06', 'Josefa Isidora Alarcon Garcia', 7, 'CHIL', 'ALARCON', '2026-07-20', '2026-07-25', ''),
+    ('07', 'Ademar Alejandro Alarcon', 47, 'CHIL', 'ALARCON', '2026-07-20', '2026-07-25', ''),
+    ('07', 'Karen Fabiola Garcia Astudillo', 46, 'CHIL', 'ALARCON', '2026-07-20', '2026-07-25', ''),
+    ('08', 'Prem Pavan Vuthandam', 51, 'INDI', 'VUTHANDAM', '2026-07-22', '2026-07-26', 'GLUTEN FREE LACTOSE FREE. Requerimientos alimentarios: Libre de Gluten - Libre de Lactosa - Baja en Carbohidratos - Libre de Azucar'),
+    ('08', 'Purtini Vijaykumar Joshi', 48, 'USA', 'VUTHANDAM', '2026-07-22', '2026-07-26', 'VEGETARIANO. Requerimientos alimentarios: Vegetariana'),
+    ('09', 'Meher Vuthandam', 7, 'INDI', 'VUTHANDAM', '2026-07-22', '2026-07-26', ''),
+    ('09', 'Aahan Vuthandam', 17, 'INDI', 'VUTHANDAM', '2026-07-22', '2026-07-26', ''),
+    ('10', 'Pamela Wheeler Maxwell', 84, 'USA', 'MAXWELL', '2026-07-21', '2026-07-24', ''),
+    ('10', 'James Leslie Maxwell', 82, 'USA', 'MAXWELL', '2026-07-21', '2026-07-24', ''),
+    ('13', 'Patrizia Galante', 78, 'ITAL', 'GALANTE', '2026-07-22', '2026-07-26', ''),
+    ('13', 'Max Schwarz', 14, 'BRAZ', 'GALANTE', '2026-07-22', '2026-07-26', ''),
+    ('13', 'Giulia Ellis Ramalho', 15, 'BRAZ', 'GALANTE', '2026-07-22', '2026-07-26', ''),
+    ('14', 'Javiera Powditch Diez', 16, 'CHIL', 'DIEZ', '2026-07-22', '2026-07-26', ''),
+    ('14', 'Catalina Powditch Diez', 18, 'CHIL', 'DIEZ', '2026-07-22', '2026-07-26', ''),
+    ('15', 'Veronica Ivonne Diez Sabat', 50, 'CHIL', 'DIEZ', '2026-07-22', '2026-07-26', ''),
+    ('15', 'Carlos Eduardo Kitridge Powditch Araya', 48, 'CHIL', 'DIEZ', '2026-07-22', '2026-07-26', ''),
+    ('16', 'Davi Ribeiro Simao', 17, 'BRAZ', 'SIMAO', '2026-07-18', '2026-07-24', ''),
+    ('16', 'Daniel Ribeiro Simao', 17, 'BRAZ', 'SIMAO', '2026-07-18', '2026-07-24', ''),
+    ('16', 'Lais Ribeiro Simao', 7, 'BRAZ', 'SIMAO', '2026-07-18', '2026-07-24', ''),
+    ('17', 'Lucas Pinto Simao', 41, 'BRAZ', 'SIMAO', '2026-07-18', '2026-07-24', ''),
+    ('17', 'Luana De Carvalho Ribeiro Simão', 43, 'BRAZ', 'SIMAO', '2026-07-18', '2026-07-24', ''),
+    ('18', 'Bernardita Maria Salas Negroni', 55, 'CHIL', 'UNDURRAGA', '2026-07-23', '2026-07-26', ''),
+    ('18', 'Gonzalo Undurraga Pellegrini', 54, 'CHIL', 'UNDURRAGA', '2026-07-22', '2026-07-26', 'Requerimientos alimentarios: Libre de Azucar'),
+    ('19', 'Blas Moreno', 16, 'ARGE', 'GUIDI', '2026-07-19', '2026-07-24', ''),
+    ('19', 'Oriana Guidi', 57, 'ITAL', 'GUIDI', '2026-07-19', '2026-07-24', 'GLUTEN FREEE - LACTOSE FREE. Requerimientos alimentarios: Libre de Gluten - Libre de Lactosa - Baja en Carbohidratos. Alergias: I am not allergic to Gluten - I am intollerant to Gluten'),
+    ('19', 'Patricio Esteban Maraboli Valenzuela', 44, 'CHIL', 'DAZA', '2026-07-24', '2026-07-29', ''),
+    ('19', 'Adriana Sandra Milena Daza Gil', 50, 'CHIL', 'DAZA', '2026-07-24', '2026-07-29', ''),
+    ('20', 'Salvador Moran Ramo', 14, 'MEXI', 'MORAN', '2026-07-24', '2026-07-28', ''),
+    ('20', 'Salvador Moran Monroy', 59, 'MEXI', 'MORAN', '2026-07-24', '2026-07-28', ''),
+    ('20', 'Giselle El Masou Luco', 47, 'CHIL', 'EL', '2026-07-22', '2026-07-24', 'Sin restricciones alimenticias - NO QUINOA'),
+    ('21', 'Gabriela Muniz Barreto', 47, 'BRAZ', 'CAROSELLA', '2026-07-23', '2026-07-29', ''),
+    ('22', 'Gabriela Barbosa Albuquerque', 6, 'BRAZ', 'BARBOSA', '2026-07-22', '2026-07-27', ''),
+    ('22', 'Guilherme Barbosa Albuquerque', 9, 'BRAZ', 'BARBOSA', '2026-07-22', '2026-07-27', ''),
+    ('23', 'Maria Juliana Salhani Do Prado Barbosa', 46, 'BRAZ', 'BARBOSA', '2026-07-22', '2026-07-27', ''),
+    ('23', 'Andre Fernando Da Silva Vilarinho Simoes De Albuquerque', 43, 'BRAZ', 'BARBOSA', '2026-07-22', '2026-07-27', ''),
+    ('24', 'Isabel Margarita Gonzalez Henriquez', 46, 'CHIL', 'ALBORNOZ', '2026-07-21', '2026-07-24', 'Requerimientos alimentarios: Libre de Lactosa. Alergias: No tengo dietas pero no como cosas con mucho aliño - Alergia a la azitromicina'),
+    ('24', 'Susanne Vollbrecht', 63, 'GERM', 'VOLLBRECHT', '2026-07-24', '2026-07-27', 'prefieren una alimentación rica en vegetales y agradecerían mucho que siempre se les ofrecieran porciones abundantes de verduras y productos integrales en todas las comidas, incluido el desayuno.'),
+    ('24', 'Daniela Albornoz', 32, 'CHIL', 'ALBORNOZ', '2026-07-21', '2026-07-24', 'NO COME NUECES. Alergias: nueces'),
+    ('24', 'Vera Vollbrecht', 30, 'GERM', 'VOLLBRECHT', '2026-07-24', '2026-07-27', 'prefieren una alimentación rica en vegetales y agradecerían mucho que siempre se les ofrecieran porciones abundantes de verduras y productos integrales en todas las comidas, incluido el desayuno.'),
+    ('25', 'Henrique Mc Darby Arouche De Toledo', 19, 'BRAZ', 'REZENDE', '2026-07-19', '2026-07-24', ''),
+    ('25', 'Sophia Mc Darby Arouche De Toledo', 17, 'BRAZ', 'REZENDE', '2026-07-19', '2026-07-24', ''),
+    ('26', 'Luis Henrique Rezende Arouche De Toledo', 55, 'BRAZ', 'REZENDE', '2026-07-19', '2026-07-24', ''),
+    ('26', 'Grace Mc Darby Arouche De Toledo', 52, 'BRAZ', 'REZENDE', '2026-07-19', '2026-07-24', ''),
+    ('27', 'Clara Lannes Ozmen Henrique', 14, 'BRAZ', 'LANNES', '2026-07-21', '2026-07-25', ''),
+    ('27', 'Beatriz Lannes Ozmen Henrique', 11, 'BRAZ', 'LANNES', '2026-07-21', '2026-07-25', ''),
+    ('28', 'Laercio Henrique Junior', 45, 'BRAZ', 'LANNES', '2026-07-21', '2026-07-25', ''),
+    ('28', 'Aylin Lannes Ozmen Henrique', 45, 'BRAZ', 'LANNES', '2026-07-21', '2026-07-25', ''),
+    ('29', 'Olivia De Albuquerque Schenardi', 12, 'BRAZ', 'SCHENARDI', '2026-07-22', '2026-07-27', ''),
+    ('29', 'Maria Fernanda Vilarinho Simoes De Albuquerque', 45, 'BRAZ', 'SCHENARDI', '2026-07-22', '2026-07-27', ''),
+    ('29', 'Cristiano Schenardi Paula', 48, 'BRAZ', 'SCHENARDI', '2026-07-22', '2026-07-27', ''),
+    ('30', 'Lara Haddad Kairalla', 41, 'BRAZ', 'FUAD', '2026-07-24', '2026-07-30', ''),
+    ('30', 'Tomas Leal Da Costa Marinho Rodrigues', 22, 'BRAZ', 'LEAL', '2026-07-17', '2026-07-24', ''),
+    ('30', 'Ana Claudia Leal Da Costa Marinho Rodrigues', 52, 'BRAZ', 'LEAL', '2026-07-17', '2026-07-24', 'Alergia a la piña'),
+    ('30', 'Luciano Fuad Kairalla', 40, 'BRAZ', 'FUAD', '2026-07-24', '2026-07-30', 'LIBRE DE LACTOSA - SOLO COME QUESO SIN LACTOSA. Requerimientos alimentarios: Libre de Lactosa'),
+    ('31', 'Isabela Felgueiras Da Silva', 12, 'BRAZ', 'ZANIN', '2026-07-21', '2026-07-26', ''),
+    ('31', 'Jan Kozak', 38, 'CZEC', 'KOZAK', '2026-07-22', '2026-07-25', ''),
+    ('31', 'Xiaoxiao Shen', 36, 'CHIN', 'KOZAK', '2026-07-22', '2026-07-25', ''),
+    ('31', 'Maria Eduarda Felgueiras Da Silva', 12, 'BRAZ', 'ZANIN', '2026-07-21', '2026-07-26', ''),
+    ('32', 'Francesca Carosella Aldrovandi', 14, 'ITAL', 'CAROSELLA', '2026-07-23', '2026-07-29', 'VEGETARIANA COME PESCADO. Requerimientos alimentarios: Vegetariana'),
+    ('32', 'Gabriel Pires Demarchi', 15, 'BRAZ', 'CAROSELLA', '2026-07-23', '2026-07-29', ''),
+    ('33', 'Filippo Bom Angelo Vita', 12, 'BRAZ', 'VITA', '2026-07-22', '2026-07-27', ''),
+    ('33', 'Lorenzo Bom Angelo Vita', 8, 'BRAZ', 'VITA', '2026-07-22', '2026-07-27', ''),
+    ('34', 'Michele Maria Vita', 45, 'ITAL', 'VITA', '2026-07-22', '2026-07-27', ''),
+    ('34', 'Mariana Arriel Bom Angelo Vita', 43, 'BRAZ', 'VITA', '2026-07-22', '2026-07-27', ''),
+    ('35', 'Joaquin Emilio Undurraga Salas', 12, 'CHIL', 'UNDURRAGA', '2026-07-23', '2026-07-26', ''),
+    ('35', 'Elisa Maria Undurraga Salas', 20, 'CHIL', 'UNDURRAGA', '2026-07-23', '2026-07-26', ''),
+    ('36', 'Josefina Undurraga Salas', 23, 'CHIL', 'UNDURRAGA', '2026-07-23', '2026-07-26', ''),
+    ('36', 'Bernardita Maria Undurraga Salas', 28, 'CHIL', 'UNDURRAGA', '2026-07-23', '2026-07-26', ''),
+    ('37', 'Carlos Andres Olson Woodburn', 4, 'USA', 'WOODBURN', '2026-07-21', '2026-07-27', ''),
+    ('37', 'Jennifer Elizabeth Woodburn', 38, 'USA', 'WOODBURN', '2026-07-21', '2026-07-27', 'ALERGIA SEVERA A LOS MARISCOS'),
+    ('37', 'Siena Olson Woodburn', 1, 'USA', 'WOODBURN', '2026-07-21', '2026-07-27', ''),
+    ('37', 'Carlos Eduardo Gonzalez Olson', 44, 'MEXI', 'WOODBURN', '2026-07-21', '2026-07-27', ''),
+    ('39', 'Thelio Bonesio Gonçalves', 37, 'BRAZ', 'BONESIO', '2026-07-19', '2026-07-24', ''),
+    ('39', 'David Salvador Mediavilla', 19, 'SPAI', 'SALVADOR', '2026-07-24', '2026-07-28', ''),
+    ('39', 'Jose Benedito Ventura', 46, 'BRAZ', 'BONESIO', '2026-07-19', '2026-07-24', ''),
+    ('39', 'Martin Salvador Mediavilla', 17, 'SPAI', 'SALVADOR', '2026-07-24', '2026-07-28', 'ALERGIA A TODOS LOS FRUTOS SECOS'),
+    ('40', 'Miguel Bonesio Gonçalves Da Silva', 13, 'BRAZ', 'BONESIO', '2026-07-19', '2026-07-24', ''),
+    ('40', 'Maria Luisa Mediavilla Sanz', 56, 'SPAI', 'SALVADOR', '2026-07-24', '2026-07-28', ''),
+    ('40', 'Emilio Luis Salvador Prieto', 56, 'SPAI', 'SALVADOR', '2026-07-24', '2026-07-28', ''),
+    ('40', 'Graziella Bonesio Gonçalves', 39, 'BRAZ', 'BONESIO', '2026-07-19', '2026-07-24', ''),
+    ('41', 'Maria Clara Comparini Nogueira De Sa Santos Pereira', 41, 'BRAZ', 'NOGUEIRA', '2026-07-23', '2026-07-30', ''),
+    ('41', 'Joao Pedro Nogueira De Sa Santos Pereira', 8, 'BRAZ', 'NOGUEIRA', '2026-07-23', '2026-07-30', ''),
+    ('42', 'Rosa Maria Dos Santos', 55, 'BRAZ', 'NOGUEIRA', '2026-07-23', '2026-07-30', ''),
+    ('42', 'Luiz Eduardo Nogueira De Sá Santos Pereira', 4, 'BRAZ', 'NOGUEIRA', '2026-07-23', '2026-07-30', ''),
+    ('43', 'Marcel Tadeu Matos Alves Da Silva', 50, 'BRAZ', 'ZANIN', '2026-07-21', '2026-07-26', ''),
+    ('43', 'Carla Zanin Dos Santos Felgueiras', 50, 'BRAZ', 'ZANIN', '2026-07-21', '2026-07-26', ''),
+    ('44', 'Paola Florencia Carosella', 53, 'ARGE', 'CAROSELLA', '2026-07-23', '2026-07-29', ''),
+    ('45', 'Leticia Guimaraes Albernaz Lyle', 45, 'BRAZ', 'SHAYER', '2026-07-24', '2026-07-28', ''),
+    ('45', 'Catherine Hilary Rogers', 49, 'USA', 'TAN', '2026-07-21', '2026-07-24', ''),
+    ('45', 'Miguel Tan', 56, 'USA', 'TAN', '2026-07-21', '2026-07-24', ''),
+    ('45', 'Fernando Shayer', 52, 'BRAZ', 'SHAYER', '2026-07-24', '2026-07-28', ''),
+    ('46', 'Renata De Luizi Correia', 49, 'BRAZ', 'DE LUIZI', '2026-07-19', '2026-07-24', 'PESCETARIANA. Requerimientos alimentarios: Pescetariana'),
+    ('47', 'Claudine Parseghian De Luizi Correia', 53, 'BRAZ', 'DE LUIZI', '2026-07-19', '2026-07-24', ''),
+    ('47', 'André De Luizi Correia', 53, 'BRAZ', 'DE LUIZI', '2026-07-19', '2026-07-24', ''),
+    ('48', 'Marco Antonio Nogueira De Sá Santos Pereira', 6, 'BRAZ', 'NOGUEIRA', '2026-07-23', '2026-07-30', ''),
+    ('48', 'Maria Teresa Nogueira De Sá Santos Pereira', 10, 'BRAZ', 'NOGUEIRA', '2026-07-23', '2026-07-30', ''),
+    ('48', 'Renato Junqueira Santos Pereira', 49, 'BRAZ', 'NOGUEIRA', '2026-07-23', '2026-07-30', ''),
+    ('49', 'Julia Parseghian De Luizi Correia', 17, 'BRAZ', 'DE LUIZI', '2026-07-19', '2026-07-24', ''),
+    ('49', 'Sofia Parseghian De Luizi Correia', 24, 'BRAZ', 'DE LUIZI', '2026-07-19', '2026-07-24', ''),
+    ('50', 'Ana Cecilia Lecona Galvez', 27, 'MEXI', 'WOODBURN', '2026-07-22', '2026-07-25', ''),
 ]
 
 
@@ -197,6 +202,7 @@ FOOD_TOPICS = [
     (r"FRUTILLA|FRESA|STRAWBERR",            "frutillas"),
     (r"\bPINA\b|ANANA|PINEAPPLE|ABACAXI",    "pina"),
     (r"CILANTRO|CULANTRO|CORIANDER",         "cilantro"),
+    (r"QUINOA|QUINUA",                       "quinoa"),
 ]
 
 # Temas que siempre son dieta (preferencia) o condición, sin importar el modo.
@@ -220,6 +226,12 @@ ALLERGY_MODE = re.compile(r"ALERG|ALLERG|CELIAC|INTOLERAN")
 # el ALLERGY_MODE lo marcaría en rojo. La observación completa manda en el obs.
 NEG_ALLERGY  = re.compile(r"NO ALERG|NOT ALLERGIC|NO SOY ALERG")
 SPLIT_FRAGS  = re.compile(r"[;,·/]|\.\s|\n|\s[-–]\s|\sY\s|\sAND\s|\sE\s")
+# Afirmación de consumo: "come pescado" (sí lo come) NO es evitación → no debe
+# generar un tag "sin-pescado". Sólo aplica cuando el fragmento dice "come" sin
+# ninguna marca de evitación; "no come", "libre de", "sin", "alergia" sí lo son
+# ("vegetariana come pescado" = pescetariana; queda vegetariana + obs completa).
+EATS_AFFIRM  = re.compile(r"\bCOME[NS]?\b")
+AVOID_MARK   = re.compile(r"\bNO\b|LIBRE|\bSIN\b|EVITA|ALERG|INTOLER|CELIAC")
 
 
 def _fold(s):
@@ -237,8 +249,11 @@ def obs_to_tags(obs):
         if not frag:
             continue
         allergy = bool(ALLERGY_MODE.search(frag)) and not NEG_ALLERGY.search(frag)
+        affirm  = bool(EATS_AFFIRM.search(frag)) and not AVOID_MARK.search(frag)
         for rx, slug in FOOD_TOPICS:
             if re.search(rx, frag):
+                if affirm:            # "come pescado" = sí lo come, no es restricción
+                    continue
                 tags.append(f"alergia-{slug}" if allergy else f"dieta-sin-{slug}")
         for rx, slug in DIET_TOPICS:
             if re.search(rx, frag):
