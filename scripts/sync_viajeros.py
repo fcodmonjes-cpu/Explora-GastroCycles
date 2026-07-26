@@ -5,11 +5,12 @@ sync_viajeros.py — publica en Firebase los viajeros en casa con sus dietas,
 alergias y restricciones, agrupados por habitación. Alimenta el módulo
 "Viajeros" del ATA Handbook (el reemplazo digital del corcho de tarjetas).
 
-Fuentes reales (fase 2, cuando el Excel esté disponible):
+Fuentes reales (fase 2): PGO, un portal web. El script inicia sesión con
+Playwright y lee las tablas HTML de los reportes del día:
   · Reporte "Dietas"      → hab, nombre, edad, nac, grupo, observaciones
   · "Reporte Geos" diario → hab, viajero, nac, IN/OUT, edad, excursión, grupo
-  parse_excel() queda como stub documentado; el resto del pipeline
-  (normalización → doc Firebase) ya es el definitivo.
+  Ver la sección "Fase 2 · PGO" abajo. El resto del pipeline
+  (cruce → normalización → doc Firebase) es el mismo que el seed.
 
 Fase 1 (actual): SEED_ROWS — transcripción manual de los reportes REALES del
 día (2026-07-29). El roster completo (hab, nombre, edad, nac, grupo, IN/OUT)
@@ -44,11 +45,13 @@ Secrets requeridos solo para escribir (GitHub → Settings → Secrets → Actio
   FIREBASE_KEY → contenido completo del JSON de la service account
 
 Modos:
-  python scripts/sync_viajeros.py --seed               → escribe el seed en Firebase
-  python scripts/sync_viajeros.py --from-excel         → baja el Excel real y escribe (fase 2)
-  python scripts/sync_viajeros.py --debug              → imprime resumen, no escribe
-  python scripts/sync_viajeros.py --emit-json out.json → dump del doc (dev local)
-  (combinables: --from-excel --debug valida el Excel sin tocar Firebase)
+  python scripts/sync_viajeros.py --seed                 → escribe el seed en Firebase
+  python scripts/sync_viajeros.py --from-pgo [--date D]  → login en PGO + reportes del día y escribe (fase 2)
+  python scripts/sync_viajeros.py --debug                → imprime resumen, no escribe
+  python scripts/sync_viajeros.py --emit-json out.json   → dump del doc (dev local)
+  python scripts/sync_viajeros.py --from-pgo --dump-html --debug → guarda el HTML de PGO para ajustar selectores
+  (combinables: --from-pgo --debug lee PGO y muestra el resumen sin tocar Firebase;
+   --date YYYY-MM-DD elige la fecha del reporte, por defecto hoy)
 """
 
 import json, os, re, sys, datetime, unicodedata
@@ -294,24 +297,39 @@ def build_doc(rows, date_str, source):
     }
 
 
-# ── Fase 2 — parseo del Excel real (Dietas + Reporte Geos) ───────────────────
-# El PLUMBING ya está listo: download_excel() baja el xlsx desde SharePoint,
-# main() --from-excel lo carga con openpyxl y llama a parse_excel(wb), y el
-# resultado pasa por build_doc(source="excel") igual que el seed. Lo único que
-# falta cuando llegue el link es MAPEAR LAS COLUMNAS dentro de parse_excel().
+# ── Fase 2 · PGO (portal web) ────────────────────────────────────────────────
+# Los reportes NO son un Excel de SharePoint: viven en PGO, una aplicación web.
+# Los PDFs que se bajaban a mano son "Imprimir a PDF" del navegador (los meta
+# dicen Title:PGO · Producer:Skia/PDF · Creator:…Edg…). Por eso la fase 2 inicia
+# sesión en PGO con Playwright (Chromium headless), abre el "Reporte Geos" y
+# "Dietas" del día y LEE LAS TABLAS HTML directamente (dato limpio, sin parsear
+# PDF). El resto (cruce por nombre → build_doc → obs_to_tags → fb_put) es igual
+# que el seed.
 #
-# Activar la fase 2 (cuando el owner consiga el link de descarga):
-#   1. Agregar el secret VIAJEROS_SHAREPOINT_URL en GitHub → Settings → Secrets
-#      → Actions (link directo de descarga del Excel Dietas/Geos). Es un secret
-#      DISTINTO al SHAREPOINT_URL del rol.
-#   2. Llenar parse_excel() con el mapeo de columnas real (ver spec abajo).
-#   3. Validar sin escribir:  VIAJEROS_SHAREPOINT_URL=<url> \
-#        python scripts/sync_viajeros.py --from-excel --debug
-#   4. Cuando el resumen se vea bien: --from-excel (escribe /viajeros/current).
-#   5. En seed-viajeros.yml: agregar un cron horario que corra --from-excel con
-#      el nuevo secret (hoy el workflow solo corre --seed on-dispatch/on-push).
-
-VIAJEROS_XLSX_ENV = "VIAJEROS_SHAREPOINT_URL"   # secret propio del Excel de dietas
+# Secrets (GitHub → Settings → Secrets and variables → Actions):
+#   PGO_USER      → usuario de PGO
+#   PGO_PASS      → contraseña de PGO
+#   PGO_BASE_URL  → URL base de PGO (ej. https://pgo.ejemplo.com). Va como secret
+#                   para no dejar el host interno en el repo.
+#   FIREBASE_KEY  → (ya existente) service account de Firebase.
+#
+# Config de la UI de PGO — se confirma UNA vez contra el HTML real. Todo es
+# sobrescribible por variable de entorno, así que se afina sin tocar el código.
+# Para descubrir selectores/rutas cuando falten:
+#   PGO_BASE_URL=… PGO_USER=… PGO_PASS=… \
+#     python scripts/sync_viajeros.py --from-pgo --dump-html --debug
+#   → guarda el HTML de login y de cada reporte en ./pgo-dump/ (no escribe Firebase).
+#
+# TODO(pgo): confirmar estos PLACEHOLDERS contra PGO (login y rutas de reportes).
+PGO_BASE_URL    = os.environ.get("PGO_BASE_URL", "").rstrip("/")
+PGO_LOGIN_PATH  = os.environ.get("PGO_LOGIN_PATH",  "/login")
+PGO_SEL_USER    = os.environ.get("PGO_SEL_USER",    "input[name='usuario'], input[name='username'], input[type='email']")
+PGO_SEL_PASS    = os.environ.get("PGO_SEL_PASS",    "input[name='clave'], input[name='password'], input[type='password']")
+PGO_SEL_SUBMIT  = os.environ.get("PGO_SEL_SUBMIT",  "button[type='submit'], input[type='submit']")
+PGO_DATE_FMT    = os.environ.get("PGO_DATE_FMT",    "%Y-%m-%d")   # formato de fecha en la URL del reporte
+PGO_GEOS_PATH   = os.environ.get("PGO_GEOS_PATH",   "/reportes/geos?fecha={date}")
+PGO_DIETAS_PATH = os.environ.get("PGO_DIETAS_PATH", "/reportes/dietas?fecha={date}")
+PGO_TABLE_SEL   = os.environ.get("PGO_TABLE_SEL",   "")   # vacío = autodetecta la tabla con más filas
 
 
 def norm_key(s):
@@ -319,52 +337,168 @@ def norm_key(s):
     return unicodedata.normalize("NFD", str(s)).encode("ascii", "ignore").decode().lower().strip()
 
 
-def download_excel():
-    """Baja el xlsx desde SharePoint. Espejo de download_excel() de sync_rol.py."""
-    import io, requests
-    url = os.environ.get(VIAJEROS_XLSX_ENV)
-    if not url:
+def _pgo_require():
+    faltan = [k for k in ("PGO_BASE_URL", "PGO_USER", "PGO_PASS") if not os.environ.get(k)]
+    if faltan:
         raise SystemExit(
-            f"Falta el secret/variable {VIAJEROS_XLSX_ENV} (link de descarga del "
-            "Excel Dietas/Geos). Agrégalo en GitHub Actions o expórtalo local."
+            "[sync-viajeros] Fase 2 PGO no configurada: faltan " + ", ".join(faltan)
+            + ".\n  Definí esos secrets/variables (nunca en el código) y reintentá."
         )
-    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"},
-                     allow_redirects=True, timeout=30)
-    r.raise_for_status()
-    if r.content[:2] != b"PK":
-        raise ValueError(
-            f"La respuesta no es un xlsx ({len(r.content)} bytes). "
-            "¿Expiró el link de SharePoint?"
+
+
+# JS que extrae una tabla HTML → {headers:[...], rows:[[celda,...],...]}.
+# Autodetecta la tabla con más filas si no se pasó un selector explícito.
+_PGO_TABLE_JS = r"""
+(sel) => {
+  const pick = () => {
+    if (sel) return document.querySelector(sel);
+    let best = null, n = -1;
+    for (const t of document.querySelectorAll('table')) {
+      const rows = t.querySelectorAll('tr').length;
+      if (rows > n) { n = rows; best = t; }
+    }
+    return best;
+  };
+  const tbl = pick();
+  if (!tbl) return null;
+  const norm = s => (s || '').replace(/\s+/g, ' ').trim();
+  const trs = [...tbl.querySelectorAll('tr')];
+  let hi = trs.findIndex(tr => tr.querySelector('th'));
+  if (hi < 0) hi = 0;
+  const headers = [...trs[hi].querySelectorAll('th,td')].map(c => norm(c.innerText));
+  const rows = [];
+  for (let i = hi + 1; i < trs.length; i++) {
+    const cells = [...trs[i].querySelectorAll('td,th')].map(c => norm(c.innerText));
+    if (cells.some(x => x)) rows.push(cells);
+  }
+  return { headers, rows };
+}
+"""
+
+
+def _pgo_dump(page, name):
+    import pathlib
+    d = pathlib.Path("pgo-dump"); d.mkdir(exist_ok=True)
+    (d / f"{name}.html").write_text(page.content(), encoding="utf-8")
+    print(f"[sync-viajeros] HTML guardado en pgo-dump/{name}.html")
+
+
+def _pgo_read_report(page, path, dump_name=None):
+    """Abre un reporte y devuelve lista de dicts {encabezado_normalizado: valor}."""
+    url = PGO_BASE_URL + path
+    page.goto(url, wait_until="networkidle", timeout=60000)
+    if dump_name:
+        _pgo_dump(page, dump_name)
+    data = page.evaluate(_PGO_TABLE_JS, PGO_TABLE_SEL or None)
+    if not data or not data.get("rows"):
+        raise SystemExit(
+            f"[sync-viajeros] No encontré tabla de datos en {url}.\n"
+            "  Corré con --dump-html y ajustá PGO_TABLE_SEL o la ruta del reporte."
         )
-    return io.BytesIO(r.content)
+    headers = [norm_key(h) for h in data["headers"]]
+    out = []
+    for cells in data["rows"]:
+        out.append({headers[i]: cells[i] for i in range(min(len(headers), len(cells)))})
+    return out
 
 
-def parse_excel(wb):
+def pgo_fetch(date_str, dump=False):
+    """Login en PGO + lectura de Geos y Dietas del día → (geos_rows, dietas_rows)."""
+    _pgo_require()
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        raise SystemExit(
+            "[sync-viajeros] Falta Playwright. Instalá:\n"
+            "  pip install playwright && python -m playwright install chromium\n"
+            "  (en el workflow ya se instala automáticamente)."
+        )
+    fecha = datetime.date.fromisoformat(date_str).strftime(PGO_DATE_FMT)
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        page = browser.new_context().new_page()
+        # 1) Login
+        page.goto(PGO_BASE_URL + PGO_LOGIN_PATH, wait_until="networkidle", timeout=60000)
+        if dump:
+            _pgo_dump(page, "login")
+        page.locator(PGO_SEL_USER).first.fill(os.environ["PGO_USER"])
+        page.locator(PGO_SEL_PASS).first.fill(os.environ["PGO_PASS"])
+        page.locator(PGO_SEL_SUBMIT).first.click()
+        page.wait_for_load_state("networkidle", timeout=60000)
+        # 2) Reportes del día
+        geos   = _pgo_read_report(page, PGO_GEOS_PATH.format(date=fecha),   "geos"   if dump else None)
+        dietas = _pgo_read_report(page, PGO_DIETAS_PATH.format(date=fecha), "dietas" if dump else None)
+        browser.close()
+    return geos, dietas
+
+
+# Mapeo encabezado de PGO (ya normalizado) → campo interno. Varios alias por si
+# PGO nombra distinto que el PDF. Ajustar contra el HTML si algún nombre difiere.
+PGO_GEOS_COLS = {
+    "hab": "hab", "habitacion": "hab",
+    "viajero": "nombre", "nombre": "nombre",
+    "nac": "nac", "nacionalidad": "nac",
+    "in/out": "inout", "inout": "inout", "in / out": "inout",
+    "edad": "edad", "grupo": "grupo",
+}
+PGO_DIET_COLS = {
+    "hab": "hab", "nombre": "nombre", "viajero": "nombre",
+    "edad": "edad", "nac": "nac", "grupo": "grupo",
+    "observaciones": "obs", "observacion": "obs", "observaciones geos": "obs",
+}
+
+
+def _remap(row, colmap):
+    return {colmap[k]: v for k, v in row.items() if k in colmap}
+
+
+def _to_int(s, default=0):
+    m = re.search(r"\d+", str(s or ""))
+    return int(m.group()) if m else default
+
+
+def _pgo_inout(val, year):
+    """'20-07 22-07' (con saltos u otros separadores) -> ('YYYY-07-20','YYYY-07-22')."""
+    ds = re.findall(r"(\d{1,2})[-/](\d{1,2})", str(val or ""))
+    def iso(dd, mm):
+        return f"{year:04d}-{int(mm):02d}-{int(dd):02d}"
+    if len(ds) >= 2:
+        return iso(*ds[0]), iso(*ds[1])
+    if len(ds) == 1:
+        return iso(*ds[0]), ""
+    return "", ""
+
+
+def parse_pgo(geos_rows, dietas_rows, date_str):
     """
-    Cruza las dos fuentes y devuelve filas en el MISMO formato que SEED_ROWS
-    (hab, nombre, edad, nac, grupo, in, out, obs) para pasar por build_doc().
-    obs_to_tags() y build_doc() ya hacen el resto sin cambios.
+    Cruza Geos+Dietas (dicts leídos de PGO) -> filas en el MISMO formato que
+    SEED_ROWS (hab, nombre, edad, nac, grupo, in, out, obs). De ahí en adelante
+    build_doc() y obs_to_tags() hacen el resto sin cambios.
 
-    Flujo previsto (llenar contra el Excel real; detectar columnas leyendo la
-    fila de encabezado, no hardcodear índices — ver find_sheet/get_day_cols en
-    sync_rol.py como referencia de la técnica):
-
-      1. Hoja "Dietas": una fila por viajero → hab, nombre, edad, nac, grupo,
-         observación libre. Indexar por norm_key(nombre) (o hab+nombre si hay
-         homónimos entre grupos).
-      2. Hoja "Reporte Geos" (diaria): una fila por viajero → IN/OUT (y hab, que
-         manda si difiere de Dietas). Cruzar por el mismo norm_key para pegar
-         las fechas IN/OUT sobre cada viajero de Dietas.
-      3. Emitir la lista de tuplas en el orden de columnas de SEED_ROWS.
-
-    Los `nac` nuevos que aparezcan hay que sumarlos al mapa VJ_NAC de index.html
-    (nacionalidad → bandera) o caen a texto sin bandera.
+    Roster desde Geos (manda hab/edad/nac/grupo/IN-OUT); observación de dieta
+    cruzada por norm_key(nombre) desde Dietas y pegada verbatim en obs.
     """
-    raise NotImplementedError(
-        "Fase 2 — falta mapear columnas del Excel Dietas/Geos. El plumbing "
-        "(download_excel, --from-excel, build_doc) ya está listo; ver el "
-        "comentario de arriba para los pasos de activación."
-    )
+    year = datetime.date.fromisoformat(date_str).year
+    diet = {}
+    for r in (_remap(x, PGO_DIET_COLS) for x in dietas_rows):
+        if r.get("nombre"):
+            diet[norm_key(r["nombre"])] = (r.get("obs") or "").strip()
+    rows = []
+    for r in (_remap(x, PGO_GEOS_COLS) for x in geos_rows):
+        nombre = (r.get("nombre") or "").strip()
+        if not nombre:
+            continue
+        hab_digits = re.sub(r"\D", "", str(r.get("hab") or ""))
+        hab = hab_digits.zfill(2) if hab_digits else str(r.get("hab") or "").strip()
+        ind, outd = _pgo_inout(r.get("inout"), year)
+        rows.append((
+            hab, nombre, _to_int(r.get("edad")),
+            (r.get("nac") or "").strip().upper(),
+            (r.get("grupo") or "").strip(),
+            ind, outd,
+            diet.get(norm_key(nombre), ""),
+        ))
+    return rows
 
 
 # ── Firebase (mismo mecanismo que sync_rol.py) ───────────────────────────────
@@ -412,13 +546,24 @@ def print_summary(doc):
     print(f"  salen el {doc['date']:14s} {len(salen):2d}  {', '.join(salen)}")
 
 
+def _arg_value(flag):
+    """Valor que sigue a un flag en argv, o None (p.ej. --date 2026-07-26)."""
+    if flag in sys.argv:
+        i = sys.argv.index(flag)
+        if i + 1 < len(sys.argv):
+            return sys.argv[i + 1]
+    return None
+
+
 def main():
-    from_excel = "--from-excel" in sys.argv
-    if from_excel:
-        import openpyxl
-        print("[sync-viajeros] Descargando Excel Dietas/Geos...")
-        wb = openpyxl.load_workbook(download_excel(), read_only=True, data_only=True)
-        doc = build_doc(parse_excel(wb), datetime.date.today().isoformat(), "excel")
+    from_pgo = "--from-pgo" in sys.argv
+    if from_pgo:
+        date_str = _arg_value("--date") or datetime.date.today().isoformat()
+        print(f"[sync-viajeros] PGO — login y lectura de reportes ({date_str})...")
+        geos, dietas = pgo_fetch(date_str, dump="--dump-html" in sys.argv)
+        rows = parse_pgo(geos, dietas, date_str)
+        print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
+        doc = build_doc(rows, date_str, "pgo")
     else:
         doc = build_doc(SEED_ROWS, REPORT_DATE, "seed")
 
@@ -435,8 +580,8 @@ def main():
         print("[sync-viajeros] Modo debug — Firebase no modificado.")
         return
 
-    if not from_excel and "--seed" not in sys.argv:
-        print("[sync-viajeros] Nada que hacer: usa --seed, --from-excel, --debug o --emit-json.")
+    if not from_pgo and "--seed" not in sys.argv:
+        print("[sync-viajeros] Nada que hacer: usa --seed, --from-pgo, --debug o --emit-json.")
         return
 
     print("[sync-viajeros] Autenticando con Firebase...")

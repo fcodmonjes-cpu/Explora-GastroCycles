@@ -1,0 +1,68 @@
+name: Sync Viajeros (PGO)
+
+# Fase 2: entra a PGO (portal web), lee el "Reporte Geos" + "Dietas" del día y
+# escribe /viajeros/current en Firebase — el reemplazo automático del seed manual.
+#
+# Manual por ahora (workflow_dispatch). Cuando el login/parseo esté CONFIRMADO
+# contra PGO, se agrega un cron diario (ver el bloque comentado abajo).
+# Nota: el botón "Run workflow" recién aparece en la UI de Actions cuando este
+# archivo llega a la rama default (main) — igual que seed-viajeros.yml.
+#
+# Secrets requeridos (Settings -> Secrets and variables -> Actions):
+#   PGO_BASE_URL, PGO_USER, PGO_PASS, FIREBASE_KEY
+# Opcionales para afinar sin tocar código (como "Variables" del repo/entorno):
+#   PGO_LOGIN_PATH, PGO_SEL_USER, PGO_SEL_PASS, PGO_SEL_SUBMIT,
+#   PGO_GEOS_PATH, PGO_DIETAS_PATH, PGO_TABLE_SEL, PGO_DATE_FMT
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Fecha del reporte (YYYY-MM-DD). Vacío = hoy."
+        required: false
+        default: ""
+      dump_html:
+        description: "Guardar el HTML de PGO como artifact (para ajustar selectores). No escribe Firebase."
+        type: boolean
+        default: false
+
+# Descomentar cuando PGO esté confirmado, para poblar solo (ejemplo: cada día 06:00 UTC):
+# on:
+#   schedule:
+#     - cron: "0 6 * * *"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: |
+          pip install requests google-auth playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Sync desde PGO
+        env:
+          PGO_BASE_URL: ${{ secrets.PGO_BASE_URL }}
+          PGO_USER:     ${{ secrets.PGO_USER }}
+          PGO_PASS:     ${{ secrets.PGO_PASS }}
+          FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
+        run: |
+          ARGS="--from-pgo"
+          if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
+          if [ "${{ inputs.dump_html }}" = "true" ]; then ARGS="$ARGS --dump-html --debug"; fi
+          echo "Ejecutando: sync_viajeros.py $ARGS"
+          python scripts/sync_viajeros.py $ARGS
+
+      - name: Subir HTML de depuración
+        if: ${{ inputs.dump_html }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pgo-dump
+          path: pgo-dump/
+          if-no-files-found: ignore
