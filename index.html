@@ -2668,6 +2668,8 @@ const VJ_TAGS = {
   'alergia-cilantro':      { cls:'alergia', key:'vjTagCilantro' },
   'alergia-quinoa':        { cls:'alergia', key:'vjTagQuinoa' },
   'alergia-trufa':         { cls:'alergia', key:'vjTagTrufa' },
+  'alergia-champinones':   { cls:'alergia', key:'vjTagChampinones' },
+  'alergia-pollo':         { cls:'alergia', key:'vjTagPollo' },
   'dieta-vegetariana':     { cls:'dieta',   key:'vjTagVegetariana' },
   'dieta-vegana':          { cls:'dieta',   key:'vjTagVegana' },
   'dieta-pescetariana':    { cls:'dieta',   key:'vjTagPescetariana' },
@@ -2688,6 +2690,8 @@ const VJ_TAGS = {
   'dieta-sin-cilantro':    { cls:'dieta',   key:'vjTagSinCilantro' },
   'dieta-sin-quinoa':      { cls:'dieta',   key:'vjTagSinQuinoa' },
   'dieta-sin-trufa':       { cls:'dieta',   key:'vjTagSinTrufa' },
+  'dieta-sin-champinones': { cls:'dieta',   key:'vjTagSinChampinones' },
+  'dieta-sin-pollo':       { cls:'dieta',   key:'vjTagSinPollo' },
   'cond-diabetico':        { cls:'cond',    key:'vjTagDiabetico' },
   'cond-embarazada':       { cls:'cond',    key:'vjTagEmbarazada' }
 };
@@ -2695,7 +2699,7 @@ const VJ_TAGS = {
 // del Reporte Geos. Sólo los confirmados en la data — un código sin mapear cae
 // a su texto crudo (mejor que una bandera equivocada sobre un viajero real).
 // Fase 2: agregar acá los códigos nuevos a medida que aparezcan en el Excel.
-const VJ_NAC = { BRAZ:'🇧🇷', CHIL:'🇨🇱', USA:'🇺🇸', ENGL:'🇬🇧', INDI:'🇮🇳', ARGE:'🇦🇷', ITAL:'🇮🇹', MEXI:'🇲🇽', THAI:'🇹🇭', GERM:'🇩🇪', SPAI:'🇪🇸', CZEC:'🇨🇿', CHIN:'🇨🇳', LUXE:'🇱🇺' };
+const VJ_NAC = { BRAZ:'🇧🇷', CHIL:'🇨🇱', USA:'🇺🇸', ENGL:'🇬🇧', INDI:'🇮🇳', ARGE:'🇦🇷', ITAL:'🇮🇹', MEXI:'🇲🇽', THAI:'🇹🇭', GERM:'🇩🇪', SPAI:'🇪🇸', CZEC:'🇨🇿', CHIN:'🇨🇳', LUXE:'🇱🇺', RUSS:'🇷🇺', PARA:'🇵🇾', ECUA:'🇪🇨', CANA:'🇨🇦' };
 let VIAJEROS_DATA          = null;   // { date, updatedAt, source, habs:{} } | null
 let VIAJEROS_FETCHED_AT    = 0;      // ms del último fetch (para el re-fetch por staleness)
 let VIAJEROS_LOAD_ERROR    = false;
@@ -2869,8 +2873,8 @@ const UI = {
     vjSinRestriccion:'Sin restricciones',
     vjNoResults:'Sin resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Borrar', vjClear:'Limpiar',
-    vjTagMariscos:'Mariscos', vjTagGluten:'Gluten', vjTagLactosa:'Lactosa', vjTagSesamo:'Sésamo', vjTagPescado:'Pescado', vjTagAjo:'Ajo', vjTagFrutosSecos:'Frutos secos', vjTagFrutillas:'Frutillas', vjTagPina:'Piña', vjTagCilantro:'Cilantro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Trufa',
-    vjTagVegetariana:'Vegetariano', vjTagVegana:'Vegano', vjTagPescetariana:'Pescetariano', vjTagSinGluten:'Sin gluten', vjTagSinLactosa:'Sin lactosa', vjTagSinCerdo:'Sin cerdo', vjTagSinCarnesRojas:'Sin carnes rojas', vjTagSinCordero:'Sin cordero', vjTagSinMariscos:'Sin mariscos', vjTagSinPescado:'Sin pescado', vjTagSinFritura:'Sin fritura', vjTagSinSesamo:'Sin sésamo', vjTagSinAjo:'Sin ajo', vjTagSinFrutosSecos:'Sin frutos secos', vjTagSinFrutillas:'Sin frutillas', vjTagSinPina:'Sin piña', vjTagSinAzucar:'Sin azúcar', vjTagSinCilantro:'Sin cilantro', vjTagSinQuinoa:'Sin quinoa', vjTagSinTrufa:'Sin trufa',
+    vjTagMariscos:'Mariscos', vjTagGluten:'Gluten', vjTagLactosa:'Lactosa', vjTagSesamo:'Sésamo', vjTagPescado:'Pescado', vjTagAjo:'Ajo', vjTagFrutosSecos:'Frutos secos', vjTagFrutillas:'Frutillas', vjTagPina:'Piña', vjTagCilantro:'Cilantro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Trufa', vjTagChampinones:'Champiñones', vjTagPollo:'Pollo',
+    vjTagVegetariana:'Vegetariano', vjTagVegana:'Vegano', vjTagPescetariana:'Pescetariano', vjTagSinGluten:'Sin gluten', vjTagSinLactosa:'Sin lactosa', vjTagSinCerdo:'Sin cerdo', vjTagSinCarnesRojas:'Sin carnes rojas', vjTagSinCordero:'Sin cordero', vjTagSinMariscos:'Sin mariscos', vjTagSinPescado:'Sin pescado', vjTagSinFritura:'Sin fritura', vjTagSinSesamo:'Sin sésamo', vjTagSinAjo:'Sin ajo', vjTagSinFrutosSecos:'Sin frutos secos', vjTagSinFrutillas:'Sin frutillas', vjTagSinPina:'Sin piña', vjTagSinAzucar:'Sin azúcar', vjTagSinCilantro:'Sin cilantro', vjTagSinQuinoa:'Sin quinoa', vjTagSinTrufa:'Sin trufa', vjTagSinChampinones:'Sin champiñones', vjTagSinPollo:'Sin pollo',
     vjTagDiabetico:'Diabético', vjTagEmbarazada:'Embarazada'
   },
   en: {
@@ -3031,8 +3035,8 @@ const UI = {
     vjSinRestriccion:'No restrictions',
     vjNoResults:'No matches for this filter',
     vjNumpadToggle:'Number pad', vjDelete:'Delete', vjClear:'Clear',
-    vjTagMariscos:'Shellfish', vjTagGluten:'Gluten', vjTagLactosa:'Lactose', vjTagSesamo:'Sesame', vjTagPescado:'Fish', vjTagAjo:'Garlic', vjTagFrutosSecos:'Tree nuts', vjTagFrutillas:'Strawberries', vjTagPina:'Pineapple', vjTagCilantro:'Cilantro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Truffle',
-    vjTagVegetariana:'Vegetarian', vjTagVegana:'Vegan', vjTagPescetariana:'Pescatarian', vjTagSinGluten:'Gluten-free', vjTagSinLactosa:'Lactose-free', vjTagSinCerdo:'No pork', vjTagSinCarnesRojas:'No red meat', vjTagSinCordero:'No lamb', vjTagSinMariscos:'No shellfish', vjTagSinPescado:'No fish', vjTagSinFritura:'No fried food', vjTagSinSesamo:'No sesame', vjTagSinAjo:'No garlic', vjTagSinFrutosSecos:'No nuts', vjTagSinFrutillas:'No strawberries', vjTagSinPina:'No pineapple', vjTagSinAzucar:'Sugar-free', vjTagSinCilantro:'No cilantro', vjTagSinQuinoa:'No quinoa', vjTagSinTrufa:'No truffle',
+    vjTagMariscos:'Shellfish', vjTagGluten:'Gluten', vjTagLactosa:'Lactose', vjTagSesamo:'Sesame', vjTagPescado:'Fish', vjTagAjo:'Garlic', vjTagFrutosSecos:'Tree nuts', vjTagFrutillas:'Strawberries', vjTagPina:'Pineapple', vjTagCilantro:'Cilantro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Truffle', vjTagChampinones:'Mushrooms', vjTagPollo:'Chicken',
+    vjTagVegetariana:'Vegetarian', vjTagVegana:'Vegan', vjTagPescetariana:'Pescatarian', vjTagSinGluten:'Gluten-free', vjTagSinLactosa:'Lactose-free', vjTagSinCerdo:'No pork', vjTagSinCarnesRojas:'No red meat', vjTagSinCordero:'No lamb', vjTagSinMariscos:'No shellfish', vjTagSinPescado:'No fish', vjTagSinFritura:'No fried food', vjTagSinSesamo:'No sesame', vjTagSinAjo:'No garlic', vjTagSinFrutosSecos:'No nuts', vjTagSinFrutillas:'No strawberries', vjTagSinPina:'No pineapple', vjTagSinAzucar:'Sugar-free', vjTagSinCilantro:'No cilantro', vjTagSinQuinoa:'No quinoa', vjTagSinTrufa:'No truffle', vjTagSinChampinones:'No mushrooms', vjTagSinPollo:'No chicken',
     vjTagDiabetico:'Diabetic', vjTagEmbarazada:'Pregnant'
   },
   pt: {
@@ -3193,8 +3197,8 @@ const UI = {
     vjSinRestriccion:'Sem restrições',
     vjNoResults:'Sem resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Apagar', vjClear:'Limpar',
-    vjTagMariscos:'Frutos do mar', vjTagGluten:'Glúten', vjTagLactosa:'Lactose', vjTagSesamo:'Gergelim', vjTagPescado:'Peixe', vjTagAjo:'Alho', vjTagFrutosSecos:'Oleaginosas', vjTagFrutillas:'Morangos', vjTagPina:'Abacaxi', vjTagCilantro:'Coentro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Trufa',
-    vjTagVegetariana:'Vegetariano', vjTagVegana:'Vegano', vjTagPescetariana:'Pescetariano', vjTagSinGluten:'Sem glúten', vjTagSinLactosa:'Sem lactose', vjTagSinCerdo:'Sem porco', vjTagSinCarnesRojas:'Sem carnes vermelhas', vjTagSinCordero:'Sem cordeiro', vjTagSinMariscos:'Sem frutos do mar', vjTagSinPescado:'Sem peixe', vjTagSinFritura:'Sem fritura', vjTagSinSesamo:'Sem gergelim', vjTagSinAjo:'Sem alho', vjTagSinFrutosSecos:'Sem oleaginosas', vjTagSinFrutillas:'Sem morangos', vjTagSinPina:'Sem abacaxi', vjTagSinAzucar:'Sem açúcar', vjTagSinCilantro:'Sem coentro', vjTagSinQuinoa:'Sem quinoa', vjTagSinTrufa:'Sem trufa',
+    vjTagMariscos:'Frutos do mar', vjTagGluten:'Glúten', vjTagLactosa:'Lactose', vjTagSesamo:'Gergelim', vjTagPescado:'Peixe', vjTagAjo:'Alho', vjTagFrutosSecos:'Oleaginosas', vjTagFrutillas:'Morangos', vjTagPina:'Abacaxi', vjTagCilantro:'Coentro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Trufa', vjTagChampinones:'Cogumelos', vjTagPollo:'Frango',
+    vjTagVegetariana:'Vegetariano', vjTagVegana:'Vegano', vjTagPescetariana:'Pescetariano', vjTagSinGluten:'Sem glúten', vjTagSinLactosa:'Sem lactose', vjTagSinCerdo:'Sem porco', vjTagSinCarnesRojas:'Sem carnes vermelhas', vjTagSinCordero:'Sem cordeiro', vjTagSinMariscos:'Sem frutos do mar', vjTagSinPescado:'Sem peixe', vjTagSinFritura:'Sem fritura', vjTagSinSesamo:'Sem gergelim', vjTagSinAjo:'Sem alho', vjTagSinFrutosSecos:'Sem oleaginosas', vjTagSinFrutillas:'Sem morangos', vjTagSinPina:'Sem abacaxi', vjTagSinAzucar:'Sem açúcar', vjTagSinCilantro:'Sem coentro', vjTagSinQuinoa:'Sem quinoa', vjTagSinTrufa:'Sem trufa', vjTagSinChampinones:'Sem cogumelos', vjTagSinPollo:'Sem frango',
     vjTagDiabetico:'Diabético', vjTagEmbarazada:'Grávida'
   }
 };
