@@ -22,7 +22,15 @@ on:
         required: false
         default: ""
       dump_html:
-        description: "Guardar el HTML de PGO como artifact (para ajustar selectores). No escribe Firebase."
+        description: "Diagnóstico: guarda el HTML de PGO como artifact (para ajustar selectores). No escribe Firebase."
+        type: boolean
+        default: false
+      trace_net:
+        description: "Diagnóstico: lista las llamadas XHR de la SPA (para descubrir la API interna). No escribe Firebase."
+        type: boolean
+        default: false
+      dry_run:
+        description: "Leer PGO y mostrar el resumen SIN escribir en Firebase."
         type: boolean
         default: false
 
@@ -56,13 +64,18 @@ jobs:
           ARGS="--from-pgo"
           if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
           if [ "${{ inputs.dump_html }}" = "true" ]; then ARGS="$ARGS --dump-html --debug"; fi
+          if [ "${{ inputs.trace_net }}" = "true" ]; then ARGS="$ARGS --trace-net --debug"; fi
+          if [ "${{ inputs.dry_run }}"   = "true" ]; then ARGS="$ARGS --debug"; fi
           echo "Ejecutando: sync_viajeros.py $ARGS"
           python scripts/sync_viajeros.py $ARGS
 
+      # OJO: el HTML volcado contiene DATOS PERSONALES de huéspedes (nombres,
+      # alergias). Retención mínima y sólo para depurar selectores.
       - name: Subir HTML de depuración
         if: ${{ inputs.dump_html }}
         uses: actions/upload-artifact@v4
         with:
           name: pgo-dump
           path: pgo-dump/
+          retention-days: 1
           if-no-files-found: ignore

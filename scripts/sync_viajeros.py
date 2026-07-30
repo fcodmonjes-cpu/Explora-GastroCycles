@@ -50,6 +50,7 @@ Modos:
   python scripts/sync_viajeros.py --debug                → imprime resumen, no escribe
   python scripts/sync_viajeros.py --emit-json out.json   → dump del doc (dev local)
   python scripts/sync_viajeros.py --from-pgo --dump-html --debug → guarda el HTML de PGO para ajustar selectores
+  python scripts/sync_viajeros.py --from-pgo --trace-net --debug → lista las llamadas XHR de la SPA (descubrir API)
   (combinables: --from-pgo --debug lee PGO y muestra el resumen sin tocar Firebase;
    --date YYYY-MM-DD elige la fecha del reporte, por defecto hoy)
 """
@@ -320,16 +321,28 @@ def build_doc(rows, date_str, source):
 #     python scripts/sync_viajeros.py --from-pgo --dump-html --debug
 #   → guarda el HTML de login y de cada reporte en ./pgo-dump/ (no escribe Firebase).
 #
-# TODO(pgo): confirmar estos PLACEHOLDERS contra PGO (login y rutas de reportes).
-PGO_BASE_URL    = os.environ.get("PGO_BASE_URL", "").rstrip("/")
+# Rutas CONFIRMADAS con capturas del portal (2026-07-31):
+#   https://pgo-explora.com/report-geos   → Reporte Geos
+#   https://pgo-explora.com/dietas        → Reporte Dietas
+# La FECHA NO viaja en la URL: es una SPA con un datepicker (formato DD-MM-YYYY)
+# y un botón REFRESCAR. Por eso el script setea la fecha en el input y refresca,
+# en vez de armar un link con querystring.
+PGO_BASE_URL    = os.environ.get("PGO_BASE_URL", "https://pgo-explora.com").rstrip("/")
+PGO_GEOS_PATH   = os.environ.get("PGO_GEOS_PATH",   "/report-geos")
+PGO_DIETAS_PATH = os.environ.get("PGO_DIETAS_PATH", "/dietas")
+PGO_DATE_FMT    = os.environ.get("PGO_DATE_FMT",    "%d-%m-%Y")   # como se ve en el input: 31-07-2026
+# Selector del input de fecha y del botón refrescar (texto visible, robusto a
+# cambios de clases). Sobrescribibles por env si el markup cambia.
+PGO_SEL_DATE    = os.environ.get("PGO_SEL_DATE",    "input[value*='-20'], input[placeholder*='-'], .ant-picker-input input, input[type='text']")
+PGO_SEL_REFRESH = os.environ.get("PGO_SEL_REFRESH", "REFRESCAR")   # se busca por texto (case-insensitive)
+PGO_TABLE_SEL   = os.environ.get("PGO_TABLE_SEL",   "")   # vacío = autodetecta la tabla con más filas
+# TODO(pgo): login — falta ver la pantalla de acceso. Si PGO ya deja sesión por
+# cookie, el script igual funciona: si al abrir el reporte NO estamos logueados,
+# intenta el formulario con estos selectores. Confirmar con --dump-html.
 PGO_LOGIN_PATH  = os.environ.get("PGO_LOGIN_PATH",  "/login")
 PGO_SEL_USER    = os.environ.get("PGO_SEL_USER",    "input[name='usuario'], input[name='username'], input[type='email']")
 PGO_SEL_PASS    = os.environ.get("PGO_SEL_PASS",    "input[name='clave'], input[name='password'], input[type='password']")
 PGO_SEL_SUBMIT  = os.environ.get("PGO_SEL_SUBMIT",  "button[type='submit'], input[type='submit']")
-PGO_DATE_FMT    = os.environ.get("PGO_DATE_FMT",    "%Y-%m-%d")   # formato de fecha en la URL del reporte
-PGO_GEOS_PATH   = os.environ.get("PGO_GEOS_PATH",   "/reportes/geos?fecha={date}")
-PGO_DIETAS_PATH = os.environ.get("PGO_DIETAS_PATH", "/reportes/dietas?fecha={date}")
-PGO_TABLE_SEL   = os.environ.get("PGO_TABLE_SEL",   "")   # vacío = autodetecta la tabla con más filas
 
 
 def norm_key(s):
@@ -377,16 +390,51 @@ _PGO_TABLE_JS = r"""
 
 
 def _pgo_dump(page, name):
+    """Guarda el HTML de la página para ajustar selectores.
+    OJO: el HTML contiene DATOS PERSONALES de huéspedes (nombres, alergias).
+    Los artifacts del workflow se suben con retención corta; no publicar."""
     import pathlib
     d = pathlib.Path("pgo-dump"); d.mkdir(exist_ok=True)
     (d / f"{name}.html").write_text(page.content(), encoding="utf-8")
     print(f"[sync-viajeros] HTML guardado en pgo-dump/{name}.html")
 
 
-def _pgo_read_report(page, path, dump_name=None):
-    """Abre un reporte y devuelve lista de dicts {encabezado_normalizado: valor}."""
+def _pgo_set_date(page, fecha):
+    """Setea la fecha en el datepicker de la SPA y refresca el reporte.
+
+    PGO no acepta la fecha por URL: hay un input (DD-MM-YYYY) y un botón
+    REFRESCAR. Se llena el input, se confirma con Enter y se refresca. Si el
+    input ya muestra la fecha pedida, no toca nada.
+    """
+    try:
+        inp = page.locator(PGO_SEL_DATE).first
+        if inp.count() == 0:
+            print("[sync-viajeros] Aviso: no encontré el input de fecha; leo lo que muestre el reporte.")
+            return False
+        actual = (inp.input_value() or "").strip()
+        if actual != fecha:
+            inp.click()
+            inp.fill("")
+            inp.type(fecha, delay=30)
+            page.keyboard.press("Enter")
+            page.wait_for_timeout(500)
+        # Botón REFRESCAR (por texto, case-insensitive)
+        btn = page.get_by_text(re.compile(PGO_SEL_REFRESH, re.I)).first
+        if btn.count() > 0:
+            btn.click()
+        page.wait_for_load_state("networkidle", timeout=60000)
+        page.wait_for_timeout(800)   # margen para que la tabla se repinte
+        return True
+    except Exception as e:
+        print(f"[sync-viajeros] Aviso: no pude setear la fecha ({e}); leo lo que muestre el reporte.")
+        return False
+
+
+def _pgo_read_report(page, path, fecha, dump_name=None):
+    """Abre un reporte, fija la fecha y devuelve [{encabezado_normalizado: valor}]."""
     url = PGO_BASE_URL + path
     page.goto(url, wait_until="networkidle", timeout=60000)
+    _pgo_set_date(page, fecha)
     if dump_name:
         _pgo_dump(page, dump_name)
     data = page.evaluate(_PGO_TABLE_JS, PGO_TABLE_SEL or None)
@@ -399,10 +447,19 @@ def _pgo_read_report(page, path, dump_name=None):
     out = []
     for cells in data["rows"]:
         out.append({headers[i]: cells[i] for i in range(min(len(headers), len(cells)))})
+    print(f"[sync-viajeros] {path}: {len(out)} filas · columnas: {', '.join(headers)}")
     return out
 
 
-def pgo_fetch(date_str, dump=False):
+def _pgo_logged_in(page):
+    """Heurística: si hay un formulario de contraseña visible, NO hay sesión."""
+    try:
+        return page.locator("input[type='password']").count() == 0
+    except Exception:
+        return True
+
+
+def pgo_fetch(date_str, dump=False, trace_net=False):
     """Login en PGO + lectura de Geos y Dietas del día → (geos_rows, dietas_rows)."""
     _pgo_require()
     try:
@@ -414,21 +471,58 @@ def pgo_fetch(date_str, dump=False):
             "  (en el workflow ya se instala automáticamente)."
         )
     fecha = datetime.date.fromisoformat(date_str).strftime(PGO_DATE_FMT)
+    api_calls = []
+    # PGO_CHROMIUM: ruta a un Chromium ya instalado. Útil en runners self-hosted
+    # (o si PGO resulta accesible sólo desde la red corporativa) para no bajar
+    # navegadores. Vacío = Playwright usa el suyo.
+    launch_kw = {"headless": True}
+    if os.environ.get("PGO_CHROMIUM"):
+        launch_kw["executable_path"] = os.environ["PGO_CHROMIUM"]
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
-        page = browser.new_context().new_page()
-        # 1) Login
-        page.goto(PGO_BASE_URL + PGO_LOGIN_PATH, wait_until="networkidle", timeout=60000)
-        if dump:
-            _pgo_dump(page, "login")
-        page.locator(PGO_SEL_USER).first.fill(os.environ["PGO_USER"])
-        page.locator(PGO_SEL_PASS).first.fill(os.environ["PGO_PASS"])
-        page.locator(PGO_SEL_SUBMIT).first.click()
-        page.wait_for_load_state("networkidle", timeout=60000)
+        browser = pw.chromium.launch(**launch_kw)
+        ctx = browser.new_context(locale="es-CL")
+        page = ctx.new_page()
+
+        # Diagnóstico opcional: registra las llamadas XHR/fetch de la SPA. Sirve
+        # para descubrir la API interna y, más adelante, pedir el JSON directo
+        # (sin navegador) — mucho más rápido y estable que leer el HTML.
+        if trace_net:
+            def _on_resp(resp):
+                try:
+                    if resp.request.resource_type in ("xhr", "fetch"):
+                        api_calls.append(f"{resp.request.method} {resp.status} {resp.url}")
+                except Exception:
+                    pass
+            page.on("response", _on_resp)
+
+        # 1) Sesión. Muchas apps redirigen al login al entrar a una ruta privada.
+        page.goto(PGO_BASE_URL + PGO_GEOS_PATH, wait_until="networkidle", timeout=60000)
+        if not _pgo_logged_in(page):
+            if dump:
+                _pgo_dump(page, "login")
+            page.locator(PGO_SEL_USER).first.fill(os.environ["PGO_USER"])
+            page.locator(PGO_SEL_PASS).first.fill(os.environ["PGO_PASS"])
+            page.locator(PGO_SEL_SUBMIT).first.click()
+            page.wait_for_load_state("networkidle", timeout=60000)
+            if not _pgo_logged_in(page):
+                raise SystemExit(
+                    "[sync-viajeros] No pude iniciar sesión en PGO (sigue apareciendo el "
+                    "formulario).\n  Revisá las credenciales o corré con --dump-html para "
+                    "ajustar los selectores del login."
+                )
+            print("[sync-viajeros] Sesión iniciada en PGO.")
+        else:
+            print("[sync-viajeros] Sesión activa (sin formulario de login).")
+
         # 2) Reportes del día
-        geos   = _pgo_read_report(page, PGO_GEOS_PATH.format(date=fecha),   "geos"   if dump else None)
-        dietas = _pgo_read_report(page, PGO_DIETAS_PATH.format(date=fecha), "dietas" if dump else None)
+        geos   = _pgo_read_report(page, PGO_GEOS_PATH,   fecha, "geos"   if dump else None)
+        dietas = _pgo_read_report(page, PGO_DIETAS_PATH, fecha, "dietas" if dump else None)
         browser.close()
+
+    if trace_net and api_calls:
+        print("[sync-viajeros] Llamadas XHR/fetch detectadas (candidatas a API directa):")
+        for c in dict.fromkeys(api_calls):
+            print("   ", c)
     return geos, dietas
 
 
@@ -458,12 +552,19 @@ def _to_int(s, default=0):
 
 
 def _pgo_inout(val, year):
-    """'20-07 22-07' (con saltos u otros separadores) -> ('YYYY-07-20','YYYY-07-22')."""
+    """'20-07 22-07' (con saltos u otros separadores) -> ('YYYY-07-20','YYYY-07-22').
+
+    El reporte no trae el año. Si el OUT cae antes que el IN, la estadía cruza
+    el año nuevo (p.ej. 30-12 → 02-01) y el OUT se corre al año siguiente.
+    """
     ds = re.findall(r"(\d{1,2})[-/](\d{1,2})", str(val or ""))
-    def iso(dd, mm):
-        return f"{year:04d}-{int(mm):02d}-{int(dd):02d}"
+    def iso(dd, mm, y=year):
+        return f"{y:04d}-{int(mm):02d}-{int(dd):02d}"
     if len(ds) >= 2:
-        return iso(*ds[0]), iso(*ds[1])
+        ind, outd = iso(*ds[0]), iso(*ds[1])
+        if outd < ind:                       # cruce de año (dic → ene)
+            outd = iso(ds[1][0], ds[1][1], year + 1)
+        return ind, outd
     if len(ds) == 1:
         return iso(*ds[0]), ""
     return "", ""
@@ -560,7 +661,9 @@ def main():
     if from_pgo:
         date_str = _arg_value("--date") or datetime.date.today().isoformat()
         print(f"[sync-viajeros] PGO — login y lectura de reportes ({date_str})...")
-        geos, dietas = pgo_fetch(date_str, dump="--dump-html" in sys.argv)
+        geos, dietas = pgo_fetch(date_str,
+                                 dump="--dump-html" in sys.argv,
+                                 trace_net="--trace-net" in sys.argv)
         rows = parse_pgo(geos, dietas, date_str)
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
         doc = build_doc(rows, date_str, "pgo")
