@@ -327,19 +327,19 @@ def build_doc(rows, date_str, source):
 # La FECHA NO viaja en la URL: es una SPA con un datepicker (formato DD-MM-YYYY)
 # y un botón REFRESCAR. Por eso el script setea la fecha en el input y refresca,
 # en vez de armar un link con querystring.
-PGO_BASE_URL    = os.environ.get("PGO_BASE_URL", "https://pgo-explora.com").rstrip("/")
-PGO_GEOS_PATH   = os.environ.get("PGO_GEOS_PATH",   "/report-geos")
-PGO_DIETAS_PATH = os.environ.get("PGO_DIETAS_PATH", "/dietas")
-PGO_DATE_FMT    = os.environ.get("PGO_DATE_FMT",    "%d-%m-%Y")   # como se ve en el input: 31-07-2026
+PGO_BASE_URL    = (os.environ.get("PGO_BASE_URL") or "https://pgo-explora.com").rstrip("/")
+PGO_GEOS_PATH   = os.environ.get("PGO_GEOS_PATH")   or "/report-geos"
+PGO_DIETAS_PATH = os.environ.get("PGO_DIETAS_PATH") or "/dietas"
+PGO_DATE_FMT    = os.environ.get("PGO_DATE_FMT")    or "%d-%m-%Y"   # como se ve en el input: 31-07-2026
 # Selector del input de fecha y del botón refrescar (texto visible, robusto a
 # cambios de clases). Sobrescribibles por env si el markup cambia.
 PGO_SEL_DATE    = os.environ.get("PGO_SEL_DATE",    "input[value*='-20'], input[placeholder*='-'], .ant-picker-input input, input[type='text']")
-PGO_SEL_REFRESH = os.environ.get("PGO_SEL_REFRESH", "REFRESCAR")   # se busca por texto (case-insensitive)
+PGO_SEL_REFRESH = os.environ.get("PGO_SEL_REFRESH") or "REFRESCAR"   # se busca por texto (case-insensitive)
 PGO_TABLE_SEL   = os.environ.get("PGO_TABLE_SEL",   "")   # vacío = autodetecta la tabla con más filas
 # TODO(pgo): login — falta ver la pantalla de acceso. Si PGO ya deja sesión por
 # cookie, el script igual funciona: si al abrir el reporte NO estamos logueados,
 # intenta el formulario con estos selectores. Confirmar con --dump-html.
-PGO_LOGIN_PATH  = os.environ.get("PGO_LOGIN_PATH",  "/login")
+PGO_LOGIN_PATH  = os.environ.get("PGO_LOGIN_PATH")  or "/login"
 PGO_SEL_USER    = os.environ.get("PGO_SEL_USER",    "input[name='usuario'], input[name='username'], input[type='email']")
 PGO_SEL_PASS    = os.environ.get("PGO_SEL_PASS",    "input[name='clave'], input[name='password'], input[type='password']")
 PGO_SEL_SUBMIT  = os.environ.get("PGO_SEL_SUBMIT",  "button[type='submit'], input[type='submit']")
@@ -351,7 +351,13 @@ def norm_key(s):
 
 
 def _pgo_require():
-    faltan = [k for k in ("PGO_BASE_URL", "PGO_USER", "PGO_PASS") if not os.environ.get(k)]
+    """Sólo el usuario y la clave son obligatorios: la URL base tiene default.
+    Ojo: en Actions un secret inexistente llega como env var VACÍA, por eso
+    todas las constantes de arriba usan `or default` y acá se valida el valor
+    ya resuelto (PGO_BASE_URL), no el env crudo."""
+    faltan = [k for k in ("PGO_USER", "PGO_PASS") if not os.environ.get(k)]
+    if not PGO_BASE_URL:
+        faltan.insert(0, "PGO_BASE_URL")
     if faltan:
         raise SystemExit(
             "[sync-viajeros] Fase 2 PGO no configurada: faltan " + ", ".join(faltan)
