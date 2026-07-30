@@ -371,45 +371,63 @@ def _pgo_require():
 _PGO_TABLE_JS = r"""
 (sel) => {
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
-  const fold = s => norm(s).toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  // Encabezados que esperamos de un reporte de PGO (Geos o Dietas).
+  const fold = s => norm(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const WANT = ['hab','nombre','viajero','nac','edad','grupo','observacion','in/out'];
-  // El calendario del datepicker también es <table>: se descarta por sus días.
   const DOW  = ['sun','mon','tue','wed','thu','fri','sat',
                 'dom','lun','mar','mie','jue','vie','sab'];
-  const headersOf = tbl => {
+
+  // --- Estrategia A: <table> clásica ---
+  const fromTable = tbl => {
     const trs = [...tbl.querySelectorAll('tr')];
-    if (!trs.length) return {hi: -1, headers: [], trs};
+    if (!trs.length) return null;
     let hi = trs.findIndex(tr => tr.querySelector('th'));
     if (hi < 0) hi = 0;
-    return {hi, headers: [...trs[hi].querySelectorAll('th,td')].map(c => norm(c.innerText)), trs};
-  };
-  const score = tbl => {
-    const {headers, trs} = headersOf(tbl);
-    const h = headers.map(fold);
-    if (h.length && h.every(x => DOW.includes(x))) return -1;      // calendario
-    const hits = WANT.filter(w => h.some(x => x.includes(w))).length;
-    return hits * 1000 + Math.min(trs.length, 999);                 // encabezados mandan
-  };
-  const pick = () => {
-    if (sel) return document.querySelector(sel);
-    let best = null, bestScore = -1;
-    for (const t of document.querySelectorAll('table')) {
-      const sc = score(t);
-      if (sc > bestScore) { bestScore = sc; best = t; }
+    const headers = [...trs[hi].querySelectorAll('th,td')].map(c => norm(c.innerText));
+    const rows = [];
+    for (let i = hi + 1; i < trs.length; i++) {
+      const cells = [...trs[i].querySelectorAll('td,th')].map(c => norm(c.innerText));
+      if (cells.some(x => x)) rows.push(cells);
     }
-    return bestScore > 0 ? best : null;
+    return {headers, rows};
   };
-  const tbl = pick();
-  if (!tbl) return null;
-  const {hi, headers, trs} = headersOf(tbl);
-  const rows = [];
-  for (let i = hi + 1; i < trs.length; i++) {
-    const cells = [...trs[i].querySelectorAll('td,th')].map(c => norm(c.innerText));
-    if (cells.some(x => x)) rows.push(cells);
+
+  // --- Estrategia B: grilla ARIA (role=table/grid con role=row/columnheader) ---
+  const fromAria = el => {
+    const rowsEl = [...el.querySelectorAll('[role=row]')];
+    if (!rowsEl.length) return null;
+    const hdrRow = rowsEl.find(r => r.querySelector('[role=columnheader]')) || rowsEl[0];
+    const headers = [...hdrRow.querySelectorAll('[role=columnheader],[role=cell],[role=gridcell]')]
+                      .map(c => norm(c.innerText));
+    const rows = [];
+    for (const r of rowsEl) {
+      if (r === hdrRow) continue;
+      const cells = [...r.querySelectorAll('[role=gridcell],[role=cell],[role=columnheader]')]
+                      .map(c => norm(c.innerText));
+      if (cells.some(x => x)) rows.push(cells);
+    }
+    return {headers, rows};
+  };
+
+  const score = data => {
+    if (!data || !data.headers.length) return -1;
+    const h = data.headers.map(fold);
+    if (h.every(x => DOW.includes(x))) return -1;              // calendario
+    const hits = WANT.filter(w => h.some(x => x.includes(w))).length;
+    return hits * 1000 + Math.min(data.rows.length, 999);
+  };
+
+  if (sel) {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    return (el.tagName === 'TABLE' ? fromTable(el) : fromAria(el)) || fromTable(el);
   }
-  return { headers, rows };
+  let best = null, bestScore = 0;
+  for (const el of document.querySelectorAll('table,[role=table],[role=grid]')) {
+    const data = el.tagName === 'TABLE' ? fromTable(el) : fromAria(el);
+    const sc = score(data);
+    if (sc > bestScore) { bestScore = sc; best = data; }
+  }
+  return best;
 }
 """
 
@@ -457,6 +475,59 @@ def _pgo_set_date(page, fecha):
         return False
 
 
+def _pgo_structure_report(page):
+    """Mapa de la estructura de la página cuando no aparece la grilla esperada.
+
+    Imprime QUÉ tipo de contenedores hay (tablas, grillas ARIA, contenedores con
+    muchos hijos repetidos) y sus encabezados — nunca datos de huéspedes, sólo
+    los títulos de columna y nombres de clase, que es lo que hace falta para
+    apuntar el extractor.
+    """
+    try:
+        info = page.evaluate("""
+          () => {
+            const norm = s => (s||'').replace(/\s+/g,' ').trim();
+            const out = {tables: [], aria: [], repes: []};
+            for (const t of document.querySelectorAll('table')) {
+              const tr = t.querySelector('tr');
+              out.tables.push({filas: t.querySelectorAll('tr').length,
+                               cls: (t.className||'').slice(0,60),
+                               head: tr ? norm(tr.innerText).slice(0,120) : ''});
+            }
+            for (const g of document.querySelectorAll('[role=table],[role=grid]')) {
+              out.aria.push({rol: g.getAttribute('role'),
+                             filas: g.querySelectorAll('[role=row]').length,
+                             cls: (g.className||'').slice(0,60)});
+            }
+            // Contenedores con muchos hijos del mismo tipo: candidatos a grilla div
+            for (const el of document.querySelectorAll('div,ul,tbody')) {
+              const n = el.children.length;
+              if (n < 8) continue;
+              const tags = new Set([...el.children].map(c => c.tagName));
+              if (tags.size !== 1) continue;
+              out.repes.push({hijos: n, tag: [...tags][0],
+                              cls: (el.className||'').slice(0,60),
+                              muestra: norm(el.children[0].innerText).slice(0,90)});
+            }
+            out.repes = out.repes.sort((a,b)=>b.hijos-a.hijos).slice(0,5);
+            return out;
+          }
+        """)
+    except Exception as e:
+        print(f"[sync-viajeros] (no pude mapear la estructura: {e})")
+        return
+    print("[sync-viajeros] --- estructura de la página ---")
+    for t in info.get("tables", []):
+        print(f"[sync-viajeros]   <table> filas={t['filas']} clase='{t['cls']}' encabezado='{t['head']}'")
+    for g in info.get("aria", []):
+        print(f"[sync-viajeros]   grilla ARIA role={g['rol']} filas={g['filas']} clase='{g['cls']}'")
+    for r in info.get("repes", []):
+        print(f"[sync-viajeros]   contenedor repetido <{r['tag']}> hijos={r['hijos']} "
+              f"clase='{r['cls']}' 1er_hijo='{r['muestra']}'")
+    if not any(info.values()):
+        print("[sync-viajeros]   (no encontré ni tablas ni contenedores repetidos)")
+
+
 def _pgo_read_report(page, path, fecha, dump_name=None):
     """Abre un reporte, fija la fecha y devuelve [{encabezado_normalizado: valor}]."""
     url = PGO_BASE_URL + path
@@ -466,9 +537,11 @@ def _pgo_read_report(page, path, fecha, dump_name=None):
         _pgo_dump(page, dump_name)
     data = page.evaluate(_PGO_TABLE_JS, PGO_TABLE_SEL or None)
     if not data or not data.get("rows"):
+        _pgo_structure_report(page)
         raise SystemExit(
-            f"[sync-viajeros] No encontré tabla de datos en {url}.\n"
-            "  Corré con --dump-html y ajustá PGO_TABLE_SEL o la ruta del reporte."
+            f"[sync-viajeros] No encontré la grilla de datos en {url}.\n"
+            "  Arriba va un mapa de la estructura de la página para ajustar el"
+            " extractor (o fijá PGO_TABLE_SEL con el selector correcto)."
         )
     headers = [norm_key(h) for h in data["headers"]]
     out = []
