@@ -337,6 +337,10 @@ PGO_DATE_FMT    = os.environ.get("PGO_DATE_FMT")    or "%d-%m-%Y"   # como se ve
 PGO_SEL_DATE    = os.environ.get("PGO_SEL_DATE",    "input[value*='-20'], input[placeholder*='-'], .ant-picker-input input, input[type='text']")
 PGO_SEL_REFRESH = os.environ.get("PGO_SEL_REFRESH") or "REFRESCAR"   # se busca por texto (case-insensitive)
 PGO_TABLE_SEL   = os.environ.get("PGO_TABLE_SEL",   "")   # vacío = autodetecta la tabla con más filas
+# PGO abre siempre en Torres del Paine: hay que cambiar el destino antes de
+# pedir cualquier reporte, o la grilla llega sin filas (dibuja el encabezado
+# igual, que es lo que despistaba). El destino se elige en la barra superior.
+PGO_DESTINO     = os.environ.get("PGO_DESTINO")     or "Atacama"
 # TODO(pgo): login — falta ver la pantalla de acceso. Si PGO ya deja sesión por
 # cookie, el script igual funciona: si al abrir el reporte NO estamos logueados,
 # intenta el formulario con estos selectores. Confirmar con --dump-html.
@@ -459,6 +463,34 @@ def _pgo_dump(page, name):
     print(f"[sync-viajeros] HTML guardado en pgo-dump/{name}.html")
 
 
+def _pgo_fecha_visible(page):
+    """Fecha que PGO está mostrando (DD-MM-YYYY) → ISO, o None."""
+    try:
+        v = page.evaluate(
+            "() => { const rx = /^\\s*\\d{1,2}[-\\/]\\d{1,2}[-\\/]\\d{2,4}\\s*$/;"
+            "  const i = [...document.querySelectorAll('input')]"
+            "    .find(x => x.offsetParent !== null && rx.test(x.value||''));"
+            "  return i ? i.value.trim() : null; }")
+        if not v:
+            return None
+        d, m, a = re.split(r"[-/]", v)
+        return f"{int(a):04d}-{int(m):02d}-{int(d):02d}"
+    except Exception:
+        return None
+
+
+def _pgo_refrescar(page):
+    """Aprieta REFRESCAR sin tocar la fecha (PGO ya muestra el día operativo)."""
+    try:
+        btn = page.get_by_text(re.compile(PGO_SEL_REFRESH, re.I)).first
+        if btn.count() > 0:
+            btn.click(timeout=8000)
+            print("[sync-viajeros] REFRESCAR clickeado (fecha por defecto de PGO).")
+        page.wait_for_load_state("networkidle", timeout=60000)
+    except Exception as e:
+        print(f"[sync-viajeros] Aviso: no pude refrescar ({e}).")
+
+
 def _pgo_set_date(page, fecha):
     """Fija la fecha del reporte y refresca.
 
@@ -509,6 +541,58 @@ def _pgo_set_date(page, fecha):
         return True
     except Exception as e:
         print(f"[sync-viajeros] Aviso: no pude fijar la fecha ({e}); leo lo que muestre el reporte.")
+        return False
+
+
+def _pgo_set_destino(page, destino):
+    """Cambia el destino activo (PGO arranca en Torres del Paine).
+
+    En la barra superior está el destino actual; al tocarlo se despliega la
+    lista de todos (Torres del Paine, Atacama, Rapanui, …). Sin este cambio los
+    reportes salen vacíos: la grilla dibuja su encabezado pero no trae filas,
+    porque se consulta otro destino.
+    """
+    DESTINOS = ["Torres del Paine", "Atacama", "Rapanui", "Valle Sagrado",
+                "Santiago", "El Chaltén", "Parque Nacional Patagonia", "Uyuni",
+                "Explora Expediciones"]
+    try:
+        # El disparador es el destino actual, arriba de todo (y = pocos px).
+        actual = page.evaluate("""
+          (dests) => {
+            const vis = el => el && el.offsetParent !== null;
+            for (const el of document.querySelectorAll('a,span,div,button,li')) {
+              if (!vis(el) || el.children.length > 2) continue;
+              const t = (el.innerText || '').trim();
+              if (!dests.includes(t)) continue;
+              const r = el.getBoundingClientRect();
+              if (r.top < 120 && r.width > 0) {
+                el.setAttribute('data-pgo-dest', '1');
+                return t;
+              }
+            }
+            return null;
+          }
+        """, DESTINOS)
+        if actual is None:
+            print("[sync-viajeros] Aviso: no encontré el selector de destino en la cabecera.")
+            return False
+        if actual.lower() == destino.lower():
+            print(f"[sync-viajeros] Destino ya es {destino}.")
+            return True
+        print(f"[sync-viajeros] Destino actual: {actual} → cambio a {destino}.")
+        page.locator("[data-pgo-dest='1']").first.click(timeout=8000)
+        page.wait_for_timeout(700)
+        opcion = page.get_by_text(re.compile(rf"^\s*{re.escape(destino)}\s*$", re.I)).last
+        if opcion.count() == 0:
+            print(f"[sync-viajeros] Aviso: abrí el menú pero no encontré '{destino}'.")
+            return False
+        opcion.click(timeout=8000)
+        page.wait_for_load_state("networkidle", timeout=60000)
+        page.wait_for_timeout(1200)
+        print(f"[sync-viajeros] Destino cambiado a {destino}.")
+        return True
+    except Exception as e:
+        print(f"[sync-viajeros] Aviso: no pude cambiar el destino ({e}).")
         return False
 
 
@@ -563,7 +647,10 @@ def _pgo_read_report(page, path, fecha, dump_name=None):
     """Abre un reporte, fija la fecha y devuelve [{encabezado_normalizado: valor}]."""
     url = PGO_BASE_URL + path
     page.goto(url, wait_until="networkidle", timeout=60000)
-    _pgo_set_date(page, fecha)
+    if fecha:
+        _pgo_set_date(page, fecha)
+    else:
+        _pgo_refrescar(page)
     if dump_name:
         _pgo_dump(page, dump_name)
     data = None
@@ -757,7 +844,9 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
             "  pip install playwright && python -m playwright install chromium\n"
             "  (en el workflow ya se instala automáticamente)."
         )
-    fecha = datetime.date.fromisoformat(date_str).strftime(PGO_DATE_FMT)
+    # date_str None = respetar la fecha que PGO trae por defecto (el día
+    # operativo, que es el siguiente). Sólo se fuerza si el owner pidió --date.
+    fecha = datetime.date.fromisoformat(date_str).strftime(PGO_DATE_FMT) if date_str else None
     api_calls = []
     # PGO_CHROMIUM: ruta a un Chromium ya instalado. Útil en runners self-hosted
     # (o si PGO resulta accesible sólo desde la red corporativa) para no bajar
@@ -827,8 +916,12 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         else:
             print("[sync-viajeros] Sesión activa (sin formulario de login).")
 
-        # 2) Reportes del día
+        # 2) Destino: PGO abre en Torres del Paine
+        _pgo_set_destino(page, PGO_DESTINO)
+
+        # 3) Reportes del día
         geos   = _pgo_read_report(page, PGO_GEOS_PATH,   fecha, "geos"   if dump else None)
+        fecha_iso = date_str or _pgo_fecha_visible(page)
         dietas = _pgo_read_report(page, PGO_DIETAS_PATH, fecha, "dietas" if dump else None)
         browser.close()
 
@@ -836,7 +929,7 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         print("[sync-viajeros] Llamadas XHR/fetch detectadas (candidatas a API directa):")
         for c in dict.fromkeys(api_calls):
             print("   ", c)
-    return geos, dietas
+    return geos, dietas, (fecha_iso or datetime.date.today().isoformat())
 
 
 # Mapeo encabezado de PGO (ya normalizado) → campo interno. Varios alias por si
@@ -972,11 +1065,13 @@ def _arg_value(flag):
 def main():
     from_pgo = "--from-pgo" in sys.argv
     if from_pgo:
-        date_str = _arg_value("--date") or datetime.date.today().isoformat()
-        print(f"[sync-viajeros] PGO — login y lectura de reportes ({date_str})...")
-        geos, dietas = pgo_fetch(date_str,
-                                 dump="--dump-html" in sys.argv,
-                                 trace_net="--trace-net" in sys.argv)
+        date_str = _arg_value("--date")   # None = usar el día que PGO ya muestra
+        print("[sync-viajeros] PGO — login y lectura de reportes "
+              f"({date_str or 'fecha por defecto de PGO'})...")
+        geos, dietas, date_str = pgo_fetch(date_str,
+                                           dump="--dump-html" in sys.argv,
+                                           trace_net="--trace-net" in sys.argv)
+        print(f"[sync-viajeros] Fecha efectiva del reporte: {date_str}")
         rows = parse_pgo(geos, dietas, date_str)
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
         doc = build_doc(rows, date_str, "pgo")
