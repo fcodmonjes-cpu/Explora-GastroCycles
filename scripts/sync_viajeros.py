@@ -454,92 +454,56 @@ def _pgo_dump(page, name):
 
 
 def _pgo_set_date(page, fecha):
-    """Setea la fecha en el datepicker de la SPA y refresca el reporte.
+    """Fija la fecha del reporte y refresca.
 
-    PGO no acepta la fecha por URL: hay un input (DD-MM-YYYY) y un botón
-    REFRESCAR. Se llena el input, se confirma con Enter y se refresca. Si el
-    input ya muestra la fecha pedida, no toca nada.
-    """
-    try:
-        inp = page.locator(PGO_SEL_DATE).first
-        if inp.count() == 0:
-            print("[sync-viajeros] Aviso: no encontré el input de fecha; leo lo que muestre el reporte.")
-            return False
-        actual = (inp.input_value() or "").strip()
-        if actual != fecha:
-            inp.click()
-            inp.fill("")
-            inp.type(fecha, delay=30)
-            page.keyboard.press("Enter")
-            page.wait_for_timeout(500)
-        page.keyboard.press("Escape")   # cierra el calendario: si queda abierto tapa la tabla
-        page.wait_for_timeout(200)
-        # Botón REFRESCAR (por texto, case-insensitive)
-        btn = page.get_by_text(re.compile(PGO_SEL_REFRESH, re.I)).first
-        if btn.count() > 0:
-            btn.click(timeout=8000)   # corto: si no se puede clickear, seguimos igual
-            print("[sync-viajeros] REFRESCAR clickeado.")
-        else:
-            print("[sync-viajeros] Aviso: no encontré el botón REFRESCAR.")
-        page.wait_for_load_state("networkidle", timeout=60000)
-        page.wait_for_timeout(800)   # margen para que la tabla se repinte
-        return True
-    except Exception as e:
-        print(f"[sync-viajeros] Aviso: no pude setear la fecha ({e}); leo lo que muestre el reporte.")
-        return False
-
-
-def _pgo_structure_report(page):
-    """Mapa de la estructura de la página cuando no aparece la grilla esperada.
-
-    Imprime QUÉ tipo de contenedores hay (tablas, grillas ARIA, contenedores con
-    muchos hijos repetidos) y sus encabezados — nunca datos de huéspedes, sólo
-    los títulos de columna y nombres de clase, que es lo que hace falta para
-    apuntar el extractor.
+    El campo se ubica POR CONTENIDO: el input visible cuyo valor ya tiene forma
+    de fecha (DD-MM-YYYY). Antes se buscaba por CSS y el comodín acababa
+    agarrando el BUSCADOR de la página — se tipeaba la fecha ahí, la grilla
+    filtraba por ese texto y quedaba vacía. Element UI, además, no usa las
+    clases de Ant Design que se habían supuesto.
     """
     try:
         info = page.evaluate("""
           () => {
-            const norm = s => (s||'').replace(/\s+/g,' ').trim();
-            const out = {tables: [], aria: [], repes: []};
-            for (const t of document.querySelectorAll('table')) {
-              const tr = t.querySelector('tr');
-              out.tables.push({filas: t.querySelectorAll('tr').length,
-                               cls: (t.className||'').slice(0,60),
-                               head: tr ? norm(tr.innerText).slice(0,120) : ''});
-            }
-            for (const g of document.querySelectorAll('[role=table],[role=grid]')) {
-              out.aria.push({rol: g.getAttribute('role'),
-                             filas: g.querySelectorAll('[role=row]').length,
-                             cls: (g.className||'').slice(0,60)});
-            }
-            // Contenedores con muchos hijos del mismo tipo: candidatos a grilla div
-            for (const el of document.querySelectorAll('div,ul,tbody')) {
-              const n = el.children.length;
-              if (n < 8) continue;
-              const tags = new Set([...el.children].map(c => c.tagName));
-              if (tags.size !== 1) continue;
-              out.repes.push({hijos: n, tag: [...tags][0],
-                              cls: (el.className||'').slice(0,60),
-                              muestra: norm(el.children[0].innerText).slice(0,90)});
-            }
-            out.repes = out.repes.sort((a,b)=>b.hijos-a.hijos).slice(0,5);
-            return out;
+            const vis = el => el && el.offsetParent !== null;
+            const rx = /^\\s*\\d{1,2}[-\\/]\\d{1,2}[-\\/]\\d{2,4}\\s*$/;
+            const ins = [...document.querySelectorAll('input')].filter(vis);
+            let el = ins.find(i => rx.test(i.value || ''));                 // ya trae una fecha
+            if (!el) el = ins.find(i => /fecha|date/i.test(
+                          (i.getAttribute('placeholder')||'') + ' ' +
+                          (i.className||'') + ' ' + (i.id||'')));
+            if (!el) return null;
+            el.setAttribute('data-pgo-date', '1');
+            return {valor: el.value || '', cls: (el.className||'').slice(0,50),
+                    ph: el.getAttribute('placeholder')||''};
           }
         """)
+        if not info:
+            print("[sync-viajeros] Aviso: no identifiqué el campo de fecha; leo lo que muestre el reporte.")
+            return False
+        print(f"[sync-viajeros] Campo de fecha detectado (valor actual '{info['valor']}', "
+              f"clase '{info['cls']}').")
+        if (info["valor"] or "").strip() != fecha:
+            loc = page.locator("input[data-pgo-date='1']").first
+            loc.click()
+            loc.press("Control+a")
+            loc.press("Delete")
+            loc.type(fecha, delay=45)
+            page.keyboard.press("Enter")
+            page.wait_for_timeout(400)
+        page.keyboard.press("Escape")   # cierra el calendario: si queda abierto tapa la tabla
+        page.wait_for_timeout(200)
+        btn = page.get_by_text(re.compile(PGO_SEL_REFRESH, re.I)).first
+        if btn.count() > 0:
+            btn.click(timeout=8000)
+            print("[sync-viajeros] REFRESCAR clickeado.")
+        else:
+            print("[sync-viajeros] Aviso: no encontré el botón REFRESCAR.")
+        page.wait_for_load_state("networkidle", timeout=60000)
+        return True
     except Exception as e:
-        print(f"[sync-viajeros] (no pude mapear la estructura: {e})")
-        return
-    print("[sync-viajeros] --- estructura de la página ---")
-    for t in info.get("tables", []):
-        print(f"[sync-viajeros]   <table> filas={t['filas']} clase='{t['cls']}' encabezado='{t['head']}'")
-    for g in info.get("aria", []):
-        print(f"[sync-viajeros]   grilla ARIA role={g['rol']} filas={g['filas']} clase='{g['cls']}'")
-    for r in info.get("repes", []):
-        print(f"[sync-viajeros]   contenedor repetido <{r['tag']}> hijos={r['hijos']} "
-              f"clase='{r['cls']}' 1er_hijo='{r['muestra']}'")
-    if not any(info.values()):
-        print("[sync-viajeros]   (no encontré ni tablas ni contenedores repetidos)")
+        print(f"[sync-viajeros] Aviso: no pude fijar la fecha ({e}); leo lo que muestre el reporte.")
+        return False
 
 
 def _pgo_read_report(page, path, fecha, dump_name=None):
