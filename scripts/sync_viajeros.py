@@ -972,6 +972,10 @@ PGO_GEOS_COLS = {
     "nac": "nac", "nacionalidad": "nac",
     "in/out": "inout", "inout": "inout", "in / out": "inout",
     "edad": "edad", "grupo": "grupo",
+    # El Geos trae su propio comentario por viajero. Cubre a TODOS los in-house,
+    # mientras que Dietas parece listar sólo el movimiento del día — por eso se
+    # usa como segunda fuente de observaciones (ver parse_pgo).
+    "comentario geos": "obs_geos", "comentario": "obs_geos",
 }
 PGO_DIET_COLS = {
     "hab": "hab", "nombre": "nombre", "viajero": "nombre",
@@ -1030,12 +1034,19 @@ def parse_pgo(geos_rows, dietas_rows, date_str):
         hab_digits = re.sub(r"\D", "", str(r.get("hab") or ""))
         hab = hab_digits.zfill(2) if hab_digits else str(r.get("hab") or "").strip()
         ind, outd = _pgo_inout(r.get("inout"), year)
+        obs = diet.get(norm_key(nombre), "")
+        # El comentario del Geos se suma SÓLO si normaliza a alguna dieta
+        # conocida: así entran las dietas de quien no aparece en el reporte de
+        # Dietas, sin arrastrar comentarios operativos (VIP, luna de miel, …)
+        # al campo que se muestra en la app.
+        cg = (r.get("obs_geos") or "").strip()
+        if cg and obs_to_tags(cg) and norm_key(cg) not in norm_key(obs):
+            obs = f"{obs} · {cg}".strip(" ·")
         rows.append((
             hab, nombre, _to_int(r.get("edad")),
             (r.get("nac") or "").strip().upper(),
             (r.get("grupo") or "").strip(),
-            ind, outd,
-            diet.get(norm_key(nombre), ""),
+            ind, outd, obs,
         ))
     return rows
 
