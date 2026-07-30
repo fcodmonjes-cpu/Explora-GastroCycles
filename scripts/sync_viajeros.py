@@ -562,19 +562,22 @@ def _pgo_set_destino(page, destino):
     try:
         info = page.evaluate("""
           ([dests, destino]) => {
+            // OJO: el menú está oculto hasta que se lo abre, y para un elemento
+            // sin layout innerText devuelve ''. Todo el matcheo va por
+            // textContent, que sí trae el texto de lo oculto.
             const norm = s => (s||'').replace(/\\s+/g,' ').trim();
             const tiene = t => dests.some(d => norm(t).toLowerCase().includes(d.toLowerCase()));
             let menu = null, hits = 0;
             for (const m of document.querySelectorAll('[class*=dropdown-menu],ul,div')) {
-              const items = [...m.children].filter(c => norm(c.innerText));
+              const items = [...m.children].filter(c => norm(c.textContent));
               if (items.length < 4) continue;
-              const n = items.filter(c => tiene(c.innerText)).length;
+              const n = items.filter(c => tiene(c.textContent)).length;
               if (n > hits) { hits = n; menu = m; }
             }
             if (!menu || hits < 4) return {ok: false};
             // Opción buscada dentro del menú.
-            const opt = [...menu.querySelectorAll('*')].concat([...menu.children])
-              .find(c => norm(c.innerText).toLowerCase() === destino.toLowerCase());
+            const opt = [...menu.children].concat([...menu.querySelectorAll('*')])
+              .find(c => norm(c.textContent).toLowerCase() === destino.toLowerCase());
             if (opt) opt.setAttribute('data-pgo-dest-opt', '1');
             // Disparador: el hermano/ancestro clickeable que abre este menú.
             let trg = menu.previousElementSibling;
@@ -584,7 +587,8 @@ def _pgo_set_destino(page, destino):
             }
             if (trg) trg.setAttribute('data-pgo-dest-trg', '1');
             return {ok: true, hits, menuCls: (menu.className||'').slice(0,60),
-                    opt: !!opt, trg: trg ? norm(trg.innerText).slice(0,40) : null};
+                    opt: !!opt, trg: trg ? norm(trg.textContent).slice(0,40) : null,
+                    items: [...menu.children].map(c => norm(c.textContent).slice(0,30))};
           }
         """, [DESTINOS, destino])
         if not info.get("ok"):
@@ -593,7 +597,8 @@ def _pgo_set_destino(page, destino):
         print(f"[sync-viajeros] Menú de destinos: {info['hits']} opciones "
               f"(clase '{info['menuCls']}', disparador '{info.get('trg')}').")
         if not info.get("opt"):
-            print(f"[sync-viajeros] Aviso: el menú no trae '{destino}'.")
+            print(f"[sync-viajeros] Aviso: el menú no trae '{destino}'. "
+                  f"Opciones vistas: {info.get('items')}")
             return False
         # Abrir el menú (si el disparador existe) y elegir. El click va por JS
         # porque Playwright rechaza clickear lo que aún está oculto.
@@ -639,9 +644,10 @@ def _pgo_structure_report(page):
               if (n < 8) continue;
               const tags = new Set([...el.children].map(c => c.tagName));
               if (tags.size !== 1) continue;
+              const c0 = el.children[0];
               out.repes.push({hijos: n, tag: [...tags][0],
                               cls: (el.className||'').slice(0,60),
-                              muestra: norm(el.children[0].innerText).slice(0,90)});
+                              muestra: norm(c0.innerText || c0.textContent).slice(0,90)});
             }
             out.repes = out.repes.sort((a,b)=>b.hijos-a.hijos).slice(0,5);
             return out;
