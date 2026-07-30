@@ -376,58 +376,69 @@ _PGO_TABLE_JS = r"""
   const DOW  = ['sun','mon','tue','wed','thu','fri','sat',
                 'dom','lun','mar','mie','jue','vie','sab'];
 
-  // --- Estrategia A: <table> clásica ---
-  const fromTable = tbl => {
-    const trs = [...tbl.querySelectorAll('tr')];
+  const rowsOf = (el, cellSel) =>
+    [...el.querySelectorAll('tr,[role=row]')].map(r =>
+      [...r.querySelectorAll(cellSel)].map(c => norm(c.innerText)));
+
+  // Encabezados y filas de un contenedor (tabla clásica o grilla ARIA)
+  const parse = el => {
+    const isTable = el.tagName === 'TABLE';
+    const hdrSel  = isTable ? 'th' : '[role=columnheader]';
+    const cellSel = isTable ? 'td,th' : '[role=gridcell],[role=cell],[role=columnheader]';
+    const trs = [...el.querySelectorAll('tr,[role=row]')];
     if (!trs.length) return null;
-    let hi = trs.findIndex(tr => tr.querySelector('th'));
-    if (hi < 0) hi = 0;
-    const headers = [...trs[hi].querySelectorAll('th,td')].map(c => norm(c.innerText));
+    let hi = trs.findIndex(r => r.querySelector(hdrSel));
+    if (hi < 0) hi = -1;                        // sin encabezado: sólo cuerpo
+    const headers = hi >= 0
+      ? [...trs[hi].querySelectorAll(hdrSel + ',td')].map(c => norm(c.innerText))
+      : [];
     const rows = [];
     for (let i = hi + 1; i < trs.length; i++) {
-      const cells = [...trs[i].querySelectorAll('td,th')].map(c => norm(c.innerText));
+      const cells = [...trs[i].querySelectorAll(cellSel)].map(c => norm(c.innerText));
       if (cells.some(x => x)) rows.push(cells);
     }
-    return {headers, rows};
+    return {headers, rows, el};
   };
 
-  // --- Estrategia B: grilla ARIA (role=table/grid con role=row/columnheader) ---
-  const fromAria = el => {
-    const rowsEl = [...el.querySelectorAll('[role=row]')];
-    if (!rowsEl.length) return null;
-    const hdrRow = rowsEl.find(r => r.querySelector('[role=columnheader]')) || rowsEl[0];
-    const headers = [...hdrRow.querySelectorAll('[role=columnheader],[role=cell],[role=gridcell]')]
-                      .map(c => norm(c.innerText));
-    const rows = [];
-    for (const r of rowsEl) {
-      if (r === hdrRow) continue;
-      const cells = [...r.querySelectorAll('[role=gridcell],[role=cell],[role=columnheader]')]
-                      .map(c => norm(c.innerText));
-      if (cells.some(x => x)) rows.push(cells);
-    }
-    return {headers, rows};
+  const score = d => {
+    if (!d || !d.headers.length) return -1;
+    const h = d.headers.map(fold);
+    if (h.every(x => DOW.includes(x))) return -1;          // calendario
+    return WANT.filter(w => h.some(x => x.includes(w))).length;
   };
 
-  const score = data => {
-    if (!data || !data.headers.length) return -1;
-    const h = data.headers.map(fold);
-    if (h.every(x => DOW.includes(x))) return -1;              // calendario
-    const hits = WANT.filter(w => h.some(x => x.includes(w))).length;
-    return hits * 1000 + Math.min(data.rows.length, 999);
-  };
-
+  const cands = [...document.querySelectorAll('table,[role=table],[role=grid]')]
+                  .map(parse).filter(Boolean);
   if (sel) {
     const el = document.querySelector(sel);
-    if (!el) return null;
-    return (el.tagName === 'TABLE' ? fromTable(el) : fromAria(el)) || fromTable(el);
+    const d = el && parse(el);
+    if (d) return {headers: d.headers, rows: d.rows};
   }
+
   let best = null, bestScore = 0;
-  for (const el of document.querySelectorAll('table,[role=table],[role=grid]')) {
-    const data = el.tagName === 'TABLE' ? fromTable(el) : fromAria(el);
-    const sc = score(data);
-    if (sc > bestScore) { bestScore = sc; best = data; }
+  for (const d of cands) {
+    const sc = score(d);
+    if (sc > bestScore) { bestScore = sc; best = d; }
   }
-  return best;
+  if (!best) return null;
+
+  // Element UI (y otros) parten la tabla en DOS: una sólo con los títulos
+  // (header fijo) y otra sólo con los datos. Si la mejor candidata no trae
+  // filas, se le pega el cuerpo de la tabla hermana cuyo Nº de columnas coincida.
+  if (!best.rows.length) {
+    const nCols = best.headers.length;
+    let body = null;
+    const wrap = best.el.closest('div');
+    const pool = cands.filter(d => d !== best && d.rows.length);
+    const near = pool.filter(d => wrap && wrap.contains(d.el));
+    for (const d of (near.length ? near : pool)) {
+      const cols = d.rows[0].length;
+      if (cols === nCols) { body = d; break; }
+      if (!body && Math.abs(cols - nCols) <= 2) body = d;
+    }
+    if (body) return {headers: best.headers, rows: body.rows};
+  }
+  return {headers: best.headers, rows: best.rows};
 }
 """
 
