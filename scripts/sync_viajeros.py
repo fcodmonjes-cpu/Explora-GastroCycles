@@ -428,7 +428,7 @@ def _pgo_set_date(page, fecha):
         # Botón REFRESCAR (por texto, case-insensitive)
         btn = page.get_by_text(re.compile(PGO_SEL_REFRESH, re.I)).first
         if btn.count() > 0:
-            btn.click()
+            btn.click(timeout=8000)   # corto: si no se puede clickear, seguimos igual
         page.wait_for_load_state("networkidle", timeout=60000)
         page.wait_for_timeout(800)   # margen para que la tabla se repinte
         return True
@@ -458,10 +458,61 @@ def _pgo_read_report(page, path, fecha, dump_name=None):
     return out
 
 
+def _pgo_login(page):
+    """Completa el formulario de acceso.
+
+    No adivina el `name` del campo de usuario: ubica el input de CONTRASEÑA y
+    toma el input de texto/email inmediatamente anterior dentro del mismo form.
+    Es la estructura de cualquier login y sobrevive a cambios de nomenclatura.
+    Si eso falla, cae a los selectores configurables PGO_SEL_USER.
+    """
+    user, pwd = os.environ["PGO_USER"], os.environ["PGO_PASS"]
+    filled = page.evaluate("""
+      () => {
+        const pass = [...document.querySelectorAll("input[type='password']")]
+                      .find(i => i.offsetParent !== null);
+        if (!pass) return null;
+        const scope = pass.closest('form') || document;
+        const cands = [...scope.querySelectorAll("input")].filter(i =>
+          i !== pass && i.offsetParent !== null &&
+          ['text','email','tel',''].includes((i.getAttribute('type')||'').toLowerCase()));
+        const idx = cands.findIndex(i => pass.compareDocumentPosition(i) & Node.DOCUMENT_POSITION_PRECEDING);
+        const u = idx >= 0 ? cands[cands.length - 1] : (cands[0] || null);
+        if (!u) return null;
+        return {name: u.getAttribute('name') || '', id: u.id || '',
+                ph: u.getAttribute('placeholder') || ''};
+      }
+    """)
+    if filled:
+        desc = filled.get("name") or filled.get("id") or filled.get("ph") or "(sin nombre)"
+        print(f"[sync-viajeros] Campo de usuario detectado: {desc}")
+        sel = (f"input#{filled['id']}" if filled.get("id")
+               else (f"input[name='{filled['name']}']" if filled.get("name")
+                     else "input:not([type='password'])"))
+        page.locator(sel).first.fill(user)
+    else:
+        page.locator(PGO_SEL_USER).first.fill(user)
+    page.locator(PGO_SEL_PASS).first.fill(pwd)
+    # Enviar: botón de submit si existe, si no Enter en la contraseña.
+    btn = page.locator(PGO_SEL_SUBMIT)
+    if btn.count() > 0:
+        btn.first.click()
+    else:
+        page.keyboard.press("Enter")
+
+
 def _pgo_logged_in(page):
-    """Heurística: si hay un formulario de contraseña visible, NO hay sesión."""
+    """Heurística: si hay un campo de contraseña VISIBLE, no hay sesión.
+
+    Ojo con las SPA: al loguearse suelen ocultar el formulario sin sacarlo del
+    DOM, así que contar los inputs no alcanza — hay que mirar visibilidad
+    (offsetParent nulo = oculto por display:none en él o en algún ancestro).
+    """
     try:
-        return page.locator("input[type='password']").count() == 0
+        return not page.evaluate(
+            "() => [...document.querySelectorAll(\"input[type='password']\")]"
+            "        .some(i => i.offsetParent !== null)"
+        )
     except Exception:
         return True
 
@@ -521,9 +572,7 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         if not _pgo_logged_in(page):
             if dump:
                 _pgo_dump(page, "login")
-            page.locator(PGO_SEL_USER).first.fill(os.environ["PGO_USER"])
-            page.locator(PGO_SEL_PASS).first.fill(os.environ["PGO_PASS"])
-            page.locator(PGO_SEL_SUBMIT).first.click()
+            _pgo_login(page)
             page.wait_for_load_state("networkidle", timeout=60000)
             if not _pgo_logged_in(page):
                 raise SystemExit(
