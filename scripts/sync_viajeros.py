@@ -370,22 +370,40 @@ def _pgo_require():
 # Autodetecta la tabla con más filas si no se pasó un selector explícito.
 _PGO_TABLE_JS = r"""
 (sel) => {
+  const norm = s => (s || '').replace(/\s+/g, ' ').trim();
+  const fold = s => norm(s).toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  // Encabezados que esperamos de un reporte de PGO (Geos o Dietas).
+  const WANT = ['hab','nombre','viajero','nac','edad','grupo','observacion','in/out'];
+  // El calendario del datepicker también es <table>: se descarta por sus días.
+  const DOW  = ['sun','mon','tue','wed','thu','fri','sat',
+                'dom','lun','mar','mie','jue','vie','sab'];
+  const headersOf = tbl => {
+    const trs = [...tbl.querySelectorAll('tr')];
+    if (!trs.length) return {hi: -1, headers: [], trs};
+    let hi = trs.findIndex(tr => tr.querySelector('th'));
+    if (hi < 0) hi = 0;
+    return {hi, headers: [...trs[hi].querySelectorAll('th,td')].map(c => norm(c.innerText)), trs};
+  };
+  const score = tbl => {
+    const {headers, trs} = headersOf(tbl);
+    const h = headers.map(fold);
+    if (h.length && h.every(x => DOW.includes(x))) return -1;      // calendario
+    const hits = WANT.filter(w => h.some(x => x.includes(w))).length;
+    return hits * 1000 + Math.min(trs.length, 999);                 // encabezados mandan
+  };
   const pick = () => {
     if (sel) return document.querySelector(sel);
-    let best = null, n = -1;
+    let best = null, bestScore = -1;
     for (const t of document.querySelectorAll('table')) {
-      const rows = t.querySelectorAll('tr').length;
-      if (rows > n) { n = rows; best = t; }
+      const sc = score(t);
+      if (sc > bestScore) { bestScore = sc; best = t; }
     }
-    return best;
+    return bestScore > 0 ? best : null;
   };
   const tbl = pick();
   if (!tbl) return null;
-  const norm = s => (s || '').replace(/\s+/g, ' ').trim();
-  const trs = [...tbl.querySelectorAll('tr')];
-  let hi = trs.findIndex(tr => tr.querySelector('th'));
-  if (hi < 0) hi = 0;
-  const headers = [...trs[hi].querySelectorAll('th,td')].map(c => norm(c.innerText));
+  const {hi, headers, trs} = headersOf(tbl);
   const rows = [];
   for (let i = hi + 1; i < trs.length; i++) {
     const cells = [...trs[i].querySelectorAll('td,th')].map(c => norm(c.innerText));
@@ -425,6 +443,8 @@ def _pgo_set_date(page, fecha):
             inp.type(fecha, delay=30)
             page.keyboard.press("Enter")
             page.wait_for_timeout(500)
+        page.keyboard.press("Escape")   # cierra el calendario: si queda abierto tapa la tabla
+        page.wait_for_timeout(200)
         # Botón REFRESCAR (por texto, case-insensitive)
         btn = page.get_by_text(re.compile(PGO_SEL_REFRESH, re.I)).first
         if btn.count() > 0:
