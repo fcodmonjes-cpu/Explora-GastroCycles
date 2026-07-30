@@ -3,8 +3,9 @@ name: Sync Viajeros (PGO)
 # Fase 2: entra a PGO (portal web), lee el "Reporte Geos" + "Dietas" del día y
 # escribe /viajeros/current en Firebase — el reemplazo automático del seed manual.
 #
-# Manual por ahora (workflow_dispatch). Cuando el login/parseo esté CONFIRMADO
-# contra PGO, se agrega un cron diario (ver el bloque comentado abajo).
+# Corre solo cada mañana (10:00 UTC = 06:00 en Chile, antes del desayuno) y
+# también a mano desde la UI de Actions. El cron pasa la fecha de HOY: PGO abre
+# por defecto en el día siguiente, así que sin --date poblaría mañana.
 # Nota: el botón "Run workflow" recién aparece en la UI de Actions cuando este
 # archivo llega a la rama default (main) — igual que seed-viajeros.yml.
 #
@@ -15,10 +16,12 @@ name: Sync Viajeros (PGO)
 #   PGO_GEOS_PATH, PGO_DIETAS_PATH, PGO_TABLE_SEL, PGO_DATE_FMT
 
 on:
+  schedule:
+    - cron: "0 10 * * *"
   workflow_dispatch:
     inputs:
       date:
-        description: "Fecha del reporte (YYYY-MM-DD). Vacío = hoy."
+        description: "Fecha del reporte (YYYY-MM-DD). Vacío = la que PGO trae por defecto (mañana)."
         required: false
         default: ""
       dump_html:
@@ -33,11 +36,6 @@ on:
         description: "Leer PGO y mostrar el resumen SIN escribir en Firebase."
         type: boolean
         default: false
-
-# Descomentar cuando PGO esté confirmado, para poblar solo (ejemplo: cada día 06:00 UTC):
-# on:
-#   schedule:
-#     - cron: "0 6 * * *"
 
 jobs:
   sync:
@@ -62,7 +60,13 @@ jobs:
           FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
         run: |
           ARGS="--from-pgo"
-          if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
+          FECHA="${{ inputs.date }}"
+          # En el cron no hay inputs: se usa la fecha de hoy (a las 10:00 UTC ya
+          # es el mismo día en Chile).
+          if [ -z "$FECHA" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+            FECHA="$(date -u +%F)"
+          fi
+          if [ -n "$FECHA" ]; then ARGS="$ARGS --date $FECHA"; fi
           if [ "${{ inputs.dump_html }}" = "true" ]; then ARGS="$ARGS --dump-html --debug"; fi
           if [ "${{ inputs.trace_net }}" = "true" ]; then ARGS="$ARGS --trace-net --debug"; fi
           if [ "${{ inputs.dry_run }}"   = "true" ]; then ARGS="$ARGS --debug"; fi
