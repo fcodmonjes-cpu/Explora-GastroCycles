@@ -458,6 +458,34 @@ def _pgo_read_report(page, path, fecha, dump_name=None):
     return out
 
 
+def _pgo_error_msg(page):
+    """Texto de error visible tras un login fallido (ej. 'RUT inválido').
+
+    Busca primero contenedores típicos de alerta y, si no hay, cualquier texto
+    corto visible que mencione una palabra de error. Devuelve '' si no encuentra.
+    """
+    try:
+        return page.evaluate("""
+          () => {
+            const vis = el => el && el.offsetParent !== null;
+            const sels = ['.error','.alert','.ant-message','.ant-form-item-explain',
+                          '.invalid-feedback','[role=alert]','.toast','.notification'];
+            for (const s of sels) {
+              const el = [...document.querySelectorAll(s)].find(vis);
+              if (el && el.innerText.trim()) return el.innerText.trim().slice(0, 200);
+            }
+            const rx = /(incorrect|invalid|inv\\u00e1lid|err|no existe|no coincide|requerid|oblig)/i;
+            const el = [...document.querySelectorAll('span,div,p,small,label')]
+              .filter(vis)
+              .find(e => e.children.length === 0 && rx.test(e.innerText||'')
+                         && (e.innerText||'').trim().length < 160);
+            return el ? el.innerText.trim() : '';
+          }
+        """) or ""
+    except Exception:
+        return ""
+
+
 def _pgo_login(page):
     """Completa el formulario de acceso.
 
@@ -574,11 +602,16 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
                 _pgo_dump(page, "login")
             _pgo_login(page)
             page.wait_for_load_state("networkidle", timeout=60000)
+            page.wait_for_timeout(1500)   # margen para el XHR de login de la SPA
             if not _pgo_logged_in(page):
+                msg = _pgo_error_msg(page)
                 raise SystemExit(
                     "[sync-viajeros] No pude iniciar sesión en PGO (sigue apareciendo el "
-                    "formulario).\n  Revisá las credenciales o corré con --dump-html para "
-                    "ajustar los selectores del login."
+                    "formulario)."
+                    + (f"\n  PGO dice: “{msg}”" if msg else "")
+                    + "\n  Ojo: el campo de acceso de PGO es el RUT, no un nombre de usuario"
+                      " — el secret PGO_USER debe llevar el RUT tal como se escribe al entrar"
+                      " a mano.\n  Si el mensaje de arriba no aclara, corré con dump_html."
                 )
             print("[sync-viajeros] Sesión iniciada en PGO.")
         else:
