@@ -407,7 +407,13 @@ _PGO_TABLE_JS = r"""
     return WANT.filter(w => h.some(x => x.includes(w))).length;
   };
 
+  // Los calendarios de Element UI nunca son candidatos (ni como encabezado ni
+  // como cuerpo): se descartan por clase antes de puntuar.
+  const esCalendario = el =>
+    /date-table|year-table|month-table|picker|calendar/i.test(el.className || '') ||
+    !!el.closest('.el-date-picker,.el-picker-panel,[class*=picker],[class*=calendar]');
   const cands = [...document.querySelectorAll('table,[role=table],[role=grid]')]
+                  .filter(el => !esCalendario(el))
                   .map(parse).filter(Boolean);
   if (sel) {
     const el = document.querySelector(sel);
@@ -504,6 +510,53 @@ def _pgo_set_date(page, fecha):
     except Exception as e:
         print(f"[sync-viajeros] Aviso: no pude fijar la fecha ({e}); leo lo que muestre el reporte.")
         return False
+
+
+def _pgo_structure_report(page):
+    """Mapa de la estructura de la página cuando no aparece la grilla esperada.
+
+    Sólo títulos de columna y nombres de clase — nunca datos de huéspedes.
+    """
+    try:
+        info = page.evaluate("""
+          () => {
+            const norm = s => (s||'').replace(/\\s+/g,' ').trim();
+            const out = {tables: [], aria: [], repes: []};
+            for (const t of document.querySelectorAll('table')) {
+              const tr = t.querySelector('tr');
+              out.tables.push({filas: t.querySelectorAll('tr').length,
+                               cls: (t.className||'').slice(0,60),
+                               head: tr ? norm(tr.innerText).slice(0,120) : ''});
+            }
+            for (const g of document.querySelectorAll('[role=table],[role=grid]')) {
+              out.aria.push({rol: g.getAttribute('role'),
+                             filas: g.querySelectorAll('[role=row]').length,
+                             cls: (g.className||'').slice(0,60)});
+            }
+            for (const el of document.querySelectorAll('div,ul,tbody')) {
+              const n = el.children.length;
+              if (n < 8) continue;
+              const tags = new Set([...el.children].map(c => c.tagName));
+              if (tags.size !== 1) continue;
+              out.repes.push({hijos: n, tag: [...tags][0],
+                              cls: (el.className||'').slice(0,60),
+                              muestra: norm(el.children[0].innerText).slice(0,90)});
+            }
+            out.repes = out.repes.sort((a,b)=>b.hijos-a.hijos).slice(0,5);
+            return out;
+          }
+        """)
+    except Exception as e:
+        print(f"[sync-viajeros] (no pude mapear la estructura: {e})")
+        return
+    print("[sync-viajeros] --- estructura de la página ---")
+    for t in info.get("tables", []):
+        print(f"[sync-viajeros]   <table> filas={t['filas']} clase='{t['cls']}' encabezado='{t['head']}'")
+    for g in info.get("aria", []):
+        print(f"[sync-viajeros]   grilla ARIA role={g['rol']} filas={g['filas']} clase='{g['cls']}'")
+    for r in info.get("repes", []):
+        print(f"[sync-viajeros]   contenedor repetido <{r['tag']}> hijos={r['hijos']} "
+              f"clase='{r['cls']}' 1er_hijo='{r['muestra']}'")
 
 
 def _pgo_read_report(page, path, fecha, dump_name=None):
