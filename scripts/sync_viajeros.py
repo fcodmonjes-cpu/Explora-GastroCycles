@@ -458,6 +458,78 @@ def _pgo_read_report(page, path, fecha, dump_name=None):
     return out
 
 
+def _pgo_form_report(page, titulo):
+    """Imprime la estructura del formulario de acceso en el log.
+
+    Sólo metadatos del formulario (type/name/id/placeholder/estado) — nunca
+    valores tipeados ni datos de huéspedes. Es lo que permite ajustar el login
+    sin tener que bajarse el HTML.
+    """
+    try:
+        info = page.evaluate("""
+          () => {
+            const vis = el => el && el.offsetParent !== null;
+            const inputs = [...document.querySelectorAll('input,select,textarea')]
+              .filter(vis).map(i => ({
+                tag: i.tagName.toLowerCase(),
+                type: (i.getAttribute('type')||'').toLowerCase(),
+                name: i.getAttribute('name')||'', id: i.id||'',
+                ph: i.getAttribute('placeholder')||'',
+                maxlength: i.getAttribute('maxlength')||'',
+                filled: !!(i.value && i.value.length)
+              }));
+            const btns = [...document.querySelectorAll('button,input[type=submit]')]
+              .filter(vis).map(b => ({
+                text: (b.innerText||b.value||'').trim().slice(0,40),
+                type: (b.getAttribute('type')||'').toLowerCase(),
+                disabled: !!b.disabled
+              }));
+            const f = document.querySelector('form');
+            return {inputs, btns, action: f ? (f.getAttribute('action')||'') : '(sin <form>)'};
+          }
+        """)
+    except Exception as e:
+        print(f"[sync-viajeros] (no pude inspeccionar el formulario: {e})")
+        return
+    print(f"[sync-viajeros] --- {titulo} ---")
+    print(f"[sync-viajeros]   form action: {info.get('action')}")
+    for i in info.get("inputs", []):
+        print("[sync-viajeros]   campo: tag={tag} type={type} name={name} id={id} "
+              "placeholder={ph} maxlength={maxlength} con_valor={filled}".format(**i))
+    for b in info.get("btns", []):
+        print("[sync-viajeros]   boton: texto='{text}' type={type} deshabilitado={disabled}".format(**b))
+
+
+def _pgo_type(page, selector, value):
+    """Escribe en un campo como lo haría una persona.
+
+    Los campos de RUT suelen llevar máscara (se formatean mientras se tipea) y
+    esos componentes ignoran un `fill()` que asigna el valor de una sola vez.
+    Por eso: click, limpiar y tipear tecla por tecla. Si aun así el campo queda
+    vacío, se cae al setter nativo + eventos para que el framework se entere.
+    """
+    loc = page.locator(selector).first
+    loc.click()
+    try:
+        loc.press("Control+a")
+        loc.press("Delete")
+    except Exception:
+        pass
+    loc.type(value, delay=45)
+    try:
+        if (loc.input_value() or "").strip():
+            return
+    except Exception:
+        return
+    print("[sync-viajeros] El campo quedó vacío al tipear; uso setter nativo.")
+    loc.evaluate(
+        "(el, v) => { const p = Object.getPrototypeOf(el);"
+        " const d = Object.getOwnPropertyDescriptor(p, 'value');"
+        " d && d.set ? d.set.call(el, v) : (el.value = v);"
+        " el.dispatchEvent(new Event('input', {bubbles:true}));"
+        " el.dispatchEvent(new Event('change', {bubbles:true})); }", value)
+
+
 def _pgo_error_msg(page):
     """Texto de error visible tras un login fallido (ej. 'RUT inválido').
 
@@ -517,10 +589,10 @@ def _pgo_login(page):
         sel = (f"input#{filled['id']}" if filled.get("id")
                else (f"input[name='{filled['name']}']" if filled.get("name")
                      else "input:not([type='password'])"))
-        page.locator(sel).first.fill(user)
     else:
-        page.locator(PGO_SEL_USER).first.fill(user)
-    page.locator(PGO_SEL_PASS).first.fill(pwd)
+        sel = PGO_SEL_USER
+    _pgo_type(page, sel, user)
+    _pgo_type(page, PGO_SEL_PASS, pwd)
     # Enviar: botón de submit si existe, si no Enter en la contraseña.
     btn = page.locator(PGO_SEL_SUBMIT)
     if btn.count() > 0:
@@ -600,10 +672,12 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         if not _pgo_logged_in(page):
             if dump:
                 _pgo_dump(page, "login")
+            _pgo_form_report(page, "formulario de acceso (antes de completar)")
             _pgo_login(page)
             page.wait_for_load_state("networkidle", timeout=60000)
             page.wait_for_timeout(1500)   # margen para el XHR de login de la SPA
             if not _pgo_logged_in(page):
+                _pgo_form_report(page, "formulario tras intentar entrar")
                 msg = _pgo_error_msg(page)
                 raise SystemExit(
                     "[sync-viajeros] No pude iniciar sesión en PGO (sigue apareciendo el "
