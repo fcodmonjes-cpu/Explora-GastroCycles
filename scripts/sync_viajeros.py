@@ -322,12 +322,13 @@ def build_doc(rows, date_str, source):
 #   → guarda el HTML de login y de cada reporte en ./pgo-dump/ (no escribe Firebase).
 #
 # Rutas CONFIRMADAS con capturas del portal (2026-07-31):
-#   https://pgo-explora.com/report-geos   → Reporte Geos
-#   https://pgo-explora.com/dietas        → Reporte Dietas
+#   https://www.pgo-explora.com/report-geos → Reporte Geos
+#   https://www.pgo-explora.com/dietas      → Reporte Dietas
+# (el navegador esconde el "www."; el DNS público sólo tiene el host con www)
 # La FECHA NO viaja en la URL: es una SPA con un datepicker (formato DD-MM-YYYY)
 # y un botón REFRESCAR. Por eso el script setea la fecha en el input y refresca,
 # en vez de armar un link con querystring.
-PGO_BASE_URL    = (os.environ.get("PGO_BASE_URL") or "https://pgo-explora.com").rstrip("/")
+PGO_BASE_URL    = (os.environ.get("PGO_BASE_URL") or "https://www.pgo-explora.com").rstrip("/")
 PGO_GEOS_PATH   = os.environ.get("PGO_GEOS_PATH")   or "/report-geos"
 PGO_DIETAS_PATH = os.environ.get("PGO_DIETAS_PATH") or "/dietas"
 PGO_DATE_FMT    = os.environ.get("PGO_DATE_FMT")    or "%d-%m-%Y"   # como se ve en el input: 31-07-2026
@@ -502,7 +503,21 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
             page.on("response", _on_resp)
 
         # 1) Sesión. Muchas apps redirigen al login al entrar a una ruta privada.
-        page.goto(PGO_BASE_URL + PGO_GEOS_PATH, wait_until="networkidle", timeout=60000)
+        #    Si el host no resuelve, probamos la variante con/sin "www." — los
+        #    navegadores esconden el "www." en la barra, así que la URL que uno
+        #    copia a mano suele venir sin él aunque el DNS sólo tenga el www.
+        base = PGO_BASE_URL
+        try:
+            page.goto(base + PGO_GEOS_PATH, wait_until="networkidle", timeout=60000)
+        except Exception as e:
+            if "ERR_NAME_NOT_RESOLVED" not in str(e):
+                raise
+            alt = (base.replace("://www.", "://", 1) if "://www." in base
+                   else base.replace("://", "://www.", 1))
+            print(f"[sync-viajeros] {base} no resuelve; reintento con {alt}")
+            page.goto(alt + PGO_GEOS_PATH, wait_until="networkidle", timeout=60000)
+            base = alt
+        globals()["PGO_BASE_URL"] = base   # las lecturas siguientes usan el host que sí funcionó
         if not _pgo_logged_in(page):
             if dump:
                 _pgo_dump(page, "login")
