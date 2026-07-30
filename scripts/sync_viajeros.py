@@ -559,8 +559,7 @@ def _pgo_set_destino(page, destino):
     # <a> por destino) pero está oculto hasta tocar el disparador. Por eso se
     # busca el menú primero y desde ahí se deduce el disparador, en vez de
     # adivinar el texto de la cabecera (que trae la inicial del avatar pegada).
-    try:
-        info = page.evaluate("""
+    _JS = """
           ([dests, destino]) => {
             // OJO: el menú está oculto hasta que se lo abre, y para un elemento
             // sin layout innerText devuelve ''. Todo el matcheo va por
@@ -590,7 +589,14 @@ def _pgo_set_destino(page, destino):
                     opt: !!opt, trg: trg ? norm(trg.textContent).slice(0,40) : null,
                     items: [...menu.children].map(c => norm(c.textContent).slice(0,30))};
           }
-        """, [DESTINOS, destino])
+        """
+    try:
+        info = {}
+        for _ in range(20):        # la SPA monta la cabecera unos segundos tarde
+            info = page.evaluate(_JS, [DESTINOS, destino])
+            if info.get("ok"):
+                break
+            page.wait_for_timeout(1000)
         if not info.get("ok"):
             print("[sync-viajeros] Aviso: no encontré el menú de destinos.")
             return False
@@ -939,7 +945,10 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         else:
             print("[sync-viajeros] Sesión activa (sin formulario de login).")
 
-        # 2) Destino: PGO abre en Torres del Paine
+        # 2) Destino: PGO abre en Torres del Paine. Se cambia ya parado en la
+        # página del reporte — recién ahí está montada la cabecera con el menú
+        # (justo después del login la SPA todavía no la dibujó).
+        page.goto(PGO_BASE_URL + PGO_GEOS_PATH, wait_until="networkidle", timeout=60000)
         _pgo_set_destino(page, PGO_DESTINO)
 
         # 3) Reportes del día
