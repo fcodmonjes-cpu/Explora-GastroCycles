@@ -478,6 +478,9 @@ def _pgo_set_date(page, fecha):
         btn = page.get_by_text(re.compile(PGO_SEL_REFRESH, re.I)).first
         if btn.count() > 0:
             btn.click(timeout=8000)   # corto: si no se puede clickear, seguimos igual
+            print("[sync-viajeros] REFRESCAR clickeado.")
+        else:
+            print("[sync-viajeros] Aviso: no encontré el botón REFRESCAR.")
         page.wait_for_load_state("networkidle", timeout=60000)
         page.wait_for_timeout(800)   # margen para que la tabla se repinte
         return True
@@ -546,7 +549,12 @@ def _pgo_read_report(page, path, fecha, dump_name=None):
     _pgo_set_date(page, fecha)
     if dump_name:
         _pgo_dump(page, dump_name)
-    data = page.evaluate(_PGO_TABLE_JS, PGO_TABLE_SEL or None)
+    data = None
+    for intento in range(30):                     # hasta ~30 s
+        data = page.evaluate(_PGO_TABLE_JS, PGO_TABLE_SEL or None)
+        if data and data.get("rows"):
+            break
+        page.wait_for_timeout(1000)
     if not data or not data.get("rows"):
         _pgo_structure_report(page)
         raise SystemExit(
