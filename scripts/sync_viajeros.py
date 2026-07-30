@@ -555,40 +555,57 @@ def _pgo_set_destino(page, destino):
     DESTINOS = ["Torres del Paine", "Atacama", "Rapanui", "Valle Sagrado",
                 "Santiago", "El Chaltén", "Parque Nacional Patagonia", "Uyuni",
                 "Explora Expediciones"]
+    # El menú vive en el DOM desde el arranque (Bootstrap: .dropdown-menu con un
+    # <a> por destino) pero está oculto hasta tocar el disparador. Por eso se
+    # busca el menú primero y desde ahí se deduce el disparador, en vez de
+    # adivinar el texto de la cabecera (que trae la inicial del avatar pegada).
     try:
-        # El disparador es el destino actual, arriba de todo (y = pocos px).
-        actual = page.evaluate("""
-          (dests) => {
-            const vis = el => el && el.offsetParent !== null;
-            for (const el of document.querySelectorAll('a,span,div,button,li')) {
-              if (!vis(el) || el.children.length > 2) continue;
-              const t = (el.innerText || '').trim();
-              if (!dests.includes(t)) continue;
-              const r = el.getBoundingClientRect();
-              if (r.top < 120 && r.width > 0) {
-                el.setAttribute('data-pgo-dest', '1');
-                return t;
-              }
+        info = page.evaluate("""
+          ([dests, destino]) => {
+            const norm = s => (s||'').replace(/\\s+/g,' ').trim();
+            const tiene = t => dests.some(d => norm(t).toLowerCase().includes(d.toLowerCase()));
+            let menu = null, hits = 0;
+            for (const m of document.querySelectorAll('[class*=dropdown-menu],ul,div')) {
+              const items = [...m.children].filter(c => norm(c.innerText));
+              if (items.length < 4) continue;
+              const n = items.filter(c => tiene(c.innerText)).length;
+              if (n > hits) { hits = n; menu = m; }
             }
-            return null;
+            if (!menu || hits < 4) return {ok: false};
+            // Opción buscada dentro del menú.
+            const opt = [...menu.querySelectorAll('*')].concat([...menu.children])
+              .find(c => norm(c.innerText).toLowerCase() === destino.toLowerCase());
+            if (opt) opt.setAttribute('data-pgo-dest-opt', '1');
+            // Disparador: el hermano/ancestro clickeable que abre este menú.
+            let trg = menu.previousElementSibling;
+            if (!trg && menu.parentElement) {
+              trg = menu.parentElement.querySelector(
+                '.dropdown-toggle,[data-toggle=dropdown],[aria-haspopup]');
+            }
+            if (trg) trg.setAttribute('data-pgo-dest-trg', '1');
+            return {ok: true, hits, menuCls: (menu.className||'').slice(0,60),
+                    opt: !!opt, trg: trg ? norm(trg.innerText).slice(0,40) : null};
           }
-        """, DESTINOS)
-        if actual is None:
-            print("[sync-viajeros] Aviso: no encontré el selector de destino en la cabecera.")
+        """, [DESTINOS, destino])
+        if not info.get("ok"):
+            print("[sync-viajeros] Aviso: no encontré el menú de destinos.")
             return False
-        if actual.lower() == destino.lower():
-            print(f"[sync-viajeros] Destino ya es {destino}.")
-            return True
-        print(f"[sync-viajeros] Destino actual: {actual} → cambio a {destino}.")
-        page.locator("[data-pgo-dest='1']").first.click(timeout=8000)
-        page.wait_for_timeout(700)
-        opcion = page.get_by_text(re.compile(rf"^\s*{re.escape(destino)}\s*$", re.I)).last
-        if opcion.count() == 0:
-            print(f"[sync-viajeros] Aviso: abrí el menú pero no encontré '{destino}'.")
+        print(f"[sync-viajeros] Menú de destinos: {info['hits']} opciones "
+              f"(clase '{info['menuCls']}', disparador '{info.get('trg')}').")
+        if not info.get("opt"):
+            print(f"[sync-viajeros] Aviso: el menú no trae '{destino}'.")
             return False
-        opcion.click(timeout=8000)
+        # Abrir el menú (si el disparador existe) y elegir. El click va por JS
+        # porque Playwright rechaza clickear lo que aún está oculto.
+        if info.get("trg"):
+            page.eval_on_selector("[data-pgo-dest-trg='1']", "el => el.click()")
+            page.wait_for_timeout(600)
+        try:
+            page.locator("[data-pgo-dest-opt='1']").first.click(timeout=4000)
+        except Exception:
+            page.eval_on_selector("[data-pgo-dest-opt='1']", "el => el.click()")
         page.wait_for_load_state("networkidle", timeout=60000)
-        page.wait_for_timeout(1200)
+        page.wait_for_timeout(1500)
         print(f"[sync-viajeros] Destino cambiado a {destino}.")
         return True
     except Exception as e:
