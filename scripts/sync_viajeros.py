@@ -695,7 +695,14 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
             _pgo_form_report(page, "formulario de acceso (antes de completar)")
             _pgo_login(page)
             page.wait_for_load_state("networkidle", timeout=60000)
-            page.wait_for_timeout(1500)   # margen para el XHR de login de la SPA
+            # Esperar POR CONDICIÓN, no por tiempo fijo: PGO tarda distinto en
+            # cada intento (con 1,5 s fijos el login entraba unas veces sí y
+            # otras no). Se sondea hasta 20 s: corta apenas desaparece el
+            # formulario o aparece un mensaje de error.
+            for _ in range(40):
+                page.wait_for_timeout(500)
+                if _pgo_logged_in(page) or _pgo_error_msg(page):
+                    break
             if not _pgo_logged_in(page):
                 _pgo_form_report(page, "formulario tras intentar entrar")
                 msg = _pgo_error_msg(page)
