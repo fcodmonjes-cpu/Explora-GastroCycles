@@ -135,12 +135,11 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
 │                   habs: { "01": [ { id, nombre, edad, nac, grupo,
 │                                     in, out, tags[], obs, foto? } ] } }
 │       (un solo doc sobrescrito por cada sync; lo escribe
-│        scripts/sync_viajeros.py — seed manual vía workflow_dispatch hoy,
-│        Excel Dietas+Geos en fase 2: el plumbing `--from-excel` (descarga
-│        SharePoint + build_doc) ya está listo; falta el link (secret
-│        VIAJEROS_SHAREPOINT_URL) + mapear columnas en parse_excel() — ver la
-│        cabecera del script. Read-only en la app, sin PIN. Tags canónicos
-│        alergia-*/dieta-*/cond-* compartidos script ↔ VJ_TAGS)
+│        scripts/sync_viajeros.py --from-pgo, automático cada día 10:00 UTC
+│        (06:00 en Chile) vía .github/workflows/sync-viajeros.yml. El seed
+│        manual (SEED_ROWS) y --from-excel quedan como respaldo. Read-only en
+│        la app, sin PIN. Tags canónicos alergia-*/dieta-*/cond-* compartidos
+│        script ↔ VJ_TAGS — ver §4.1)
 │
 ├── orders/                        ← cola viva del café (mesero → barista)
 │   └── {auto-id} → { items[], table, timestamp, status:'pending', lang }
@@ -169,6 +168,52 @@ qué buckets/entradas están fuera de la ventana de retención y los borra.
 Eventually consistent, no necesita Cloud Functions ni cron. El barista
 de cualquier turno mantiene la base limpia por el simple hecho de
 abrir la app.
+
+### 4.1 Sync de viajeros desde PGO (automático desde 2026-07-30)
+
+`/viajeros/current` ya no se llena a mano. `scripts/sync_viajeros.py
+--from-pgo` entra al portal PGO con Playwright + Chromium headless, lee el
+**Reporte Geos** (roster completo: hab, nombre, nac, edad, grupo, IN/OUT) y
+**Dietas** (observaciones), los cruza por nombre normalizado y escribe el doc.
+Corre solo cada día a las **10:00 UTC** (06:00 en Chile, antes del desayuno)
+y también a mano desde Actions con `date` / `dry_run`.
+
+**Secrets** (Settings → Secrets → Actions): `PGO_BASE_URL`, `PGO_USER` (es el
+**RUT**, no un nombre de usuario), `PGO_PASS`, `FIREBASE_KEY`.
+
+**Las trampas de PGO — cada una costó una corrida, no re-descubrirlas:**
+
+| Síntoma | Causa real |
+|---|---|
+| `ERR_NAME_NOT_RESOLVED` | El apex `pgo-explora.com` no tiene DNS; sólo existe `www.`. El navegador oculta el "www." al mostrarlo. El script hace fallback automático. |
+| Login falla con credenciales correctas | El campo de RUT está **enmascarado**: `fill()` setea el valor de una sola vez y el componente lo descarta. Hay que tipear tecla por tecla (`type(delay=45)`). |
+| La grilla dibuja el encabezado pero sin filas | PGO abre en **Torres del Paine**. Sin cambiar el destino a Atacama, todo reporte sale vacío. |
+| No se encuentra el menú de destinos | Está oculto hasta abrirlo, y **`innerText` devuelve `''` para elementos sin layout**. Todo el matcheo de menús cerrados va por `textContent`. |
+| El menú "no existe" justo después del login | La SPA monta la cabecera unos segundos tarde. Se navega primero al reporte y se reintenta hasta 20s. |
+| La fecha se escribe en el buscador | PGO es **Element UI (Vue)**. El campo de fecha se ubica por su *valor* (regex `DD-MM-YYYY`), no por clase ni por `input[type=text]`. |
+| El calendario se lee como tabla de datos | Element UI usa `<table>` para el date-picker. El extractor puntúa por encabezados esperados y excluye clases `date-table|picker|calendar`. |
+| El encabezado aparece sin filas | Element UI parte la grilla en **dos tablas** (header y body); se unen por cantidad de columnas. |
+| Un secret vacío pisa el valor por defecto | `os.environ.get(k, default)` devuelve `""` si la variable existe vacía — GitHub siempre la inyecta. Usar `os.environ.get(k) or default`. |
+| El botón "Run workflow" no aparece en Actions | `workflow_dispatch` sólo se muestra cuando el archivo está en la rama **default** (`main`). Por eso estos workflows se iteran en `main`. |
+
+**Dos comportamientos del negocio, no bugs:** PGO abre por defecto en el **día
+siguiente** (por eso el cron pasa `--date` con la fecha de hoy), y el reporte
+de **Dietas lista el movimiento del día**, no a todos los in-house — el
+`comentario geos` quedó cableado como segunda fuente (sólo se usa si normaliza
+a una dieta conocida, para no ensuciar el campo visible), pero al 2026-07-30
+venía vacío. **Pendiente de QA:** contrastar a mano si faltan dietas de
+huéspedes que llegaron días antes.
+
+**Para depurar sin adivinar:** el script imprime un *mapa de estructura* de la
+página (tablas, encabezados, contenedores repetidos, clases) cuando no
+encuentra la grilla — sólo metadatos, nunca datos de huéspedes. Los inputs
+`dump_html` / `trace_net` del workflow guardan HTML y llamadas XHR; **el HTML
+tiene datos personales**, por eso `retention-days: 1`.
+
+**Próximo paso (diferido a pedido del owner):** extraer más campos del viajero
+(preferencia de agua, vinos, special requests) para una ficha rica. Lo difícil
+declarado no es guardarlos, sino **cómo esa información interactúa con el
+resto de la app**.
 
 ---
 
@@ -434,7 +479,8 @@ Hay decisiones conscientes de prototipo. Listarlas explícitas:
 - **No hay tests.** El programa se valida con uso real y commits
   reversibles. Para un solo desarrollador iterando rápido, el costo
   de tests automatizados todavía supera el beneficio.
-- **CI implícito vía Vercel.** No hay GitHub Actions de build/test.
+- **CI implícito vía Vercel.** No hay GitHub Actions de build/test (las que
+  existen son de datos: `sync-viajeros.yml`, `seed-viajeros.yml`, `sync-rol`).
   Vercel despliega cada push automáticamente — `main` a producción,
   `staging` a una URL fija para QA por iPhone, `feature/*` a previews
   efímeras. La separación de branches (sección 12) cubre la mayor parte
@@ -549,7 +595,7 @@ está en exploración** — y cada una tiene su URL de Vercel distinta.
 2. **Bytes NUL:** contar `b'\x00'` sobre el archivo en binario → debe dar `0` (la herramienta de edición a veces mete un NUL literal; ensucia el repo y rompe ripgrep).
 3. **Syntax-check real con Node** (`node v24` está instalado): extraer los `<script>` inline (regex `/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi`) y `node --check` sobre el resultado. Atrapa errores de sintaxis sin ejecutar el DOM.
 4. **Screenshot de render real con Chrome/Edge headless** (ambos instalados en `Program Files`): como los módulos viven detrás de una tab + Firebase, armar un *harness* que reuse el `<style>` real del `index.html` + markup estático que replique lo que emiten las funciones de render, y capturarlo: `chrome.exe --headless=new --disable-gpu --window-size=390,H --screenshot=out.png harness.html`. Atrapa errores de CSS/layout/overflow que el syntax-check no ve. **Caveat:** los emoji de bandera (indicadores regionales) **no renderizan en Windows** (salen como letras `BR`/`CL`); ese detalle solo se valida en iPhone.
-5. **Scripts Python (`sync_*.py`):** correr con `PYTHONUTF8=1` en consola Windows — sin eso, los `print` con `≤`/`·`/`ñ` tiran `UnicodeEncodeError` (cp1252). En CI ubuntu corren sin el flag. Validar el pipeline con `--debug` (no escribe Firebase).
+5. **Scripts Python (`sync_*.py`):** correr con `PYTHONUTF8=1` en consola Windows — sin eso, los `print` con `≤`/`·`/`ñ` tiran `UnicodeEncodeError` (cp1252). En CI ubuntu corren sin el flag. Validar el pipeline con `--debug` (no escribe Firebase). Además, un **chequeo estático con `ast`** (funciones llamadas pero no definidas + constantes en mayúscula sin asignar) antes de gastar una corrida de CI: al editar bloques grandes es fácil borrar una función vecina y el `NameError` recién aparece a los 3 minutos, en el runner.
 6. La **prueba real** sigue siendo cargar la página (server local o preview de Vercel) y, para lo que solo se ve en iOS, el QA del owner desde iPhone en la URL fija de staging.
 
 **Al cerrar:**
