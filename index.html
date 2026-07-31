@@ -802,6 +802,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   0%, 100% { box-shadow: 0 0 6px 0px rgba(202,138,4,0.15), inset 0 0 0px rgba(202,138,4,0); }
   50%       { box-shadow: 0 0 18px 4px rgba(202,138,4,0.35), inset 0 0 8px rgba(202,138,4,0.08); }
 }
+/* Badge "nuevo" del tab PGO. Ámbar del sistema (el mismo de .tab-sparkle), sin
+   color nuevo; late apenas para llamar sin gritar. Se quita cuando deje de ser
+   novedad. El tab pasa a inline-flex porque ahora lleva label + badge. */
+.tab-with-badge { display:inline-flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap; }
+.tab-new { font-family:'Courier Prime','Courier New',monospace; font-size:8px; letter-spacing:0.1em; text-transform:uppercase; color:#fcd34d; border:0.5px solid rgba(252,211,77,0.4); border-radius:4px; padding:1px 4px; line-height:1.3; animation:new-badge-pulse 3.2s ease-in-out infinite; }
+.tab.active .tab-new { color:#fff; border-color:rgba(255,255,255,0.55); animation:none; }
+@keyframes new-badge-pulse { 0%,100% { opacity:0.6; } 50% { opacity:1; } }
 .tab-sparkle { display:inline-block; color:#fcd34d; font-size:9px; margin-right:4px; vertical-align:middle; animation:sparkle-pulse 2.8s ease-in-out infinite; }
 
 /* Detail panel */
@@ -1729,10 +1736,13 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
     <button class="tab active" onclick="setTab('menus',this)">Menú</button>
     <button class="tab" onclick="setTab('vinos',this)">Vinos</button>
     <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
-    <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
+    <!-- PGO ocupa el 4º lugar (era de Café) para quedar a la vista sin scroll:
+         es lo que más se consulta a hora de servicio. El badge "nuevo" invita
+         a descubrirla y se retira cuando deje de serlo. -->
+    <button class="tab tab-with-badge" onclick="setTab('viajeros',this)" id="tab-btn-viajeros"><span class="tab-label">PGO</span><span class="tab-new">nuevo</span></button>
     <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">Comande</button>
     <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol">Rol</button>
-    <button class="tab" onclick="setTab('viajeros',this)" id="tab-btn-viajeros">Viajeros</button>
+    <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
   </div>
 
   <!-- MENÚS TAB -->
@@ -2866,7 +2876,7 @@ const UI = {
     chkPinTitle:'Modo edición', chkPinSub:'Introduce el código del supervisor',
     chkPinError:'Código incorrecto', chkPinClose:'Cerrar',
     // Viajeros module
-    tabViajeros:'Viajeros',
+    tabViajeros:'PGO', tabNuevo:'nuevo',
     vjSubtitle:'Dietas y restricciones por habitación',
     vjReportOf:'Reporte del',
     vjStatViajeros:'viajeros', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'salen hoy',
@@ -3029,7 +3039,7 @@ const UI = {
     chkPinTitle:'Edit mode', chkPinSub:'Enter the supervisor code',
     chkPinError:'Wrong code', chkPinClose:'Close',
     // Viajeros module
-    tabViajeros:'Guests',
+    tabViajeros:'PGO', tabNuevo:'new',
     vjSubtitle:'Diets & restrictions by room',
     vjReportOf:'Report of',
     vjStatViajeros:'guests', vjStatNinos:'minors', vjStatAlergias:'allergies', vjStatDietas:'diets', vjStatSalenHoy:'leave today',
@@ -3192,7 +3202,7 @@ const UI = {
     chkPinTitle:'Modo edição', chkPinSub:'Insira o código do supervisor',
     chkPinError:'Código incorreto', chkPinClose:'Fechar',
     // Viajeros module
-    tabViajeros:'Viajantes',
+    tabViajeros:'PGO', tabNuevo:'novo',
     vjSubtitle:'Dietas e restrições por quarto',
     vjReportOf:'Relatório de',
     vjStatViajeros:'viajantes', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'saem hoje',
@@ -3442,8 +3452,13 @@ function setLang(lang, el) {
   if (cmdBtn) cmdBtn.textContent = t('tabComandera');
   const rolBtn = document.getElementById('tab-btn-rol');
   if (rolBtn) rolBtn.textContent = t('tabRol');
-  const vjBtn = document.getElementById('tab-btn-viajeros');
-  if (vjBtn) vjBtn.textContent = t('tabViajeros');
+  // El tab de PGO lleva estructura interna (label + badge "nuevo"): se
+  // actualiza cada span por separado, igual que el de Checklist — pisar el
+  // textContent del botón borraría el badge.
+  const vjLabel = document.querySelector('#tab-btn-viajeros .tab-label');
+  if (vjLabel) vjLabel.textContent = t('tabViajeros');
+  const vjNew = document.querySelector('#tab-btn-viajeros .tab-new');
+  if (vjNew) vjNew.textContent = t('tabNuevo');
   // The Checklist button has internal structure (icon + label spans), so we
   // can't just overwrite its textContent — that would drop the icon. Update
   // the .checklist-feature-label span instead.
