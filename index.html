@@ -1506,8 +1506,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .staffing-viajeros-link:hover, .staffing-viajeros-link:focus-visible { color:var(--gold); outline:none; }
 
 .vj-head { margin-bottom:0.4rem; }
-.vj-title-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.7rem; }
-.vj-subtitle { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:19px; color:var(--text-secondary); }
+.vj-title-row { display:flex; justify-content:flex-end; align-items:baseline; gap:12px; margin-bottom:0.7rem; }
 .vj-updated { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); white-space:nowrap; }
 
 /* Stat-chips: contadores tappeables que a la vez son filtros. */
@@ -2877,7 +2876,6 @@ const UI = {
     chkPinError:'Código incorrecto', chkPinClose:'Cerrar',
     // Viajeros module
     tabViajeros:'PGO', tabNuevo:'nuevo',
-    vjSubtitle:'Dietas y restricciones por habitación',
     vjReportOf:'Reporte del',
     vjStatViajeros:'viajeros', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'salen hoy',
     vjSearchPh:'Buscar viajero, hab o grupo...',
@@ -3040,7 +3038,6 @@ const UI = {
     chkPinError:'Wrong code', chkPinClose:'Close',
     // Viajeros module
     tabViajeros:'PGO', tabNuevo:'new',
-    vjSubtitle:'Diets & restrictions by room',
     vjReportOf:'Report of',
     vjStatViajeros:'guests', vjStatNinos:'minors', vjStatAlergias:'allergies', vjStatDietas:'diets', vjStatSalenHoy:'leave today',
     vjSearchPh:'Search guest, room or group...',
@@ -3203,7 +3200,6 @@ const UI = {
     chkPinError:'Código incorreto', chkPinClose:'Fechar',
     // Viajeros module
     tabViajeros:'PGO', tabNuevo:'novo',
-    vjSubtitle:'Dietas e restrições por quarto',
     vjReportOf:'Relatório de',
     vjStatViajeros:'viajantes', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'saem hoje',
     vjSearchPh:'Buscar viajante, quarto ou grupo...',
@@ -5659,7 +5655,6 @@ function viajerosRender(){
     root.innerHTML = `
       <div class="vj-head">
         <div class="vj-title-row">
-          <span class="vj-subtitle" id="vj-subtitle"></span>
           <span class="vj-updated" id="vj-updated"></span>
         </div>
         <div class="vj-stats" id="vj-stats"></div>
@@ -5678,7 +5673,6 @@ function viajerosRender(){
       </div>
       <div id="vj-body"></div>`;
   }
-  document.getElementById('vj-subtitle').textContent = t('vjSubtitle');
   document.getElementById('vj-updated').textContent  = `${t('vjReportOf')} ${vjShortDate(VIAJEROS_DATA.date)}`;
   document.getElementById('vj-search').placeholder   = t('vjSearchPh');
   vjSyncNumpad();
