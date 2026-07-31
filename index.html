@@ -1586,6 +1586,10 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-tag.dieta   { background:var(--gold-light); color:#d4a24c; }
 .vj-tag.cond    { background:var(--wine-red-light); color:var(--wine-red-dark); }
 .vj-tag.ok      { background:var(--teal-light); color:var(--teal); }
+/* Línea para recuperar los salientes ocultos. Deliberadamente tenue: está para
+   quien la busca, no para competir con las fichas de los que sí están. */
+.vj-out-toggle { display:block; width:100%; background:none; border:0; border-top:0.5px solid var(--border-md); padding:9px 0 3px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); text-align:center; cursor:pointer; }
+.vj-out-toggle:active { color:var(--text-secondary); }
 .vj-out-chip { display:inline-block; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary); border:0.5px solid var(--border-md); border-radius:4px; padding:1px 6px; margin:2px 0 0 0; }
 
 /* Modal de detalle de hab — bottom sheet en móvil, centrado en pantallas anchas. */
@@ -2650,7 +2654,7 @@ let _CHK_META_WRITE_QUEUE   = {};       // { 'section/phase': meta patch }
 // scripts/sync_viajeros.py (seed hoy, Excel Dietas+Geos en fase 2).
 // Sin PIN (decisión 2026-07-17, misma lógica de fricción que Rol/E-Check).
 const VIAJEROS_PATH        = 'viajeros/current';
-const VIAJEROS_NINO_MAX    = 12;             // edad ≤ 12 cuenta como "niño"
+const VIAJEROS_NINO_MAX    = 17;             // edad ≤ 17 cuenta como "menor" (menor de edad)
 const VIAJEROS_STALE_MS    = 5 * 60 * 1000;  // re-fetch al abrir la tab si la data es más vieja
 // Taxonomía canónica de tags — mismos slugs que emite el script Python.
 // cls colorea (alergia=rojo · dieta=gold · cond=azul); key apunta al
@@ -2707,6 +2711,7 @@ let VIAJEROS_FILTER        = null;   // null | 'ninos'|'alergias'|'dietas'|'sale
 let VIAJEROS_SEARCH        = '';
 let VIAJEROS_HAB_OPEN      = null;   // hab abierta en el modal de detalle
 let VIAJEROS_NUMPAD_OPEN   = false;  // teclado numérico incorporado plegado/desplegado
+let VIAJEROS_SHOW_OUT      = false;  // salientes del día ocultos por defecto en las vistas por hab
 
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
@@ -2864,12 +2869,13 @@ const UI = {
     tabViajeros:'Viajeros',
     vjSubtitle:'Dietas y restricciones por habitación',
     vjReportOf:'Reporte del',
-    vjStatViajeros:'viajeros', vjStatNinos:'niños', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'salen hoy',
+    vjStatViajeros:'viajeros', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'salen hoy',
     vjSearchPh:'Buscar viajero, hab o grupo...',
     vjEmpty:'Aún no hay datos de viajeros. Corre "Seed Viajeros" desde GitHub Actions para poblar Firebase.',
     vjError:'No se pudieron cargar los viajeros. Se reintenta al volver a abrir la tab.',
-    vjHab:'Hab', vjYears:'años', vjNino:'niño',
+    vjHab:'Hab', vjYears:'años', vjNino:'menor', vjNinoPl:'menores',
     vjSaleHoy:'sale hoy', vjSaleManana:'sale mañana', vjLlegaHoy:'llegó hoy',
+    vjVerSalientes:'ver salientes', vjOcultarSalientes:'ocultar salientes',
     vjSinRestriccion:'Sin restricciones',
     vjNoResults:'Sin resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Borrar', vjClear:'Limpiar',
@@ -3026,12 +3032,13 @@ const UI = {
     tabViajeros:'Guests',
     vjSubtitle:'Diets & restrictions by room',
     vjReportOf:'Report of',
-    vjStatViajeros:'guests', vjStatNinos:'children', vjStatAlergias:'allergies', vjStatDietas:'diets', vjStatSalenHoy:'leave today',
+    vjStatViajeros:'guests', vjStatNinos:'minors', vjStatAlergias:'allergies', vjStatDietas:'diets', vjStatSalenHoy:'leave today',
     vjSearchPh:'Search guest, room or group...',
     vjEmpty:'No guest data yet. Run "Seed Viajeros" from GitHub Actions to populate Firebase.',
     vjError:'Could not load guests. Will retry next time the tab opens.',
-    vjHab:'Room', vjYears:'yrs', vjNino:'child',
+    vjHab:'Room', vjYears:'yrs', vjNino:'minor', vjNinoPl:'minors',
     vjSaleHoy:'leaves today', vjSaleManana:'leaves tomorrow', vjLlegaHoy:'arrived today',
+    vjVerSalientes:'show departures', vjOcultarSalientes:'hide departures',
     vjSinRestriccion:'No restrictions',
     vjNoResults:'No matches for this filter',
     vjNumpadToggle:'Number pad', vjDelete:'Delete', vjClear:'Clear',
@@ -3188,12 +3195,13 @@ const UI = {
     tabViajeros:'Viajantes',
     vjSubtitle:'Dietas e restrições por quarto',
     vjReportOf:'Relatório de',
-    vjStatViajeros:'viajantes', vjStatNinos:'crianças', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'saem hoje',
+    vjStatViajeros:'viajantes', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'saem hoje',
     vjSearchPh:'Buscar viajante, quarto ou grupo...',
     vjEmpty:'Ainda não há dados de viajantes. Rode "Seed Viajeros" no GitHub Actions para popular o Firebase.',
     vjError:'Não foi possível carregar os viajantes. Nova tentativa ao reabrir a aba.',
-    vjHab:'Quarto', vjYears:'anos', vjNino:'criança',
+    vjHab:'Quarto', vjYears:'anos', vjNino:'menor', vjNinoPl:'menores',
     vjSaleHoy:'sai hoje', vjSaleManana:'sai amanhã', vjLlegaHoy:'chegou hoje',
+    vjVerSalientes:'ver saídas', vjOcultarSalientes:'ocultar saídas',
     vjSinRestriccion:'Sem restrições',
     vjNoResults:'Sem resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Apagar', vjClear:'Limpar',
@@ -5474,8 +5482,12 @@ winetipsStart();
 // Traveler: { id, nombre, edad, nac, grupo, in, out, tags[], obs, foto? }
 // Escribe solo scripts/sync_viajeros.py (seed hoy; Excel Dietas+Geos fase 2).
 // Read-only en la app, sin PIN. Estado y VJ_TAGS viven en STATE TOP.
-// "Niño" se deriva de edad ≤ VIAJEROS_NINO_MAX; "sale hoy" compara out con
-// la fecha local del dispositivo (no con la fecha del reporte).
+// "Menor" se deriva de edad ≤ VIAJEROS_NINO_MAX (17 = menor de edad); "sale
+// hoy" compara out con la fecha local del dispositivo (no con la del reporte).
+// Los que salen hoy quedan OCULTOS en las vistas por hab (acá y en el panel de
+// habs del Comande) — a la hora del servicio ya no están y solo estorban la
+// lectura. Siguen a un tap: el stat "salen hoy" los filtra, y cada tarjeta de
+// hab ofrece "ver salientes" (VIAJEROS_SHOW_OUT).
 
 function viajerosUrl(){ return `${CF_FIREBASE_CONFIG.databaseURL}/${VIAJEROS_PATH}.json`; }
 
@@ -5525,6 +5537,35 @@ function vjAvatarEl(tr, extra){
 function vjFlag(nac){ return VJ_NAC[String(nac || '').trim().toUpperCase()] || ''; }
 function vjFirstName(nombre){ return String(nombre || '').trim().split(/\s+/)[0] || ''; }
 function vjIsNino(tr){ return typeof tr.edad === 'number' && tr.edad <= VIAJEROS_NINO_MAX; }
+function vjSaleHoy(tr){ return tr.out === vjTodayIso(); }
+// Divide una hab en los que se quedan y los que salen hoy. Las vistas por hab
+// muestran solo `queda` salvo que el usuario pida ver los salientes.
+function vjSplitOut(list){
+  const out = [], queda = [];
+  (list || []).forEach(tr => (vjSaleHoy(tr) ? out : queda).push(tr));
+  return { queda, out };
+}
+// Lo que se muestra en una hab según el toggle. Si TODOS salen hoy, se muestran
+// igual: una hab vacía no dice nada y el saliente sigue siendo el ocupante.
+function vjVisibles(list){
+  const s = vjSplitOut(list);
+  if (VIAJEROS_SHOW_OUT || !s.queda.length) return { rows: list || [], ocultos: 0 };
+  return { rows: s.queda, ocultos: s.out.length };
+}
+function vjToggleShowOut(ev){
+  if (ev) ev.stopPropagation();
+  VIAJEROS_SHOW_OUT = !VIAJEROS_SHOW_OUT;
+  if (typeof currentTab !== 'undefined' && currentTab === 'comandera') comandaRender();
+  else vjRenderBody();
+}
+// Línea discreta para recuperar lo oculto — "el detalle, a mano".
+function vjOutToggleLine(ocultos){
+  if (!ocultos && !VIAJEROS_SHOW_OUT) return '';
+  const txt = VIAJEROS_SHOW_OUT
+    ? t('vjOcultarSalientes')
+    : `${ocultos} ${ocultos > 1 ? t('vjStatSalenHoy') : t('vjSaleHoy')} · ${t('vjVerSalientes')}`;
+  return `<button class="vj-out-toggle" onclick="vjToggleShowOut(event)">${txt}</button>`;
+}
 function vjHasAlergia(tr){ return (tr.tags || []).some(x => x.indexOf('alergia-') === 0); }
 function vjHasDieta(tr){ return (tr.tags || []).some(x => x.indexOf('dieta-') === 0); }
 function vjTagCls(tag){ return (VJ_TAGS[tag] && VJ_TAGS[tag].cls) || tag.split('-')[0]; }
@@ -5707,19 +5748,23 @@ function vjRenderHabs(){
   const keys = Object.keys(habs).sort();
   const today = vjTodayIso();
   return `<div class="vj-grid">` + keys.map(h => {
-    const list = habs[h] || [];
-    const grupo = (list[0] && list[0].grupo) || '';
+    const full = habs[h] || [];
+    // Los que salen hoy no se listan (ni cuentan en los flags): a la hora del
+    // servicio ya no están. El flag "N sale hoy" deja el dato a la vista.
+    const vis  = vjVisibles(full);
+    const list = vis.rows;
+    const grupo = (full[0] && full[0].grupo) || '';
     const nAl = list.filter(vjHasAlergia).length;
     const nDi = list.filter(vjHasDieta).length;
     const nCo = list.filter(tr => (tr.tags || []).some(x => x.indexOf('cond-') === 0)).length;
     const nNi = list.filter(vjIsNino).length;
-    const sale = list.some(tr => tr.out === today);
+    const nSale = full.filter(tr => tr.out === today).length;
     const flags = [];
     if (nAl) flags.push(`<span class="vj-flag alergia">● ${nAl}</span>`);
     if (nDi) flags.push(`<span class="vj-flag dieta">● ${nDi}</span>`);
     if (nCo) flags.push(`<span class="vj-flag cond">● ${nCo}</span>`);
-    if (nNi) flags.push(`<span class="vj-flag nino">${nNi} ${t('vjNino')}${nNi > 1 ? 's' : ''}</span>`);
-    if (sale) flags.push(`<span class="vj-flag out">${t('vjSaleHoy')}</span>`);
+    if (nNi) flags.push(`<span class="vj-flag nino">${nNi} ${nNi > 1 ? t('vjNinoPl') : t('vjNino')}</span>`);
+    if (nSale) flags.push(`<span class="vj-flag out">${nSale > 1 ? nSale + ' ' + t('vjStatSalenHoy') : t('vjSaleHoy')}</span>`);
     return `
       <div class="vj-hab-card" onclick="vjOpenHab('${h}')">
         <div class="vj-hab-top"><span class="vj-hab-num">${vjEsc(h)}</span><span class="vj-hab-grupo">${vjEsc(grupo)}</span></div>
@@ -5751,7 +5796,9 @@ function vjRenderHabModal(){
   const list = (VIAJEROS_DATA.habs[hab] || []);
   const grupo = (list[0] && list[0].grupo) || '';
   const today = vjTodayIso();
-  const rows = list.map(tr => vjTravelerRow(tr, today)).join('');
+  const vis  = vjVisibles(list);
+  const rows = vis.rows.map(tr => vjTravelerRow(tr, today)).join('')
+             + vjOutToggleLine(vis.ocultos);
   return `
     <div class="vj-modal-backdrop" onclick="vjCloseHab()">
       <div class="vj-modal" onclick="event.stopPropagation()">
@@ -8948,8 +8995,10 @@ function comandaRenderRoomsPanel(c){
     bodyHtml = rooms.map(h => {
       const list  = cmdRoomTravelers(h);
       const grupo = (list && list[0] && list[0].grupo) || '';
+      // En el Comande importan los que están: los salientes van ocultos.
+      const vis   = vjVisibles(list);
       const inner = (list && list.length)
-        ? list.map(tr => vjTravelerRow(tr, today)).join('')
+        ? vis.rows.map(tr => vjTravelerRow(tr, today)).join('') + vjOutToggleLine(vis.ocultos)
         : `<div class="cmd-room-nodata">${t('cmdRoomNoData')}</div>`;
       return `
         <div class="cmd-room-card">
@@ -8981,8 +9030,9 @@ function comandaRenderFullRooms(c){
   const blocks = rooms.map(h => {
     const list  = cmdRoomTravelers(h);
     const grupo = (list && list[0] && list[0].grupo) || '';
+    const vis   = vjVisibles(list);
     const inner = (list && list.length)
-      ? list.map(tr => vjTravelerRow(tr, today)).join('')
+      ? vis.rows.map(tr => vjTravelerRow(tr, today)).join('') + vjOutToggleLine(vis.ocultos)
       : `<div class="cmd-room-nodata">${t('cmdRoomNoData')}</div>`;
     return `
       <div class="cmd-room-card">

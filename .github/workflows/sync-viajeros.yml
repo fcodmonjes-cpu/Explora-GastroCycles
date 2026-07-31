@@ -3,9 +3,13 @@ name: Sync Viajeros (PGO)
 # Fase 2: entra a PGO (portal web), lee el "Reporte Geos" + "Dietas" del día y
 # escribe /viajeros/current en Firebase — el reemplazo automático del seed manual.
 #
-# Corre solo cada mañana (10:00 UTC = 06:00 en Chile, antes del desayuno) y
-# también a mano desde la UI de Actions. El cron pasa la fecha de HOY: PGO abre
-# por defecto en el día siguiente, así que sin --date poblaría mañana.
+# Corre solo a medianoche de Chile (04:00 UTC en invierno = 00:00 CLT; en
+# horario de verano queda 01:00 CLT — igual de madrugada), así a las 06:00 el
+# handbook ya tiene los datos del día. También corre a mano desde la UI de
+# Actions. El cron pasa la fecha de HOY: PGO abre por defecto en el día
+# siguiente, así que sin --date poblaría mañana.
+# Ojo: GitHub atrasa los cron en horas de carga; si un día importa el minuto
+# exacto, disparar a mano.
 # Nota: el botón "Run workflow" recién aparece en la UI de Actions cuando este
 # archivo llega a la rama default (main) — igual que seed-viajeros.yml.
 #
@@ -17,7 +21,7 @@ name: Sync Viajeros (PGO)
 
 on:
   schedule:
-    - cron: "0 10 * * *"
+    - cron: "0 4 * * *"
   workflow_dispatch:
     inputs:
       date:
