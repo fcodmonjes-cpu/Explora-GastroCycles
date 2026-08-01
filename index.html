@@ -1191,7 +1191,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    Deliberadamente NO son las tarjetas de la tab: acá manda la ops-strip, así
    que es una línea mono discreta, del alto de un renglón. Los números pesan,
    las etiquetas se apagan. */
-.pgo-banner { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 16px; margin:0 0 1.1rem; padding:0 0 0.9rem; border-bottom:0.5px solid var(--border); font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
+/* El halo es TEMPORAL: acompaña al badge "nuevo" del tab mientras el módulo
+   sea novedad. Reusa @notice-glow y el ámbar del sistema (202,138,4) — sin
+   color nuevo. Para apagarlo: borrar animation, border y background, y
+   devolver el border-bottom que tenía la versión de una línea. */
+.pgo-banner { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 16px; margin:0 0 1.3rem; padding:0.7rem 0.85rem; border:0.5px solid rgba(202,138,4,0.22); border-radius:var(--radius-md); background:rgba(202,138,4,0.03); animation:notice-glow 5s ease-in-out infinite; font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
 .pgo-banner[hidden] { display:none; }
 .pgo-b-item { display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap; background:none; border:0; padding:0; font-family:inherit; cursor:pointer; transition:opacity .15s; }
 .pgo-b-item:active { opacity:0.6; }
