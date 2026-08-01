@@ -1550,9 +1550,15 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-stat.active { border-color:var(--gold); background:var(--gold-light); }
 
 /* Chips de filtro por tag — solo los presentes en la data de hoy. */
-.vj-chips { display:flex; flex-wrap:wrap; gap:6px; margin:0.8rem 0 1rem; }
-.vj-chip { font-size:11px; letter-spacing:0.03em; padding:4px 11px; border-radius:999px; border:0.5px solid var(--border-md); background:transparent; color:var(--text-secondary); cursor:pointer; transition:all .15s; -webkit-user-select:none; user-select:none; }
-.vj-chip .vj-chip-n { font-family:'Courier Prime','Courier New',monospace; font-size:10px; opacity:0.75; margin-left:4px; }
+/* Grilla en vez de flex-wrap: con nombres de largo tan dispar ("Gluten" vs
+   "Sin frutos secos") el wrap dejaba filas de 4, 3, 3 y 2 con los bordes
+   derechos en cualquier parte. En columnas iguales los nombres arrancan
+   todos en la misma vertical y los conteos quedan a la derecha, como el
+   índice de una carta. auto-fill: 2 columnas en teléfono, más en pantallas
+   anchas, sin media queries. */
+.vj-chips { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; margin:0.8rem 0 1rem; }
+.vj-chip { display:flex; justify-content:space-between; align-items:baseline; gap:8px; text-align:left; font-size:11px; letter-spacing:0.03em; padding:5px 10px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:transparent; color:var(--text-secondary); cursor:pointer; transition:all .15s; -webkit-user-select:none; user-select:none; }
+.vj-chip .vj-chip-n { font-family:'Courier Prime','Courier New',monospace; font-size:10px; opacity:0.75; }
 .vj-chip.alergia { color:#e08663; border-color:rgba(216,90,48,0.45); }
 .vj-chip.dieta   { color:#cfa14a; border-color:rgba(186,117,23,0.45); }
 .vj-chip.cond    { color:var(--wine-red-dark); border-color:rgba(127,119,221,0.45); }
