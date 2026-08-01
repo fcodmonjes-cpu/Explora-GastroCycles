@@ -1,8 +1,17 @@
 name: Sync Rol desde SharePoint
 
+# DESHABILITADO 2026-08-01 — cayó en desuso: la base de la que extraía los
+# datos cambió por completo y el job venía fallando cada hora. El overview de
+# turnos ya salió de la home y el rol vivo se cubre desde PGO (sync-viajeros).
+#
+# Queda SOLO workflow_dispatch: no corre solo, pero se puede disparar a mano
+# para probar si algún día se reconecta la fuente. Para revivirlo: arreglar
+# scripts/sync_rol.py contra la fuente nueva, actualizar el secret
+# SHAREPOINT_URL y descomentar el cron de abajo.
+
 on:
-  schedule:
-    - cron: '0 * * * *'   # cada hora en punto
+  # schedule:
+  #   - cron: '0 * * * *'   # cada hora en punto
   workflow_dispatch:        # trigger manual desde GitHub Actions UI
 
 jobs:
