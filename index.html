@@ -102,7 +102,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .ops-strip { margin: 0 0 1.5rem; padding: 0 0 0.9rem; border-bottom: 0.5px solid var(--border); }
 
 /* Staffing panel — child of .ops-strip. No own border; relies on wrapper. */
-.staffing-panel { margin: 0 0 0.7rem; padding: 0; font-family: 'Courier Prime','Courier New',monospace; }
+/* LATENTE 2026-08-01 — el overview de turnos rotativos se retiró de la home a
+   pedido del owner (ya no se consulta). El módulo staffing sigue entero: su
+   fetch, su render y la tab Rol funcionan igual. Reactivar = borrar el
+   display:none de abajo. */
+.staffing-panel { display:none; margin: 0 0 0.7rem; padding: 0; font-family: 'Courier Prime','Courier New',monospace; }
 .staffing-panel:empty { margin: 0; }
 .staffing-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:0.7rem; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; }
 /* Subtle opacity pulse — signals "live data, syncing in real time" without
@@ -1176,8 +1180,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    main: gastrocycles.vercel.app / .company) queda oculto y el módulo sigue
    latente e inalcanzable. Cuando el módulo esté listo para el staff,
    publicar = borrar el gate de host del boot y dejarlo siempre visible. */
+/* 2026-08-01 — OCULTO EN TODOS LOS ENTORNOS. Antes se revelaba en hosts de
+   desarrollo vía body.chk-access-on; ese destape se retiró para que staging
+   modele main tal cual. El módulo sigue latente: para volver a publicarlo,
+   restaurar la regla `body.chk-access-on #tab-btn-checklist { display:flex; }`
+   (el boot todavía pone la clase) o dejarlo visible sin gate. */
 #tab-btn-checklist { display:none; }
-body.chk-access-on #tab-btn-checklist { display:flex; }
+
+/* ── Banner PGO (home) ────────────────────────────────────────────────────
+   Deliberadamente NO son las tarjetas de la tab: acá manda la ops-strip, así
+   que es una línea mono discreta, del alto de un renglón. Los números pesan,
+   las etiquetas se apagan. */
+.pgo-banner { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 16px; margin:0 0 1.1rem; padding:0 0 0.9rem; border-bottom:0.5px solid var(--border); font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
+.pgo-banner[hidden] { display:none; }
+.pgo-b-item { display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap; background:none; border:0; padding:0; font-family:inherit; cursor:pointer; transition:opacity .15s; }
+.pgo-b-item:active { opacity:0.6; }
+.pgo-b-num { font-size:15px; color:var(--text); line-height:1; }
+.pgo-b-num.ninos  { color:var(--teal); }
+.pgo-b-num.dietas { color:var(--gold); }
+.pgo-b-label { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); }
+.pgo-b-tag { font-size:8px; letter-spacing:0.08em; color:var(--teal); border:0.5px solid rgba(29,158,117,0.45); border-radius:3px; padding:0 3px; }
+.pgo-b-go { margin-left:auto; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); }
+.pgo-banner:hover .pgo-b-go { color:var(--gold); }
 
 .checklist-feature-btn {
   display:flex; align-items:center; justify-content:center; gap:10px;
@@ -1730,6 +1754,13 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
     <span class="checklist-feature-icon" aria-hidden="true">◇</span>
     <span class="checklist-feature-label">Checklist &amp; Protocolos</span>
   </button>
+
+  <!-- Banner PGO — ocupa el lugar que dejó el botón de Checklist. Una sola
+       línea mono, sin cajas: el mismo lenguaje de la ops-strip, no las
+       tarjetas de la tab. Tap = abre PGO. Lo puebla pgoBannerRender() desde
+       VIAJEROS_DATA (ya se baja en el boot, no agrega un fetch). Cada contador
+       es un botón: abre PGO ya filtrado por eso mismo. -->
+  <div class="pgo-banner" id="pgo-banner" hidden></div>
 
   <div class="main-tabs">
     <button class="tab active" onclick="setTab('menus',this)">Menú</button>
@@ -5513,6 +5544,43 @@ async function viajerosFetch(){
   }
   VIAJEROS_FETCHED_AT = Date.now();
   viajerosRender();
+  pgoBannerRender();
+}
+
+// ── Banner PGO en la home ────────────────────────────────────────────────
+// Resumen del día donde antes estaba el botón de Checklist. "Viajeros" son los
+// que van a estar en el servicio: total del reporte MENOS los que salen hoy —
+// misma regla con la que las vistas por hab esconden a los salientes.
+function pgoBannerCounts(){
+  const all   = vjAll();
+  const queda = all.filter(tr => !vjSaleHoy(tr));
+  return { viajeros: queda.length, menores: queda.filter(vjIsNino).length,
+           dietas: queda.filter(vjHasDieta).length, alergias: queda.filter(vjHasAlergia).length };
+}
+function pgoBannerRender(){
+  const el = document.getElementById('pgo-banner');
+  if (!el) return;
+  if (!VIAJEROS_DATA){ el.hidden = true; return; }   // sin datos no se anuncia
+  const c = pgoBannerCounts();
+  el.hidden = false;
+  el.innerHTML = `
+    <button type="button" class="pgo-b-item" onclick="pgoBannerOpen(null)">
+      <span class="pgo-b-num">${c.viajeros}</span><span class="pgo-b-label">${t('vjStatViajeros')}</span></button>
+    <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('ninos')">
+      <span class="pgo-b-num ninos">${c.menores}</span><span class="pgo-b-label">${t('vjStatNinos')}</span><span class="pgo-b-tag">-18</span></button>
+    <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('dietas')">
+      <span class="pgo-b-num dietas">${c.dietas}</span><span class="pgo-b-label">${t('vjStatDietas')}</span></button>
+    <span class="pgo-b-go">PGO ›</span>`;
+}
+// Cada contador entra a PGO ya filtrado por lo que muestra — el número deja de
+// ser un dato y pasa a ser la puerta a los nombres detrás de él.
+function pgoBannerOpen(filtro){
+  VIAJEROS_FILTER   = filtro || null;
+  VIAJEROS_HAB_OPEN = null;
+  VIAJEROS_SEARCH   = '';
+  const inp = document.getElementById('vj-search');
+  if (inp) inp.value = '';
+  setTab('viajeros', document.getElementById('tab-btn-viajeros'));
 }
 
 // Entrada por tab: re-fetch solo si la data está vieja (el sync es horario;
@@ -5822,6 +5890,7 @@ function vjRenderHabModal(){
 }
 
 onI18nChange(viajerosRender);
+onI18nChange(pgoBannerRender);   // el banner de la home vive fuera de la tab
 viajerosFetch();   // boot: no gatea el telón de intro — el módulo vive detrás de su tab
 
 // ── History helpers ──────────────────────────────────────────────────────────
