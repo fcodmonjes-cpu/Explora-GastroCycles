@@ -2,7 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- viewport-fit=cover: la app se instala en pantalla completa (PWA), así que
+     el contenido llega hasta los bordes del iPhone. El respiro contra el notch
+     y la barra inferior lo pone .app con env(safe-area-inset-*). -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>The ATA Handbook</title>
 <!-- Favicon: A italic gold + dot, eco visual del subtítulo "el detalle, a
      mano". SVG escala sin pérdida; usa Georgia italic como fallback robusto
@@ -11,8 +14,19 @@
      nítido que un PNG). theme-color tiñe la chrome del browser móvil con
      el bg del programa. -->
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="apple-touch-icon" href="/favicon.svg">
 <meta name="theme-color" content="#0f0f10">
+<!-- PWA — "Agregar a pantalla de inicio" abre el handbook sin la chrome del
+     browser, como una app. En iOS mandan las metas apple-*; el manifest es
+     para Android/Chrome. El apple-touch-icon tiene que ser PNG: iOS ignora el
+     SVG y cae a una captura de pantalla como ícono.
+     black-translucent = el fondo del programa pasa por debajo de la barra de
+     estado; el texto no se mete ahí gracias al safe-area de .app. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ATA">
 <!-- Cormorant Garamond — referenced throughout the app as the elegant serif
      family, finally loaded from Google Fonts so italic actually renders
      as italic instead of falling back to Palatino. Subset to the four
@@ -86,7 +100,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   }
 }
 
-.app { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem; }
+/* El padding suma los safe-area insets: instalada en pantalla completa, el
+   contenido pasaría por debajo del notch y de la barra de gestos. En el
+   browser normal esos insets valen 0 y el padding queda como siempre. */
+.app { max-width: 960px; margin: 0 auto;
+       padding: calc(1.5rem + env(safe-area-inset-top)) calc(1rem + env(safe-area-inset-right))
+                calc(1.5rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left)); }
 
 .header { padding: 1rem 0 1.5rem; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between; }
 /* Brand title — italic Cormorant Garamond. Bigger than before so the
@@ -11998,6 +12017,18 @@ const CHK_SEED = {
     ]
   }
 };
+</script>
+
+<!-- PWA — registro del service worker. Va al final y detrás de 'load' para no
+     competir con el primer render. Estrategia network-first (ver sw.js): la
+     app siempre pide a la red, el cache solo salva cuando el wifi se corta.
+     Si alguna vez hay que desinstalarlo, la receta está en sw.js. -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});   // falla en silencio: la app funciona igual sin SW
+  });
+}
 </script>
 </body>
 </html>
