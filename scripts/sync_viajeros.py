@@ -274,9 +274,24 @@ def obs_to_tags(obs):
 
 # ── Construcción del doc ──────────────────────────────────────────────────────
 
+# Firebase Realtime Database rechaza como clave: vacío y cualquier cosa con
+# . $ # [ ] / o caracteres de control — devuelve 400 y NO escribe nada. La hab
+# viene del reporte, así que una celda rara (vacía, "S/N", "12.A") tiraba abajo
+# el sync entero. Pasó el 2026-08-07: PGO leyó las 71 filas y el PUT murió.
+_FB_BAD_KEY = re.compile(r"[.$#\[\]/\x00-\x1f\x7f]")
+
+def fb_key(valor, fallback="SIN HAB"):
+    k = _FB_BAD_KEY.sub("", str(valor or "")).strip()
+    return k or fallback
+
+
 def build_doc(rows, date_str, source):
     habs = {}
     for i, (hab, nombre, edad, nac, grupo, in_d, out_d, obs) in enumerate(rows):
+        hab_ok = fb_key(hab)
+        if hab_ok != str(hab or "").strip():
+            print(f"[sync-viajeros] Aviso: hab '{hab}' no sirve como clave → '{hab_ok}'.")
+        hab = hab_ok
         traveler = {
             "id":     f"h{hab}-{i}",
             "nombre": nombre,
@@ -1069,14 +1084,20 @@ def get_token():
 
 
 def fb_put(token, path, data):
+    """El token va en la cabecera, no en la query.
+
+    Con ?access_token=… el token entraba en la URL y, ante un error, requests lo
+    imprimía completo en el traceback del log de Actions (pasó el 2026-08-07).
+    """
     import requests
     r = requests.put(
         f"{DB_URL}/{path}.json",
-        params={"access_token": token},
+        headers={"Authorization": f"Bearer {token}"},
         json=data,
         timeout=20,
     )
-    r.raise_for_status()
+    if not r.ok:      # el cuerpo dice QUÉ rechazó Firebase; el status solo dice 400
+        raise SystemExit(f"[sync-viajeros] Firebase rechazó el PUT ({r.status_code}): {r.text[:300]}")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
