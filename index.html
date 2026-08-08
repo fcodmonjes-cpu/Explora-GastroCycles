@@ -253,8 +253,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Firma manuscrita "Comande Smart" — invitación recatada, escrita a mano */
 .cmd-home-script { font-family:'Caveat',cursive; font-size:22px; font-weight:500; line-height:1; color:var(--text-secondary); opacity:0.92; margin-bottom:1px; }
 .cmd-exit-btn { background:transparent; border:none; color:var(--text-tertiary); font-size:11px; text-decoration:underline; cursor:pointer; padding:0; }
-.cmd-mesa-card { display:flex; gap:14px; align-items:center; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:8px; cursor:pointer; transition:border-color .15s, background .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
-.cmd-mesa-card:hover { background:var(--bg-secondary); border-color:var(--gold); }
+.cmd-mesa-card { display:flex; gap:14px; align-items:center; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:8px; cursor:pointer; transition:border-color .15s, background .15s, transform .08s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+/* REGLA DE FEEL (2026-08-08) — vale para todo el módulo:
+   1. `:hover` va SIEMPRE dentro de @media (hover:hover). En iOS Safari el hover
+      se queda PEGADO después del tap: la tarjeta quedaba con borde gold hasta
+      tocar otra cosa. Es la mitad de la sensación "página web, no app".
+   2. Si un elemento suprime el highlight nativo con -webkit-tap-highlight-color,
+      DEBE tener `:active`. Si no, apretás y no pasa absolutamente nada hasta que
+      la acción termina — la otra mitad de la sensación de touch poco fiable.
+   3. La transición del transform va corta (.08s): el press tiene que sentirse
+      en el dedo, no animarse. */
+@media (hover:hover){ .cmd-mesa-card:hover { background:var(--bg-secondary); border-color:var(--gold); } }
+.cmd-mesa-card:active { background:var(--bg-secondary); border-color:var(--gold); transform:scale(0.985); }
 .cmd-mesa-num { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:24px; color:var(--gold); min-width:40px; text-align:center; }
 .cmd-mesa-info { flex:1; min-width:0; font-family:'Courier Prime','Courier New',monospace; }
 .cmd-mesa-meta { font-size:11px; color:var(--text-tertiary); letter-spacing:0.08em; text-transform:uppercase; }
@@ -266,7 +276,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-history-section { margin-top:1.75rem; padding-top:1.1rem; border-top:0.5px solid var(--border); }
 .cmd-history-title { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:0.85rem; }
 .cmd-mesa-card-closed { opacity:0.6; transition:opacity .15s, border-color .15s, background .15s; }
-.cmd-mesa-card-closed:hover { opacity:1; }
+@media (hover:hover){ .cmd-mesa-card-closed:hover { opacity:1; } }
+.cmd-mesa-card-closed:active { opacity:1; }
 .cmd-mesa-card-closed .cmd-mesa-num { color:var(--text-tertiary); }
 .cmd-mesa-card-closed .cmd-mesa-elapsed { color:var(--text-tertiary); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; }
 .cmd-empty-state { text-align:center; color:var(--text-tertiary); font-size:11px; padding:2.5rem 1rem; letter-spacing:0.1em; text-transform:uppercase; font-family:'Courier Prime','Courier New',monospace; }
@@ -282,11 +293,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-stepper-btn:active { transform:scale(0.94); }
 .cmd-stepper-val { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:32px; color:var(--gold); min-width:50px; text-align:center; }
 .cmd-form-actions { display:flex; gap:8px; justify-content:space-between; margin-top:10px; }
-.cmd-btn { padding:9px 16px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:transparent; color:var(--text-secondary); font-size:12px; cursor:pointer; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; font-family:inherit; }
-.cmd-btn:hover { color:var(--text); }
+.cmd-btn { padding:9px 16px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:transparent; color:var(--text-secondary); font-size:12px; cursor:pointer; transition:background .15s, border-color .15s, color .15s, opacity .15s, transform .08s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; font-family:inherit; }
+@media (hover:hover){ .cmd-btn:hover { color:var(--text); } }
+.cmd-btn:not(:disabled):active { color:var(--text); background:var(--gold-light); border-color:var(--gold); transform:scale(0.97); }
 .cmd-btn:disabled { opacity:0.35; cursor:default; }
 .cmd-btn.primary { background:var(--wine-red); border-color:var(--wine-red); color:white; }
-.cmd-btn.primary:hover { opacity:0.88; }
+@media (hover:hover){ .cmd-btn.primary:hover { opacity:0.88; } }
+.cmd-btn.primary:not(:disabled):active { background:var(--wine-red); border-color:var(--wine-red); color:white; opacity:0.82; transform:scale(0.97); }
 
 /* Active mesa view */
 .cmd-active-header { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:1rem; }
@@ -294,7 +307,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-active-sub { font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); margin-top:2px; }
 .cmd-active-controls { display:flex; gap:10px; align-items:center; }
 .cmd-timer-btn { background:transparent; border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:5px 10px; font-family:'Courier Prime','Courier New',monospace; font-size:13px; color:var(--gold); cursor:pointer; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; line-height:1.2; }
-.cmd-timer-btn:hover { background:rgba(202,138,4,0.08); }
+@media (hover:hover){ .cmd-timer-btn:hover { background:rgba(202,138,4,0.08); } }
+.cmd-timer-btn:active { background:rgba(202,138,4,0.2); border-color:var(--gold); transform:scale(0.95); }
 .cmd-timer-btn.warn { color:#e07b3a; border-color:rgba(224,123,58,0.45); }
 .cmd-timer-btn.urgent { color:#e55; border-color:rgba(229,85,85,0.5); animation:cfurgentpulse 1.8s ease infinite; }
 
@@ -315,10 +329,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-table-hint { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; letter-spacing:0.09em; text-transform:uppercase; color:var(--text-tertiary); }
 .cmd-table-tools { display:flex; gap:6px; flex:0 0 auto; }
 .cmd-mini-btn { background:var(--surface); border:0.5px solid var(--border-md); color:var(--text-secondary); border-radius:var(--radius-md); padding:5px 10px; font-size:12px; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; transition:all .15s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
-.cmd-mini-btn:hover { border-color:var(--gold); color:var(--gold); }
+@media (hover:hover){ .cmd-mini-btn:hover { border-color:var(--gold); color:var(--gold); } }
+.cmd-mini-btn:active { border-color:var(--gold); color:var(--gold); background:rgba(186,117,23,0.2); transform:scale(0.94); }
 .cmd-mini-btn.active { border-color:var(--gold); color:var(--gold); background:rgba(186,117,23,0.12); }
 .cmd-shape-ctl { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:8px 0 4px; padding:8px 10px; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:var(--radius-md); animation:panelIn 0.2s ease both; }
 .cmd-shape-opt { flex:1 1 0; min-width:66px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text-secondary); border-radius:var(--radius-md); padding:7px 8px; font-size:12px; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; text-align:center; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.cmd-shape-opt:active { background:rgba(186,117,23,0.22); border-color:var(--gold); color:var(--gold); transform:scale(0.96); }
 .cmd-shape-opt.active { background:rgba(186,117,23,0.16); border-color:var(--gold); color:var(--gold); }
 
 .cmd-table-map { position:relative; width:100%; max-width:380px; margin:6px auto 0; height:clamp(230px, 62vw, 320px); }
@@ -328,8 +344,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-table-surface.shape-couple { width:28%; height:28%; border-radius:50%; }
 .cmd-table-name { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.1; }
 .cmd-table-name small { display:block; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); margin-top:3px; }
-.cmd-seat { position:absolute; transform:translate(-50%,-50%); width:46px; height:46px; border-radius:50%; border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:22px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s, border-color .15s, box-shadow .15s, color .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
-.cmd-seat:hover { border-color:rgba(78,160,255,0.5); }
+.cmd-seat { position:absolute; transform:translate(-50%,-50%); width:46px; height:46px; border-radius:50%; border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:22px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s, border-color .15s, box-shadow .15s, color .15s, transform .08s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+@media (hover:hover){ .cmd-seat:hover { border-color:rgba(78,160,255,0.5); } }
+.cmd-seat:active { border-color:#4ea0ff; background:rgba(78,160,255,0.16); transform:translate(-50%,-50%) scale(0.9); }
 .cmd-seat.active { background:rgba(78,160,255,0.2); color:#cfe4ff; border-color:#4ea0ff; box-shadow:0 0 0 1px rgba(78,160,255,0.55), 0 0 14px rgba(78,160,255,0.4); z-index:2; }
 .cmd-seat.head { border-color:rgba(202,138,4,0.55); }
 .cmd-seat.head.active { border-color:#4ea0ff; }
@@ -355,8 +372,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Tags de categoría: grilla uniforme (columnas iguales, alineadas) en vez de
    pills de ancho dispar que se veían ragueadas al envolver. */
 .cmd-cats { display:grid; grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); gap:6px; margin-bottom:0.85rem; }
-.cmd-cat-btn { display:flex; align-items:center; justify-content:center; gap:7px; min-height:46px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:9px 10px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; transition:background .15s, border-color .15s, color .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
-.cmd-cat-btn:hover { color:var(--text-secondary); border-color:rgba(186,117,23,0.4); }
+.cmd-cat-btn { display:flex; align-items:center; justify-content:center; gap:7px; min-height:46px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:9px 10px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; transition:background .15s, border-color .15s, color .15s, transform .08s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+@media (hover:hover){ .cmd-cat-btn:hover { color:var(--text-secondary); border-color:rgba(186,117,23,0.4); } }
+.cmd-cat-btn:active { color:var(--gold); border-color:var(--gold); background:rgba(186,117,23,0.16); transform:scale(0.97); }
 .cmd-cat-btn.active { background:rgba(186,117,23,0.16); border-color:var(--gold); color:var(--gold); box-shadow:0 0 0 1px rgba(186,117,23,0.35); }
 
 /* Item catalog */
@@ -367,14 +385,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Catálogo como grilla de chips: todo visible, tap targets grandes, menos scroll */
 .cmd-cat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); gap:6px; }
 .cmd-item-btn { display:flex; align-items:center; justify-content:center; text-align:center; min-height:50px; padding:8px 10px; border-radius:10px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text); font-size:13px; font-family:inherit; cursor:pointer; transition:background .12s, border-color .12s, transform .07s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; line-height:1.2; }
-.cmd-item-btn:hover { border-color:rgba(186,117,23,0.5); }
+@media (hover:hover){ .cmd-item-btn:hover { border-color:rgba(186,117,23,0.5); } }
 .cmd-item-btn:active { background:rgba(186,117,23,0.16); border-color:var(--gold); transform:scale(0.97); }
 .cmd-item-name { min-width:0; }
 .cmd-item-allergen { font-size:14px; color:#e07b3a; cursor:help; flex-shrink:0; }
 .cmd-item-allergen-tip { font-size:10px; color:#e07b3a; opacity:0.75; }
 
 /* Buscador transversal + teclado en pantalla — reusa tokens; sin paleta nueva */
-.cmd-search-panel { margin-bottom:0.85rem; animation:panelIn 0.22s cubic-bezier(0.34,1.1,0.64,1) both; }
+/* La animación de entrada va detrás de .panel-in y NO en la regla base: cableada
+   al elemento se re-disparaba en cada comandaRender(), así que el catálogo entero
+   volvía a entrar animado cada vez que el mozo tocaba un plato. La clase se pone
+   sólo cuando el panel realmente aparece o cambia de modo (ver COMANDA_PANEL_ANIM). */
+.cmd-search-panel { margin-bottom:0.85rem; }
+.cmd-search-panel.panel-in { animation:panelIn 0.22s cubic-bezier(0.34,1.1,0.64,1) both; }
 .cmd-search-bar { display:flex; align-items:center; gap:8px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:9px 12px; margin-bottom:8px; }
 .cmd-search-icon { color:var(--text-tertiary); font-size:16px; flex-shrink:0; }
 /* min-height 24px = alto del botón ✕: la barra no crece cuando aparece al teclear. */
@@ -395,7 +418,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-search-row-group { flex-shrink:0; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
 .cmd-search-hint { text-align:center; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); padding:8px 0; }
 .cmd-search-otro { width:100%; padding:9px; margin-bottom:10px; border:0.5px dashed var(--border-md); border-radius:var(--radius-md); background:transparent; color:var(--text-tertiary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:15px; cursor:pointer; transition:border-color .15s, color .15s; -webkit-tap-highlight-color:transparent; }
-.cmd-search-otro:hover { border-color:var(--gold); color:var(--gold); }
+@media (hover:hover){ .cmd-search-otro:hover { border-color:var(--gold); color:var(--gold); } }
+.cmd-search-otro:active { border-color:var(--gold); color:var(--gold); background:var(--gold-light); }
 .cmd-kbd { display:flex; flex-direction:column; gap:5px; }
 .cmd-kbd-row { display:flex; gap:5px; justify-content:center; }
 .cmd-kbd-key { flex:1 1 0; min-width:0; padding:13px 0; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text); font-size:16px; text-transform:uppercase; font-family:'Courier Prime','Courier New',monospace; cursor:pointer; transition:background .12s, border-color .12s, opacity .12s; touch-action:manipulation; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
@@ -403,7 +427,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-kbd-key.dim { opacity:0.22; pointer-events:none; }
 .cmd-kbd-key.cmd-kbd-del { flex:0 0 15%; color:var(--text-tertiary); font-size:15px; }
 .cmd-search-mode { width:100%; margin-top:10px; padding:8px; border:none; background:transparent; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:color .15s; -webkit-tap-highlight-color:transparent; }
-.cmd-search-mode:hover { color:var(--gold); }
+@media (hover:hover){ .cmd-search-mode:hover { color:var(--gold); } }
+.cmd-search-mode:active { color:var(--gold); }
 .cmd-kbd-space { flex:1 1 55%; text-transform:none; font-size:12px; letter-spacing:0.06em; color:var(--text-tertiary); }
 /* Marca sutil "otro día" en resultados fuera del menú del día */
 .cmd-search-row.is-offday { opacity:0.82; }
@@ -416,7 +441,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-line.cmd-sep-line { background:transparent; border:none; min-height:0; padding:4px 0; }
 .cmd-sep-rule { flex:1; height:0; border-top:1.5px dashed rgba(192,125,42,0.6); margin:0 10px; }
 .cmd-add-sep { display:block; margin:8px auto 0; padding:6px 14px; border:0.5px dashed var(--border-md); border-radius:var(--radius-md); background:transparent; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:border-color .15s, color .15s; -webkit-tap-highlight-color:transparent; }
-.cmd-add-sep:hover { border-color:var(--gold); color:var(--gold); }
+@media (hover:hover){ .cmd-add-sep:hover { border-color:var(--gold); color:var(--gold); } }
+.cmd-add-sep:active { border-color:var(--gold); color:var(--gold); background:var(--gold-light); }
 
 /* Custom item inline form */
 .cmd-custom-form { padding:10px 12px; background:rgba(202,138,4,0.04); border:0.5px solid rgba(202,138,4,0.2); border-radius:var(--radius-md); margin-bottom:1rem; animation:panelIn 0.22s cubic-bezier(0.34,1.1,0.64,1) both; }
@@ -425,7 +451,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-custom-input:focus { border-color:var(--gold); }
 
 /* Diner-specific summary block (active diner) */
-.cmd-diner-summary { padding-top:0.85rem; border-top:0.5px solid var(--border); margin-bottom:0.85rem; }
+/* Dentro de la bandeja el borde superior ya lo pone el handle, y el scroll lo
+   maneja .cmd-tray-body — acá sólo queda el respiro vertical. */
+.cmd-diner-summary { padding-top:0.35rem; margin-bottom:0.5rem; }
 .cmd-summary-head { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:7px; }
 .cmd-summary-empty { font-size:11px; color:var(--text-tertiary); font-style:italic; padding:4px 0; }
 .cmd-line { display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-top:0.5px solid rgba(255,255,255,0.04); }
@@ -438,8 +466,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-line-cat { display:block; font-size:10px; color:var(--text-tertiary); letter-spacing:0.08em; text-transform:uppercase; margin-top:2px; }
 .cmd-line-actions { display:flex; gap:4px; flex-shrink:0; }
 .cmd-line-btn { width:26px; height:26px; border-radius:5px; border:0.5px solid var(--border-md); background:transparent; color:var(--text-tertiary); font-size:12px; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
-.cmd-line-btn:hover { color:var(--gold); }
-.cmd-line-btn.cmd-rm:hover { color:#d68a8a; border-color:rgba(214,138,138,0.32); }
+@media (hover:hover){ .cmd-line-btn:hover { color:var(--gold); } }
+.cmd-line-btn:active { color:var(--gold); border-color:var(--gold); background:rgba(186,117,23,0.18); transform:scale(0.9); }
+@media (hover:hover){ .cmd-line-btn.cmd-rm:hover { color:#d68a8a; border-color:rgba(214,138,138,0.32); } }
+.cmd-line-btn.cmd-rm:active { color:#d68a8a; border-color:rgba(214,138,138,0.5); background:rgba(214,138,138,0.16); }
 
 /* Footer actions */
 .cmd-footer-actions { display:flex; gap:8px; align-items:center; margin-top:1rem; padding-top:0.9rem; border-top:0.5px solid var(--border); }
@@ -654,12 +684,47 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-line.is-sent .cmd-line-grip { visibility:hidden; }
 /* Send CTA — the primary action in the waiter footer when there are open */
 /* items. Amber gradient (matches "Por enviar" header), full-width feel. */
-.cmd-send-btn { background:linear-gradient(135deg, #d49b3a, #b67d1f); color:#1a1a1a; border:0.5px solid rgba(202,138,4,0.7); border-radius:var(--radius-md); padding:10px 18px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; font-style:italic; font-weight:600; letter-spacing:0.04em; cursor:pointer; box-shadow:0 0 0 0 rgba(246,196,107,0.5); animation:cmdSendBtnPulse 2.2s ease-in-out infinite; }
-.cmd-send-btn:hover { filter:brightness(1.05); }
+.cmd-send-btn { background:linear-gradient(135deg, #d49b3a, #b67d1f); color:#1a1a1a; border:0.5px solid rgba(202,138,4,0.7); border-radius:var(--radius-md); padding:10px 18px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; font-style:italic; font-weight:600; letter-spacing:0.04em; cursor:pointer; box-shadow:0 0 0 0 rgba(246,196,107,0.5); animation:cmdSendBtnPulse 2.2s ease-in-out infinite; transition:filter .12s, transform .08s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+@media (hover:hover){ .cmd-send-btn:hover { filter:brightness(1.05); } }
+.cmd-send-btn:active { filter:brightness(0.9); transform:scale(0.97); }
 @keyframes cmdSendBtnPulse {
   0%, 100% { box-shadow:0 0 0 0 rgba(246,196,107,0.0); }
   50%      { box-shadow:0 0 0 6px rgba(246,196,107,0.18); }
 }
+
+/* ── Bandeja del pedido — anclada al borde inferior ───────────────────────
+   El resumen del asiento vivía al FONDO del documento, después del teclado y
+   del mapa de mesa: en un iPhone quedaba siempre fuera de pantalla, así que el
+   mozo tocaba un plato y no veía nada. Acá el pedido pasa a una bandeja fija:
+   colapsada muestra asiento + conteo + último ítem (es la confirmación de que
+   el tap entró), y al tocarla sube por encima del catálogo con el detalle
+   completo. Nunca empuja el catálogo ni el teclado.
+   position:fixed funciona porque .app no tiene transform/will-change (ver nota
+   de 2026-06-09 arriba) — si algún día se le agrega uno, esto deja de anclar. */
+.cmd-tray { position:fixed; left:0; right:0; bottom:0; z-index:900; background:var(--bg-secondary); border-top:0.5px solid var(--border-md); box-shadow:0 -10px 28px rgba(0,0,0,0.45); padding-bottom:env(safe-area-inset-bottom); }
+.cmd-tray-inner { max-width:960px; margin:0 auto; }
+.cmd-tray-handle { display:flex; align-items:center; gap:9px; width:100%; padding:11px 14px; background:transparent; border:none; color:var(--text-secondary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; text-align:left; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cmd-tray-handle:active { background:rgba(255,255,255,0.05); }
+.cmd-tray-caret { color:var(--gold); font-size:10px; transition:transform .2s ease; flex-shrink:0; }
+.cmd-tray.is-open .cmd-tray-caret { transform:rotate(180deg); }
+.cmd-tray-seat { color:var(--gold); flex-shrink:0; }
+.cmd-tray-count { color:var(--text-secondary); flex-shrink:0; display:inline-block; }
+/* Destello del conteo al agregar: junto al :active de la ficha, cierra el lazo
+   "toqué → pasó algo" sin re-renderizar nada. */
+@keyframes cmdTrayBump {
+  0%   { transform:scale(1);    color:var(--text-secondary); }
+  30%  { transform:scale(1.22); color:var(--gold); }
+  100% { transform:scale(1);    color:var(--text-secondary); }
+}
+.cmd-tray-count.bump { animation:cmdTrayBump 0.36s cubic-bezier(0.34,1.2,0.64,1); }
+.cmd-tray-last { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:15px; text-transform:none; letter-spacing:0.01em; color:var(--text-tertiary); }
+.cmd-tray-send { padding:0 14px 10px; }
+.cmd-tray-send:empty { display:none; }
+.cmd-tray-send .cmd-send-btn { width:100%; }
+.cmd-tray-body { display:none; max-height:min(58vh,470px); overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:0 14px 12px; }
+.cmd-tray.is-open .cmd-tray-body { display:block; }
+/* Reserva en el flujo para que el último ítem del documento no quede tapado. */
+.cmd-tray-spacer { height:62px; }
 /* Recibidor view — mesa cards. Glow while lastSentAt > recibidorSeenAt. */
 .cmd-recibidor-card { position:relative; display:flex; align-items:center; gap:14px; padding:14px 16px; margin-bottom:10px; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); cursor:pointer; transition:transform .15s, border-color .2s; }
 .cmd-recibidor-card:hover { transform:translateY(-1px); }
@@ -2412,6 +2477,15 @@ let COMANDA_CATALOG_MODE    = 'search'; // 'search' | 'browse'
 let COMANDA_SEARCH_QUERY    = '';       // buffer del teclado en pantalla
 let COMANDA_SEARCH_CUSTOM   = false;    // captura de texto libre ("Otro / pedido especial")
 let COMANDA_SEARCH_INDEX    = null;     // índice plano del catálogo (rebuild al abrir mesa)
+// Animación de entrada del panel de catálogo: se consume (vuelve a false) en el
+// primer comandaRenderSearch() que la use. Sin esto la animación estaba cableada
+// a la regla base y se re-disparaba en CADA render — el catálogo entero volvía a
+// entrar animado por cada plato tocado, que es lo que se leía como "programa
+// barato". Se re-arma sólo cuando el panel de verdad aparece o cambia de modo.
+let COMANDA_PANEL_ANIM      = true;
+// Bandeja del pedido anclada al borde inferior: colapsada (default) muestra
+// asiento + conteo + último ítem; abierta sube sobre el catálogo con el detalle.
+let COMANDA_TRAY_OPEN       = false;
 let COMANDA_NEW_MESA_BUF    = '';
 let COMANDA_NEW_DINERS      = 2;
 let COMANDA_NOTE_EDIT_ID    = null;     // item id whose note dialog is open
@@ -2890,6 +2964,8 @@ const UI = {
     cmdFullViewTitle:'Comanda completa',
     // Mapa de mesa espacial + vista única de comanda
     cmdSeat:'Asiento', cmdHead:'Cabecera',
+    // Bandeja del pedido (2026-08-08) — traducciones EN/PT propuestas, a revisar.
+    cmdSeatShort:'as.', cmdTrayOneItem:'1 ítem', cmdTrayNItems:'{n} ítems',
     cmdShapeRect:'Rectangular', cmdShapeRound:'Redonda', cmdShapeCouple:'Pareja',
     cmdTableShape:'Forma de mesa', cmdTableTotals:'Totales de la mesa', cmdBySeat:'Por asiento',
     cmdAddSeat:'Agregar comensal', cmdTapSeat:'Tocá un asiento para tomar su pedido',
@@ -3052,6 +3128,7 @@ const UI = {
     cmdFullViewTitle:'Full ticket',
     // Spatial table map + single order view · [EN — revisar]
     cmdSeat:'Seat', cmdHead:'Head',
+    cmdSeatShort:'st.', cmdTrayOneItem:'1 item', cmdTrayNItems:'{n} items',
     cmdShapeRect:'Rectangular', cmdShapeRound:'Round', cmdShapeCouple:'Couple',
     cmdTableShape:'Table shape', cmdTableTotals:'Table totals', cmdBySeat:'By seat',
     cmdAddSeat:'Add guest', cmdTapSeat:'Tap a seat to take its order',
@@ -3214,6 +3291,7 @@ const UI = {
     cmdFullViewTitle:'Comanda completa',
     // Mapa espacial da mesa + vista única · [PT — revisar]
     cmdSeat:'Assento', cmdHead:'Cabeceira',
+    cmdSeatShort:'as.', cmdTrayOneItem:'1 item', cmdTrayNItems:'{n} itens',
     cmdShapeRect:'Retangular', cmdShapeRound:'Redonda', cmdShapeCouple:'Casal',
     cmdTableShape:'Forma da mesa', cmdTableTotals:'Totais da mesa', cmdBySeat:'Por assento',
     cmdAddSeat:'Adicionar hóspede', cmdTapSeat:'Toque num assento para fazer o pedido',
@@ -7545,6 +7623,7 @@ function comandaResetSearch(){
   COMANDA_SEARCH_QUERY = '';
   COMANDA_SEARCH_CUSTOM = false;
   COMANDA_SEARCH_INDEX = null;   // rebuild lazy: depende del día D1-D4 y del servicio
+  COMANDA_PANEL_ANIM = true;     // el panel aparece de cero → sí se anima
 }
 function comandaBuildSearchIndex(){
   const idx = [];
@@ -7690,8 +7769,12 @@ function comandaRenderSearch(){
   const ph = custom ? t('cmdSearchOtro') : t('cmdSearchPlaceholder');
   const qDisp = q ? vjEsc(q) : `<span class="cmd-search-ph">${ph}</span>`;
   const body = custom ? comandaCustomPreviewHtml(q) : comandaSearchResultsHtml(q);
+  // La clase de animación se consume acá: un render cualquiera (agregar ítem,
+  // cambiar de asiento, cerrar una nota) NO re-anima el panel.
+  const animCls = COMANDA_PANEL_ANIM ? ' panel-in' : '';
+  COMANDA_PANEL_ANIM = false;
   return `
-    <div class="cmd-search-panel">
+    <div class="cmd-search-panel${animCls}">
       <div class="cmd-search-bar">
         <span class="cmd-search-icon">${custom ? '✎' : '⌕'}</span>
         <span class="cmd-search-q" id="cmd-search-q">${qDisp}</span>
@@ -7776,6 +7859,7 @@ function comandaSearchAdd(srcKey, sourceId, name, allergens, group){
 // que el mozo ya venía tecleando en la búsqueda.
 function comandaSearchOtro(){
   COMANDA_SEARCH_CUSTOM = true;
+  COMANDA_PANEL_ANIM = true;   // cambia de modo → el panel sí se re-anima
   comandaRender();
 }
 function comandaCustomConfirm(){
@@ -7788,10 +7872,12 @@ function comandaCustomConfirm(){
 }
 function comandaCustomCancel(){
   COMANDA_SEARCH_CUSTOM = false;
+  COMANDA_PANEL_ANIM = true;
   comandaRender();
 }
 function comandaSetCatalogMode(mode){
   COMANDA_CATALOG_MODE = mode;
+  COMANDA_PANEL_ANIM = true;   // search ↔ browse es un cambio de superficie
   comandaRender();
 }
 
@@ -7955,13 +8041,72 @@ function comandaAddItem(source, sourceId, name, allergens, group){
   else if (isDrink)        insertAt = lastIdx + 1;                          // bebida → final del bloque
   else                     insertAt = (firstDrinkIdx >= 0) ? firstDrinkIdx : lastIdx + 1; // comida → antes de bebidas
   items.splice(insertAt, 0, item);
-  // Optimistic UI: render IMMEDIATELY so the tap feels instant. The
-  // network write happens fire-and-forget; the queue in comandaPersist
-  // serialises and coalesces rapid taps so out-of-order PATCHes can't
-  // lose data.
-  comandaRender();
+  // UI optimista: se parcha SOLO la bandeja y el badge del asiento, nunca la
+  // vista entera. Un comandaRender() acá hacía innerHTML de todo lo activo y
+  // destruía el botón que el mozo tenía bajo el dedo a mitad del gesto — de ahí
+  // la sensación de tap poco fiable. Mismo criterio que comandaKbdApply.
+  // La escritura va fire-and-forget: la cola de comandaPersist serializa y
+  // coalesce los taps rápidos para que un PATCH fuera de orden no pierda datos.
+  comandaPatchTray();
   comandaPersist({ items });
   return item;
+}
+// Parche quirúrgico de la bandeja + el badge del asiento. No toca el catálogo,
+// ni el teclado, ni el scroll. Si la bandeja no está en el DOM (otra vista),
+// cae al render completo.
+function comandaPatchTray(){
+  const tray = document.getElementById('cmd-tray');
+  if (!tray){ comandaRender(); return; }
+  const items  = (COMANDA_ACTIVE_DATA && COMANDA_ACTIVE_DATA.items) || [];
+  const dinerN = COMANDA_ACTIVE_DINER;
+  const { count, last } = comandaTraySummary(items, dinerN);
+
+  const countEl = document.getElementById('cmd-tray-count');
+  if (countEl){
+    countEl.textContent = count === 1 ? t('cmdTrayOneItem') : t('cmdTrayNItems').replace('{n}', count);
+    // Re-arranca la animación de destello: sin el reflow intermedio el navegador
+    // no vuelve a dispararla cuando la clase ya estaba puesta.
+    countEl.classList.remove('bump');
+    void countEl.offsetWidth;
+    countEl.classList.add('bump');
+  }
+  const lastEl = document.getElementById('cmd-tray-last');
+  if (lastEl) lastEl.innerHTML = last ? '⤓ ' + vjEsc(last) : '';
+
+  const sendEl = document.getElementById('cmd-tray-send');
+  if (sendEl){
+    const html = comandaSendBtnHtml(items);
+    if (sendEl.innerHTML !== html) sendEl.innerHTML = html;   // evita reiniciar el pulso
+  }
+  // El detalle sólo se reconstruye si la bandeja está abierta (si no, no se ve).
+  if (COMANDA_TRAY_OPEN){
+    const sum = document.getElementById('cmd-diner-summary');
+    if (sum) sum.innerHTML = comandaDinerSummaryHtml(items, dinerN) + comandaAddSepBtnHtml(items, dinerN);
+  }
+  comandaPatchSeatBadges(items);
+}
+// Badges de cantidad sobre los asientos del mapa (quién ya pidió, de un vistazo).
+// Se ubican por data-seat y se crean/actualizan/borran en su lugar, sin redibujar
+// el mapa: redibujarlo cancelaría el :active del asiento recién tocado.
+function comandaPatchSeatBadges(items){
+  const counts = {};
+  items.forEach(it => {
+    if (it.status === 'cancelled' || comandaIsSep(it)) return;
+    counts[it.dinerN] = (counts[it.dinerN] || 0) + (it.qty || 1);
+  });
+  document.querySelectorAll('.cmd-table-map .cmd-seat[data-seat]').forEach(btn => {
+    const n = parseInt(btn.getAttribute('data-seat'), 10);
+    const cnt = counts[n] || 0;
+    let badge = btn.querySelector('.cmd-seat-badge');
+    if (!cnt){ if (badge) badge.remove(); return; }
+    if (!badge){
+      badge = document.createElement('span');
+      badge.className = 'cmd-seat-badge';
+      btn.appendChild(badge);
+    }
+    const txt = String(cnt);
+    if (badge.textContent !== txt) badge.textContent = txt;
+  });
 }
 // Separador manual: línea-marca movible que el mozo pone donde quiera en la
 // tanda por-enviar del asiento activo. Se inserta tras su último ítem por-enviar.
@@ -8755,7 +8900,8 @@ function comandaRenderActive(root){
     const cnt    = seatCount[s.n] || 0;
     const badge  = cnt ? `<span class="cmd-seat-badge">${cnt}</span>` : '';
     const crown  = s.isHead ? `<span class="cmd-seat-crown">♛</span>` : '';
-    return `<button class="cmd-seat${active}${head}" style="left:${s.x}%;top:${s.y}%" onclick="comandaSetDiner(${s.n})" title="${t('cmdSeat')} ${s.n}">${crown}${s.n}${badge}</button>`;
+    // data-seat: ancla estable para el patch-in-place del badge (comandaPatchSeatBadges).
+    return `<button class="cmd-seat${active}${head}" data-seat="${s.n}" style="left:${s.x}%;top:${s.y}%" onclick="comandaSetDiner(${s.n})" title="${t('cmdSeat')} ${s.n}">${crown}${s.n}${badge}</button>`;
   }).join('');
   const shapeCtl = COMANDA_SHAPE_CTL_OPEN ? `
       <div class="cmd-shape-ctl">
@@ -8844,15 +8990,53 @@ function comandaRenderActive(root){
        ${catalogHtml}`
     : comandaRenderSearch();
 
-  // Active diner's items, partitioned into batches (Por enviar / Enviado).
-  // Within each batch, course dividers still group by Entrada/Plato/Postre.
-  // Sent items lose the drag grip and dim slightly; pending items keep the
-  // freshness halo so the waiter still sees what they just typed.
-  const dinerItems = items.filter(it => it.dinerN === COMANDA_ACTIVE_DINER);
-  let dinerSummary = '';
-  if (dinerItems.length){
-    const batches = comandaSplitBatches(dinerItems);
-    dinerSummary = batches.map(batch => {
+  // El pedido del asiento, el "＋ separador" y el CTA de enviar viven ahora en la
+  // bandeja inferior (comandaTrayHtml). Se arman con los mismos helpers que usa
+  // el patch-in-place de comandaAddItem, así render y parche no se desincronizan.
+  const trayHtml = comandaTrayHtml(items);
+
+  root.innerHTML = `
+    <div class="cmd-active-header">
+      <div>
+        <div class="cmd-active-title">${t('cmdMesaPrefix')} ${c.mesa}</div>
+        <div class="cmd-active-sub">${diners} ${diners===1?t('cmdComensal'):t('cmdComensales')}</div>
+      </div>
+      <div class="cmd-active-controls">
+        ${timerChip}
+        <button class="cmd-change-mesa-btn" onclick="comandaChangeMesaShow()" title="${t('cmdChangeMesa')}">⇆ ${t('cmdChangeMesa')}</button>
+        <button class="cmd-mesas-btn" onclick="comandaBackToHome()">${t('cmdMesasBtn')}</button>
+      </div>
+    </div>
+
+    ${comandaRenderRoomsPanel(c)}
+
+    <div class="cmd-seat-panel-head">${t('cmdSeat')} <strong>${COMANDA_ACTIVE_DINER}</strong>${seatCfg.hasHead && COMANDA_ACTIVE_DINER===1 ? ' ♛' : ''}</div>
+
+    ${catalogSection}
+
+    ${tableMap}
+
+    <div class="cmd-tray-spacer"></div>
+    ${trayHtml}
+
+    ${COMANDA_NOTE_EDIT_ID ? comandaRenderNoteModal() : ''}
+    ${COMANDA_FULL_OPEN ? comandaRenderFullModal() : ''}
+    ${COMANDA_CHANGE_MESA_OPEN ? comandaRenderChangeMesaModal() : ''}
+    ${COMANDA_ROOM_ADD_OPEN ? comandaRenderRoomAddModal() : ''}`;
+}
+
+// ── Bandeja del pedido + helpers de resumen ──────────────────────────────
+// Extraídos de comandaRenderActive para que el patch-in-place (comandaAddItem)
+// pueda reconstruir SOLO la bandeja sin tocar el catálogo. Render y parche
+// comparten estos helpers, así no se desincronizan.
+function comandaDinerSummaryHtml(items, dinerN){
+  // Ítems del asiento, partidos en tandas (Por enviar / Enviado). Dentro de cada
+  // tanda el único corte automático es comida → bebidas. Los enviados pierden la
+  // manija de arrastre y se atenúan; los pendientes conservan el halo de recién
+  // agregado para que el mozo vea lo que acaba de tipear.
+  const dinerItems = items.filter(it => it.dinerN === dinerN);
+  if (!dinerItems.length) return `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
+  return comandaSplitBatches(dinerItems).map(batch => {
       const isPending = batch.kind === 'open';
       // Hora de envío oculta por defecto en la vista del mozo (solo ocupa
       // espacio); la cocina/recibidor sí la conserva.
@@ -8904,58 +9088,70 @@ function comandaRenderActive(root){
       }).join('');
       return header + lines;
     }).join('');
-  } else {
-    dinerSummary = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
-  }
-  // "＋ separador": visible cuando el asiento tiene algo por-enviar que dividir.
-  const dinerHasOpen = dinerItems.some(it => !it.sentAt && it.status !== 'cancelled' && !comandaIsSep(it));
-  const addSepBtn = dinerHasOpen
-    ? `<button class="cmd-add-sep" onclick="comandaAddSep()">＋ ${t('cmdAddSep')}</button>` : '';
-
-  // Send-batch CTA — visible whenever ANY diner in the mesa has open items
-  // (not just the currently-focused one). Counts across the whole mesa so
-  // the waiter can finalise the whole table in one tap.
+}
+// "＋ separador": visible cuando el asiento tiene algo por-enviar que dividir.
+function comandaAddSepBtnHtml(items, dinerN){
+  const hasOpen = items.some(it => it.dinerN === dinerN && !it.sentAt && it.status !== 'cancelled' && !comandaIsSep(it));
+  return hasOpen ? `<button class="cmd-add-sep" onclick="comandaAddSep()">＋ ${t('cmdAddSep')}</button>` : '';
+}
+// CTA de envío — visible cuando CUALQUIER comensal de la mesa tiene pendientes,
+// no sólo el asiento enfocado: el mozo cierra la mesa entera de un tap.
+function comandaSendBtnHtml(items){
   const pendingTotal = comandaPendingCount(items);
-  const sendBtn = pendingTotal > 0
+  return pendingTotal > 0
     ? `<button class="cmd-send-btn" onclick="comandaSendBatch()">${t('cmdSendBtnCount').replace('{n}', pendingTotal)}</button>`
     : '';
-
-  root.innerHTML = `
-    <div class="cmd-active-header">
-      <div>
-        <div class="cmd-active-title">${t('cmdMesaPrefix')} ${c.mesa}</div>
-        <div class="cmd-active-sub">${diners} ${diners===1?t('cmdComensal'):t('cmdComensales')}</div>
+}
+// Texto del handle: asiento + conteo + último ítem agregado. Es la confirmación
+// de que el tap entró, así que se actualiza también desde el patch-in-place.
+function comandaTraySummary(items, dinerN){
+  const mine = items.filter(it => it.dinerN === dinerN && !comandaIsSep(it) && it.status !== 'cancelled');
+  const count = mine.reduce((s, it) => s + (it.qty || 1), 0);
+  // El "último" va por addedAt, NO por posición en el array: comandaAddItem
+  // inserta la comida ANTES de la primera bebida del comensal, así que recorrer
+  // el array desde el final devolvía el vino viejo en vez del plato recién
+  // tocado — justo la confirmación que el mozo necesita ver.
+  let last = '', lastAt = -1;
+  mine.forEach(it => {
+    const at = it.addedAt || 0;
+    if (at >= lastAt){ lastAt = at; last = it.name || ''; }
+  });
+  return { count, last };
+}
+function comandaTrayHtml(items){
+  const dinerN = COMANDA_ACTIVE_DINER;
+  const { count, last } = comandaTraySummary(items, dinerN);
+  const countTxt = count === 1 ? t('cmdTrayOneItem') : t('cmdTrayNItems').replace('{n}', count);
+  return `
+    <div class="cmd-tray${COMANDA_TRAY_OPEN ? ' is-open' : ''}" id="cmd-tray">
+      <div class="cmd-tray-inner">
+        <button class="cmd-tray-handle" onclick="comandaToggleTray()">
+          <span class="cmd-tray-caret">▲</span>
+          <span class="cmd-tray-seat">${t('cmdSeatShort')} ${dinerN}</span>
+          <span class="cmd-tray-count" id="cmd-tray-count">${countTxt}</span>
+          <span class="cmd-tray-last" id="cmd-tray-last">${last ? '⤓ ' + vjEsc(last) : ''}</span>
+        </button>
+        <div class="cmd-tray-send" id="cmd-tray-send">${comandaSendBtnHtml(items)}</div>
+        <div class="cmd-tray-body" id="cmd-tray-body">
+          <div class="cmd-diner-summary" id="cmd-diner-summary">
+            ${comandaDinerSummaryHtml(items, dinerN)}
+            ${comandaAddSepBtnHtml(items, dinerN)}
+          </div>
+          <div class="cmd-footer-actions">
+            <button class="cmd-btn" onclick="comandaShowFullView()">${t('cmdViewFull')}</button>
+            <button class="cmd-btn primary" onclick="comandaCloseMesa()">${t('cmdCloseMesa')}</button>
+          </div>
+        </div>
       </div>
-      <div class="cmd-active-controls">
-        ${timerChip}
-        <button class="cmd-change-mesa-btn" onclick="comandaChangeMesaShow()" title="${t('cmdChangeMesa')}">⇆ ${t('cmdChangeMesa')}</button>
-        <button class="cmd-mesas-btn" onclick="comandaBackToHome()">${t('cmdMesasBtn')}</button>
-      </div>
-    </div>
-
-    ${comandaRenderRoomsPanel(c)}
-
-    <div class="cmd-seat-panel-head">${t('cmdSeat')} <strong>${COMANDA_ACTIVE_DINER}</strong>${seatCfg.hasHead && COMANDA_ACTIVE_DINER===1 ? ' ♛' : ''}</div>
-
-    ${catalogSection}
-
-    ${tableMap}
-
-    <div class="cmd-diner-summary">
-      ${dinerSummary}
-      ${addSepBtn}
-    </div>
-
-    <div class="cmd-footer-actions">
-      <button class="cmd-btn" onclick="comandaShowFullView()">${t('cmdViewFull')}</button>
-      ${sendBtn}
-      <button class="cmd-btn primary" onclick="comandaCloseMesa()">${t('cmdCloseMesa')}</button>
-    </div>
-
-    ${COMANDA_NOTE_EDIT_ID ? comandaRenderNoteModal() : ''}
-    ${COMANDA_FULL_OPEN ? comandaRenderFullModal() : ''}
-    ${COMANDA_CHANGE_MESA_OPEN ? comandaRenderChangeMesaModal() : ''}
-    ${COMANDA_ROOM_ADD_OPEN ? comandaRenderRoomAddModal() : ''}`;
+    </div>`;
+}
+function comandaToggleTray(){
+  COMANDA_TRAY_OPEN = !COMANDA_TRAY_OPEN;
+  // Sólo se togglea la clase: un comandaRender() acá reconstruiría el catálogo
+  // entero (y el teclado) por abrir una bandeja.
+  const tray = document.getElementById('cmd-tray');
+  if (tray) tray.classList.toggle('is-open', COMANDA_TRAY_OPEN);
+  else comandaRender();
 }
 
 function comandaRenderChangeMesaModal(){
