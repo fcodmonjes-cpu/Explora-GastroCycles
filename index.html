@@ -409,6 +409,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    12 resultados estiren la página. Que el teclado no se corra al crecer/achicar
    lo resuelve comandaPinKbd() compensando el scroll, no un alto fijo. */
 .cmd-search-results { max-height:clamp(180px,38vh,340px); overflow-y:auto; -webkit-overflow-scrolling:touch; margin-bottom:8px; overscroll-behavior:contain; }
+/* Con el teclado plegado el tope de 38vh no tiene sentido: existía para que el
+   teclado siguiera en pantalla. Sin él, la grilla del día se cortaba a media
+   fila — justo lo que este rediseño venía a evitar. */
+.cmd-search-results.kbd-folded { max-height:none; overflow-y:visible; }
 .cmd-search-row { display:flex; align-items:center; gap:10px; width:100%; text-align:left; min-height:46px; padding:8px 11px; margin-bottom:5px; border-radius:10px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text); font-family:inherit; cursor:pointer; transition:background .12s, border-color .12s, transform .07s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 .cmd-search-row:active { background:rgba(186,117,23,0.16); border-color:var(--gold); transform:scale(0.99); }
 .cmd-search-row-icon { flex-shrink:0; font-size:16px; width:22px; text-align:center; }
@@ -417,6 +421,29 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-search-al { font-size:10px; color:#e07b3a; letter-spacing:0.04em; }
 .cmd-search-row-group { flex-shrink:0; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
 .cmd-search-hint { text-align:center; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); padding:8px 0; }
+/* ── Catálogo del día como grilla de fichas ───────────────────────────────
+   La lista de una columna con el nombre completo entregaba demasiada
+   información (ícono repetido que no informa, curso repetido a la derecha de
+   cada fila, alérgenos gritando en naranja) y truncaba justo el discriminante
+   ("Corvina y texturas de…"). Con el nombre corto (dishShortName) los 8 platos
+   del día entran en 2 columnas sin scroll, agrupados por tiempo. Como el menú
+   tiene un arquetipo estable, las posiciones se repiten servicio a servicio:
+   la separación la hace la estructura, no un color nuevo. */
+.cmd-tile-head { display:flex; align-items:center; gap:8px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); padding:12px 2px 7px; }
+.cmd-tile-head::after { content:''; flex:1 1 auto; height:0.5px; background:var(--gold); opacity:0.3; }
+.cmd-tile-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.cmd-tile { position:relative; display:flex; align-items:center; justify-content:center; text-align:center; min-height:66px; padding:10px 11px; border-radius:11px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:18px; line-height:1.15; cursor:pointer; transition:background .12s, border-color .12s, transform .08s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+@media (hover:hover){ .cmd-tile:hover { border-color:rgba(186,117,23,0.5); } }
+.cmd-tile:active { background:rgba(186,117,23,0.18); border-color:var(--gold); transform:scale(0.96); }
+.cmd-tile-name { min-width:0; overflow-wrap:anywhere; }
+/* El alérgeno baja a una marca discreta en la esquina: el detalle vive en el
+   title y en la ficha del plato, no compitiendo con el nombre. */
+.cmd-tile-al { position:absolute; top:5px; right:7px; font-size:10px; color:#e07b3a; opacity:0.8; line-height:1; }
+/* Teclado plegado: en el zero-state la lista del día se queda con la pantalla;
+   el teclado aparece recién al tocar la barra de búsqueda. */
+.cmd-kbd-open { width:100%; margin-top:10px; padding:9px; border:0.5px dashed var(--border-md); border-radius:var(--radius-md); background:transparent; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+@media (hover:hover){ .cmd-kbd-open:hover { border-color:var(--gold); color:var(--gold); } }
+.cmd-kbd-open:active { border-color:var(--gold); color:var(--gold); background:var(--gold-light); }
 .cmd-search-otro { width:100%; padding:9px; margin-bottom:10px; border:0.5px dashed var(--border-md); border-radius:var(--radius-md); background:transparent; color:var(--text-tertiary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:15px; cursor:pointer; transition:border-color .15s, color .15s; -webkit-tap-highlight-color:transparent; }
 @media (hover:hover){ .cmd-search-otro:hover { border-color:var(--gold); color:var(--gold); } }
 .cmd-search-otro:active { border-color:var(--gold); color:var(--gold); background:var(--gold-light); }
@@ -2486,6 +2513,10 @@ let COMANDA_PANEL_ANIM      = true;
 // Bandeja del pedido anclada al borde inferior: colapsada (default) muestra
 // asiento + conteo + último ítem; abierta sube sobre el catálogo con el detalle.
 let COMANDA_TRAY_OPEN       = false;
+// Teclado en pantalla del buscador: plegado mientras el zero-state muestra el
+// menú del día (que es el caso mayoritario), desplegado al tocar la barra o
+// apenas hay query. Se re-pliega al limpiar la búsqueda.
+let COMANDA_KBD_OPEN        = false;
 let COMANDA_NEW_MESA_BUF    = '';
 let COMANDA_NEW_DINERS      = 2;
 let COMANDA_NOTE_EDIT_ID    = null;     // item id whose note dialog is open
@@ -7624,6 +7655,13 @@ function comandaResetSearch(){
   COMANDA_SEARCH_CUSTOM = false;
   COMANDA_SEARCH_INDEX = null;   // rebuild lazy: depende del día D1-D4 y del servicio
   COMANDA_PANEL_ANIM = true;     // el panel aparece de cero → sí se anima
+  COMANDA_KBD_OPEN = false;      // arranca con el menú del día a pantalla completa
+}
+// Despliega el teclado (tap en la barra de búsqueda o en "buscar otra cosa").
+function comandaOpenKbd(){
+  if (COMANDA_KBD_OPEN) return;
+  COMANDA_KBD_OPEN = true;
+  comandaRender();
 }
 function comandaBuildSearchIndex(){
   const idx = [];
@@ -7663,6 +7701,34 @@ function comandaBuildSearchIndex(){
 function comandaSearchIndex(){
   if (!COMANDA_SEARCH_INDEX) COMANDA_SEARCH_INDEX = comandaBuildSearchIndex();
   return COMANDA_SEARCH_INDEX;
+}
+// ── Nombre corto del plato para el catálogo ──────────────────────────────
+// El menú del lodge tiene un arquetipo rígido: las entradas de cena son
+// siempre Hojas · Sopa · Pasta · (mar/otro), y los principales carne ·
+// pescado · vegetariano · cuarto. El discriminante vive SIEMPRE en las
+// primeras 1-2 palabras: "Corvina y texturas de Betarraga" → "Corvina",
+// "Ensalada hojas con tomate" → "Ensalada hojas", "Pato con milhojas de
+// papa" → "Pato". Cortar en la primera preposición da 0 colisiones dentro de
+// día+servicio+curso sobre los 60 platos actuales — y ése es el único
+// ámbito donde importa, porque el catálogo muestra un solo servicio del día.
+// OJO: esto es SÓLO presentación. El nombre completo se sigue guardando en
+// it.name, que es lo que viaja a la comanda, al ticket y al recibidor.
+// Si la regla no acierta con un plato nuevo, se le pone `short:` en DISHES.
+const DISH_SHORT_STOP = new Set(['con','de','del','y','e','al','a','en','la','el','los','las','sin','sobre']);
+function dishShortName(name, sourceId){
+  if (sourceId && typeof DISHES !== 'undefined'){
+    const dish = DISHES.find(d => d.id === sourceId);
+    if (dish && dish.short) return dish.short;   // override explícito: gana siempre
+  }
+  const clean = String(name == null ? '' : name).replace(/\s*\([^)]*\)/g, '').trim();
+  if (!clean) return String(name == null ? '' : name);
+  const words = clean.split(/\s+/);
+  const out = [];
+  for (let i = 0; i < words.length; i++){
+    if (i > 0 && DISH_SHORT_STOP.has(words[i].toLowerCase())) break;
+    out.push(words[i]);
+  }
+  return out.join(' ') || clean;
 }
 // Iniciales de palabra: "Pisco Sour" → "ps"
 function comandaInitials(name){
@@ -7706,17 +7772,48 @@ function comandaSearchRow(srcKey, sourceId, name, group, allergens, icon, today)
   const offDay    = (today === false) ? `<span class="cmd-search-offday">${t('cmdSearchOtherDay')}</span>` : '';
   return `<button class="cmd-search-row${today===false?' is-offday':''}" onclick="comandaSearchAdd('${srcKey}', ${sid}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${alJson}"><span class="cmd-search-row-icon">${icon||''}</span><span class="cmd-search-row-main"><span class="cmd-search-row-name">${vjEsc(name)}${offDay}</span>${alHint}</span>${group?`<span class="cmd-search-row-group">${vjEsc(group)}</span>`:''}</button>`;
 }
+// Ficha del catálogo: nombre corto en grande, alérgenos reducidos a un ⚠ (el
+// detalle no cabe ni hace falta acá — el mozo ya sabe que la pasta lleva gluten;
+// el nombre completo queda en el title y en la comanda).
+function comandaDishTile(srcKey, sourceId, name, group, allergens){
+  const safeName  = String(name||'').replace(/'/g,'\\\'').replace(/"/g,'&quot;');
+  const safeGroup = String(group||'').replace(/'/g,'\\\'').replace(/"/g,'&quot;');
+  const alJson    = JSON.stringify(allergens||[]).replace(/"/g,'&quot;');
+  const sid       = sourceId ? `'${String(sourceId).replace(/'/g,'\\\'')}'` : 'null';
+  const short     = dishShortName(name, sourceId);
+  const alMark    = (allergens && allergens.length)
+    ? `<span class="cmd-tile-al" title="${vjEsc(allergens.join(', '))}">⚠</span>` : '';
+  return `<button class="cmd-tile" onclick="comandaSearchAdd('${srcKey}', ${sid}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${alJson}" title="${vjEsc(name)}"><span class="cmd-tile-name">${vjEsc(short)}</span>${alMark}</button>`;
+}
 function comandaSearchResultsHtml(q){
   if (!(q || '').trim()){
     // Zero-state: los platos/postres del día (la fuente dishes ya filtra día+servicio).
+    // Se agrupan por tiempo con encabezado propio en vez de repetir la etiqueta
+    // ENTRADA/PLATO PRINCIPAL a la derecha de cada fila, y se pintan como grilla
+    // de 2 columnas: con el nombre corto entran los 8 del día sin scroll, y las
+    // posiciones quedan estables servicio a servicio (memoria muscular).
     const dishesSrc = COMANDA_SOURCES.find(s => s.key === 'dishes');
     let day = [];
     try { day = (dishesSrc && typeof dishesSrc.items === 'function' && dishesSrc.items()) || []; } catch(e){ day = []; }
     day = day.filter(it => !it.note);
     if (day.length){
-      const icon = (dishesSrc && dishesSrc.icon) || '🍽';
-      return `<div class="cmd-search-hint">${t('cmdSearchToday')}</div>` +
-        day.map(it => comandaSearchRow('dishes', it.sourceId, it.name, it.group, it.allergens, icon)).join('');
+      const byCourse = new Map();
+      day.forEach(it => {
+        const g = it.group || '—';
+        if (!byCourse.has(g)) byCourse.set(g, []);
+        byCourse.get(g).push(it);
+      });
+      // Orden canónico del servicio primero; cualquier grupo inesperado, después.
+      const ordered = [
+        ...COMANDA_SERVICE_ORDER.filter(g => byCourse.has(g)),
+        ...[...byCourse.keys()].filter(g => COMANDA_SERVICE_ORDER.indexOf(g) < 0)
+      ];
+      return ordered.map(g => {
+        const label = COMANDA_SERVICE_ORDER.indexOf(g) >= 0 ? courseLabel(g) : g;
+        const tiles = byCourse.get(g)
+          .map(it => comandaDishTile('dishes', it.sourceId, it.name, it.group, it.allergens)).join('');
+        return `<div class="cmd-tile-head">${vjEsc(label)}</div><div class="cmd-tile-grid">${tiles}</div>`;
+      }).join('');
     }
     // Fuera de horario de servicio (o sin menú del día cargado) la lista viene
     // vacía. En vez de un marco pelado, se ofrece lo que la mesa YA pidió: "otra
@@ -7758,14 +7855,21 @@ function comandaCustomPreviewHtml(q){
 function comandaRenderSearch(){
   const q = COMANDA_SEARCH_QUERY;
   const custom = COMANDA_SEARCH_CUSTOM;
-  const live = custom ? null : comandaLiveKeys(q);   // en custom no se atenúa (texto libre)
-  let kbdHtml = ['qwertyuiop','asdfghjkl','zxcvbnm'].map(row =>
-    `<div class="cmd-kbd-row">${row.split('').map(ch => {
-      const dim = (!custom && !live.has(ch)) ? ' dim' : '';
-      return `<button class="cmd-kbd-key${dim}" data-k="${ch}" onclick="comandaKbdPress('${ch}')">${ch}</button>`;
-    }).join('')}</div>`
-  ).join('');
-  kbdHtml += `<div class="cmd-kbd-row"><button class="cmd-kbd-key cmd-kbd-space" onclick="comandaKbdPress('space')">${t('cmdKbdSpace')}</button><button class="cmd-kbd-key cmd-kbd-del" onclick="comandaKbdPress('del')" aria-label="${t('vjDelete')}">⌫</button></div>`;
+  // El teclado se despliega si el mozo lo pidió, si ya hay query, o si está
+  // capturando texto libre. En el zero-state (menú del día) va plegado: la
+  // lista se queda con la pantalla, que es lo que se usa el 90% de las veces.
+  const kbdOpen = COMANDA_KBD_OPEN || custom || !!(q || '').trim();
+  const live = (custom || !kbdOpen) ? null : comandaLiveKeys(q);   // en custom no se atenúa (texto libre)
+  let kbdHtml = '';
+  if (kbdOpen){
+    kbdHtml = ['qwertyuiop','asdfghjkl','zxcvbnm'].map(row =>
+      `<div class="cmd-kbd-row">${row.split('').map(ch => {
+        const dim = (!custom && !live.has(ch)) ? ' dim' : '';
+        return `<button class="cmd-kbd-key${dim}" data-k="${ch}" onclick="comandaKbdPress('${ch}')">${ch}</button>`;
+      }).join('')}</div>`
+    ).join('');
+    kbdHtml += `<div class="cmd-kbd-row"><button class="cmd-kbd-key cmd-kbd-space" onclick="comandaKbdPress('space')">${t('cmdKbdSpace')}</button><button class="cmd-kbd-key cmd-kbd-del" onclick="comandaKbdPress('del')" aria-label="${t('vjDelete')}">⌫</button></div>`;
+  }
   const ph = custom ? t('cmdSearchOtro') : t('cmdSearchPlaceholder');
   const qDisp = q ? vjEsc(q) : `<span class="cmd-search-ph">${ph}</span>`;
   const body = custom ? comandaCustomPreviewHtml(q) : comandaSearchResultsHtml(q);
@@ -7775,14 +7879,16 @@ function comandaRenderSearch(){
   COMANDA_PANEL_ANIM = false;
   return `
     <div class="cmd-search-panel${animCls}">
-      <div class="cmd-search-bar">
+      <div class="cmd-search-bar"${kbdOpen ? '' : ' onclick="comandaOpenKbd()"'}>
         <span class="cmd-search-icon">${custom ? '✎' : '⌕'}</span>
         <span class="cmd-search-q" id="cmd-search-q">${qDisp}</span>
-        ${q ? `<button class="cmd-search-clear" onclick="comandaKbdPress('clr')" aria-label="${t('vjClear')}">✕</button>` : ''}
+        ${q ? `<button class="cmd-search-clear" onclick="event.stopPropagation();comandaKbdPress('clr')" aria-label="${t('vjClear')}">✕</button>` : ''}
       </div>
-      <div class="cmd-search-results" id="cmd-search-results">${body}</div>
+      <div class="cmd-search-results${kbdOpen ? '' : ' kbd-folded'}" id="cmd-search-results">${body}</div>
       ${custom ? '' : `<button class="cmd-search-otro" onclick="comandaSearchOtro()">✎ ${t('cmdSearchOtro')}</button>`}
-      <div class="cmd-kbd" id="cmd-kbd">${kbdHtml}</div>
+      ${kbdOpen
+        ? `<div class="cmd-kbd" id="cmd-kbd">${kbdHtml}</div>`
+        : `<button class="cmd-kbd-open" onclick="comandaOpenKbd()">⌨ ${t('cmdSearchFind')}</button>`}
       ${custom
         ? `<button class="cmd-search-mode" onclick="comandaCustomCancel()">← ${t('cmdSearchFind')}</button>`
         : `<button class="cmd-search-mode" onclick="comandaSetCatalogMode('browse')">${t('cmdSearchBrowse')} ▾</button>`}
@@ -7825,6 +7931,13 @@ function comandaKbdApply(k){
   else if (k === 'clr')  COMANDA_SEARCH_QUERY = '';
   else if (k === 'space'){ if (COMANDA_SEARCH_QUERY && COMANDA_SEARCH_QUERY.length < 40 && COMANDA_SEARCH_QUERY.slice(-1) !== ' ') COMANDA_SEARCH_QUERY += ' '; }
   else if (COMANDA_SEARCH_QUERY.length < 40) COMANDA_SEARCH_QUERY += k;
+  comandaPatchSearchPanel();
+}
+// Refresca en su lugar la barra, los resultados y el atenuado del teclado a
+// partir del estado actual de la query. Lo usan el teclado y también
+// comandaSearchAdd: como agregar ya no re-renderiza la vista, el panel tiene
+// que limpiarse solo tras elegir un resultado.
+function comandaPatchSearchPanel(){
   const q = COMANDA_SEARCH_QUERY;
   const custom = COMANDA_SEARCH_CUSTOM;
   const qEl = document.getElementById('cmd-search-q');
@@ -7850,9 +7963,13 @@ function comandaKbdApply(k){
   }
 }
 function comandaSearchAdd(srcKey, sourceId, name, allergens, group){
-  COMANDA_SEARCH_QUERY = '';   // limpiar antes del render optimista de comandaAddItem
+  const teniaQuery = !!COMANDA_SEARCH_QUERY;
+  COMANDA_SEARCH_QUERY = '';
   COMANDA_SEARCH_CUSTOM = false;
-  comandaAddItem(srcKey, sourceId, name, allergens, group);   // hace comandaRender()
+  comandaAddItem(srcKey, sourceId, name, allergens, group);   // parcha la bandeja
+  // Si venía de una búsqueda tecleada, el panel tiene que volver al menú del día:
+  // comandaAddItem ya no re-renderiza la vista, así que se parcha explícitamente.
+  if (teniaQuery) comandaPatchSearchPanel();
 }
 // "Otro / pedido especial": captura el nombre con el MISMO teclado en pantalla
 // (sin ir a la vista de botones ni disparar el teclado del iPhone). Semilla: lo
