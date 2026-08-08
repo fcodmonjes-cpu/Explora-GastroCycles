@@ -304,6 +304,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Active mesa view */
 .cmd-active-header { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:1rem; }
 .cmd-active-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); }
+/* El título es a la vez el control del nº de mesa (comanda en blanco: el número
+   se asigna después). Sin número queda punteado, como un campo a completar. */
+.cmd-mesa-chip { display:inline-block; background:transparent; border:0.5px solid transparent; border-radius:var(--radius-md); padding:2px 8px; margin-left:-8px; text-align:left; cursor:pointer; transition:border-color .15s, background .15s, transform .08s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+@media (hover:hover){ .cmd-mesa-chip:hover { border-color:rgba(202,138,4,0.5); } }
+.cmd-mesa-chip:active { background:var(--gold-light); border-color:var(--gold); transform:scale(0.97); }
+.cmd-mesa-chip.is-empty { border-style:dashed; border-color:rgba(202,138,4,0.45); color:rgba(202,138,4,0.85); }
 .cmd-active-sub { font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); margin-top:2px; }
 .cmd-active-controls { display:flex; gap:10px; align-items:center; }
 .cmd-timer-btn { background:transparent; border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:5px 10px; font-family:'Courier Prime','Courier New',monospace; font-size:13px; color:var(--gold); cursor:pointer; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; line-height:1.2; }
@@ -682,7 +688,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* "Mesas" back button — replaces the small "Salir" link with a more
    discoverable styled button on the active mesa header. */
 .cmd-mesas-btn { background:var(--surface); border:0.5px solid var(--border-md); color:var(--text-secondary); border-radius:var(--radius-md); padding:5px 11px; font-size:11px; letter-spacing:0.06em; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; transition:all .15s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
-.cmd-mesas-btn:hover { border-color:var(--gold); color:var(--gold); }
+@media (hover:hover){ .cmd-mesas-btn:hover { border-color:var(--gold); color:var(--gold); } }
+.cmd-mesas-btn:active { border-color:var(--gold); color:var(--gold); background:var(--gold-light); transform:scale(0.96); }
+/* Acciones del home: "Empezar comanda" es la primaria (cero pasos previos);
+   "con nº de mesa" queda como camino secundario, no se retira. */
+.cmd-start-btn { width:100%; margin-top:1.25rem; padding:14px 18px; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:18px; font-style:italic; letter-spacing:0.02em; }
+.cmd-start-alt { width:100%; margin-top:8px; }
+/* Comanda sin número: el borde punteado dice "esto todavía se puede completar". */
+.cmd-mesa-card-sinnum .cmd-mesa-num { color:rgba(202,138,4,0.7); font-size:20px; }
+.cmd-mesa-card-sinnum { border-style:dashed; }
 
 /* Course / service-time divider inside the diner summary list. Thin gold
    line + tiny caption with the course name. Caption uses the captured
@@ -2953,7 +2967,9 @@ const UI = {
     tabComandera:'Comande',
     cmdPinTitle:'Comandera', cmdPinSub:'Código de acceso', cmdPinError:'Código incorrecto',
     cmdHomeTitle:'Mesas activas', cmdHomeEmpty:'No hay mesas abiertas',
-    cmdNewMesaBtn:'+ Nueva mesa',
+    cmdNewMesaBtn:'+ Con n° de mesa',
+    // Comanda en blanco (2026-08-08) — EN/PT propuestas, a revisar.
+    cmdStartBlank:'Empezar comanda', cmdMesaSinNum:'—', cmdSetMesa:'Poner n° de mesa',
     cmdNewMesaTitle:'Abrir comanda', cmdMesaNumLabel:'N° de mesa', cmdDinersLabel:'Comensales',
     cmdContinue:'Continuar →', cmdBack:'← Volver',
     cmdMesaPrefix:'Mesa', cmdComensales:'comensales', cmdComensal:'comensal',
@@ -3117,7 +3133,8 @@ const UI = {
     tabComandera:'Comande',
     cmdPinTitle:'Order pad', cmdPinSub:'Access code', cmdPinError:'Wrong code',
     cmdHomeTitle:'Active tables', cmdHomeEmpty:'No tables open',
-    cmdNewMesaBtn:'+ New table',
+    cmdNewMesaBtn:'+ With table no.',
+    cmdStartBlank:'Start order', cmdMesaSinNum:'—', cmdSetMesa:'Set table number',
     cmdNewMesaTitle:'Open table', cmdMesaNumLabel:'Table #', cmdDinersLabel:'Guests',
     cmdContinue:'Continue →', cmdBack:'← Back',
     cmdMesaPrefix:'Table', cmdComensales:'guests', cmdComensal:'guest',
@@ -3280,7 +3297,8 @@ const UI = {
     tabComandera:'Comande',
     cmdPinTitle:'Comanda', cmdPinSub:'Código de acesso', cmdPinError:'Código incorreto',
     cmdHomeTitle:'Mesas ativas', cmdHomeEmpty:'Sem mesas abertas',
-    cmdNewMesaBtn:'+ Nova mesa',
+    cmdNewMesaBtn:'+ Com n° de mesa',
+    cmdStartBlank:'Começar comanda', cmdMesaSinNum:'—', cmdSetMesa:'Pôr n° de mesa',
     cmdNewMesaTitle:'Abrir comanda', cmdMesaNumLabel:'N° de mesa', cmdDinersLabel:'Hóspedes',
     cmdContinue:'Continuar →', cmdBack:'← Voltar',
     cmdMesaPrefix:'Mesa', cmdComensales:'hóspedes', cmdComensal:'hóspede',
@@ -7253,6 +7271,13 @@ function comandaDateKey(){
   return `${y}-${m}-${da}`;
 }
 function comandaUid(){ return 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+// Etiqueta del nº de mesa. Desde la "comanda en blanco" el número es DIFERIBLE
+// (mesa:null), así que todo punto que lo pinte pasa por acá en vez de volcar
+// c.mesa crudo y mostrar "Mesa null". Único lugar donde esto puede romperse.
+function comandaMesaLabel(c){
+  const m = c && c.mesa;
+  return (m === null || m === undefined || m === '') ? t('cmdMesaSinNum') : String(m);
+}
 function comandaFmtMs(ms){
   if (!ms || ms < 0) ms = 0;
   const total = Math.floor(ms/1000);
@@ -7337,7 +7362,7 @@ function comandaBuildTicket(mesa, batch){
   // Header — chef station + mesa, both centred between rules.
   out.push(center('ATA CHEF'));
   out.push(rule());
-  out.push(center('Mesa # ' + (mesa.mesa || '?')));
+  out.push(center('Mesa # ' + comandaMesaLabel(mesa)));
   out.push(rule());
   out.push('');
   // Batch banner — when this group was sent, plain left-aligned.
@@ -7370,7 +7395,7 @@ function comandaBuildTicket(mesa, batch){
   const d = new Date(sentAt);
   const fdate = `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
   out.push(fdate);
-  out.push('Mesa: ' + (mesa.mesa || '?') + '   Clientes: ' + (mesa.diners || '?'));
+  out.push('Mesa: ' + comandaMesaLabel(mesa) + '   Clientes: ' + (mesa.diners || '?'));
   out.push(rule());
   return out.join('\n');
 }
@@ -7576,11 +7601,24 @@ function comandaNewMesaDinerStep(delta){
   COMANDA_NEW_DINERS = Math.max(1, Math.min(20, COMANDA_NEW_DINERS + delta));
   comandaRender();
 }
+// ── Comanda en blanco ────────────────────────────────────────────────────
+// El flujo obligaba a tipear nº de mesa y contar comensales ANTES de poder
+// escribir la primera línea: cuatro interacciones y dos datos que a veces
+// todavía no existen, porque el huésped pide al tiro. Acá se abre la comanda
+// vacía y se entra directo a cargar; el número se asigna después (chip del
+// header → el mismo numpad de "cambiar mesa", con su chequeo de colisión) y
+// los asientos crecen con el ＋ del mapa.
+async function comandaCreateBlank(){
+  return comandaCreateMesaDoc(null, 1);
+}
 async function comandaCreateMesa(){
   if (!COMANDA_NEW_MESA_BUF) return;
+  return comandaCreateMesaDoc(COMANDA_NEW_MESA_BUF, COMANDA_NEW_DINERS);
+}
+async function comandaCreateMesaDoc(mesa, diners){
   const payload = {
-    mesa: COMANDA_NEW_MESA_BUF,
-    diners: COMANDA_NEW_DINERS,
+    mesa: mesa,
+    diners: diners,
     openedAt: Date.now(),
     closedAt: null,
     timerStartedAt: null,
@@ -8688,7 +8726,7 @@ function comandaRenderRecibidorHome(root){
         const newChip = unseen ? `<span class="cmd-rcb-new-chip">${t('cmdRecibidorNewBatch')}</span>` : '';
         return `
           <div class="cmd-recibidor-card ${unseen?'is-new':''}" onclick="comandaRecibidorOpen('${c.id}')">
-            <div class="cmd-mesa-num">${c.mesa}</div>
+            <div class="cmd-mesa-num">${comandaMesaLabel(c)}</div>
             <div class="cmd-rcb-info">
               <div class="cmd-rcb-meta">${sentItems.length} ${t('cmdSentItems')} · ${c.diners} ${c.diners===1?t('cmdComensal'):t('cmdComensales')}</div>
               <div class="cmd-rcb-sub">${t('cmdLastSent')}: ${lastSent}</div>
@@ -8742,7 +8780,7 @@ function comandaRenderRecibidorDetail(root){
   root.innerHTML = `
     <div class="cmd-active-header">
       <div>
-        <div class="cmd-active-title">${t('cmdMesaPrefix')} ${c.mesa}</div>
+        <div class="cmd-active-title">${t('cmdMesaPrefix')} ${comandaMesaLabel(c)}</div>
         <div class="cmd-active-sub">${c.diners} ${c.diners===1?t('cmdComensal'):t('cmdComensales')}</div>
       </div>
       <div class="cmd-active-controls">
@@ -8843,10 +8881,21 @@ function comandaRenderHome(root){
         const elapsedMs = Date.now() - (c.openedAt || Date.now());
         const cls = comandaTimerClass(elapsedMs);
         const itemCount = (c.items || []).length;
-        const summary = itemCount ? `${itemCount} ítem${itemCount>1?'s':''}` : (t('cmdNoOrders') || '—');
+        let summary = itemCount ? `${itemCount} ítem${itemCount>1?'s':''}` : (t('cmdNoOrders') || '—');
+        // Una comanda sin número todavía no tiene identidad visual propia, y si
+        // hay varias abiertas compiten entre sí. La seña son la hora de apertura
+        // y los primeros ítems: alcanza para reconocer cuál es cuál.
+        const sinNum = c.mesa === null || c.mesa === undefined || c.mesa === '';
+        if (sinNum){
+          const nombres = (c.items || [])
+            .filter(it => it && it.name && !comandaIsSep(it) && it.status !== 'cancelled')
+            .slice(0, 2).map(it => dishShortName(it.name, it.sourceId));
+          const abierta = c.openedAt ? comandaFmtHM(c.openedAt) : '';
+          summary = [abierta, nombres.join(' · ')].filter(Boolean).join(' · ') || summary;
+        }
         return `
-          <div class="cmd-mesa-card" onclick="comandaOpenMesa('${c.id}')">
-            <div class="cmd-mesa-num">${c.mesa}</div>
+          <div class="cmd-mesa-card${sinNum ? ' cmd-mesa-card-sinnum' : ''}" onclick="comandaOpenMesa('${c.id}')">
+            <div class="cmd-mesa-num">${comandaMesaLabel(c)}</div>
             <div class="cmd-mesa-info">
               <div class="cmd-mesa-meta">${c.diners} ${c.diners === 1 ? t('cmdComensal') : t('cmdComensales')}${comandaRoomChip(c)}</div>
               <div class="cmd-mesa-summary">${summary}</div>
@@ -8861,7 +8910,7 @@ function comandaRenderHome(root){
     const itemCount = (c.items || []).length;
     return `
       <div class="cmd-mesa-card cmd-mesa-card-closed" onclick="comandaShowHistoryItem('${c.id}')">
-        <div class="cmd-mesa-num">${c.mesa}</div>
+        <div class="cmd-mesa-num">${comandaMesaLabel(c)}</div>
         <div class="cmd-mesa-info">
           <div class="cmd-mesa-meta">${c.diners} ${c.diners === 1 ? t('cmdComensal') : t('cmdComensales')} · ${itemCount} ítem${itemCount===1?'':'s'}${comandaRoomChip(c)}</div>
           <div class="cmd-mesa-summary">${t('cmdClosedAgo')} ${closedAgo}</div>
@@ -8881,7 +8930,8 @@ function comandaRenderHome(root){
       </div>
     </div>
     ${activeCards}
-    <button class="cmd-btn primary" style="width:100%;margin-top:1rem" onclick="comandaShowNewMesa()">${t('cmdNewMesaBtn')}</button>
+    <button class="cmd-btn primary cmd-start-btn" onclick="comandaCreateBlank()">${t('cmdStartBlank')}</button>
+    <button class="cmd-btn cmd-start-alt" onclick="comandaShowNewMesa()">${t('cmdNewMesaBtn')}</button>
     ${historySection}
     ${COMANDA_HIST_VIEW_DATA ? comandaRenderHistoryModal() : ''}`;
 }
@@ -8924,7 +8974,7 @@ function comandaRenderHistoryModal(){
   return `
     <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaHideHistoryItem()">
       <div class="cmd-modal-panel">
-        <div class="cmd-modal-title">${t('cmdMesaPrefix')} ${c.mesa} · ${t('cmdLasted')} ${lasted}</div>
+        <div class="cmd-modal-title">${t('cmdMesaPrefix')} ${comandaMesaLabel(c)} · ${t('cmdLasted')} ${lasted}</div>
         ${comandaRenderFullRooms(c)}
         ${sections.join('')}
         <div class="cmd-modal-actions">
@@ -9038,7 +9088,7 @@ function comandaRenderActive(root){
       </div>
       ${shapeCtl}
       <div class="cmd-table-map">
-        <div class="cmd-table-surface shape-${seatCfg.shape}"><span class="cmd-table-name">${t('cmdMesaPrefix')} ${c.mesa}<small>${diners} ${diners===1?t('cmdComensal'):t('cmdComensales')}</small></span></div>
+        <div class="cmd-table-surface shape-${seatCfg.shape}"><span class="cmd-table-name">${t('cmdMesaPrefix')} ${comandaMesaLabel(c)}<small>${diners} ${diners===1?t('cmdComensal'):t('cmdComensales')}</small></span></div>
         ${seatsHtml}
       </div>
     </div>`;
@@ -9111,16 +9161,18 @@ function comandaRenderActive(root){
   // bandeja inferior (comandaTrayHtml). Se arman con los mismos helpers que usa
   // el patch-in-place de comandaAddItem, así render y parche no se desincronizan.
   const trayHtml = comandaTrayHtml(items);
+  const sinNumero = c.mesa === null || c.mesa === undefined || c.mesa === '';
 
   root.innerHTML = `
     <div class="cmd-active-header">
       <div>
-        <div class="cmd-active-title">${t('cmdMesaPrefix')} ${c.mesa}</div>
+        <!-- El título es el control del nº de mesa: sin número invita a ponerlo,
+             con número abre el mismo numpad de "cambiar mesa". -->
+        <button class="cmd-active-title cmd-mesa-chip${sinNumero ? ' is-empty' : ''}" onclick="comandaChangeMesaShow()" title="${t('cmdSetMesa')}">${t('cmdMesaPrefix')} ${comandaMesaLabel(c)}</button>
         <div class="cmd-active-sub">${diners} ${diners===1?t('cmdComensal'):t('cmdComensales')}</div>
       </div>
       <div class="cmd-active-controls">
         ${timerChip}
-        <button class="cmd-change-mesa-btn" onclick="comandaChangeMesaShow()" title="${t('cmdChangeMesa')}">⇆ ${t('cmdChangeMesa')}</button>
         <button class="cmd-mesas-btn" onclick="comandaBackToHome()">${t('cmdMesasBtn')}</button>
       </div>
     </div>
@@ -9283,7 +9335,7 @@ function comandaRenderChangeMesaModal(){
       <div class="cmd-modal-panel">
         <div class="cmd-modal-title">${t('cmdChangeMesaTitle')}</div>
         <div class="cmd-new-section">
-          <span class="cmd-new-label">${t('cmdMesaPrefix')} ${c.mesa} →</span>
+          <span class="cmd-new-label">${t('cmdMesaPrefix')} ${comandaMesaLabel(c)} →</span>
           <div class="cmd-new-mesa-display ${dispClass}" id="cmd-change-display">${dispMesa}</div>
           <div class="cmd-numpad" style="max-width:240px;margin:0 auto">
             <div class="cmd-numpad-grid">
@@ -9627,7 +9679,7 @@ function comandaRenderFullModal(){
   return `
     <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaHideFullView()">
       <div class="cmd-modal-panel">
-        <div class="cmd-modal-title">${t('cmdFullViewTitle')} · ${t('cmdMesaPrefix')} ${c.mesa}</div>
+        <div class="cmd-modal-title">${t('cmdFullViewTitle')} · ${t('cmdMesaPrefix')} ${comandaMesaLabel(c)}</div>
         ${body}
         <div class="cmd-modal-actions">
           <button class="cmd-btn primary" onclick="comandaHideFullView()">OK</button>
