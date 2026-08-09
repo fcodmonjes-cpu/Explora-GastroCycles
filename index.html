@@ -951,17 +951,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   0%, 100% { opacity: 0.45; transform: scale(0.85); }
   50%       { opacity: 1;    transform: scale(1.1);  }
 }
-@keyframes notice-glow {
-  0%, 100% { box-shadow: 0 0 6px 0px rgba(202,138,4,0.15), inset 0 0 0px rgba(202,138,4,0); }
-  50%       { box-shadow: 0 0 18px 4px rgba(202,138,4,0.35), inset 0 0 8px rgba(202,138,4,0.08); }
-}
-/* Badge "nuevo" del tab PGO. Ámbar del sistema (el mismo de .tab-sparkle), sin
-   color nuevo; late apenas para llamar sin gritar. Se quita cuando deje de ser
-   novedad. El tab pasa a inline-flex porque ahora lleva label + badge. */
-.tab-with-badge { display:inline-flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap; }
-.tab-new { font-family:'Courier Prime','Courier New',monospace; font-size:8px; letter-spacing:0.1em; text-transform:uppercase; color:#fcd34d; border:0.5px solid rgba(252,211,77,0.4); border-radius:4px; padding:1px 4px; line-height:1.3; animation:new-badge-pulse 3.2s ease-in-out infinite; }
-.tab.active .tab-new { color:#fff; border-color:rgba(255,255,255,0.55); animation:none; }
-@keyframes new-badge-pulse { 0%,100% { opacity:0.6; } 50% { opacity:1; } }
+/* (2026-08-09) PGO dejó de ser novedad: se retiraron el badge "nuevo" del tab
+   (.tab-with-badge / .tab-new / @new-badge-pulse) y el halo del banner de la
+   home (@notice-glow). El tab volvió a ser uno común y el banner, mobiliario. */
 .tab-sparkle { display:inline-block; color:#fcd34d; font-size:9px; margin-right:4px; vertical-align:middle; animation:sparkle-pulse 2.8s ease-in-out infinite; }
 
 /* Detail panel */
@@ -1340,11 +1332,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    Deliberadamente NO son las tarjetas de la tab: acá manda la ops-strip, así
    que es una línea mono discreta, del alto de un renglón. Los números pesan,
    las etiquetas se apagan. */
-/* El halo es TEMPORAL: acompaña al badge "nuevo" del tab mientras el módulo
-   sea novedad. Reusa @notice-glow y el ámbar del sistema (202,138,4) — sin
-   color nuevo. Para apagarlo: borrar animation, border y background, y
-   devolver el border-bottom que tenía la versión de una línea. */
-.pgo-banner { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 16px; margin:0 0 1.3rem; padding:0.7rem 0.85rem; border:0.5px solid rgba(202,138,4,0.22); border-radius:var(--radius-md); background:rgba(202,138,4,0.03); animation:notice-glow 5s ease-in-out infinite; font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
+/* (2026-08-09) Halo retirado: PGO dejó de ser novedad, así que el banner deja
+   de anunciarse y pasa a ser mobiliario — fila mono con una regla inferior, sin
+   caja ni animación. Vuelve a mandar la ops-strip, que es lo que corresponde. */
+.pgo-banner { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 16px; margin:0 0 1.3rem; padding:0.5rem 0 0.7rem; border-bottom:0.5px solid var(--border); font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
 .pgo-banner[hidden] { display:none; }
 .pgo-b-item { display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap; background:none; border:0; padding:0; font-family:inherit; cursor:pointer; transition:opacity .15s; }
 .pgo-b-item:active { opacity:0.6; }
@@ -1354,7 +1345,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .pgo-b-label { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); }
 .pgo-b-tag { font-size:8px; letter-spacing:0.08em; color:var(--teal); border:0.5px solid rgba(29,158,117,0.45); border-radius:3px; padding:0 3px; }
 .pgo-b-go { margin-left:auto; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); }
-.pgo-banner:hover .pgo-b-go { color:var(--gold); }
+/* Guardado tras hover:hover — en iOS el hover se queda pegado tras el tap. */
+@media (hover:hover){ .pgo-banner:hover .pgo-b-go { color:var(--gold); } }
 
 .checklist-feature-btn {
   display:flex; align-items:center; justify-content:center; gap:10px;
@@ -1928,7 +1920,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
     <!-- PGO ocupa el 4º lugar (era de Café) para quedar a la vista sin scroll:
          es lo que más se consulta a hora de servicio. El badge "nuevo" invita
          a descubrirla y se retira cuando deje de serlo. -->
-    <button class="tab tab-with-badge" onclick="setTab('viajeros',this)" id="tab-btn-viajeros"><span class="tab-label">PGO</span><span class="tab-new">nuevo</span></button>
+    <button class="tab" onclick="setTab('viajeros',this)" id="tab-btn-viajeros">PGO</button>
     <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">Comande</button>
     <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol">Rol</button>
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
@@ -3096,7 +3088,7 @@ const UI = {
     chkPinTitle:'Modo edición', chkPinSub:'Introduce el código del supervisor',
     chkPinError:'Código incorrecto', chkPinClose:'Cerrar',
     // Viajeros module
-    tabViajeros:'PGO', tabNuevo:'nuevo',
+    tabViajeros:'PGO',
     vjReportOf:'Reporte del',
     vjStatViajeros:'viajeros', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'salen hoy',
     vjSearchPh:'Buscar viajero, hab o grupo...',
@@ -3260,7 +3252,7 @@ const UI = {
     chkPinTitle:'Edit mode', chkPinSub:'Enter the supervisor code',
     chkPinError:'Wrong code', chkPinClose:'Close',
     // Viajeros module
-    tabViajeros:'PGO', tabNuevo:'new',
+    tabViajeros:'PGO',
     vjReportOf:'Report of',
     vjStatViajeros:'guests', vjStatNinos:'minors', vjStatAlergias:'allergies', vjStatDietas:'diets', vjStatSalenHoy:'leave today',
     vjSearchPh:'Search guest, room or group...',
@@ -3424,7 +3416,7 @@ const UI = {
     chkPinTitle:'Modo edição', chkPinSub:'Insira o código do supervisor',
     chkPinError:'Código incorreto', chkPinClose:'Fechar',
     // Viajeros module
-    tabViajeros:'PGO', tabNuevo:'novo',
+    tabViajeros:'PGO',
     vjReportOf:'Relatório de',
     vjStatViajeros:'viajantes', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'saem hoje',
     vjSearchPh:'Buscar viajante, quarto ou grupo...',
@@ -3673,13 +3665,8 @@ function setLang(lang, el) {
   if (cmdBtn) cmdBtn.textContent = t('tabComandera');
   const rolBtn = document.getElementById('tab-btn-rol');
   if (rolBtn) rolBtn.textContent = t('tabRol');
-  // El tab de PGO lleva estructura interna (label + badge "nuevo"): se
-  // actualiza cada span por separado, igual que el de Checklist — pisar el
-  // textContent del botón borraría el badge.
-  const vjLabel = document.querySelector('#tab-btn-viajeros .tab-label');
-  if (vjLabel) vjLabel.textContent = t('tabViajeros');
-  const vjNew = document.querySelector('#tab-btn-viajeros .tab-new');
-  if (vjNew) vjNew.textContent = t('tabNuevo');
+  const vjBtn = document.getElementById('tab-btn-viajeros');
+  if (vjBtn) vjBtn.textContent = t('tabViajeros');
   // The Checklist button has internal structure (icon + label spans), so we
   // can't just overwrite its textContent — that would drop the icon. Update
   // the .checklist-feature-label span instead.
