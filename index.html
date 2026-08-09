@@ -445,6 +445,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* El alérgeno baja a una marca discreta en la esquina: el detalle vive en el
    title y en la ficha del plato, no compitiendo con el nombre. */
 .cmd-tile-al { position:absolute; top:5px; right:7px; font-size:10px; color:#e07b3a; opacity:0.8; line-height:1; }
+
+/* ── Relleno de mantenida (long-press → nota) ─────────────────────────────
+   Al apoyar el dedo un barrido dorado llena el botón en 400ms y al completarse
+   se abre la nota del ítem. Cumple dos funciones: confirma que el gesto está
+   corriendo (sin esto volvemos al "¿registró mi tap?" que acabamos de arreglar)
+   y lo enseña solo — quien apoya el dedo de más lo descubre. En iPhone es la
+   ÚNICA señal, porque navigator.vibrate no existe en iOS Safari.
+   Sin colores nuevos: el mismo gold del resto del módulo a baja alfa. */
+.cmd-tile, .cmd-search-row, .cmd-item-btn { position:relative; overflow:hidden; }
+.cmd-tile::after, .cmd-search-row::after, .cmd-item-btn::after {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:0;
+  background:rgba(186,117,23,0.28); pointer-events:none; border-radius:inherit;
+}
+.cmd-tile.is-holding::after, .cmd-search-row.is-holding::after, .cmd-item-btn.is-holding::after {
+  animation:cmdHoldFill 0.4s linear forwards;
+}
+@keyframes cmdHoldFill { from { width:0; } to { width:100%; } }
+/* Quien prefiere menos movimiento igual necesita saber que la mantenida corre:
+   en vez del barrido, el botón se tiñe de una. */
+@media (prefers-reduced-motion: reduce) {
+  .cmd-tile.is-holding::after, .cmd-search-row.is-holding::after, .cmd-item-btn.is-holding::after {
+    animation:none; width:100%;
+  }
+}
 /* Teclado plegado: en el zero-state la lista del día se queda con la pantalla;
    el teclado aparece recién al tocar la barra de búsqueda. */
 .cmd-kbd-open { width:100%; margin-top:10px; padding:9px; border:0.5px dashed var(--border-md); border-radius:var(--radius-md); background:transparent; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
@@ -2563,6 +2587,20 @@ let COMANDA_CUSTOM_OPEN     = false;
 // a dish/wine in the catalog. Updated by document-level listeners installed
 // at the bottom of the comanda module.
 let COMANDA_LAST_INTERACTION = 0;
+// Long-press sobre un botón del catálogo → agrega el ítem y abre su nota, para
+// capturar la indicación del huésped en el momento en que la dice. Mismo patrón
+// que CMD_DRAG (timer + cancelación por movimiento). `fired` sirve para suprimir
+// el click sintético que llega después del touchend: sin eso el ítem se agrega
+// dos veces (una por el long-press y otra por el onclick del botón).
+let CMD_TILE_LP = null;   // { el, timer, startX, startY }
+const CMD_TILE_LP_MS   = 400;   // el tap normal ronda 50-150ms; 400 no se pisa
+const CMD_TILE_LP_MOVE = 12;    // px de tolerancia antes de tratarlo como scroll
+// Ventana durante la cual se traga el próximo click sobre un botón del catálogo.
+// El long-press ya agregó el ítem; el click sintético que el navegador emite tras
+// el touchend lo agregaría UNA SEGUNDA VEZ. No alcanza con preventDefault() en el
+// touchend: hay entornos donde ese evento no llega (el Chrome headless del harness
+// es uno) y ahí el ítem se duplicaba. Este guardia no depende del touchend.
+let CMD_TILE_LP_SWALLOW = 0;
 
 // --- Rol (turnos) module state -------------------------------------------
 // Module: rol — weekly shift schedule reader gated by PIN. Pulls
@@ -7808,7 +7846,8 @@ function comandaSearchRow(srcKey, sourceId, name, group, allergens, icon, today)
   const sid       = sourceId ? `'${String(sourceId).replace(/'/g,'\\\'')}'` : 'null';
   const alHint    = (allergens && allergens.length) ? `<span class="cmd-search-al">⚠ ${vjEsc(allergens.join(', '))}</span>` : '';
   const offDay    = (today === false) ? `<span class="cmd-search-offday">${t('cmdSearchOtherDay')}</span>` : '';
-  return `<button class="cmd-search-row${today===false?' is-offday':''}" onclick="comandaSearchAdd('${srcKey}', ${sid}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${alJson}"><span class="cmd-search-row-icon">${icon||''}</span><span class="cmd-search-row-main"><span class="cmd-search-row-name">${vjEsc(name)}${offDay}</span>${alHint}</span>${group?`<span class="cmd-search-row-group">${vjEsc(group)}</span>`:''}</button>`;
+  const lp = `data-lp-src="${vjEsc(srcKey)}" data-lp-sid="${sourceId ? vjEsc(String(sourceId)) : ''}" data-lp-name="${vjEsc(name)}" data-lp-group="${vjEsc(group || '')}"`;
+  return `<button class="cmd-search-row${today===false?' is-offday':''}" onclick="comandaSearchAdd('${srcKey}', ${sid}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${alJson}" ${lp}><span class="cmd-search-row-icon">${icon||''}</span><span class="cmd-search-row-main"><span class="cmd-search-row-name">${vjEsc(name)}${offDay}</span>${alHint}</span>${group?`<span class="cmd-search-row-group">${vjEsc(group)}</span>`:''}</button>`;
 }
 // Ficha del catálogo: nombre corto en grande, alérgenos reducidos a un ⚠ (el
 // detalle no cabe ni hace falta acá — el mozo ya sabe que la pasta lleva gluten;
@@ -7821,7 +7860,10 @@ function comandaDishTile(srcKey, sourceId, name, group, allergens){
   const short     = dishShortName(name, sourceId);
   const alMark    = (allergens && allergens.length)
     ? `<span class="cmd-tile-al" title="${vjEsc(allergens.join(', '))}">⚠</span>` : '';
-  return `<button class="cmd-tile" onclick="comandaSearchAdd('${srcKey}', ${sid}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${alJson}" title="${vjEsc(name)}"><span class="cmd-tile-name">${vjEsc(short)}</span>${alMark}</button>`;
+  // data-lp-*: payload para el long-press (ver cmdTileLpStart). El onclick queda
+  // igual — el camino de agregar con un tap no se toca.
+  const lp = `data-lp-src="${vjEsc(srcKey)}" data-lp-sid="${sourceId ? vjEsc(String(sourceId)) : ''}" data-lp-name="${vjEsc(name)}" data-lp-group="${vjEsc(group || '')}"`;
+  return `<button class="cmd-tile" onclick="comandaSearchAdd('${srcKey}', ${sid}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${alJson}" ${lp} title="${vjEsc(name)}"><span class="cmd-tile-name">${vjEsc(short)}</span>${alMark}</button>`;
 }
 function comandaSearchResultsHtml(q){
   if (!(q || '').trim()){
@@ -9137,7 +9179,10 @@ function comandaRenderActive(root){
             // Comodín "Otra/Otro": agrega la línea y abre la nota para el detalle.
             const fn = it.note ? 'comandaAddItemNote' : 'comandaAddItem';
             const otherCls = it.note ? ' cmd-item-other' : '';
-            return `<button class="cmd-item-btn${otherCls}" onclick="${fn}('${activeSrc.key}', ${it.sourceId?`'${it.sourceId}'`:'null'}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${allergensJson}"><span class="cmd-item-name">${it.name}</span></button>`;
+            // El comodín "Otra/Otro" ya abre la nota con un solo tap, así que no
+            // recibe long-press: sería el mismo destino por dos caminos.
+            const lp = it.note ? '' : `data-lp-src="${vjEsc(activeSrc.key)}" data-lp-sid="${it.sourceId ? vjEsc(String(it.sourceId)) : ''}" data-lp-name="${vjEsc(it.name)}" data-lp-group="${vjEsc(it.group || '')}"`;
+            return `<button class="cmd-item-btn${otherCls}" onclick="${fn}('${activeSrc.key}', ${it.sourceId?`'${it.sourceId}'`:'null'}, '${safeName}', JSON.parse(this.dataset.al), '${safeGroup}')" data-al="${allergensJson}" ${lp}><span class="cmd-item-name">${it.name}</span></button>`;
           }).join('');
           return `<div class="cmd-cat-group">${gName}</div><div class="cmd-cat-grid">${itemsHtml}</div>`;
         }).join('');
@@ -10420,6 +10465,85 @@ onI18nChange(() => { if (currentTab === 'rol') rolRender(); });
     if (currentTab === 'comandera') COMANDA_LAST_INTERACTION = Date.now();
   }, { passive: true, capture: true });
 });
+
+// ── Long-press en el catálogo → nota / indicación especial ────────────────
+// Los botones que agregan un ítem (.cmd-tile del menú del día, .cmd-search-row
+// de la búsqueda, .cmd-item-btn del modo explorar) llevan los datos del producto
+// en data-*; el onclick de agregar queda intacto. Los listeners se registran UNA
+// vez acá y resuelven por delegación, así sobreviven a cada re-render sin
+// re-ligarse. El menú nativo de selección no molesta porque .cmd-root ya trae
+// -webkit-touch-callout:none (ver nota en el CSS del módulo).
+function cmdTileLpReset(){
+  if (!CMD_TILE_LP) return;
+  clearTimeout(CMD_TILE_LP.timer);
+  CMD_TILE_LP.el.classList.remove('is-holding');
+  CMD_TILE_LP = null;
+}
+function cmdTileLpStart(e){
+  if (currentTab !== 'comandera' || e.touches.length !== 1) return;
+  const el = e.target.closest && e.target.closest('[data-lp-name]');
+  if (!el) return;
+  cmdTileLpReset();
+  const touch = e.touches[0];
+  CMD_TILE_LP = {
+    el, fired: false, startX: touch.clientX, startY: touch.clientY,
+    timer: setTimeout(() => {
+      if (!CMD_TILE_LP) return;
+      const el2 = CMD_TILE_LP.el;
+      const d = el2.dataset;
+      // Se suelta el gesto YA: si por lo que sea no llegara el touchend, no
+      // queda estado colgado que contamine el próximo toque.
+      cmdTileLpReset();
+      CMD_TILE_LP_SWALLOW = Date.now() + 900;
+      let allergens = [];
+      try { allergens = JSON.parse(d.al || '[]'); } catch(err){ allergens = []; }
+      // comandaAddItem (y NO comandaAddItemNote): así no se marca
+      // COMANDA_NOTE_PENDING_ID y cancelar la nota deja el plato puesto. El
+      // comodín "Otro" conserva su camino aparte, donde cancelar sí lo descarta.
+      const item = comandaAddItem(d.lpSrc, d.lpSid || null, d.lpName, allergens, d.lpGroup || '');
+      if (item){
+        if (navigator.vibrate) try { navigator.vibrate(15); } catch(err){}
+        comandaOpenNote(item.id);
+      }
+    }, CMD_TILE_LP_MS)
+  };
+  el.classList.add('is-holding');
+}
+function cmdTileLpMove(e){
+  if (!CMD_TILE_LP || e.touches.length !== 1) return;
+  const touch = e.touches[0];
+  if (Math.abs(touch.clientX - CMD_TILE_LP.startX) > CMD_TILE_LP_MOVE ||
+      Math.abs(touch.clientY - CMD_TILE_LP.startY) > CMD_TILE_LP_MOVE){
+    cmdTileLpReset();   // se movió: era scroll, no una mantenida
+  }
+}
+function cmdTileLpEnd(e){
+  // En dispositivos reales esto evita que el click llegue a existir; el guardia
+  // de CMD_TILE_LP_SWALLOW cubre el caso de que el touchend no llegue.
+  if (!CMD_TILE_LP && CMD_TILE_LP_SWALLOW && Date.now() < CMD_TILE_LP_SWALLOW && e.cancelable){
+    e.preventDefault();
+  }
+  cmdTileLpReset();
+}
+document.addEventListener('touchstart', cmdTileLpStart, { passive: true });
+document.addEventListener('touchmove',  cmdTileLpMove,  { passive: true });
+document.addEventListener('touchend',   cmdTileLpEnd,   { passive: false });
+document.addEventListener('touchcancel', cmdTileLpReset, { passive: true });
+// Se traga el click que sigue a un long-press ya disparado. En captura, antes de
+// que llegue a ningún handler.
+// Se traga SIN mirar sobre qué cayó, a propósito: cuando el long-press dispara,
+// la nota se abre bajo el dedo, así que al levantar el click ya no aterriza en la
+// ficha sino en el overlay del modal — cuyo handler cierra la nota. Filtrando por
+// [data-lp-name] la nota se abría y se cerraba sola en el mismo gesto.
+// La ventana es corta y sólo se arma al disparar, así que el único click que
+// puede caer dentro es el de ese mismo toque.
+document.addEventListener('click', e => {
+  if (!CMD_TILE_LP_SWALLOW) return;
+  if (Date.now() > CMD_TILE_LP_SWALLOW){ CMD_TILE_LP_SWALLOW = 0; return; }
+  CMD_TILE_LP_SWALLOW = 0;
+  e.preventDefault();
+  e.stopPropagation();
+}, true);
 
 // ──────────────────────────────────────────────────────────────────────────
 // Module: checklist — pre-service operational checklists for the GEO team.
