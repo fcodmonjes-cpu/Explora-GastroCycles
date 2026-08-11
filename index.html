@@ -942,6 +942,119 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .allergen-row { display: flex; flex-wrap: wrap; gap: 4px; }
 .allergen-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border); }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   VISTA MENÚ 2026 — servicio, lente de restricciones, buffet y Carta de Bar
+   ══════════════════════════════════════════════════════════════════════════
+   El almuerzo pasó de 4 platos a 14, así que la vista corta primero por
+   SERVICIO y el buffet se dibuja como una grilla de bandejas fijas, no como
+   una lista más. Paleta sin colores nuevos: ámbar de navegación
+   (#c07d2a / rgba(192,125,42,x)), coral de alergia (#e08663) y dorado de
+   dieta (#cfa14a), los mismos que ya usan PGO y el Checklist. */
+
+/* --- Selector de servicio: la primera decisión de la pantalla ------------- */
+.mn-svc { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; padding:3px; margin:0 0 1.1rem; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:9px; }
+.mn-svc-btn { background:none; border:none; border-radius:6px; padding:9px 6px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.11em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; transition:background .15s, color .15s; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+.mn-svc-btn.active { background:rgba(192,125,42,0.14); color:#f3b572; box-shadow:0 0 0 0.5px rgba(192,125,42,0.4) inset; }
+/* Segundo nivel (comida / tragos), sólo dentro de BAR: más chico y sin caja,
+   para que se lea como sub-navegación y no compita con el selector de arriba. */
+.mn-svc2 { grid-template-columns:repeat(2,1fr); background:none; border:none; padding:0; margin:-0.6rem 0 1.1rem; width:fit-content; gap:6px; }
+.mn-svc2 .mn-svc-btn { padding:7px 16px; font-size:10px; border:0.5px solid var(--border); border-radius:999px; }
+.mn-svc2 .mn-svc-btn.active { border-color:rgba(192,125,42,0.45); }
+
+/* Riel del selector de día. Alto reservado: en BAR el selector se reemplaza
+   por el rótulo de carta fija y NADA se mueve de lugar. */
+.mn-daybar { min-height:33px; margin-bottom:1.5rem; }
+.mn-daybar .day-selector { margin-bottom:0; }
+.mn-fixed-note { display:flex; align-items:center; justify-content:center; height:33px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.13em; text-transform:uppercase; color:var(--text-tertiary); border:0.5px dashed var(--border); border-radius:var(--radius-md); }
+/* Una regla `display` explícita le gana al atributo [hidden] (que sólo aporta
+   el default display:none del user-agent). Sin esto, los dos hijos del riel
+   se dibujan a la vez. */
+.mn-daybar > [hidden] { display:none !important; }
+
+/* --- La lente de restricciones ------------------------------------------- */
+/* Arranca colapsada en una línea. Al abrirse, la fila de acciones existe
+   siempre con alto fijo: prender o apagar un eje nunca reflowea los chips. */
+.mn-lens { border:0.5px solid var(--border); border-radius:var(--radius-lg); margin-bottom:1.4rem; overflow:hidden; }
+.mn-lens.on { border-color:rgba(192,125,42,0.45); }
+.mn-lens-head { display:flex; align-items:center; gap:9px; width:100%; padding:11px 12px; background:none; border:none; color:var(--text-secondary); cursor:pointer; text-align:left; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.mn-lens-title { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); }
+.mn-lens-sum { flex:1 1 auto; min-width:0; font-size:12px; color:var(--text-tertiary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mn-lens.on .mn-lens-sum { color:#cfa14a; }
+.mn-lens-caret { flex:0 0 auto; font-size:10px; color:var(--text-tertiary); transition:transform .18s; }
+.mn-lens.open .mn-lens-caret { transform:rotate(180deg); }
+.mn-lens-body { padding:0 12px 12px; animation:panelIn 0.2s cubic-bezier(0.34,1.1,0.64,1) both; }
+.mn-lens-chips { display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:6px; }
+.mn-chip { display:flex; align-items:center; min-height:34px; padding:6px 11px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:transparent; color:var(--text-secondary); font-size:11.5px; letter-spacing:0.03em; text-align:left; cursor:pointer; transition:background .15s, color .15s, border-color .15s; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+.mn-chip.active { color:#cfa14a; border-color:rgba(186,117,23,0.55); background:var(--gold-light); }
+/* Fila de acciones: siempre presente mientras la lente está abierta. */
+.mn-lens-acts { display:flex; align-items:center; gap:7px; min-height:34px; margin-top:9px; }
+.mn-act { background:transparent; border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--text-secondary); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; padding:8px 11px; cursor:pointer; transition:color .15s, border-color .15s, background .15s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.mn-act.active { color:#f3b572; border-color:rgba(192,125,42,0.5); background:rgba(192,125,42,0.12); }
+.mn-act[disabled] { opacity:0.32; cursor:default; }
+.mn-act-room { margin-left:auto; }
+.mn-room-msg { margin-top:8px; font-size:11px; font-style:italic; color:var(--text-tertiary); }
+
+/* --- Encabezado de sección: regla editorial que crece a la derecha -------- */
+.mn-sec { margin-bottom:1.5rem; }
+.mn-sec-head { display:flex; align-items:center; gap:9px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); padding:2px 2px 9px; }
+.mn-sec-head::after { content:''; flex:1 1 auto; height:0.5px; background:var(--gold); opacity:0.3; }
+.mn-sec-count { flex:0 0 auto; font-size:9px; letter-spacing:0.08em; color:var(--text-tertiary); }
+
+/* --- La bandeja: ficha de dos columnas ------------------------------------ */
+/* Mismo feel táctil que el catálogo del Comande (.cmd-tile), con el rótulo
+   del slot arriba: el slot es fijo, lo que rota es el plato que lo ocupa. */
+.mn-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.mn-tile { position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:5px; min-height:84px; padding:9px 11px 10px; border-radius:11px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text); text-align:left; cursor:pointer; transition:background .12s, border-color .12s, transform .07s; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+.mn-tile.wide { grid-column:1 / -1; min-height:0; flex-direction:row; align-items:center; gap:10px; }
+.mn-tile.open { grid-column:1 / -1; border-color:rgba(192,125,42,0.55); cursor:default; }
+@media (hover:hover){ .mn-tile:hover { border-color:rgba(186,117,23,0.5); } }
+.mn-tile:active { transform:scale(0.97); }
+.mn-tile.open:active { transform:none; }
+.mn-slot { flex:0 0 auto; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); }
+.mn-name { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:17px; line-height:1.16; overflow-wrap:anywhere; }
+.mn-tile.wide .mn-name { font-size:16px; }
+/* Lo único que marca la ficha cerrada: lo que el plato EXCLUYE. El silencio
+   significa apto — no hay chip verde, sólo se marcan las excepciones. */
+.mn-excl { font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.05em; color:#e08663; opacity:0.9; line-height:1.3; }
+.mn-excl.nodata { color:var(--text-tertiary); }
+/* Atenuado con la lente activa: recede, pero sigue tapeable y legible —
+   el garzón necesita saber qué NO servir tanto como qué sí. */
+.mn-tile.dim { background:transparent; border-color:rgba(255,255,255,0.06); }
+.mn-tile.dim .mn-name { color:var(--text-secondary); }
+.mn-tile.dim .mn-slot { opacity:0.55; }
+/* Sin matriz del asesor: borde punteado. "No sé" tiene que verse distinto de
+   "no" y, sobre todo, distinto de "sí". */
+.mn-tile.unk { border-style:dashed; border-color:rgba(255,255,255,0.14); }
+
+/* --- Ficha abierta -------------------------------------------------------- */
+.mn-open { width:100%; margin-top:11px; padding-top:11px; border-top:0.5px solid var(--border); animation:panelIn 0.26s cubic-bezier(0.34,1.1,0.64,1) both; }
+/* La explicación breve es lo único de toda la app escrito para decirse en voz
+   alta. Por eso se lee como cita y no como texto de ficha. */
+.mn-quote { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:17px; line-height:1.5; color:var(--text); padding-left:12px; border-left:1.5px solid rgba(192,125,42,0.5); }
+.mn-ext { margin-top:10px; padding-left:12px; border-left:0.5px solid var(--border); font-size:12.5px; line-height:1.6; color:var(--text-secondary); animation:panelIn 0.2s ease both; }
+.mn-more { margin-top:9px; background:none; border:none; padding:6px 0; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.mn-meta { margin-top:11px; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
+
+/* Veredictos de restricción. Coral = no apto · dorado = apto con condición
+   (siempre con su nota, nunca un asterisco suelto) · gris = sin dato. */
+.mn-verdicts { margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+/* Etiquetas largas ("Sin gluten superficial") bajan su texto a la línea
+   siguiente en vez de dejar la fila ragueada. */
+.mn-v { display:flex; flex-wrap:wrap; gap:3px 9px; align-items:baseline; font-size:12px; line-height:1.45; }
+.mn-v-tag { flex:0 0 auto; min-width:78px; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; }
+.mn-v.no      .mn-v-tag { color:#e08663; }
+.mn-v.note    .mn-v-tag { color:#cfa14a; }
+.mn-v.nodata  .mn-v-tag { color:var(--text-tertiary); }
+.mn-v-txt { color:var(--text-secondary); }
+.mn-v.note .mn-v-txt { color:var(--text); }
+
+/* El 💡 del guion: oportunidad de mencionarlo, no un guion que recitar. */
+.mn-twin { display:inline-flex; align-items:center; gap:7px; margin-top:12px; padding:7px 11px; border-radius:999px; border:0.5px solid rgba(192,125,42,0.35); background:rgba(192,125,42,0.07); color:#cfa14a; font-size:11.5px; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.mn-draft { display:inline-block; margin-top:10px; font-size:10px; font-style:italic; color:var(--text-tertiary); }
+
+/* Vacío por filtro: nunca una pantalla muda, siempre la salida operativa. */
+.mn-empty { grid-column:1 / -1; padding:14px 12px; border:0.5px dashed var(--border); border-radius:var(--radius-md); font-size:12px; line-height:1.5; color:var(--text-tertiary); }
+
 /* Panel open animation */
 @keyframes panelIn {
   from { opacity: 0; transform: translateY(-6px) scale(0.97); }
@@ -1916,7 +2029,9 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
   <div class="main-tabs">
     <button class="tab active" onclick="setTab('menus',this)">Menú</button>
     <button class="tab" onclick="setTab('vinos',this)">Vinos</button>
-    <button class="tab" onclick="setTab('cocktails',this)">Cocktails</button>
+    <!-- Cocktails dejó de ser tab el 2026-08-10: todo lo del bar (comida +
+         tragos) vive en el segmento BAR de Menú. La fila baja de 7 a 6 tabs. -->
+
     <!-- PGO ocupa el 4º lugar (era de Café) para quedar a la vista sin scroll:
          es lo que más se consulta a hora de servicio. El badge "nuevo" invita
          a descubrirla y se retira cuando deje de serlo. -->
@@ -1926,19 +2041,66 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
   </div>
 
-  <!-- MENÚS TAB -->
+  <!-- MENÚS TAB — desde el cambio de menú 2026 la vista corta primero por
+       SERVICIO (almuerzo / cena / bar) porque el almuerzo pasó de 4 platos a
+       14 (buffet de 6 bandejas + sopa + 4 principales + 3 postres). El
+       segmented, la lente de restricciones y el contenido los pinta el JS
+       (renderDishes) para que salgan traducidos; la barra de búsqueda y el
+       selector de día quedan estáticos para no perder el foco al re-render. -->
   <div id="tab-menus">
     <div class="search-bar">
       <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
       <input type="text" placeholder="Buscar plato o ingrediente..." id="dish-search" oninput="renderDishes()">
     </div>
-    <div class="day-selector">
-      <button class="day-btn" onclick="setDay('1',this)">D1</button>
-      <button class="day-btn" onclick="setDay('2',this)">D2</button>
-      <button class="day-btn" onclick="setDay('3',this)">D3</button>
-      <button class="day-btn" onclick="setDay('4',this)">D4</button>
+    <!-- Riel de alto reservado: en BAR el selector de día se reemplaza por el
+         rótulo de carta fija y nada de lo de abajo se mueve de lugar. -->
+    <div class="mn-daybar" id="mn-daybar">
+      <div class="day-selector" id="mn-day-selector">
+        <button class="day-btn" onclick="setDay('1',this)">D1</button>
+        <button class="day-btn" onclick="setDay('2',this)">D2</button>
+        <button class="day-btn" onclick="setDay('3',this)">D3</button>
+        <button class="day-btn" onclick="setDay('4',this)">D4</button>
+      </div>
+      <div class="mn-fixed-note" id="mn-fixed-note" hidden></div>
     </div>
+    <div class="mn-svc" id="mn-svc"></div>
+    <!-- Segundo nivel, sólo dentro de BAR: la carta de bar tiene comida y
+         tragos y ambos viven acá. Almuerzo y cena quedan en dos niveles. -->
+    <div id="mn-bar-tabs"></div>
+    <div id="mn-lens"></div>
     <div id="dish-grid"></div>
+    <!-- Carta de tragos: era la tab Cocktails, ahora vive dentro del segmento
+         BAR. Cambió de casa, no de código — renderCocktails() y
+         toggleMomentosSection() siguen siendo los mismos. -->
+    <div id="mn-bar-drinks">
+      <div id="tab-cocktails" class="hidden">
+        <!-- Momentos sub-tab: full-width, rojo claro (coming soon). Sits ABOVE
+             the search bar so it isn't mistaken for a header of the cocktails listing. -->
+        <button class="momentos-banner" id="momentos-banner" onclick="toggleMomentosSection()">
+          <span class="momentos-banner-text">
+            <span class="momentos-banner-label" id="momentos-banner-label">Momentos</span>
+            <span class="momentos-banner-sub" id="momentos-banner-sub">Nueva carta por implementar</span>
+          </span>
+        </button>
+
+        <div class="search-bar" id="cocktail-search-bar" style="margin-bottom:1rem;">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+          <input type="text" id="cocktail-search" placeholder="Buscar cocktail..." oninput="renderCocktails()">
+        </div>
+
+        <!-- Default view: mocktails (green halo) + cocktails, each with its own labelled divider -->
+        <div id="cocktails-content"></div>
+
+        <!-- Toggled view: Momentos (hidden until banner is tapped) -->
+        <div id="momentos-section" style="display:none">
+          <div class="momentos-notice">
+            <span>⚠</span>
+            <span id="momentos-notice-text">Próximamente · Esta carta aún no está disponible en el bar</span>
+          </div>
+          <div id="momentos-content"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- VINOS TAB -->
@@ -1958,34 +2120,8 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
     <div id="guiones-content" style="display:none"></div>
   </div>
 
-  <!-- COCKTAILS TAB — now also hosts Mocktails (with green halo) and Momentos (toggleable section above the search) -->
-  <div id="tab-cocktails" class="hidden">
-    <!-- Momentos sub-tab: full-width, rojo claro (coming soon). Sits ABOVE
-         the search bar so it isn't mistaken for a header of the cocktails listing. -->
-    <button class="momentos-banner" id="momentos-banner" onclick="toggleMomentosSection()">
-      <span class="momentos-banner-text">
-        <span class="momentos-banner-label" id="momentos-banner-label">Momentos</span>
-        <span class="momentos-banner-sub" id="momentos-banner-sub">Nueva carta por implementar</span>
-      </span>
-    </button>
-
-    <div class="search-bar" id="cocktail-search-bar" style="margin-bottom:1rem;">
-      <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
-      <input type="text" id="cocktail-search" placeholder="Buscar cocktail..." oninput="renderCocktails()">
-    </div>
-
-    <!-- Default view: mocktails (green halo) + cocktails, each with its own labelled divider -->
-    <div id="cocktails-content"></div>
-
-    <!-- Toggled view: Momentos (hidden until banner is tapped) -->
-    <div id="momentos-section" style="display:none">
-      <div class="momentos-notice">
-        <span>⚠</span>
-        <span id="momentos-notice-text">Próximamente · Esta carta aún no está disponible en el bar</span>
-      </div>
-      <div id="momentos-content"></div>
-    </div>
-  </div>
+  <!-- La carta de tragos ya no es una tab propia: el bloque #tab-cocktails
+       vive ahora dentro del segmento BAR de la tab Menú (ver #mn-bar-drinks). -->
 
   <!-- CAFÉ TAB -->
   <div id="tab-cafe" class="hidden">
@@ -2092,6 +2228,448 @@ const DISHES = [
   {id:'d59',day:'4',service:'Almuerzo y Cena',course:'Postre',name:'Panacotta de vainilla',desc:'Panacotta elaborada sin horno (leche s/L, crema, yogurt s/L y colapez), aromatizada con vaina de vainilla. Servida con jugo de naranja, mermelada de mora y frutos rojos frescos (frambuesa y arándano). Alérgenos: Lácteos (crema).',allergens:['Lácteos'],wines:['erasmo','azur'],why:{erasmo:'Dulzor floral con la vainilla y los frutos rojos.',azur:'Burbuja seca para un cierre liviano.'}},
   {id:'d60',day:'1',service:'Cena',course:'Entrada',name:'Sopa de coliflor',desc:'Coliflor picada fina, dorada en mantequilla sin lactosa hasta lograr sabor avellanado, vino blanco y caldo de vegetales. Textura cremosa. Sin lactosa.',allergens:[],wines:['aquitania','soldesol'],why:{aquitania:'Cremosidad y acidez del Chardonnay integran el sabor avellanado de la coliflor.',soldesol:'Cremosidad y acidez del Chardonnay integran el sabor avellanado de la coliflor.'}}
 ];
+
+// ════════════════════════════════════════════════════════════════════════════
+// CAMBIO DE MENÚ 2026 — buffet de almuerzo, postres nuevos y Carta de Bar
+// ════════════════════════════════════════════════════════════════════════════
+// Fuente: los 5 documentos de Yumcha (Armado de Menú, Restricciones
+// Alimenticias, los dos Guiones de Explicación y el Dossier de Concepto).
+//
+// Baja GRADUAL: entran el buffet (6 bandejas + sopa), los 12 postres nuevos y
+// los 11 platos del bar. Las 4 Opciones Principales del almuerzo NO se tocan —
+// siguen las actuales (course:'Plato principal' en DISHES) hasta fin de mes.
+// Los 16 principales nuevos están en los documentos, no en el código.
+//
+// Todo lo nuevo se empuja a DISHES al final del bloque, así el buscador, el
+// catálogo del Comande (COMANDA_SOURCES) y dishShortName() lo ven sin cambios.
+
+// --- Los 9 ejes de restricción del documento del asesor ---------------------
+// El orden es el de las columnas de la tabla y se respeta en toda la UI.
+// Valores por plato: 1 = apto · 0 = no apto · '*' = apto con condición
+// (obliga a tener su texto en dietNotes) · AUSENTE = sin dato del asesor.
+// "Sin dato" NUNCA se pinta como apto: se muestra como consulta a cocina.
+const DIET_AXES = [
+  { key:'veg',   abbr:'Veg',   uiKey:'dietVeg'   },  // Vegano
+  { key:'vgt',   abbr:'Vgt',   uiKey:'dietVgt'   },  // Vegetariano
+  { key:'pesc',  abbr:'Pesc',  uiKey:'dietPesc'  },  // Pescetariano
+  { key:'mar',   abbr:'Mar',   uiKey:'dietMar'   },  // Mariscos/crustáceos
+  { key:'fs',    abbr:'FS',    uiKey:'dietFs'    },  // Frutos secos
+  { key:'lac',   abbr:'Lac',   uiKey:'dietLac'   },  // Lactosa
+  { key:'ge',    abbr:'GE',    uiKey:'dietGe'    },  // Gluten estricto
+  { key:'gs',    abbr:'GS',    uiKey:'dietGs'    },  // Gluten superficial
+  { key:'halal', abbr:'Halal', uiKey:'dietHalal' }   // Cerdo/Halal
+];
+
+// --- Puente PGO → ejes -----------------------------------------------------
+// Traduce los tags canónicos del viajero (VJ_TAGS, escritos por
+// sync_viajeros.py) a los ejes de la tabla del asesor. Es lo que permite
+// preguntar "¿qué le sirvo a la 214?" en vez de leer una fila de ✓/✗.
+// La lectura GE=alergia (celiaquía) vs GS=preferencia es interpretación
+// nuestra del documento; si el asesor la corrige, se cambia acá y nada más.
+const VJ_TAG_TO_AXIS = {
+  'dieta-vegana':           'veg',
+  'dieta-vegetariana':      'vgt',
+  'dieta-pescetariana':     'pesc',
+  'alergia-mariscos':       'mar',
+  'dieta-sin-mariscos':     'mar',
+  'alergia-frutos-secos':   'fs',
+  'dieta-sin-frutos-secos': 'fs',
+  'alergia-lactosa':        'lac',
+  'dieta-sin-lactosa':      'lac',
+  'alergia-gluten':         'ge',
+  'dieta-sin-gluten':       'gs',
+  'dieta-sin-cerdo':        'halal'
+};
+
+// --- Las 6 bandejas del buffet ---------------------------------------------
+// El orden NO cambia nunca: sólo cambia el plato que va adentro. Por eso la
+// vista los dibuja como slots fijos y no como una lista — el garzón aprende
+// una vez dónde está cada bandeja y eso queda cierto para siempre.
+const BUFFET_SLOTS = [
+  { key:'hojas',   uiKey:'slotHojas'   },
+  { key:'firmes',  uiKey:'slotFirmes'  },
+  { key:'granos',  uiKey:'slotGranos'  },
+  { key:'cocidos', uiKey:'slotCocidos' },
+  { key:'profria', uiKey:'slotProFria' },
+  { key:'prococ',  uiKey:'slotProCoc'  }
+];
+
+// --- Corrección del ciclo ---------------------------------------------------
+// El documento numera "Día de servicio 1..4"; la app calcula su D1..D4 desde
+// el ancla de fecha (ver el IIFE de auto-selección de día). NO está confirmado
+// que ambos coincidan. Si cocina confirma un desfase, se corrige acá:
+// un offset de 1 significa que el "Día 1" del documento se sirve en el D2.
+// Verificación: preguntar en cocina qué día de servicio corresponde a hoy y
+// compararlo con el D que la app marca con el halo azul.
+const MENU_CYCLE_OFFSET = 0;
+
+// El desfase se aplica UNA sola vez, al entrar los platos nuevos al catálogo:
+// a partir de ahí todo el resto de la app ve un único sistema de numeración
+// (el de la app) y ningún consumidor necesita saber que el offset existe.
+// Los platos que ya estaban en DISHES no pasan por acá — su `day` ya está en
+// la numeración de la app.
+function menuDocDayToApp(docDay){
+  return String(((Number(docDay) - 1 + MENU_CYCLE_OFFSET) % 4 + 4) % 4 + 1);
+}
+
+// --- Buffet: 6 bandejas × 4 días -------------------------------------------
+const MENU_BUFFET = [
+  // ── Día 1 ──────────────────────────────────────────────────────────────
+  {id:'bf1-hojas',day:'1',slot:'hojas',recipeDay:'1',
+   name:'César de Lechuga Costina, Pollo Ahumado y Pan Gratato',short:'César',
+   diet:{veg:0,vgt:'*',pesc:1,mar:1,fs:1,lac:0,ge:0,gs:'*',halal:1},
+   dietNotes:{vgt:'Sin el pollo ni el pan gratato. El dressing no lleva anchoa.',gs:'Sin el pan gratato — se sirve aparte.'},
+   brief:'Nuestra versión de ensalada César: lechuga costina, pollo ahumado en casa y un pan crocante tostado en mantequilla, con un aderezo cremoso de yema y parmesano.',
+   extended:'Es una relectura de la César clásica. El pollo lo ahumamos nosotros mismos, así que tiene un sabor más profundo que el pollo a la plancha habitual. El "pan gratato" es pan rallado tostado en mantequilla y ajo hasta quedar dorado y crocante, y reemplaza al crutón tradicional dándole otra textura. El aderezo se hace con yema y parmesano. Si el viajero es vegetariano, podemos servir la base sin el pollo ni el pan, con el aderezo (que no lleva anchoa).',
+   barTwin:'bar-cesar'},
+  {id:'bf1-firmes',day:'1',slot:'firmes',recipeDay:'1',
+   name:'Ensalada de Papas Doradas con Mostaza',short:'Papas doradas',
+   diet:{veg:1,vgt:1,pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Papas doradas al horno, con un aderezo de mostaza y vinagre de arroz que les da un toque ácido y picante suave.',
+   extended:'Las papas se cocinan y se doran al horno para conseguir un exterior crocante manteniendo el interior suave. El aderezo combina mostaza y vinagre de arroz con el caldo de las mismas papas, lo que le da cuerpo sin necesidad de crema ni lácteos — por eso es un plato que pueden comer prácticamente todos los viajeros sin restricción.'},
+  {id:'bf1-granos',day:'1',slot:'granos',recipeDay:'2',
+   name:'Arroz, Coco y Cebolla Frita',short:'Arroz y coco',
+   diet:{veg:1,vgt:1,pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Arroz aromatizado con coco tostado y cebolla frita, con un sofrito de cebollín, ajo y pieles de cítricos.',
+   extended:'Buscamos un arroz que no fuera plano: el coco rallado se tuesta para intensificar su sabor, y la cebolla y el ajo fritos aportan un crocante que contrasta con el arroz suave. Se termina con un sofrito de cebollín, ajo y pieles de cítricos que le da frescura y aroma. Es un plato vegano por completo.'},
+  {id:'bf1-cocidos',day:'1',slot:'cocidos',recipeDay:'1',
+   name:'Brócoli Salteado, Hierbas Aromáticas y Emulsión de Brócoli',short:'Brócoli salteado',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Brócoli salteado con menta, huacatay y albahaca frescas, acompañado de una emulsión hecha con el mismo brócoli.',
+   extended:'La emulsión es una salsa liviana hecha licuando brócoli con cilantro, ajo y jengibre, texturizada con un poco de garbanzo — así logramos una salsa cremosa sin usar lácteos. El brócoli salteado se sirve con abundante menta, huacatay y albahaca frescas por encima. El pan gratato que a veces lo acompaña se sirve siempre aparte, así que la base es apta para quienes evitan gluten o lácteos.'},
+  {id:'bf1-profria',day:'1',slot:'profria',recipeDay:'1',
+   name:'Ceviche de Pescado, Salsa Verde, Pepino y Quinoa',short:'Ceviche verde',
+   diet:{veg:0,vgt:0,pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Pescado al natural bañado en una leche de tigre verde de pepino y manzana, al estilo ceviche, con quinoa crocante.',
+   extended:'El pescado se corta fresco y se sirve al natural, sin curar previamente — la leche de tigre se agrega al momento, hecha con pepino, cilantro y manzana verde, lo que le da un perfil más fresco que el ceviche tradicional. Se acompaña de una salsa verde chilena y quinoa frita para dar textura crocante. Es un plato pescetariano, no apto para vegetarianos ni veganos.'},
+  {id:'bf1-prococ',day:'1',slot:'prococ',recipeDay:'1',
+   name:'Lomo de Cerdo',short:'Lomo de cerdo',
+   diet:{veg:0,vgt:0,pesc:0,mar:1,fs:1,lac:1,ge:1,gs:1,halal:0},
+   brief:'Lomo de cerdo cocido lentamente al vacío para mantenerlo jugoso, y sellado al final para dorar la superficie.',
+   extended:'Cocinamos el cerdo a baja temperatura durante un par de horas, lo que asegura que quede tierno incluso servido en el buffet. Antes pasa por una salmuera breve, una técnica que ayuda a que la carne retenga humedad. Al final se sella en sartén para conseguir un dorado en la superficie. No es apto para viajeros que no consumen cerdo.'},
+
+  // ── Día 2 ──────────────────────────────────────────────────────────────
+  {id:'bf2-hojas',day:'2',slot:'hojas',recipeDay:'2',
+   name:'Ensalada de Hojas de Mostaza y Rúcula, Huevo y Pomelo',short:'Mostaza y rúcula',
+   diet:{veg:0,vgt:0,pesc:1,mar:0,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Hojas de mostaza y rúcula con supremas de pomelo, huevo y un aderezo de sabor asiático con toques de pescado.',
+   extended:'Nos inspiramos en las ensaladas frescas del sudeste asiático: hojas de sabor picante como la mostaza se combinan con rúcula, pomelo para dar acidez y dulzor, y huevo para dar cuerpo. El aderezo lleva salsa de pescado, típica de esa cocina, que le da un fondo salado distinto al de un aderezo occidental. No es apta para veganos, vegetarianos, ni para quienes evitan mariscos o pescado.'},
+  {id:'bf2-firmes',day:'2',slot:'firmes',recipeDay:'2',
+   name:'Berenjenas Ahumadas a la Brasa, Yogurt y Aceite de Cacho de Cabra',short:'Berenjenas ahumadas',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:0,lac:0,ge:1,gs:1,halal:1},
+   brief:'Berenjenas ahumadas directamente al fuego, con una salsa de yogurt y ajo, y un aceite picante de cacho de cabra con maní.',
+   extended:'Las berenjenas se queman enteras sobre la brasa hasta que la piel se carboniza, lo que les da un sabor ahumado profundo antes de pelarlas. Se sirven con una salsa fresca de yogurt, ajo y tahini, y una salsa macha —textura crujiente a base de maní y cacho de cabra ahumado, un ají chileno—. No es apta para veganos, por el yogurt, ni para quienes evitan frutos secos, por el maní.'},
+  {id:'bf2-granos',day:'2',slot:'granos',recipeDay:'1',
+   name:'Tabulé de Mote con Limón Fermentado',short:'Tabulé de mote',
+   diet:{veg:1,vgt:1,pesc:1,mar:1,fs:1,lac:1,ge:0,gs:0,halal:1},
+   brief:'Nuestra versión del tabulé usando mote de trigo en vez de trigo bulgur tradicional, con tomates y un limón fermentado en sal.',
+   extended:'El mote de trigo reemplaza al bulgur del tabulé original, dándole una textura chilena a un plato de tradición mediterránea. El limón fermentado en sal durante semanas aporta un sabor salino y concentrado muy distinto al limón fresco. Es un plato vegano, pero al llevar mote de trigo, no es apto para quienes evitan el gluten.'},
+  {id:'bf2-cocidos',day:'2',slot:'cocidos',recipeDay:'3',
+   name:'Repollo Salteado y Cebollas en Salsa de Mantequilla y Limón',short:'Repollo salteado',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
+   brief:'Repollo salteado con cebollas asadas, bañado en una salsa suave de mantequilla y limón.',
+   extended:'El repollo se saltea hasta dorar ligeramente y se combina con cebollas asadas enteras. La salsa lleva mantequilla, miso blanco y un toque de limón, dándole una textura sedosa. El pan gratato que a veces acompaña este tipo de plato se sirve siempre aparte. No es apto para veganos ni para quienes evitan lácteos, por la mantequilla de la salsa.'},
+  {id:'bf2-profria',day:'2',slot:'profria',recipeDay:'2',
+   name:'Tartar de Vacuno con Alcaparras, Mostaza y Salsa de Yema',short:'Tartar de vacuno',
+   diet:{veg:0,vgt:0,pesc:0,mar:1,fs:1,lac:0,ge:0,gs:0,halal:1},
+   dietNotes:{ge:'El pan gratato va mezclado en el plato, no aparte.',gs:'El pan gratato va mezclado en el plato, no aparte.',lac:'El pan gratato va mezclado en el plato, no aparte.'},
+   brief:'Vacuno crudo picado a cuchillo con alcaparras fritas y una salsa cremosa de yema, mostaza y miso.',
+   extended:'El vacuno se pica finamente a mano y se sazona con cebolla, rabanito y hierbas frescas. La salsa combina yema de huevo, mostaza Dijon y miso blanco, dándole un perfil más complejo que un tartar clásico. Se termina con alcaparras fritas y pan gratato por encima. No es apto para vegetarianos ni veganos, y por el pan gratato integrado, tampoco para quienes evitan el gluten o los lácteos.'},
+  {id:'bf2-prococ',day:'2',slot:'prococ',recipeDay:'2',
+   name:'Pechuga de Pollo',short:'Pechuga de pollo',
+   diet:{veg:0,vgt:0,pesc:0,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Pechuga de pollo cocida al vacío para mantenerla jugosa, y sellada al final.',
+   extended:'Al igual que con el cerdo, el pollo pasa primero por una salmuera breve y luego se cocina a baja temperatura al vacío, lo que asegura una textura jugosa incluso servido frío en el buffet. Se sella al final para dorar la superficie. No es apto para vegetarianos, veganos ni pescetarianos estrictos.'},
+
+  // ── Día 3 ──────────────────────────────────────────────────────────────
+  {id:'bf3-hojas',day:'3',slot:'hojas',recipeDay:'3',
+   name:'Rúcula y Espinaca con Fruta a la Brasa, Pescado Ahumado, Miel y Mostaza',short:'Rúcula y espinaca',
+   diet:{veg:0,vgt:'*',pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   dietNotes:{vgt:'Sin el pescado ahumado — se sirve aparte en cuenco.'},
+   brief:'Rúcula y espinaca con fruta asada a la brasa, un aderezo de miel y mostaza, y charqui de pescado servido aparte.',
+   extended:'Las hojas se combinan con fruta de estación pasada por la brasa, lo que aporta dulzor y un toque ahumado. El aderezo balancea miel y mostaza Dijon, y el charqui de pescado —pescado deshidratado en hebras— se sirve en un cuenco aparte para quien quiera agregarlo. La base, sin el charqui, es apta para vegetarianos.'},
+  {id:'bf3-firmes',day:'3',slot:'firmes',recipeDay:'3',
+   name:'Zapallo Italiano con Sésamo, Aceite de Ají Aromático y Ciboulette',short:'Zapallo con sésamo',
+   diet:{veg:1,vgt:1,pesc:1,mar:1,fs:1,lac:1,ge:0,gs:1,halal:1},
+   brief:'Zapallo italiano al vapor con un aderezo de sésamo y una base dulce de soya, terminado con un aceite aromático de especias.',
+   extended:'El zapallo se cocina suave al vapor para mantener su textura firme, y se baña en un aderezo de tahini sobre una base de soya dulce. El aceite de ají aromático lleva especias como anís, canela y clavo, infusionadas lentamente. Es un plato vegano; no apto para quienes evitan el gluten estricto, por la salsa de soya.'},
+  {id:'bf3-granos',day:'3',slot:'granos',recipeDay:'3',
+   name:'Garbanzos Cocidos, Garbanzos Fritos, Hummus Ligero y Perejil',short:'Garbanzos',
+   diet:{veg:1,vgt:1,pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Garbanzos preparados de tres formas —cocidos, fritos y en hummus— con tomates y pimentón asados.',
+   extended:'Jugamos con la misma legumbre en distintas texturas: unos garbanzos se mantienen suaves, otros se fríen para dar crocancia, y el resto se convierte en un hummus liviano con tahini y comino. Se completa con tomates y pimentón asados. Es un plato apto para casi todas las restricciones alimentarias.'},
+  {id:'bf3-cocidos',day:'3',slot:'cocidos',recipeDay:'2',
+   name:'Hongos Salteados, Maní, Apio y Salsa de Cacho de Cabra',short:'Hongos salteados',
+   diet:{veg:1,vgt:1,pesc:1,mar:1,fs:0,lac:1,ge:0,gs:1,halal:1},
+   brief:'Hongos y apio salteados a fuego alto con maní y una salsa picante de cacho de cabra, un ají chileno.',
+   extended:'Los hongos se saltean muy rápido junto al apio para conseguir bordes crocantes, y se combinan con un aderezo asiático de vinagre añejado y aceite de sésamo. La salsa macha aporta el crocante del maní tostado junto al picor del cacho de cabra. Es un plato vegano; no apto para quienes evitan frutos secos, por el maní.'},
+  {id:'bf3-profria',day:'3',slot:'profria',recipeDay:'3',
+   name:'Salpicón de Camarón, Apio, Palta, Rabanito y Cebolla Morada',short:'Salpicón de camarón',
+   diet:{veg:0,vgt:0,pesc:1,mar:0,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Camarón cocido con apio, palta, rabanito y cebolla morada, en una mayonesa cítrica casera.',
+   extended:'El camarón se cocina y se limpia, y se mezcla con vegetales frescos picados finamente en una mayonesa hecha con yema de huevo y cítricos. Es un plato pescetariano; no apto para vegetarianos, veganos, ni para quienes evitan mariscos o crustáceos.'},
+  {id:'bf3-prococ',day:'3',slot:'prococ',recipeDay:'3',
+   name:'Roast Beef',short:'Roast beef',
+   diet:{veg:0,vgt:0,pesc:0,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Vacuno cocido lentamente al vacío a punto rosado, enfriado y cortado en láminas finas.',
+   extended:'Este corte se cocina a baja temperatura durante varias horas para lograr un punto rosado uniforme, y luego se enfría antes de cortarlo en láminas muy finas — la técnica clásica del roast beef frío de buffet. No es apto para vegetarianos ni veganos.'},
+
+  // ── Día 4 ──────────────────────────────────────────────────────────────
+  {id:'bf4-hojas',day:'4',slot:'hojas',recipeDay:'4',
+   name:'Lechuga con Tomates Asados, Aceituna, Rabanitos y Aderezo de Orégano',short:'Lechuga y tomate',
+   diet:{veg:1,vgt:1,pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Lechuga fresca con tomates asados, aceitunas y rabanitos, con un aderezo de orégano y pepino.',
+   extended:'Es la ensalada más simple y fresca del ciclo: lechuga, tomates asados en el horno, aceitunas y rabanitos encurtidos, con un aderezo que combina orégano, pepino y ajo. Es apta para prácticamente todas las restricciones alimentarias — vegana, vegetariana y sin alérgenos relevantes.'},
+  {id:'bf4-firmes',day:'4',slot:'firmes',recipeDay:'4',
+   name:'Pepino, Kiwi, Yogurt y Cebollín',short:'Pepino y kiwi',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
+   brief:'Pepino y kiwi frescos con una salsa verde de yogurt y un sofrito de cebollín, ajo y pieles de cítricos.',
+   extended:'El pepino y el kiwi se combinan crudos para dar frescura, bañados en una salsa que mezcla puré de kiwi y pepino con yogurt natural, y se aromatizan con un sofrito de cebollín, ajo y pieles de cítricos. No es apta para veganos, por el yogurt de la salsa.'},
+  {id:'bf4-granos',day:'4',slot:'granos',recipeDay:'4',
+   name:'Porotos Cocidos, Aceituna, Cebolla, Perejil y Charqui de Vacuno',short:'Porotos y charqui',
+   diet:{veg:'*',vgt:'*',pesc:'*',mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   dietNotes:{veg:'Sin el charqui de vacuno — se sirve aparte en cuenco.',vgt:'Sin el charqui de vacuno — se sirve aparte en cuenco.',pesc:'Sin el charqui de vacuno — se sirve aparte en cuenco.'},
+   brief:'Porotos con aceituna, cebolla morada y perejil, con charqui de vacuno servido aparte.',
+   extended:'Los porotos se sirven con una limoneta de perejil, aceituna y cebolla morada. El charqui de vacuno —carne deshidratada, típica de la zona— se sirve en un cuenco aparte para quien quiera agregarlo. La base, sin el charqui, es apta para veganos, vegetarianos y pescetarianos.'},
+  {id:'bf4-cocidos',day:'4',slot:'cocidos',recipeDay:'4',
+   name:'Corazones de Alcachofas con Habas Salteadas',short:'Alcachofa y habas',
+   diet:{veg:1,vgt:1,pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Corazones de alcachofa horneados con habas salteadas y pimentón asado, con una limoneta de oliva.',
+   extended:'Las alcachofas se hornean hasta ablandar y se combinan con habas salteadas rápidamente para mantener su color, pimentón asado y hierbas frescas como hinojo y eneldo. Es un plato 100% vegano y apto para prácticamente todas las restricciones.'},
+  {id:'bf4-profria',day:'4',slot:'profria',recipeDay:'4',
+   name:'Ceviche de Pescado con Merkén y Maíz Patasquero',short:'Ceviche con merkén',
+   diet:{veg:0,vgt:0,pesc:1,mar:1,fs:0,lac:1,ge:1,gs:1,halal:1},
+   brief:'Pescado cortado en cubos, con una leche de tigre de cacho de cabra y maíz patasquero.',
+   extended:'El pescado se corta en cubos y se cura brevemente en cítrico. La leche de tigre lleva un toque ahumado de cacho de cabra, y se acompaña de canchita frita (maíz tostado), maíz patasquero cocido y una salsa macha con maní. Es pescetariano; no apto para vegetarianos, veganos, ni para quienes evitan frutos secos.'},
+  {id:'bf4-prococ',day:'4',slot:'prococ',recipeDay:'4',
+   name:'Pechuga de Pato',short:'Pechuga de pato',
+   diet:{veg:0,vgt:0,pesc:0,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Pechuga de pato cocida al vacío y sellada al final para dejar la piel crocante.',
+   extended:'El pato pasa por una salmuera breve antes de cocinarse a baja temperatura, y se sella al final con la piel marcada en rombos, subiendo el fuego gradualmente hasta dejarla crocante — la técnica clásica para pechuga de pato. No es apto para vegetarianos ni veganos.'}
+];
+
+// --- Sopa del día -----------------------------------------------------------
+// Va aparte del buffet aunque se sirva en la misma línea: es una sola, y en la
+// vista ocupa el ancho completo en vez de compartir la grilla de dos columnas.
+const MENU_SOPAS = [
+  {id:'so1',day:'1',recipeDay:'1',
+   name:'Pantrucas de Albóndigas de Pescado y Luche',short:'Pantrucas de pescado',
+   diet:{veg:0,vgt:0,pesc:1,mar:0,fs:1,lac:1,ge:0,gs:0,halal:1},
+   dietNotes:{mar:'El caldo base lleva almejas y choritos — no es separable del plato.'},
+   brief:'Sopa marina con albóndigas de pescado, pantrucas (una pasta chilena) y luche, un alga típica de nuestras costas.',
+   extended:'El caldo se hace con huesos de pescado, almejas y choritos, cocido varias horas para conseguir un sabor profundo de mar. Las albóndigas son de pescado y las pantrucas son una pasta simple de harina, típica de la cocina casera chilena. El luche —un alga— se agrega al final. Por el caldo de mariscos no es apta para quienes los evitan, y por las pantrucas tampoco es apta para quienes evitan el gluten.'},
+  {id:'so2',day:'2',recipeDay:'2',
+   name:'Sopa de Quinoa',short:'Sopa de quinoa',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
+   brief:'Sopa especiada de quinoa con tomate y pimentón, con menta fresca servida aparte.',
+   extended:'El caldo se hace con una base de vegetales asados y especias, ligado con mantequilla para dar cuerpo. La quinoa se cocina directamente en el caldo, y se sirve con tomate, pimentón y menta fresca aparte para que cada viajero ajuste a su gusto. No es apta para veganos por la mantequilla del caldo, pero sí es apta para vegetarianos.'},
+  {id:'so3',day:'3',recipeDay:'3',
+   name:'Sopa de Tomate Tatemado',short:'Tomate tatemado',
+   diet:{veg:1,vgt:1,pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Sopa de tomate ahumado a la parrilla (tatemado), con arroz, papas y maíz patasquero.',
+   extended:'El tomate, ajo, cebolla y ají se queman directamente sobre la llama —una técnica llamada tatemado, de tradición latinoamericana— antes de molerse, lo que le da a la sopa un sabor ahumado y rústico. Se completa con arroz, papas y maíz patasquero, un maíz andino de grano grande. Es un plato 100% vegano.'},
+  // El Armado de Menú la llama "Pescado Ahumado" y el Guion "Charqui de
+  // Pescado". Usamos el nombre del Armado y dejamos el otro como alias
+  // buscable hasta que el asesor unifique.
+  {id:'so4',day:'4',recipeDay:'4',
+   name:'Sopa de Papa, Puerro y Pescado Ahumado',short:'Papa y puerro',alias:'Charqui de pescado',
+   diet:{veg:'*',vgt:'*',pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   dietNotes:{veg:'Sin el charqui de pescado — la base es 100% vegetal y las guarniciones van aparte.',vgt:'Sin el charqui de pescado — la base es 100% vegetal y las guarniciones van aparte.'},
+   brief:'Crema de papa y puerro, con charqui de pescado y guarniciones crocantes servidas aparte.',
+   extended:'La base de la sopa es una crema completamente vegetal de papa y puerro. El charqui de pescado —pescado deshidratado y desmenuzado—, junto con papas fritas, ajo frito y cebolla frita, se sirven todos en cuencos aparte para que cada viajero arme su sopa a gusto. La base, sin agregar el charqui, es apta para veganos y vegetarianos.'}
+];
+
+// --- Postres nuevos: 3 por día ----------------------------------------------
+// Reemplazan a los 12 anteriores en almuerzo Y cena (decisión del owner).
+// Los antiguos no se borran: quedan en DISHES_LEGACY_POSTRES, reactivables en
+// una línea, con el mismo criterio que el módulo Postres/86 latente.
+// Los documentos no traen maridaje para estos postres: no se inventa ninguno.
+const MENU_POSTRES = [
+  // ── Día 1 ──
+  {id:'po1-fruta',day:'1',slot:'fruta',recipeDay:'1',
+   name:'Leche con Plátano, Pimienta Molle y Rosa del Año',short:'Leche con plátano',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
+   brief:'Crema inglesa de plátano con pimienta molle y rosa del año, plátano caramelizado y helado de plátano.',
+   extended:'Es nuestra versión de un postre de leche clásico, pero con plátano como protagonista: hay una crema inglesa de plátano, un helado del mismo sabor y plátanos caramelizados. La pimienta molle y la rosa del año —ambas de tradición andina— aportan un aroma floral y ligeramente picante que se equilibra con el dulzor del plátano. Lleva lácteos y huevo, no es apto para veganos.'},
+  {id:'po1-granos',day:'1',slot:'granos',recipeDay:'1',
+   name:'Mote con Huesillo',short:'Mote con huesillo',
+   diet:{veg:1,vgt:1,pesc:1,mar:1,fs:1,lac:1,ge:0,gs:0,halal:1},
+   brief:'Nuestra versión del clásico mote con huesillo chileno: mote de trigo suflado, duraznos asados en almíbar de canela, y un sorbete y mochi de durazno.',
+   extended:'Tomamos una bebida tradicional chilena de verano y la convertimos en postre. El mote suflado da una textura crocante, los duraznos asados con canela y rosa del año aportan el sabor característico, y sumamos un sorbete de durazno y un mochi relleno de huesillo y chancaca como un guiño adicional. Por el mote de trigo, no es apto para quienes evitan el gluten.'},
+  {id:'po1-sinazucar',day:'1',slot:'sinazucar',recipeDay:'1',
+   name:'Peras al Vino Blanco, Nueces y Yogurt',short:'Peras al vino blanco',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:0,lac:0,ge:1,gs:1,halal:1},
+   brief:'Peras cocidas lentamente en vino blanco con miel y especias, acompañadas de un praliné de nuez, nueces caramelizadas y un helado de yogurt.',
+   extended:'Las peras se cocinan a fuego suave en vino blanco con canela y vainilla hasta absorber el sabor, y ese mismo líquido se reduce para hacer una salsa. Las nueces se ahuman y caramelizan para dar contraste crocante, se suma un praliné de nuez, y el helado de yogurt aporta un toque ácido que equilibra el dulzor. Es parte de nuestra carta de postres sin azúcar añadida. No es apto para veganos ni para quienes evitan frutos secos o lácteos.'},
+
+  // ── Día 2 ──
+  {id:'po2-fruta',day:'2',slot:'fruta',recipeDay:'2',
+   name:'Duraznos a la Brasa con Leche de Cabra',short:'Duraznos a la brasa',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
+   brief:'Duraznos asados directamente al fuego, con helado de leche de cabra y una granola de quinoa y chañar.',
+   extended:'Los duraznos se asan a la brasa para intensificar su dulzor natural, y se sirven con un gel y una compota del mismo fruto. El helado se hace con leche de cabra, dándole un perfil más complejo que un helado de leche de vaca tradicional, y se termina con una granola crocante de quinoa suflada y chañar con miel de ulmo. No es apto para veganos, por los lácteos del helado.'},
+  {id:'po2-granos',day:'2',slot:'granos',recipeDay:'2',
+   name:'Almendrado',short:'Almendrado',
+   diet:{veg:0,vgt:0,pesc:0,mar:1,fs:0,lac:0,ge:1,gs:1,halal:0},
+   dietNotes:{vgt:'El semifrío se estabiliza con gelatina animal (colapez).',halal:'La gelatina (colapez) no está certificada Halal.'},
+   brief:'Una torta helada de almendra trabajada en distintas texturas: financier, praliné crocante y un semifrío de leche de almendra.',
+   extended:'Es un postre que trabaja la almendra en distintas texturas, como una torta helada: un financier horneado (un bizcocho denso, sin harina de trigo), un praliné crocante, un semifrío cremoso hecho con leche de almendra, y almendras garrapiñadas. No es apto para veganos, vegetarianos ni para quienes evitan frutos secos — y como el semifrío se estabiliza con gelatina de origen animal, tampoco es apto para Halal.',
+   barTwin:'bar-almendra'},
+  {id:'po2-sinazucar',day:'2',slot:'sinazucar',recipeDay:'4',
+   name:'Membrillos Asados con Sésamo',short:'Membrillos asados',
+   diet:{veg:'*',vgt:1,pesc:1,mar:1,fs:1,lac:'*',ge:1,gs:1,halal:1},
+   dietNotes:{veg:'Lleva mantequilla para asar la fruta. Cocina prepara la versión sin mantequilla avisando con anticipación.',lac:'Lleva mantequilla para asar la fruta. Cocina prepara la versión sin mantequilla avisando con anticipación.'},
+   brief:'Membrillos asados con un jarabe de vino dulce, acompañados de un praliné de sésamo y sorbete del mismo membrillo.',
+   extended:'El membrillo se cocina primero y luego se asa con mantequilla y miel hasta caramelizar. Se acompaña de un praliné de tahini con vino dulce reducido, y un sorbete hecho con la pulpa de la misma fruta. Es parte de nuestra carta de postres sin azúcar añadida. Con aviso previo, cocina puede preparar la versión sin mantequilla para viajeros veganos.'},
+
+  // ── Día 3 ──
+  {id:'po3-fruta',day:'3',slot:'fruta',recipeDay:'3',
+   name:'Peras al Vino Tinto con Pistacho',short:'Peras al vino tinto',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:0,lac:1,ge:1,gs:1,halal:1},
+   brief:'Peras cocidas en vino tinto especiado, con un praliné de pistacho y un sorbete de la misma pera.',
+   extended:'Las peras se cocinan lentamente en vino tinto con canela, clavo y anís estrella hasta absorber su color y sabor. Se acompañan de un praliné y un garrapiñado de pistacho, y un sorbete hecho con la pulpa de la misma pera. No es apto para veganos ni para quienes evitan frutos secos.'},
+  {id:'po3-granos',day:'3',slot:'granos',recipeDay:'3',
+   name:'Coulant de Chocolate con Helado de Chocolate',short:'Coulant de chocolate',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:0,gs:0,halal:1},
+   brief:'Coulant de chocolate sin harina, de centro líquido, con un crumble crocante y helado de chocolate.',
+   extended:'El coulant no lleva harina, y se hornea justo antes de servir para que el centro quede líquido al cortarlo. Se acompaña de un crumble de chocolate y cacao —que puede prepararse sin gluten— y un helado cremoso del mismo sabor. No es apto para veganos, y por los lácteos del crumble y el helado, tampoco para quienes evitan lácteos.'},
+  {id:'po3-sinazucar',day:'3',slot:'sinazucar',recipeDay:'3',
+   name:'Piña Asada, Jengibre y Mote Suflado',short:'Piña asada',
+   diet:{veg:'*',vgt:1,pesc:1,mar:1,fs:1,lac:'*',ge:0,gs:0,halal:1},
+   dietNotes:{veg:'Lleva mantequilla para asar la fruta. Cocina prepara la versión sin mantequilla avisando con anticipación.',lac:'Lleva mantequilla para asar la fruta. Cocina prepara la versión sin mantequilla avisando con anticipación.'},
+   brief:'Piña asada con un toque de jengibre confitado, sorbete de piña asada y mote suflado crocante.',
+   extended:'La piña se pincela y se asa hasta caramelizar, y esa misma pulpa asada se usa para hacer el sorbete y una gelatina ligera con agar-agar. El jengibre se confita aparte para dar un contraste picante, y el mote suflado aporta la textura crocante final. Por el mote de trigo, no es apto para quienes evitan el gluten. Con aviso previo, existe una versión vegana sin mantequilla.'},
+
+  // ── Día 4 ──
+  {id:'po4-fruta',day:'4',slot:'fruta',recipeDay:'4',
+   name:'Mil Hojas de Manzana con Vainilla',short:'Mil hojas de manzana',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:0,lac:0,ge:0,gs:0,halal:1},
+   brief:'Milhojas de manzana caramelizada sobre una base de masa sablé, con helado de vainilla.',
+   extended:'La manzana se cocina en un syrup de vainilla, y se dispone sobre una base de masa sablé de almendra horneada. Se acompaña de un helado de vainilla clásico. No es apto para veganos, quienes evitan gluten, lácteos, ni quienes evitan frutos secos (por la harina de almendra de la masa).'},
+  {id:'po4-granos',day:'4',slot:'granos',recipeDay:'4',
+   name:'Arroz con Leche, Pera Asada y Canela',short:'Arroz con leche',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
+   brief:'Arroz con leche cremoso aromatizado con canela, acompañado de pera asada.',
+   extended:'El arroz se cocina lentamente en leche y horchata de arroz hasta lograr una textura cremosa, con un helado del mismo sabor. La pera se asa hasta caramelizar. No es apto para veganos, por el uso extenso de lácteos.'},
+  {id:'po4-sinazucar',day:'4',slot:'sinazucar',recipeDay:'2',
+   name:'Pomelo, Miel y Quinoa',short:'Pomelo y quinoa',
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
+   brief:'Postre cítrico de pomelo con curd, mermelada y helado del mismo fruto, con quinoa suflada crocante.',
+   extended:'El pomelo se trabaja en varias texturas: un curd cremoso con mantequilla y huevo, una mermelada, y un helado hecho con su jugo y leche. La quinoa suflada aporta la textura crocante final. No es apto para veganos, por la mantequilla y el huevo del curd.'}
+];
+
+// Las 3 familias de postre. Mismo rol que BUFFET_SLOTS: la familia es fija,
+// el postre que la ocupa rota.
+const POSTRE_SLOTS = [
+  { key:'fruta',     uiKey:'slotFruta'     },
+  { key:'granos',    uiKey:'slotGranos2'   },
+  { key:'sinazucar', uiKey:'slotSinAzucar' }
+];
+
+// --- Carta de Bar -----------------------------------------------------------
+// Carta FIJA: los mismos 11 platos todos los días, sin ciclo (Dossier §5).
+// Por eso no llevan `day` y la vista reemplaza el selector D1-D4 por un
+// rótulo de carta fija.
+//
+// ⚠ El asesor entregó la matriz de restricciones SÓLO para almuerzo. Acá se
+// codifica únicamente lo que el Guion de Bar afirma con palabras, más lo que
+// se desprende por definición de la proteína nombrada (jamón/cerdo → Halal).
+// Los ejes sin dato quedan AUSENTES a propósito: la UI los muestra como
+// "consultar cocina", nunca como aptos. Pedir la matriz del bar al asesor.
+const BAR_DISHES = [
+  // ── Salado ──
+  {id:'bar-hamburguesa',cat:'Salado',
+   name:'Hamburguesa Explora',short:'Hamburguesa',
+   diet:{veg:0,vgt:0,pesc:0,lac:0,ge:0,gs:0,halal:0},
+   brief:'Hamburguesa tradicional de la casa: queso cheddar, tocino, tomate, lechuga y pepinillos, con salsa estilo Big Mac y papas fritas.',
+   extended:'Es nuestra hamburguesa clásica: carne de vacuno con queso cheddar derretido, tocino, tomate, lechuga y pepinillos, terminada con una salsa inspirada en la clásica de la Big Mac. Se sirve con papas fritas. No es apta para vegetarianos, veganos, ni para quienes evitan lácteos o gluten (por el pan).'},
+  {id:'bar-pizza',cat:'Salado',
+   name:'Pizza Explora',short:'Pizza',
+   diet:{veg:0,vgt:1,pesc:1,lac:0,ge:0,gs:0},
+   brief:'Pizza individual estilo napolitana, en dos versiones: mozzarella con tomate, o margarita.',
+   extended:'Es nuestra pizza de la casa, con masa estilo napolitana en formato individual — pensada para uno o para compartir un par de porciones. Viene en dos versiones: una simple de mozzarella y tomate, y la clásica margarita con albahaca fresca. Ambas son vegetarianas; no aptas para veganos por el queso, ni para quienes evitan el gluten por la masa.'},
+  {id:'bar-tabla',cat:'Salado',draft:true,
+   name:'Tabla de Quesos y Charcutería',short:'Tabla',
+   diet:{},
+   brief:'Selección de quesos y embutidos para compartir, pensada para acompañar un trago.',
+   extended:'Una tabla armada para el picoteo social del bar — variedad de texturas y sabores, generalmente acompañada de pan, frutos secos o algo dulce que corte la grasa. La selección exacta de quesos, charcutería y acompañamientos está pendiente de la ficha técnica del asesor.'},
+  {id:'bar-tonkatsu',cat:'Salado',
+   name:'Sándwich de Cerdo Frito (Tonkatsusando)',short:'Tonkatsusando',
+   diet:{veg:0,vgt:0,pesc:0,ge:0,gs:0,halal:0},
+   brief:'Milanesa de cerdo en formato sándwich, con repollo asado, chucrut y salsa de chañar.',
+   extended:'Es la versión sándwich de nuestra Milanesa de Cerdo de almuerzo: el mismo cerdo empanizado y frito, acompañado de repollo asado, chucrut (repollo fermentado) y la salsa agridulce de chañar, un fruto del desierto. No es apto para viajeros que no consumen cerdo, ni para quienes evitan el gluten.'},
+  {id:'bar-poke',cat:'Salado',
+   name:'Poke Andino',short:'Poke',
+   diet:{veg:'*',vgt:'*',pesc:'*',halal:'*'},
+   dietNotes:{veg:'La base sin proteína es vegana.',vgt:'La base sin proteína es vegana.',pesc:'Apto eligiendo pescado fresco; no con cerdo ni pollo.',halal:'Depende de la proteína elegida — la milanesa es de cerdo.'},
+   brief:'Bowl de arroz y quinoa al vapor, con proteína a elección (pescado fresco, milanesa de cerdo o pollo ahumado), verduras encurtidas, palta, choclo y salsa de soya dulce.',
+   extended:'Sobre una base de arroz y quinoa al vapor, el viajero elige su proteína: pescado fresco, milanesa de cerdo o pechuga de pollo ahumado. Se completa con verduras encurtidas, pepino, palta, choclo cocido, cebolla frita y una salsa de soya dulce que amarra el bowl. Según la proteína elegida cambia si es apto para pescetarianos (con pescado) o no (con cerdo o pollo); la base sin proteína es vegana.'},
+  {id:'bar-coliflor',cat:'Salado',
+   name:'Coliflor Frita en Salsa de Sésamo y Cacho de Cabra',short:'Coliflor frita',
+   diet:{veg:1,vgt:1,pesc:1,mar:1,lac:1,halal:1},
+   brief:'Bastones de coliflor frita, bañados en salsa de sésamo y cacho de cabra, con pomelo fresco y cebollín.',
+   extended:'Es la versión bar de la Coliflor Frita que también se sirve en almuerzo, aquí en formato de bastones para picotear. Se fríe hasta quedar dorada y se baña en una salsa de tahini (sésamo) con un toque picante de cacho de cabra, terminada con pomelo fresco y cebollín — a diferencia de la versión de almuerzo, que lleva supremas de pomelo quemadas al soplete. Es un plato 100% vegano.'},
+  {id:'bar-cesar',cat:'Salado',
+   name:'Ensalada César',short:'César',
+   diet:{veg:0,vgt:'*'},
+   dietNotes:{vgt:'La base sin extras es vegetariana. El pollo ahumado y la milanesa de cerdo van como extra opcional.'},
+   brief:'Lechuga costina, pan gratato y un aderezo de queso parmesano y yema de huevo; con pechuga de pollo ahumada o milanesa de cerdo como extra opcional.',
+   extended:'Es la versión bar de nuestra César de almuerzo, pensada para compartir: lechuga costina, pan gratato (pan rallado tostado en mantequilla y ajo) y el mismo aderezo cremoso de parmesano y yema. A diferencia de almuerzo, aquí la proteína no viene incluida — el viajero puede agregar pechuga de pollo ahumada o milanesa de cerdo como extra opcional. La base sin extras es vegetariana.',
+   lunchTwin:'bf1-hojas'},
+  {id:'bar-planchadito',cat:'Salado',
+   name:'Planchadito Jamón-Queso',short:'Planchadito',
+   diet:{veg:0,vgt:0,pesc:0,lac:0,ge:0,gs:0,halal:0},
+   brief:'Sándwich de molde a la plancha, relleno de jamón, queso y mostaza antigua, con cebolla encurtida aparte.',
+   extended:'Es un sándwich prensado y tostado a la plancha, con jamón, queso fundido y un toque de mostaza antigua en el relleno. La cebolla encurtida se sirve aparte para que el viajero la agregue a gusto. No es apto para vegetarianos ni veganos, y por el pan y el queso, tampoco para quienes evitan el gluten o los lácteos.'},
+
+  // ── Dulce ──
+  {id:'bar-frutosrojos',cat:'Dulce',
+   name:'Torta Helada de Frutos Rojos',short:'Torta de frutos rojos',
+   diet:{veg:0,lac:0},
+   brief:'Sorbete de frambuesa, merengue, crema chiboust de vainilla y compota de frutos rojos.',
+   extended:'Combina un sorbete de frambuesa con una crema chiboust de vainilla (una crema pastelera aligerada con merengue), más merengue y una compota de frutos rojos que aporta acidez y frescura. Este postre también está disponible en la carta de cena. Lleva huevo y lácteos, no apto para veganos.'},
+  // El Dossier la lista como "Castaña y Canela"; el Guion de Bar describe la
+  // ficha real con nuez (sorbete de leche de nuez, praliné de nuez). Usamos
+  // "Nuez" y queda pendiente que el asesor unifique el nombre.
+  {id:'bar-nuez',cat:'Dulce',
+   name:'Torta Helada de Nuez y Canela',short:'Torta de nuez',alias:'Torta Helada de Castaña y Canela',
+   diet:{veg:0,fs:0},
+   brief:'Sorbete de leche de nuez, merengue de vinagre balsámico, crema chiboust de vainilla, praliné de nuez y nueces caramelizadas.',
+   extended:'Combina un sorbete de leche de nuez con un merengue aromatizado con vinagre balsámico —que aporta un contraste ácido interesante—, crema chiboust de vainilla, praliné de nuez y nueces caramelizadas para el crocante final. Este postre también está disponible en la carta de cena. No apto para veganos ni para quienes evitan frutos secos.'},
+  {id:'bar-almendra',cat:'Dulce',
+   name:'Torta Helada de Almendra',short:'Torta de almendra',
+   diet:{veg:0,vgt:0,fs:0},
+   brief:'Sorbete de leche de almendra, merengue, crema chiboust de vainilla, bizcocho de almendra y praliné de almendra.',
+   extended:'Comparte la almendra como protagonista con el Almendrado que se sirve en almuerzo, pero la construcción es distinta: mientras el de almuerzo lleva financier y semifrío, esta versión de bar combina un sorbete de leche de almendra, merengue, crema chiboust de vainilla, un bizcocho de almendra y praliné de almendra. No apto para veganos, vegetarianos ni para quienes evitan frutos secos.',
+   lunchTwin:'po2-granos'}
+];
+
+// --- Retiro de los 12 postres anteriores ------------------------------------
+// Los postres nuevos los reemplazan en almuerzo Y cena. No se borran del
+// archivo: se extraen del catálogo activo y quedan acá completos (con sus
+// maridajes y sus traducciones EN/PT en DISH_TRANS, que siguen intactas).
+// Para revertir la baja basta con: DISHES.push(...DISHES_LEGACY_POSTRES).
+// Mismo criterio que el módulo Postres/86 latente.
+const DISHES_LEGACY_POSTRES = DISHES.filter(d => d.course === 'Postre');
+DISHES_LEGACY_POSTRES.forEach(d => { const i = DISHES.indexOf(d); if (i > -1) DISHES.splice(i, 1); });
+
+// --- Ingreso al catálogo único ---------------------------------------------
+// Todo lo nuevo entra a DISHES con la forma que el resto de la app espera
+// (day/service/course/name/desc/allergens/wines). `desc` se rellena con el
+// guion breve para que el buscador de siempre y la ficha del Comande sigan
+// funcionando sin tocarlos; `wines` va vacío porque los documentos no traen
+// maridaje para estos platos y no se inventa ninguno.
+// `docDay` conserva el número del documento (el que usa cocina al hablar);
+// `day` queda ya traducido a la numeración de la app vía MENU_CYCLE_OFFSET.
+function menuToDish(d, service, course){
+  return { ...d, service, course, docDay:d.day, day:menuDocDayToApp(d.day),
+           desc:d.brief, allergens:[], wines:[], why:{} };
+}
+DISHES.push(
+  ...MENU_BUFFET .map(d => menuToDish(d, 'Almuerzo',         'Buffet')),
+  ...MENU_SOPAS  .map(d => menuToDish(d, 'Almuerzo',         'Sopa')),
+  ...MENU_POSTRES.map(d => menuToDish(d, 'Almuerzo y Cena',  'Postre'))
+);
 
 const WINES = [
   {id:'azur',type:'espumante',name:'Azur Extra Brut',valley:'Valle del Limarí',identity:'Espumante orgánico, método tradicional, Extra Brut (muy seco). Mezcla de uvas de clima frío del Limarí.',terroir:'Valle del Limarí, norte chico de Chile. Clima semiárido frío de costa, camanchaca, suelos calcáreos. Acidez marcada y sensación mineral muy clara.',winery:'Manejo orgánico. Segunda fermentación en botella (método tradicional). Crianza sobre lías. Sin exceso de azúcar de dosaje.',style:'Burbuja fina y persistente. Cítricos, manzana verde, flores blancas y pan tostado. Seco, acidez alta, cuerpo medio-ligero, final salino.',shortpitch:'Es un espumante orgánico del valle del Limarí, muy seco y fresco, con burbuja fina. Ideal para mariscos gratinados, camarones al ajillo o para comenzar con ceviches y tiraditos.',pitch:'Viene de la costa del norte chico, donde la niebla y el viento mantienen la uva muy fresca. Eso le da una acidez alta que limpia la grasa del gratín o del ajo, y la burbuja arrastra la salsa y deja la boca lista para el siguiente bocado.'},
@@ -2421,7 +2999,11 @@ const WINE_TIPS = [
     pt:"A temperatura ambiente é anterior ao aquecimento central; os tintos vão melhor a 16-18 °C." }
 ];
 
-const COURSE_ORDER = ['Entrada','Plato principal','Postre'];
+// Orden canónico de render. 'Buffet' y 'Sopa' entran adelante: en el almuerzo
+// el viajero pasa primero por la línea del buffet y después por los calientes.
+// OJO: COMANDA_SERVICE_ORDER es la copia de esta lista para el catálogo del
+// Comande — si tocás una, tocá la otra o el desglose por curso ordena mal.
+const COURSE_ORDER = ['Buffet','Sopa','Entrada','Plato principal','Postre'];
 const SERVICE_ORDER = ['Almuerzo','Cena','Almuerzo y Cena'];
 
 let currentTab = 'menus';
@@ -2430,6 +3012,21 @@ let wineFilter = 'todos';
 let selectedDish = null;
 let selectedWine = null;
 let currentLang = 'es';
+
+// --- Vista Menú: servicio, lente de restricciones y Carta de Bar -----------
+// El almuerzo pasó de 4 platos a 14 (buffet + sopa + principales + postres),
+// así que la vista se corta primero por SERVICIO y recién después se lee.
+// El valor inicial lo pisa la autodetección por hora en el boot.
+let MENU_SERVICE     = 'almuerzo';  // 'almuerzo' | 'cena' | 'bar'
+let MENU_BAR_VIEW    = 'comida';    // 'comida' | 'tragos' (sólo dentro de bar)
+let MENU_DIET_LENS   = [];          // ejes activos — keys de DIET_AXES
+let MENU_LENS_OPEN   = false;       // panel de chips desplegado
+let MENU_ONLY_FIT    = false;       // esconder los no aptos en vez de atenuarlos
+let MENU_ROOM_OPEN   = false;       // numpad de habitación abierto
+let MENU_ROOM_INPUT  = '';          // hab tipeada en el numpad
+let MENU_ROOM_ACTIVE = '';          // hab desde la que se cargó la lente
+let MENU_ROOM_MSG    = '';          // aviso cuando la hab no tiene restricciones
+let MENU_GUION_OPEN  = null;        // id del plato con la explicación extendida abierta
 
 // ════════════════════════════════════════════════════════════════════════════
 // STATE TOP — module-level let/const declarations
@@ -2948,6 +3545,28 @@ const UI = {
     searchDish:'Buscar plato o ingrediente...', searchWine:'Buscar vino o cepa...',
     allDays:'Todos', day:'Día', lunch:'Almuerzo', dinner:'Cena', lunchDinner:'Almuerzo y Cena',
     starter:'Entrada', main:'Plato principal', dessert:'Postre',
+    // --- Cambio de menú 2026: buffet, lente de restricciones y Carta de Bar ---
+    buffetCourse:'Buffet', soupCourse:'Sopa',
+    secBuffet:'Buffet', secSoup:'Sopa del día', secMains:'Principales', secDesserts:'Postres',
+    trayCount:'6 bandejas',
+    slotHojas:'Hojas', slotFirmes:'Vegetales firmes', slotGranos:'Granos',
+    slotCocidos:'Vegetales cocidos', slotProFria:'Proteína fría', slotProCoc:'Proteína cocida',
+    slotFruta:'Fruta', slotGranos2:'Granos y chocolate', slotSinAzucar:'Sin azúcar',
+    dietVeg:'Vegano', dietVgt:'Vegetariano', dietPesc:'Pescetariano',
+    dietMar:'Sin mariscos', dietFs:'Sin frutos secos', dietLac:'Sin lactosa',
+    dietGe:'Sin gluten estricto', dietGs:'Sin gluten superficial', dietHalal:'Sin cerdo / Halal',
+    lensTitle:'Para quién', lensHint:'Filtra el menú por restricción del viajero',
+    lensOnlyFit:'Sólo aptos', lensClear:'Limpiar', lensRoom:'Desde una hab',
+    lensRoomEmpty:'Sin restricciones registradas en esa habitación.',
+    lensRoomUnmapped:'⚠ Esta habitación tiene restricciones fuera de la tabla — confírmalas con cocina:',
+    lensNoFit:'Ningún plato de esta sección cumple el filtro. Consulta a cocina.',
+    dietNotFit:'No apto', dietWithNote:'Con nota', dietNoData:'Sin dato · consultar cocina', dietNoDataShort:'sin dato',
+    dietNoMatrix:'Este plato todavía no tiene la tabla de restricciones del asesor. Confirma con cocina antes de ofrecerlo.',
+    guionMore:'Más', guionLess:'Menos',
+    barTwin:'También en el Bar', lunchTwin:'También en almuerzo',
+    svcBar:'Bar', barFixed:'Carta fija · todos los días',
+    barFood:'Comida', barDrinks:'Tragos', barSalado:'Salado', barDulce:'Dulce',
+    barDraft:'Ficha pendiente', recipeDayLabel:'Receta día',
     allergens:'Alérgenos', pairings:'Maridajes sugeridos',
     identity:'Identidad', terroir:'Terroir', winery:'Viña y filosofía', style:'Estilo en copa',
     salesScript:'Guion de venta', shortPitch:'Frase corta:', development:'Desarrollo:',
@@ -3114,6 +3733,28 @@ const UI = {
     searchDish:'Search dish or ingredient...', searchWine:'Search wine or grape...',
     allDays:'All', day:'Day', lunch:'Lunch', dinner:'Dinner', lunchDinner:'Lunch & Dinner',
     starter:'Starter', main:'Main course', dessert:'Dessert',
+    // --- 2026 menu change: buffet, dietary lens and Bar menu ---
+    buffetCourse:'Buffet', soupCourse:'Soup',
+    secBuffet:'Buffet', secSoup:'Soup of the day', secMains:'Main options', secDesserts:'Desserts',
+    trayCount:'6 trays',
+    slotHojas:'Leaves', slotFirmes:'Firm vegetables', slotGranos:'Grains',
+    slotCocidos:'Cooked vegetables', slotProFria:'Cold protein', slotProCoc:'Cooked protein',
+    slotFruta:'Fruit', slotGranos2:'Grains & chocolate', slotSinAzucar:'No added sugar',
+    dietVeg:'Vegan', dietVgt:'Vegetarian', dietPesc:'Pescatarian',
+    dietMar:'No shellfish', dietFs:'No nuts', dietLac:'No lactose',
+    dietGe:'Strict gluten-free', dietGs:'Light gluten-free', dietHalal:'No pork / Halal',
+    lensTitle:'Who is it for', lensHint:'Filter the menu by the traveller’s restriction',
+    lensOnlyFit:'Suitable only', lensClear:'Clear', lensRoom:'From a room',
+    lensRoomEmpty:'No restrictions on record for that room.',
+    lensRoomUnmapped:'⚠ This room has restrictions outside the table — confirm them with the kitchen:',
+    lensNoFit:'No dish in this section matches the filter. Check with the kitchen.',
+    dietNotFit:'Not suitable', dietWithNote:'With a note', dietNoData:'No data · check with kitchen', dietNoDataShort:'no data',
+    dietNoMatrix:'This dish has no restriction table from the consultant yet. Confirm with the kitchen before offering it.',
+    guionMore:'More', guionLess:'Less',
+    barTwin:'Also on the Bar menu', lunchTwin:'Also at lunch',
+    svcBar:'Bar', barFixed:'Fixed menu · every day',
+    barFood:'Food', barDrinks:'Drinks', barSalado:'Savoury', barDulce:'Sweet',
+    barDraft:'Recipe pending', recipeDayLabel:'Recipe day',
     allergens:'Allergens', pairings:'Suggested pairings',
     identity:'Identity', terroir:'Terroir', winery:'Winery & philosophy', style:'Style in glass',
     salesScript:'Sales script', shortPitch:'Short pitch:', development:'Development:',
@@ -3278,6 +3919,28 @@ const UI = {
     searchDish:'Buscar prato ou ingrediente...', searchWine:'Buscar vinho ou uva...',
     allDays:'Todos', day:'Dia', lunch:'Almoço', dinner:'Jantar', lunchDinner:'Almoço e Jantar',
     starter:'Entrada', main:'Prato principal', dessert:'Sobremesa',
+    // --- Mudança de menu 2026: buffet, lente de restrições e Carta de Bar ---
+    buffetCourse:'Buffet', soupCourse:'Sopa',
+    secBuffet:'Buffet', secSoup:'Sopa do dia', secMains:'Principais', secDesserts:'Sobremesas',
+    trayCount:'6 bandejas',
+    slotHojas:'Folhas', slotFirmes:'Legumes firmes', slotGranos:'Grãos',
+    slotCocidos:'Legumes cozidos', slotProFria:'Proteína fria', slotProCoc:'Proteína cozida',
+    slotFruta:'Fruta', slotGranos2:'Grãos e chocolate', slotSinAzucar:'Sem açúcar',
+    dietVeg:'Vegano', dietVgt:'Vegetariano', dietPesc:'Pescetariano',
+    dietMar:'Sem frutos do mar', dietFs:'Sem frutos secos', dietLac:'Sem lactose',
+    dietGe:'Sem glúten estrito', dietGs:'Sem glúten superficial', dietHalal:'Sem porco / Halal',
+    lensTitle:'Para quem', lensHint:'Filtra o menu pela restrição do viajante',
+    lensOnlyFit:'Só os aptos', lensClear:'Limpar', lensRoom:'A partir de um quarto',
+    lensRoomEmpty:'Sem restrições registradas nesse quarto.',
+    lensRoomUnmapped:'⚠ Este quarto tem restrições fora da tabela — confirme com a cozinha:',
+    lensNoFit:'Nenhum prato desta seção atende ao filtro. Consulte a cozinha.',
+    dietNotFit:'Não apto', dietWithNote:'Com nota', dietNoData:'Sem dado · consultar a cozinha', dietNoDataShort:'sem dado',
+    dietNoMatrix:'Este prato ainda não tem a tabela de restrições do consultor. Confirme com a cozinha antes de oferecer.',
+    guionMore:'Mais', guionLess:'Menos',
+    barTwin:'Também na Carta de Bar', lunchTwin:'Também no almoço',
+    svcBar:'Bar', barFixed:'Carta fixa · todos os dias',
+    barFood:'Comida', barDrinks:'Drinks', barSalado:'Salgado', barDulce:'Doce',
+    barDraft:'Ficha pendente', recipeDayLabel:'Receita dia',
     allergens:'Alérgenos', pairings:'Harmonizações sugeridas',
     identity:'Identidade', terroir:'Terroir', winery:'Adega e filosofia', style:'Estilo na taça',
     salesScript:'Roteiro de venda', shortPitch:'Frase curta:', development:'Desenvolvimento:',
@@ -3611,7 +4274,13 @@ function getDishTr(d){ const tr=DISH_TRANS[currentLang]?.[d.id]; return tr?{...d
 function getWineTr(w){ const tr=WINE_TRANS[currentLang]?.[w.id]; return tr?{...w,...tr}:w; }
 function getGuionesTr(){ return GUION_TRANS[currentLang]||GUIONES; }
 function serviceLabel(s){ return s==='Almuerzo'?t('lunch'):s==='Cena'?t('dinner'):t('lunchDinner'); }
-function courseLabel(c){ return c==='Entrada'?t('starter'):c==='Plato principal'?t('main'):t('dessert'); }
+function courseLabel(c){
+  if (c==='Buffet')          return t('buffetCourse');
+  if (c==='Sopa')            return t('soupCourse');
+  if (c==='Entrada')         return t('starter');
+  if (c==='Plato principal') return t('main');
+  return t('dessert');
+}
 
 function setLang(lang, el) {
   currentLang = lang;
@@ -3622,13 +4291,14 @@ function setLang(lang, el) {
   // span that paints "ATA" in desert sienna. Static text → safe to set as HTML.
   document.getElementById('app-title').innerHTML = t('appTitle');
   document.getElementById('app-subtitle').textContent = t('appSubtitle');
-  // Order: Menú · Vinos · Cocktails · Café (Momentos lives inside Cocktails as a sub-tab)
+  // Menú y Vinos son los dos únicos tabs sin id propio; el resto se actualiza
+  // por id más abajo. NO agregar más índices acá: cuando Cocktails dejó de ser
+  // tab (2026-08-10), el índice 2 pasó a ser PGO y este bloque le pisaba el
+  // label y le borraba el badge. Tab nuevo → id nuevo → actualizar por id.
   const mainTabs = document.querySelectorAll('.main-tabs .tab');
   if (mainTabs[0]) mainTabs[0].textContent = t('tabMenus');
   if (mainTabs[1]) mainTabs[1].textContent = t('tabWines');
-  if (mainTabs[2]) mainTabs[2].textContent = t('tabCocktails');
-  // mainTabs[3] is Café (handled below by id)
-  // Momentos banner inside Cocktails
+  // Momentos banner, ahora dentro del segmento BAR › Tragos
   const mLbl = document.getElementById('momentos-banner-label');
   if (mLbl) mLbl.textContent = t('tabMomentos');
   const mSub = document.getElementById('momentos-banner-sub');
@@ -3649,14 +4319,12 @@ function setLang(lang, el) {
   // re-render content — preserve open panels across language switches
   const prevDish = selectedDish;
   const prevWine = selectedWine;
-  const prevSubWine = document.querySelector('.dish-card.selected .wine-chip.chip-active')?.dataset?.wid || null;
+  const prevSubWine = document.querySelector('.mn-tile.open .wine-chip.chip-active, .dish-card.selected .wine-chip.chip-active')?.dataset?.wid || null;
   selectedDish = null; selectedWine = null;
   renderDishes(); renderWines();
   if (currentTab === 'vinos' && wineFilter === 'maridajes') renderGuiones();
-  if (currentTab === 'cocktails'){
-    renderCocktails();
-    if (cocktailsShowingMomentos) renderMomentos();
-  }
+  // La carta de tragos vive dentro del Menú: renderDishes ya la repinta
+  // cuando el segmento BAR › Tragos está activo.
   if (currentTab === 'cafe') renderCafeTab();
   if (currentTab === 'comandera' && typeof comandaRender === 'function') comandaRender();
   const cafeBtn = document.getElementById('tab-btn-cafe');
@@ -3686,6 +4354,14 @@ function setLang(lang, el) {
 }
 
 function setTab(tab, el) {
+  // 'cocktails' dejó de ser una tab: la carta de tragos vive dentro del
+  // segmento BAR de Menú. Se mantiene como alias para no romper ningún
+  // enlace ni llamada existente — entra a Menú y abre BAR › Tragos.
+  if (tab === 'cocktails'){
+    MENU_SERVICE  = 'bar';
+    MENU_BAR_VIEW = 'tragos';
+    return setTab('menus', document.querySelector('.main-tabs .tab'));
+  }
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
   // The Checklist & Protocolos button lives outside .main-tabs (see HTML
@@ -3698,11 +4374,10 @@ function setTab(tab, el) {
   // Checklist — the operator wants the task list above the fold, not the
   // staffing roster that they already know.
   document.body.classList.toggle('in-checklist', tab === 'checklist');
-  ['menus','vinos','cocktails','cafe','comandera','rol','viajeros','checklist'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
-  if (tab === 'cocktails'){
-    renderCocktails();
-    if (cocktailsShowingMomentos) renderMomentos();
-  }
+  // #tab-cocktails NO está en esta lista: vive dentro de #tab-menus y su
+  // visibilidad la controla renderDishes() según el segmento BAR › Tragos.
+  ['menus','vinos','cafe','comandera','rol','viajeros','checklist'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  if (tab === 'menus') renderDishes();
   if (tab === 'cafe') renderCafeTab();
   if (tab === 'comandera') comandaEnter();
   if (tab === 'rol') rolEnter();
@@ -3763,71 +4438,452 @@ function typeChipClass(w) {
 }
 function typeLabel(tp) { return UI[currentLang]['lbl_'+tp] || UI.es['lbl_'+tp] || tp; }
 
-function renderDishes() {
-  const q = (document.getElementById('dish-search').value||'').toLowerCase();
-  const searching = q.length > 0;
-  const dishes = DISHES.filter(d => {
-    const tr = getDishTr(d);
-    const dayOk = searching || currentDay === 'all' || d.day === currentDay;
-    const qOk = !q || tr.name.toLowerCase().includes(q) || tr.desc.toLowerCase().includes(q);
-    return dayOk && qOk;
-  });
-  if (!dishes.length) {
-    document.getElementById('dish-grid').innerHTML = `<div class="empty-state">${t('noDishes')}</div>`;
-    return;
+// ════════════════════════════════════════════════════════════════════════════
+// VISTA MENÚ — servicio, lente de restricciones, buffet y Carta de Bar
+// ════════════════════════════════════════════════════════════════════════════
+// La pantalla corta primero por SERVICIO y recién después se lee, porque el
+// almuerzo pasó de 4 platos a 14. Lo que la separa de un PDF es la LENTE: en
+// vez de "buscá tu plato y leé su fila de ✓/✗", el garzón dice la restricción
+// (o la habitación) y la línea se apaga sola.
+//
+// Regla de lectura de la matriz, en un solo lugar (dietVerdict):
+//   1 apto · 0 no apto · '*' apto con condición · undefined SIN DATO.
+// "Sin dato" nunca se pinta como apto — se muestra como consulta a cocina.
+
+function dietVerdict(d, axis){ return d && d.diet ? d.diet[axis] : undefined; }
+
+// Platos que todavía NO tienen matriz del asesor: hoy son los principales del
+// almuerzo y toda la cena, que se mantienen hasta fin de mes. La regla de oro
+// es que un plato sin datos JAMÁS se lea como apto — se marca como sin dato y
+// se deriva a cocina. Silencio significa apto sólo cuando hay matriz.
+function menuHasMatrix(d){ return !!(d && d.diet && Object.keys(d.diet).length); }
+
+// ¿La lente descarta este plato? Sólo un 0 duro descarta. El condicional ('*')
+// no descarta: es justamente donde el garzón tiene algo que hacer.
+function menuFails(d){
+  return MENU_DIET_LENS.some(ax => dietVerdict(d, ax) === 0);
+}
+// Ejes activos sin dato en la ficha: el plato no se descarta, pero se avisa.
+function menuUnknownAxes(d){
+  return MENU_DIET_LENS.filter(ax => dietVerdict(d, ax) === undefined);
+}
+
+// Tira de la ficha CERRADA. Con lente activa muestra sólo los ejes que se
+// preguntaron; sin lente, lo que el plato excluye, recortado para no romper
+// la ficha en varias líneas. El silencio significa apto: no hay marca verde.
+function menuExclStrip(d){
+  const abbr = k => (DIET_AXES.find(a => a.key === k) || {}).abbr || k;
+  // Sin matriz: se cae a los alérgenos en prosa que ya traían estos platos,
+  // y con la lente activa se dice explícitamente que no hay dato.
+  if (!menuHasMatrix(d)){
+    if (MENU_DIET_LENS.length || d.draft)
+      return `<div class="mn-excl nodata">? ${t('dietNoDataShort')}</div>`;
+    return (d.allergens && d.allergens.length)
+      ? `<div class="mn-excl">✗ ${d.allergens.join(' · ')}</div>` : '';
   }
-  const days = (currentDay === 'all' || searching) ? ['1','2','3','4'] : [currentDay];
+  const axes = MENU_DIET_LENS.length ? MENU_DIET_LENS : DIET_AXES.map(a => a.key);
+  const no   = axes.filter(ax => dietVerdict(d, ax) === 0);
+  const cond = axes.filter(ax => dietVerdict(d, ax) === '*');
+  // Los ejes sin dato se avisan SIEMPRE, con o sin lente: en la Carta de Bar
+  // hay platos con matriz parcial y un plato del que no sabemos no puede
+  // leerse como apto sólo porque no tiene una cruz.
+  const nod  = axes.filter(ax => dietVerdict(d, ax) === undefined);
+  if (nod.length && !no.length && !cond.length)
+    return `<div class="mn-excl nodata">? ${nod.map(abbr).join(' ')}</div>`;
+  const parts = [];
+  if (no.length){
+    const shown = no.slice(0, 4).map(abbr).join(' ');
+    parts.push(`✗ ${shown}${no.length > 4 ? ' +' + (no.length - 4) : ''}`);
+  }
+  if (cond.length) parts.push(`✓* ${cond.map(abbr).join(' ')}`);
+  if (nod.length)  parts.push(`? ${nod.map(abbr).join(' ')}`);
+  if (!parts.length) return '';
+  return `<div class="mn-excl">${parts.join('  ·  ')}</div>`;
+}
+
+// Bloque de veredictos de la ficha ABIERTA: la foto completa del plato.
+// Cada condicional viene SIEMPRE con su nota — nunca un asterisco suelto.
+function menuVerdicts(d){
+  // Sin matriz del asesor: se muestran los alérgenos que el plato ya traía y
+  // se dice con todas las letras que la matriz no está — nunca se infiere.
+  if (!menuHasMatrix(d)){
+    const al = (d.allergens && d.allergens.length)
+      ? `<div class="mn-v no"><span class="mn-v-tag">${t('allergens')}</span><span class="mn-v-txt">${d.allergens.join(' · ')}</span></div>` : '';
+    return `<div class="mn-verdicts">${al}<div class="mn-v nodata"><span class="mn-v-tag">${t('dietNoData')}</span><span class="mn-v-txt">${t('dietNoMatrix')}</span></div></div>`;
+  }
+  const label = k => t((DIET_AXES.find(a => a.key === k) || {}).uiKey || k);
+  const no    = DIET_AXES.filter(a => d.diet[a.key] === 0).map(a => a.key);
+  const cond  = DIET_AXES.filter(a => d.diet[a.key] === '*').map(a => a.key);
+  const nod   = DIET_AXES.filter(a => d.diet[a.key] === undefined).map(a => a.key);
+  let rows = '';
+  if (no.length)
+    rows += `<div class="mn-v no"><span class="mn-v-tag">${t('dietNotFit')}</span><span class="mn-v-txt">${no.map(label).join(' · ')}</span></div>`;
+  cond.forEach(ax => {
+    const note = (d.dietNotes || {})[ax] || '';
+    rows += `<div class="mn-v note"><span class="mn-v-tag">${label(ax)}</span><span class="mn-v-txt">${vjEsc(note)}</span></div>`;
+  });
+  if (nod.length)
+    rows += `<div class="mn-v nodata"><span class="mn-v-tag">${t('dietNoData')}</span><span class="mn-v-txt">${nod.map(label).join(' · ')}</span></div>`;
+  return rows ? `<div class="mn-verdicts">${rows}</div>` : '';
+}
+
+// Ficha del plato. `slotLabel` es el rótulo fijo de la bandeja o la familia
+// de postre; `wide` es para la sopa, que es una sola y ocupa el ancho.
+function menuTile(d, slotLabel, wide){
+  const tr    = getDishTr(d);
+  const open  = selectedDish === d.id;
+  const dim   = !open && MENU_DIET_LENS.length && menuFails(d);
+  // Con la lente activa, un plato sin matriz no puede confundirse con uno
+  // apto: se marca con borde punteado. Es la diferencia entre "no" y "no sé".
+  const unk   = !open && MENU_DIET_LENS.length && !menuHasMatrix(d);
+  const cls   = ['mn-tile', wide ? 'wide' : '', open ? 'open' : '', dim ? 'dim' : '', unk ? 'unk' : ''].filter(Boolean).join(' ');
+  let body = '';
+  if (open){
+    const extOpen = MENU_GUION_OPEN === d.id;
+    const twin    = d.barTwin ? BAR_DISHES.find(b => b.id === d.barTwin)
+                  : d.lunchTwin ? DISHES.find(x => x.id === d.lunchTwin) : null;
+    // Maridaje: los platos nuevos no traen vino (los documentos no lo dan y no
+    // se inventa). Los que sí lo tienen conservan sus chips de siempre.
+    const wines = (d.wines || []).map(wid => {
+      const w = getWine(wid); if (!w) return '';
+      return `<div class="wine-chip ${typeChipClass(w)}" data-wid="${wid}" onclick="event.stopPropagation();openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${(tr.why||{})[wid]||''}</div></div>`;
+    }).join('');
+    body = `<div class="mn-open">
+      ${d.brief ? `<div class="mn-quote">${vjEsc(tr.brief || d.brief)}</div>` : `<div class="mn-quote">${tr.desc || ''}</div>`}
+      ${d.extended ? `<button class="mn-more" onclick="event.stopPropagation();menuToggleGuion('${d.id}')">${extOpen ? t('guionLess') : t('guionMore')}</button>` : ''}
+      ${extOpen && d.extended ? `<div class="mn-ext">${vjEsc(tr.extended || d.extended)}</div>` : ''}
+      ${menuVerdicts(d)}
+      ${d.draft ? `<div class="mn-draft">${t('barDraft')}</div>` : ''}
+      ${wines ? `<div class="detail-section" style="margin-top:12px"><h3>${t('pairings')}</h3><div class="wine-suggestions">${wines}</div></div>` : ''}
+      ${twin ? `<div class="mn-twin" onclick="event.stopPropagation();menuJumpTwin('${twin.id}')">💡 ${d.barTwin ? t('barTwin') : t('lunchTwin')} · ${vjEsc(twin.short || twin.name)}</div>` : ''}
+      ${d.recipeDay ? `<div class="mn-meta">${t('recipeDayLabel')} ${d.recipeDay}</div>` : ''}
+    </div>`;
+  }
+  return `<div class="${cls}" data-dish-id="${d.id}" onclick="selectDish('${d.id}')">
+    ${slotLabel ? `<div class="mn-slot">${slotLabel}</div>` : ''}
+    <div class="mn-name">${vjEsc(tr.name)}</div>
+    ${open ? '' : menuExclStrip(d)}
+    ${body}
+  </div>`;
+}
+
+// Sección con su regla editorial y su contador. Si la lente vacía la sección
+// entera, nunca queda una pantalla muda: se dice qué hacer.
+function menuSection(titleKey, tiles, count, countLabel){
+  const body = tiles || `<div class="mn-empty">${t('lensNoFit')}</div>`;
+  return `<div class="mn-sec">
+    <div class="mn-sec-head">${t(titleKey)}${count ? `<span class="mn-sec-count">${countLabel || count}</span>` : ''}</div>
+    <div class="mn-grid">${body}</div>
+  </div>`;
+}
+
+// Con "sólo aptos" prendido los no aptos se van; por defecto se atenúan pero
+// siguen ahí y siguen tapeables — saber qué NO servir importa tanto como
+// saber qué sí.
+function menuVisible(list){
+  return (MENU_ONLY_FIT && MENU_DIET_LENS.length) ? list.filter(d => !menuFails(d)) : list;
+}
+
+function renderDishes(){
+  const input     = document.getElementById('dish-search');
+  const q         = (input && input.value || '').trim().toLowerCase();
+  const searching = q.length > 0;
+  const grid      = document.getElementById('dish-grid');
+  if (!grid) return;
+
+  menuRenderChrome(searching);
+
+  // Tragos: sólo visible en BAR › Tragos y nunca durante una búsqueda de platos.
+  const drinks = document.getElementById('tab-cocktails');
+  const showDrinks = !searching && MENU_SERVICE === 'bar' && MENU_BAR_VIEW === 'tragos';
+  if (drinks){
+    drinks.classList.toggle('hidden', !showDrinks);
+    if (showDrinks){
+      renderCocktails();
+      if (cocktailsShowingMomentos) renderMomentos();
+    }
+  }
+  grid.classList.toggle('hidden', showDrinks);
+  if (showDrinks){ grid.innerHTML = ''; return; }
+
+  if (searching)                 { grid.innerHTML = menuRenderSearch(q); return; }
+  if (MENU_SERVICE === 'bar')    { grid.innerHTML = menuRenderBar();     return; }
+  if (MENU_SERVICE === 'cena')   { grid.innerHTML = menuRenderCena();    return; }
+  grid.innerHTML = menuRenderAlmuerzo();
+}
+
+// --- Almuerzo: buffet (6 bandejas) + sopa + principales + postres ----------
+function menuRenderAlmuerzo(){
+  const day = (currentDay === 'all') ? menuTodayCycleDay() : currentDay;
+  const of  = (course) => DISHES.filter(d => d.day === day && d.course === course &&
+                                             (d.service === 'Almuerzo' || d.service === 'Almuerzo y Cena'));
+  const buffet = of('Buffet'), sopa = of('Sopa'), mains = of('Plato principal'), postres = of('Postre');
+
+  // El buffet se dibuja por SLOT, no por el orden del array: la bandeja es
+  // fija y lo que rota es el plato que la ocupa.
+  const buffetTiles = BUFFET_SLOTS.map(s => {
+    const d = buffet.find(x => x.slot === s.key);
+    if (!d || (MENU_ONLY_FIT && MENU_DIET_LENS.length && menuFails(d))) return '';
+    return menuTile(d, t(s.uiKey), false);
+  }).join('');
+
+  const postreTiles = POSTRE_SLOTS.map(s => {
+    const d = postres.find(x => x.slot === s.key);
+    if (!d || (MENU_ONLY_FIT && MENU_DIET_LENS.length && menuFails(d))) return '';
+    return menuTile(d, t(s.uiKey), false);
+  }).join('');
+
   let html = '';
-  days.forEach(day => {
-    const dayDishes = dishes.filter(d => d.day === day);
-    if (!dayDishes.length) return;
-    if (currentDay === 'all' || searching) html += `<div class="day-heading">${t('day')} ${day}</div>`;
-    SERVICE_ORDER.forEach(service => {
-      const svcDishes = dayDishes.filter(d => d.service === service);
-      if (!svcDishes.length) return;
-      const dotClass = service === 'Cena' ? 'dot-dinner' : service === 'Almuerzo y Cena' ? 'dot-shared' : 'dot-lunch';
-      html += `<div class="service-block"><div class="service-header"><div class="service-dot ${dotClass}"></div><span class="service-label">${serviceLabel(service)}</span></div>`;
-      COURSE_ORDER.forEach(course => {
-        const courseDishes = svcDishes.filter(d => d.course === course);
-        if (!courseDishes.length) return;
-        html += `<div class="course-section"><div class="course-label">${courseLabel(course)}</div><div class="dish-row">`;
-        courseDishes.forEach(d => {
-          const tr = getDishTr(d);
-          const isSelected = selectedDish === d.id;
-          let expanded = '';
-          if (isSelected) {
-            const chips = d.wines.map(wid => {
-              const w = getWine(wid);
-              return `<div class="wine-chip ${typeChipClass(w)}" data-wid="${wid}" onclick="event.stopPropagation();openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${tr.why[wid]||''}</div></div>`;
-            }).join('');
-            expanded = `<div class="dish-expanded">
-              <p class="detail-meta">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)}</p>
-              ${d.allergens.length ? `<div class="detail-section"><h3>${t('allergens')}</h3><div class="allergen-detail">${d.allergens.map(a=>`<span class="allergen-pill${a==='Mariscos'?' pill-mariscos':''}">${a}</span>`).join('')}</div></div>` : ''}
-              <div class="detail-section"><h3>${t('pairings')}</h3><div class="wine-suggestions">${chips}</div></div>
-            </div>`;
-          }
-          html += `<div class="dish-card${isSelected?' selected':''}" data-dish-id="${d.id}" onclick="selectDish('${d.id}')">
-            <div class="dish-name">${tr.name}</div>
-            <div class="dish-desc">${tr.desc}</div>
-            ${d.allergens.length ? `<div class="allergen-row">${d.allergens.map(a=>`<span class="allergen-tag${a==='Mariscos'?' tag-mariscos':''}">${a}</span>`).join('')}</div>` : ''}
-            ${expanded}
-          </div>`;
-        });
-        html += `</div></div>`; // close dish-row and course-section
-      });
-      html += `</div>`;
+  if (buffet.length)  html += menuSection('secBuffet', buffetTiles, 1, t('trayCount'));
+  if (sopa.length)    html += menuSection('secSoup',  menuVisible(sopa).map(d => menuTile(d, '', true)).join(''), 0);
+  if (mains.length)   html += menuSection('secMains', menuVisible(mains).map(d => menuTile(d, '', false)).join(''), mains.length);
+  // Los postres viejos traen sus 3 líneas de postre por día; los nuevos, sus
+  // familias. Si no hay slot (postre antiguo), la ficha va sin rótulo.
+  if (postres.length) html += menuSection('secDesserts', postres.some(p => p.slot) ? postreTiles : menuVisible(postres).map(d => menuTile(d, '', false)).join(''), postres.length);
+  return html || `<div class="empty-state">${t('noDishes')}</div>`;
+}
+
+// --- Cena: se mantiene tal cual hasta que llegue su documento --------------
+function menuRenderCena(){
+  const day = (currentDay === 'all') ? menuTodayCycleDay() : currentDay;
+  const of  = (course) => DISHES.filter(d => d.day === day && d.course === course &&
+                                             (d.service === 'Cena' || d.service === 'Almuerzo y Cena'));
+  const starters = of('Entrada'), mains = of('Plato principal'), postres = of('Postre');
+  let html = '';
+  if (starters.length) html += menuSection('starter', menuVisible(starters).map(d => menuTile(d, '', false)).join(''), starters.length);
+  if (mains.length)    html += menuSection('secMains', menuVisible(mains).map(d => menuTile(d, '', false)).join(''), mains.length);
+  if (postres.length){
+    const tiles = POSTRE_SLOTS.map(s => {
+      const d = postres.find(x => x.slot === s.key);
+      if (!d || (MENU_ONLY_FIT && MENU_DIET_LENS.length && menuFails(d))) return '';
+      return menuTile(d, t(s.uiKey), false);
+    }).join('');
+    html += menuSection('secDesserts', postres.some(p => p.slot) ? tiles : menuVisible(postres).map(d => menuTile(d, '', false)).join(''), postres.length);
+  }
+  return html || `<div class="empty-state">${t('noDishes')}</div>`;
+}
+
+// --- Bar: carta fija, sin ciclo de días ------------------------------------
+function menuRenderBar(){
+  const salado = menuVisible(BAR_DISHES.filter(d => d.cat === 'Salado'));
+  const dulce  = menuVisible(BAR_DISHES.filter(d => d.cat === 'Dulce'));
+  return menuSection('barSalado', salado.map(d => menuTile(d, '', false)).join(''), salado.length)
+       + menuSection('barDulce',  dulce .map(d => menuTile(d, '', false)).join(''), dulce.length);
+}
+
+// --- Búsqueda transversal --------------------------------------------------
+// Salta día, servicio y carta: indexa nombre, descripción y los dos niveles
+// de guion, sin acentos, para que "gratato" o "tatemado" caigan igual.
+function menuRenderSearch(q){
+  const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const needle = fold(q);
+  const hit = d => {
+    const tr = getDishTr(d);
+    return [tr.name, tr.desc, d.short, d.alias, d.brief, d.extended]
+      .some(v => fold(v).includes(needle));
+  };
+  let html = '';
+  ['1','2','3','4'].forEach(day => {
+    const found = DISHES.filter(d => d.day === day && hit(d));
+    if (!found.length) return;
+    html += `<div class="day-heading">${t('day')} ${day}</div>`;
+    COURSE_ORDER.forEach(course => {
+      const list = menuVisible(found.filter(d => d.course === course));
+      if (!list.length) return;
+      html += `<div class="mn-sec"><div class="mn-sec-head">${courseLabel(course)}</div>
+        <div class="mn-grid">${list.map(d => menuTile(d, '', false)).join('')}</div></div>`;
     });
   });
-  document.getElementById('dish-grid').innerHTML = html;
+  const bar = menuVisible(BAR_DISHES.filter(hit));
+  if (bar.length){
+    html += `<div class="day-heading">${t('svcBar')}</div>
+      <div class="mn-sec"><div class="mn-grid">${bar.map(d => menuTile(d, '', false)).join('')}</div></div>`;
+  }
+  return html || `<div class="empty-state">${t('noDishes')}</div>`;
+}
+
+// --- Chrome: segmented de servicio, riel de día y lente --------------------
+function menuRenderChrome(searching){
+  const svc = document.getElementById('mn-svc');
+  if (svc){
+    const btn = (key, label) => `<button class="mn-svc-btn${MENU_SERVICE === key ? ' active' : ''}" onclick="menuSetService('${key}')">${label}</button>`;
+    svc.innerHTML = btn('almuerzo', t('lunch')) + btn('cena', t('dinner')) + btn('bar', t('svcBar'));
+  }
+  // En BAR el selector de día no tiene sentido, pero tampoco desaparece: se
+  // reemplaza por el rótulo de carta fija, del mismo alto. Nada se mueve.
+  const daySel = document.getElementById('mn-day-selector');
+  const note   = document.getElementById('mn-fixed-note');
+  const isBar  = MENU_SERVICE === 'bar' && !searching;
+  if (daySel) daySel.hidden = isBar;
+  if (note){ note.hidden = !isBar; note.textContent = t('barFixed'); }
+
+  // Sub-control comida / tragos: existe sólo dentro de BAR.
+  const barTabs = document.getElementById('mn-bar-tabs');
+  if (barTabs){
+    if (!isBar) barTabs.innerHTML = '';
+    else {
+      const b = (key, label) => `<button class="mn-svc-btn${MENU_BAR_VIEW === key ? ' active' : ''}" onclick="menuSetBarView('${key}')">${label}</button>`;
+      barTabs.innerHTML = `<div class="mn-svc mn-svc2">${b('comida', t('barFood'))}${b('tragos', t('barDrinks'))}</div>`;
+    }
+  }
+
+  // La lente no aplica a la carta de tragos: los cocteles no tienen matriz.
+  const host = document.getElementById('mn-lens');
+  if (host) host.innerHTML = (isBar && MENU_BAR_VIEW === 'tragos') ? '' : menuLensHtml();
+}
+
+function menuLensHtml(){
+  const active  = MENU_DIET_LENS.length;
+  const label   = k => t((DIET_AXES.find(a => a.key === k) || {}).uiKey || k);
+  const summary = active
+    ? MENU_DIET_LENS.map(label).join(' · ') + (MENU_ROOM_ACTIVE ? ` · hab ${vjEsc(MENU_ROOM_ACTIVE)}` : '')
+    : t('lensHint');
+  let body = '';
+  if (MENU_LENS_OPEN){
+    const chips = DIET_AXES.map(a =>
+      `<button class="mn-chip${MENU_DIET_LENS.includes(a.key) ? ' active' : ''}" onclick="menuToggleAxis('${a.key}')">${t(a.uiKey)}</button>`
+    ).join('');
+    // La fila de acciones existe SIEMPRE con la lente abierta (alto fijo):
+    // prender o apagar un eje no reflowea los chips bajo el dedo.
+    const acts = `<div class="mn-lens-acts">
+      <button class="mn-act${MENU_ONLY_FIT ? ' active' : ''}" ${active ? '' : 'disabled'} onclick="menuToggleOnlyFit()">${t('lensOnlyFit')}</button>
+      <button class="mn-act" ${active ? '' : 'disabled'} onclick="menuClearLens()">${t('lensClear')}</button>
+      <button class="mn-act mn-act-room${MENU_ROOM_OPEN ? ' active' : ''}" onclick="menuToggleRoom()">${t('lensRoom')}</button>
+    </div>`;
+    const pad = ['7','8','9','4','5','6','1','2','3','0'];
+    const numpad = MENU_ROOM_OPEN ? `<div class="vj-numpad" style="margin:9px 0 0">
+      ${pad.map(n => `<button class="vj-num-key" onclick="menuRoomKey('${n}')">${n}</button>`).join('')}
+      <button class="vj-num-key action" onclick="menuRoomKey('del')">←</button>
+      <button class="vj-num-key action" onclick="menuRoomKey('go')">✓</button>
+      </div>` : '';
+    // El aviso sobrevive al cierre del numpad: si la hab traía una restricción
+    // que la tabla de 9 ejes no cubre, el garzón tiene que seguir viéndolo.
+    const msgTxt = [MENU_ROOM_OPEN && MENU_ROOM_INPUT ? 'Hab ' + MENU_ROOM_INPUT : '', MENU_ROOM_MSG].filter(Boolean).join(' · ');
+    const msg = msgTxt ? `<div class="mn-room-msg">${vjEsc(msgTxt)}</div>` : '';
+    body = `<div class="mn-lens-body"><div class="mn-lens-chips">${chips}</div>${acts}${numpad}${msg}</div>`;
+  }
+  return `<div class="mn-lens${active ? ' on' : ''}${MENU_LENS_OPEN ? ' open' : ''}">
+    <button class="mn-lens-head" onclick="menuToggleLens()">
+      <span class="mn-lens-title">${t('lensTitle')}</span>
+      <span class="mn-lens-sum">${vjEsc(summary)}</span>
+      <span class="mn-lens-caret">▾</span>
+    </button>${body}</div>`;
+}
+
+// --- Acciones de la vista ---------------------------------------------------
+function menuTodayCycleDay(){
+  const anchor = new Date(2026, 3, 14); // 2026-04-14 = Día 4
+  const now    = new Date();
+  const today  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diff   = Math.round((today - anchor) / 86400000);
+  return String(((diff + 3) % 4 + 4) % 4 + 1);
+}
+
+function menuSetService(svc){
+  MENU_SERVICE = svc;
+  selectedDish = null;
+  MENU_GUION_OPEN = null;
+  renderDishes();
+}
+function menuSetBarView(v){
+  MENU_BAR_VIEW = v;
+  selectedDish = null;
+  MENU_GUION_OPEN = null;
+  renderDishes();
+}
+function menuToggleLens(){ MENU_LENS_OPEN = !MENU_LENS_OPEN; renderDishes(); }
+function menuToggleAxis(ax){
+  const i = MENU_DIET_LENS.indexOf(ax);
+  if (i > -1) MENU_DIET_LENS.splice(i, 1); else MENU_DIET_LENS.push(ax);
+  if (!MENU_DIET_LENS.length){ MENU_ONLY_FIT = false; MENU_ROOM_ACTIVE = ''; }
+  renderDishes();
+}
+function menuToggleOnlyFit(){ MENU_ONLY_FIT = !MENU_ONLY_FIT; renderDishes(); }
+function menuClearLens(){
+  MENU_DIET_LENS = []; MENU_ONLY_FIT = false;
+  MENU_ROOM_ACTIVE = ''; MENU_ROOM_INPUT = ''; MENU_ROOM_MSG = '';
+  renderDishes();
+}
+function menuToggleGuion(id){
+  MENU_GUION_OPEN = (MENU_GUION_OPEN === id) ? null : id;
+  renderDishes();
+}
+// Salta a la ficha hermana (💡 del guion): cambia de carta si hace falta,
+// la abre y la trae a la vista — el mismo gesto "find & jump" del Checklist.
+function menuJumpTwin(id){
+  const bar = BAR_DISHES.find(b => b.id === id);
+  if (bar){ MENU_SERVICE = 'bar'; MENU_BAR_VIEW = 'comida'; }
+  else {
+    const d = DISHES.find(x => x.id === id);
+    if (!d) return;
+    MENU_SERVICE = (d.service === 'Cena') ? 'cena' : 'almuerzo';
+    currentDay = d.day;
+    document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', String(i + 1) === d.day));
+  }
+  selectedDish = id;
+  MENU_GUION_OPEN = null;
+  renderDishes();
+  const el = document.querySelector(`.mn-tile[data-dish-id="${id}"]`);
+  if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+// --- Puente con PGO ---------------------------------------------------------
+// Lo que ningún PDF puede hacer: tomar las restricciones reales del viajero
+// alojado y encender los ejes que correspondan. Read-only sobre
+// /viajeros/current — la misma data que ya lee la tab PGO.
+function menuToggleRoom(){
+  MENU_ROOM_OPEN = !MENU_ROOM_OPEN;
+  MENU_ROOM_MSG = ''; MENU_ROOM_INPUT = '';
+  if (MENU_ROOM_OPEN && !VIAJEROS_DATA && typeof viajerosFetch === 'function'){
+    viajerosFetch().then(() => { if (MENU_ROOM_OPEN) renderDishes(); }).catch(()=>{});
+  }
+  renderDishes();
+}
+function menuRoomKey(k){
+  if (k === 'del')      MENU_ROOM_INPUT = MENU_ROOM_INPUT.slice(0, -1);
+  else if (k === 'go')  return menuApplyRoom();
+  else if (MENU_ROOM_INPUT.length < 3) MENU_ROOM_INPUT += k;
+  MENU_ROOM_MSG = '';
+  renderDishes();
+}
+function menuApplyRoom(){
+  const hab  = MENU_ROOM_INPUT;
+  const habs = (VIAJEROS_DATA && VIAJEROS_DATA.habs) || {};
+  // La clave puede venir con o sin cero a la izquierda según el sync.
+  const people = habs[hab] || habs[hab.padStart(2, '0')] || habs[String(Number(hab))] || [];
+  const axes = [], sinMapa = [];
+  people.forEach(p => (p.tags || []).forEach(tag => {
+    const ax = VJ_TAG_TO_AXIS[tag];
+    if (ax){ if (!axes.includes(ax)) axes.push(ax); }
+    // La tabla del asesor cubre 9 ejes; VJ_TAGS tiene bastantes más (sin
+    // carnes rojas, sin cilantro, diabético…). Un tag que no mapea NO se
+    // traga en silencio: se nombra, para que el garzón sepa que la lente
+    // no lo está mirando y lo consulte con cocina.
+    else if (!sinMapa.includes(tag)) sinMapa.push(tag);
+  }));
+  const legible = tag => (VJ_TAGS[tag] && t(VJ_TAGS[tag].key)) || tag.replace(/^(alergia|dieta|cond)-/, '').replace(/-/g, ' ');
+  if (!axes.length){
+    MENU_ROOM_MSG = sinMapa.length
+      ? t('lensRoomUnmapped') + ' ' + sinMapa.map(legible).join(', ')
+      : t('lensRoomEmpty');
+    renderDishes(); return;
+  }
+  MENU_DIET_LENS   = axes;
+  MENU_ROOM_ACTIVE = hab;
+  MENU_ROOM_OPEN   = false;
+  MENU_ROOM_MSG    = sinMapa.length ? t('lensRoomUnmapped') + ' ' + sinMapa.map(legible).join(', ') : '';
+  renderDishes();
 }
 
 function selectDish(id) {
   selectedDish = selectedDish === id ? null : id;
+  if (selectedDish !== id) MENU_GUION_OPEN = null;
   renderDishes();
 }
 
 function closeDishDetail() {
   selectedDish = null;
+  MENU_GUION_OPEN = null;
   renderDishes();
 }
 
@@ -3836,12 +4892,14 @@ function closeDishDetail() {
 // to close/swap. Mirrors the dish-card accordion pattern: one element, no
 // separate sub-panel.
 function openWineFromDish(wid) {
-  const target = document.querySelector(`.dish-card.selected .wine-chip[data-wid="${wid}"]`);
+  // La ficha abierta pasó de .dish-card.selected a .mn-tile.open con el
+  // cambio de menú 2026; se aceptan ambas para no romper nada latente.
+  const target = document.querySelector(`.mn-tile.open .wine-chip[data-wid="${wid}"], .dish-card.selected .wine-chip[data-wid="${wid}"]`);
   if (!target) return;
   const wasOpen = target.classList.contains('chip-active');
 
   // Collapse any currently expanded chip first
-  document.querySelectorAll('.dish-card.selected .wine-chip.chip-active').forEach(c => {
+  document.querySelectorAll('.mn-tile.open .wine-chip.chip-active, .dish-card.selected .wine-chip.chip-active').forEach(c => {
     c.classList.remove('chip-active');
     const d = c.querySelector('.wine-chip-detail');
     if (d) d.remove();
@@ -3992,6 +5050,18 @@ setLang(currentLang, document.querySelectorAll('.lang-btn')[['es','en','pt'].ind
     todayBtn.classList.add('day-btn-today'); // rastro permanente del día de hoy
     setDay(String(cycleDay), todayBtn);      // selección automática
   }
+})();
+
+// Servicio del momento: la misma ventana horaria que ya usa el catálogo del
+// Comande (almuerzo 11:30-17:59 · cena 18:00-00:59). Fuera de servicio queda
+// almuerzo, que es lo que más se consulta. Es una preselección, no un muro:
+// el segmented sigue a un tap de distancia.
+(function() {
+  const now = new Date();
+  const min = now.getHours() * 60 + now.getMinutes();
+  const isDinner = (min >= 18 * 60) || (min < 60);
+  MENU_SERVICE = isDinner ? 'cena' : 'almuerzo';
+  renderDishes();
 })();
 
 // ── LANGUAGE SHORTCUTS ───────────────────────────────────────────────────────
@@ -7191,6 +8261,9 @@ const COMANDA_SOURCES = [
       const isDinner = (minOfDay >= 18*60) || (minOfDay < 60);
       const list = DISHES.filter(d => {
         if (d.day !== cycleDay) return false;
+        // El buffet es autoservicio: el viajero se sirve solo y nunca entra
+        // en una comanda. Se consulta en la tab Menú, no acá.
+        if (d.course === 'Buffet') return false;
         const svc = d.service || '';
         if (isLunch)  return svc === 'Almuerzo' || svc === 'Almuerzo y Cena';
         if (isDinner) return svc === 'Cena'     || svc === 'Almuerzo y Cena';
@@ -8160,7 +9233,10 @@ function comandaSeatLayout(diners, shape, hasHead){
 // Service order ranks — used both for auto-inserting new items into the
 // right position within a diner's list and for drawing the course
 // dividers. Items whose group is unknown rank last (raw drinks etc.).
-const COMANDA_SERVICE_ORDER = ['Entrada','Plato principal','Postre'];
+// Copia de COURSE_ORDER para el Comande — mantener en sync (ver su comentario).
+// 'Buffet' no aparece acá a propósito: es autoservicio, el viajero se sirve
+// solo y nunca entra en una comanda. La sopa sí, porque la lleva el garzón.
+const COMANDA_SERVICE_ORDER = ['Sopa','Entrada','Plato principal','Postre'];
 function comandaGroupOf(it){
   if (!it) return '';
   if (it.source === 'dishes') return it.group || '';

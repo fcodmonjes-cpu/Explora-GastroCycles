@@ -77,16 +77,15 @@ reemplazó al strip de Postres/86 el 2026-06-22). Después, la fila de tabs:
 │  TERROIR  ·····························  (rota cada 15s) ···· │
 │  Talinay: viñas casi sobre roca caliza, a 12 km del mar.    │
 ├─────────────────────────────────────────────────────────────┤
-│ [Menú] [Vinos] [Cocktails] [Café] [E-Check]                 │
+│ [Menú] [Vinos] [PGO] [Comande] [Rol] [Café]                 │
 └─────────────────────────────────────────────────────────────┘
                     (contenido de la tab activa)
 ```
 
 | Tab | Propósito | Datos | PIN |
 |---|---|---|---|
-| **Menú** | Plato del día (D1-D4) + alérgenos + maridajes | Estático en el JS (`DISHES`) | — |
+| **Menú** | Servicio del día (Almuerzo · Cena · Bar) con lente de restricciones | Estático en el JS (`DISHES`, `BAR_DISHES`) | — |
 | **Vinos** | Ficha por vino + sub-vista "Maridajes generales" | Estático (`WINES`, `GUIONES`) | — |
-| **Cocktails** | Mocktails (halo verde) + Cocktails + sub-banner Momentos | Estático (`COCKTAILS`, `MOCKTAILS`) | — |
 | **Café** | Manual de bebidas + modo servicio (mesero / barista) | Estático (`COFFEE_DATA`) + Firebase `/orders` | 555 (mesero) · 999 (barista) |
 | **E-Check** | Comandera por mesa · **mapa espacial de asientos** | Firebase `/comandas/{date}/{id}` | 666 |
 | **Viajeros** | Dietas/alergias/restricciones por hab + filtros y contadores | Firebase `/viajeros/current` (read-only; escribe `scripts/sync_viajeros.py`) | — |
@@ -95,6 +94,57 @@ Los datos del Café (módulo Service Mode) y los del E-Check tienen su
 propia capa de Firebase. Del header, **staffing** escribe/lee Firebase; la
 **ventana de tips de vino** es 100% estática (sin Firebase). Los módulos
 **Postres/86** quedaron latentes el 2026-06-22 (ver §4).
+
+### 3.1 La vista Menú (rediseño del 2026-08-10)
+
+Con el cambio de menú, el almuerzo pasó de 4 platos a **14** (buffet de 6
+bandejas + sopa + 4 opciones principales + 3 postres). Un listado vertical
+deja de servir a esa escala, así que la vista **corta primero por servicio**
+y recién después se lee:
+
+```
+[ buscar plato, ingrediente o guion ]
+ D1   D2   D3·hoy·   D4          ← en BAR se reemplaza por "Carta fija",
+┌──────────────────────────────┐    del mismo alto: nada se mueve
+│ ALMUERZO │  CENA  │   BAR    │  ← autodetecta por hora
+└──────────────────────────────┘
+    (sólo en BAR)  [COMIDA][TRAGOS]
+PARA QUIÉN  ▸ lente de restricciones
+BUFFET ──────────── 6 bandejas
+  ┌ HOJAS ─┐ ┌ VEG.FIRMES ─┐   ← slots FIJOS: la bandeja no cambia,
+  └────────┘ └─────────────┘      cambia el plato que la ocupa
+SOPA DEL DÍA ─── (ancho completo)
+PRINCIPALES ─ 4 · POSTRES ─ 3
+```
+
+**Dos ideas la sostienen.**
+
+*La línea, no la lista.* El buffet es un objeto físico de seis bandejas en un
+orden que no cambia nunca. Se dibuja como grilla de slots fijos (`BUFFET_SLOTS`)
+en vez de como lista: el garzón aprende una vez dónde está cada bandeja y eso
+queda cierto para siempre. Es el mismo movimiento que el mapa de asientos del
+E-Check — espacializar en vez de listar.
+
+*La matriz invertida.* El PDF del asesor dice "buscá tu plato y leé su fila de
+✓/✗". La app dice "decime la restricción y la línea se apaga sola". El garzón
+prende ejes en la lente —o toca **"desde una hab"** y `VJ_TAG_TO_AXIS` traduce
+los tags reales del viajero (`/viajeros/current`) a ejes— y los platos que no
+sirven se **atenúan sin desaparecer**: saber qué NO servir importa tanto como
+saber qué sí. El `✓*` deja de ser una nota al pie y pasa a ser lo más útil de
+la pantalla, porque es una acción ejecutable ("sirve el pollo aparte").
+
+**La regla de oro de la matriz** (vive entera en `dietVerdict` + `menuHasMatrix`):
+`1` apto · `0` no apto · `'*'` apto con condición (obliga a tener su texto en
+`dietNotes`) · **ausente = sin dato**. Un plato sin datos JAMÁS se pinta como
+apto: se marca con borde punteado y "consultar cocina". Hoy aplica a los
+principales del almuerzo y a toda la cena, que se mantienen hasta fin de mes, y
+a los ejes que el Guion de Bar no declara. Silencio significa apto sólo donde
+hay matriz completa — por eso no existe un chip verde de "apto".
+
+**El bar absorbió Cocktails.** Toda la carta de bar (comida + tragos) vive en el
+segmento BAR; la tab Cocktails desapareció de `.main-tabs` (de 7 a 6 tabs) y
+`setTab('cocktails')` quedó como alias que entra a BAR › Tragos.
+`renderCocktails()` no cambió: sólo cambió de casa.
 
 **Mapa de mesa (E-Check).** La pantalla activa de la comandera es un
 **diagrama espacial**: los comensales se eligen tocando su asiento en un
@@ -362,6 +412,42 @@ estado abierto/cerrado, y evita el "flash" que destruye gestos.
 Listo. Aparece en el menú del Día 3, cena, plato principal, con los
 maridajes wireados a la ficha de cada vino.
 
+### Receta 1b: Agregar un plato con matriz de restricciones
+
+Los platos del cambio de menú 2026 viven en tres arrays propios
+(`MENU_BUFFET`, `MENU_SOPAS`, `MENU_POSTRES`) que se empujan a `DISHES` al
+final del bloque de datos, más `BAR_DISHES` para la carta fija del bar.
+
+```js
+{
+  id:'bf1-hojas',            // id estable y legible (no correlativo)
+  day:'1',                   // DÍA DEL DOCUMENTO — se traduce al día de la
+                             // app con MENU_CYCLE_OFFSET al entrar a DISHES
+  slot:'hojas',              // slot fijo: ver BUFFET_SLOTS / POSTRE_SLOTS
+  recipeDay:'1',             // ficha técnica de cocina (≠ día de servicio)
+  name:'César de Lechuga Costina, Pollo Ahumado y Pan Gratato',
+  short:'César',             // nombre corto para la ficha y la comanda
+  diet:{veg:0, vgt:'*', pesc:1, mar:1, fs:1, lac:0, ge:0, gs:'*', halal:1},
+  dietNotes:{ vgt:'Sin el pollo ni el pan gratato...' },   // obligatorio si hay '*'
+  brief:'…',                 // explicación breve — se dice en voz alta
+  extended:'…',              // explicación extendida — se lee si preguntan
+  barTwin:'bar-cesar'        // 💡 hermana en la otra carta (o lunchTwin)
+}
+```
+
+Reglas duras al cargar la matriz:
+
+1. **Se transcribe, no se infiere.** El eje que el documento del asesor no
+   declara se **omite** — se verá como "sin dato · consultar cocina". Escribir
+   un `1` que nadie verificó es el único error de esta feature que puede
+   terminar en un plato servido a quien no debía.
+2. **Todo `'*'` exige su entrada en `dietNotes`.** Un asterisco sin la acción
+   que lo resuelve no le sirve a nadie en hora de servicio.
+3. **`COURSE_ORDER` tiene una copia** en `COMANDA_SERVICE_ORDER`. Si agregás un
+   curso, tocá las dos. `'Buffet'` está excluido del catálogo del Comande a
+   propósito: es autoservicio, nunca entra en una comanda.
+4. **El cruce se valida a máquina, no a ojo.** Ver §12.
+
 ### Receta 2: Agregar una familia de productos al E-Check
 
 Por ejemplo, jugos del bar.
@@ -510,6 +596,8 @@ Mapa de regiones aproximadas (los rangos cambian a medida que crece;
 | `<script>` STATE TOP | 985-1170 | Todas las let/const accesibles desde boot |
 | Diccionario `UI` | 1170-1610 | ES/EN/PT strings |
 | Data estática | 1610-2400 | DISHES, WINES, COCKTAILS, MOCKTAILS, MOMENTOS, GUIONES |
+| Cambio de menú 2026 | tras `DISHES` | `DIET_AXES`, `VJ_TAG_TO_AXIS`, `BUFFET_SLOTS`, `POSTRE_SLOTS`, `MENU_CYCLE_OFFSET`, `MENU_BUFFET`, `MENU_SOPAS`, `MENU_POSTRES`, `BAR_DISHES`, `DISHES_LEGACY_POSTRES` (los 12 postres anteriores, retirados pero reversibles con `DISHES.push(...)`) y el `DISHES.push` que unifica todo |
+| Vista Menú | tras `setTab` | `renderDishes` + `menuRender*` (almuerzo/cena/bar/búsqueda), `dietVerdict`, `menuHasMatrix`, `menuExclStrip`, `menuVerdicts`, `menuTile`, la lente (`menuToggleAxis`, `menuApplyRoom`) y `menuJumpTwin` |
 | Navegación | 2200-2400 | setTab, setLang, openWineFromGuion |
 | Render principal | 2400-2700 | renderDishes, renderWines, renderCocktails, etc. |
 | Módulo Café | 2700-3700 | COFFEE_DATA + manual + modo servicio (waiter+barista+history) |
@@ -596,7 +684,24 @@ está en exploración** — y cada una tiene su URL de Vercel distinta.
 3. **Syntax-check real con Node** (`node v24` está instalado): extraer los `<script>` inline (regex `/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi`) y `node --check` sobre el resultado. Atrapa errores de sintaxis sin ejecutar el DOM.
 4. **Screenshot de render real con Chrome/Edge headless** (ambos instalados en `Program Files`): como los módulos viven detrás de una tab + Firebase, armar un *harness* que reuse el `<style>` real del `index.html` + markup estático que replique lo que emiten las funciones de render, y capturarlo: `chrome.exe --headless=new --disable-gpu --window-size=390,H --screenshot=out.png harness.html`. Atrapa errores de CSS/layout/overflow que el syntax-check no ve. **Caveat:** los emoji de bandera (indicadores regionales) **no renderizan en Windows** (salen como letras `BR`/`CL`); ese detalle solo se valida en iPhone.
 5. **Scripts Python (`sync_*.py`):** correr con `PYTHONUTF8=1` en consola Windows — sin eso, los `print` con `≤`/`·`/`ñ` tiran `UnicodeEncodeError` (cp1252). En CI ubuntu corren sin el flag. Validar el pipeline con `--debug` (no escribe Firebase). Además, un **chequeo estático con `ast`** (funciones llamadas pero no definidas + constantes en mayúscula sin asignar) antes de gastar una corrida de CI: al editar bloques grandes es fácil borrar una función vecina y el `NameError` recién aparece a los 3 minutos, en el runner.
-6. La **prueba real** sigue siendo cargar la página (server local o preview de Vercel) y, para lo que solo se ve en iOS, el QA del owner desde iPhone en la URL fija de staging.
+6. **Cruce de datos contra la fuente, a máquina.** Cuando entra contenido desde
+   un documento del asesor (la matriz de restricciones son 9 ejes × 40 platos =
+   360 celdas), no se revisa a ojo: un script lee la tabla del `.docx` con
+   `zipfile` + regex sobre `word/document.xml`, extrae los arrays del
+   `index.html` corriéndolos con `node -e`, cruza por nombre normalizado y
+   reporta discrepancias. Debe dar **0**. El mismo script verifica que todo
+   `'*'` tenga su `dietNotes`. Vive en el scratchpad de la sesión, no en el repo.
+7. **Delta de Y bajo el dedo.** Para cualquier control que despliegue contenido
+   variable, medir en el navegador que los elementos vecinos NO se mueven:
+   `getBoundingClientRect().top + scrollY` antes y después de cada toggle. En la
+   lente de restricciones se verificó que prender/apagar ejes deja los chips, la
+   fila de acciones y la grilla exactamente donde estaban, y que el riel del
+   selector de día mide 33 px tanto en almuerzo como en bar.
+8. **Screenshots headless con viewport real.** `chrome --headless=new` ignora
+   `--window-size` para el layout y renderiza más ancho de lo pedido, lo que
+   simula desbordes que no existen. La vuelta: un wrapper con un `<iframe>` de
+   ancho fijo (375 px) apuntando a la página, y screenshot del wrapper.
+9. La **prueba real** sigue siendo cargar la página (server local o preview de Vercel) y, para lo que solo se ve en iOS, el QA del owner desde iPhone en la URL fija de staging.
 
 **Al cerrar:**
 
