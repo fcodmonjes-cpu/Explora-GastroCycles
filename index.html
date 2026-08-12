@@ -2296,12 +2296,21 @@ const BUFFET_SLOTS = [
 
 // --- Corrección del ciclo ---------------------------------------------------
 // El documento numera "Día de servicio 1..4"; la app calcula su D1..D4 desde
-// el ancla de fecha (ver el IIFE de auto-selección de día). NO está confirmado
-// que ambos coincidan. Si cocina confirma un desfase, se corrige acá:
-// un offset de 1 significa que el "Día 1" del documento se sirve en el D2.
-// Verificación: preguntar en cocina qué día de servicio corresponde a hoy y
-// compararlo con el D que la app marca con el halo azul.
-const MENU_CYCLE_OFFSET = 0;
+// el ancla de fecha (ver el IIFE de auto-selección de día). Ambas numeraciones
+// NO coinciden: el desfase quedó CONFIRMADO el 12-08-2026 contra el servicio
+// real. Ese día la app marcaba D4, la cena (que no cambió y es el master del
+// ciclo) era la del día 4, y el almuerzo que correspondía servir era el del
+// DÍA 2 del documento. De ahí offset = 2.
+//
+//   documento día 1 → D3      documento día 3 → D1
+//   documento día 2 → D4      documento día 4 → D2
+//
+// El +2 es su propio inverso mod 4, así que la tabla se lee igual en los dos
+// sentidos. La cena y el ancla de fecha no se tocan: el desfase se corrige
+// enteramente del lado del menú nuevo.
+// Si vuelve a moverse: preguntar en cocina qué día de servicio corresponde a hoy
+// y compararlo con el D que la app marca con el halo azul.
+const MENU_CYCLE_OFFSET = 2;
 
 // El desfase se aplica UNA sola vez, al entrar los platos nuevos al catálogo:
 // a partir de ahí todo el resto de la app ve un único sistema de numeración
@@ -2366,9 +2375,15 @@ const MENU_BUFFET = [
    extended:'El mote de trigo reemplaza al bulgur del tabulé original, dándole una textura chilena a un plato de tradición mediterránea. El limón fermentado en sal durante semanas aporta un sabor salino y concentrado muy distinto al limón fresco. Es un plato vegano, pero al llevar mote de trigo, no es apto para quienes evitan el gluten.'},
   {id:'bf2-cocidos',day:'2',slot:'cocidos',recipeDay:'3',
    name:'Repollo Salteado y Cebollas en Salsa de Mantequilla y Limón',short:'Repollo salteado',
-   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
+   // lac va como '*' y no como 1 a propósito: un 1 lo daría por apto sin decir
+   // nada, y acá el porqué importa — la mantequilla aporta trazas de proteína
+   // láctea aunque no de lactosa. El '*' pasa la lente igual que un apto y
+   // además obliga a mostrar la nota, que es lo que el garzón necesita para
+   // responderle al huésped sin ir a cocina. (Determinado el 12-08-2026.)
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:'*',ge:1,gs:1,halal:1},
+   dietNotes:{lac:'Apto: la mantequilla es de origen identificado y naturalmente sin lactosa. Si el huésped evita el lácteo por alergia a la proteína, consultar en cocina.'},
    brief:'Repollo salteado con cebollas asadas, bañado en una salsa suave de mantequilla y limón.',
-   extended:'El repollo se saltea hasta dorar ligeramente y se combina con cebollas asadas enteras. La salsa lleva mantequilla, miso blanco y un toque de limón, dándole una textura sedosa. El pan gratato que a veces acompaña este tipo de plato se sirve siempre aparte. No es apto para veganos ni para quienes evitan lácteos, por la mantequilla de la salsa.'},
+   extended:'El repollo se saltea hasta dorar ligeramente y se combina con cebollas asadas enteras. La salsa lleva mantequilla, miso blanco y un toque de limón, dándole una textura sedosa. El pan gratato que a veces acompaña este tipo de plato se sirve siempre aparte. No es apto para veganos por la mantequilla de la salsa; sí lo es para quienes evitan la lactosa, porque la mantequilla que usamos es de origen identificado y naturalmente sin lactosa.'},
   {id:'bf2-profria',day:'2',slot:'profria',recipeDay:'2',
    name:'Tartar de Vacuno con Alcaparras, Mostaza y Salsa de Yema',short:'Tartar de vacuno',
    diet:{veg:0,vgt:0,pesc:0,mar:1,fs:1,lac:0,ge:0,gs:0,halal:1},
