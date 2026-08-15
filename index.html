@@ -1790,6 +1790,13 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-head { margin-bottom:0.4rem; }
 .vj-title-row { display:flex; justify-content:flex-end; align-items:baseline; gap:12px; margin-bottom:0.7rem; }
 .vj-updated { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); white-space:nowrap; }
+/* Punto de estado del sync. Sin animación a propósito: el color comunica el
+   estado y el módulo no vuelve a anunciarse (ver el retiro del halo, 09-08).
+   Los tres tonos ya están en la paleta — no se introduce color nuevo. */
+.vj-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:7px; vertical-align:middle; position:relative; top:-1px; flex-shrink:0; }
+.vj-dot.is-fresh { background:var(--teal); }
+.vj-dot.is-stale { background:var(--gold); }
+.vj-dot.is-down  { background:var(--coral); }
 
 /* Stat-chips: contadores tappeables que a la vez son filtros. */
 .vj-stats { display:flex; gap:8px; margin-bottom:0.9rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
@@ -3724,6 +3731,9 @@ const UI = {
     // Viajeros module
     tabViajeros:'PGO',
     vjReportOf:'Reporte del',
+    // Frescura del sync (2026-08-14) — EN/PT propuestas, a revisar.
+    vjSyncAgoNow:'recién', vjSyncAgoMin:'hace {n} min', vjSyncAgoHours:'hace {n} h', vjSyncAgoDays:'hace {n} d',
+    vjSyncFresh:'Al día', vjSyncStale:'Atrasado', vjSyncDown:'Sin sincronizar',
     vjStatViajeros:'viajeros', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'salen hoy',
     vjSearchPh:'Buscar viajero, hab o grupo...',
     vjEmpty:'Aún no hay datos de viajeros. Corre "Seed Viajeros" desde GitHub Actions para poblar Firebase.',
@@ -3910,6 +3920,8 @@ const UI = {
     // Viajeros module
     tabViajeros:'PGO',
     vjReportOf:'Report of',
+    vjSyncAgoNow:'just now', vjSyncAgoMin:'{n} min ago', vjSyncAgoHours:'{n} h ago', vjSyncAgoDays:'{n} d ago',
+    vjSyncFresh:'Up to date', vjSyncStale:'Behind', vjSyncDown:'Not syncing',
     vjStatViajeros:'guests', vjStatNinos:'minors', vjStatAlergias:'allergies', vjStatDietas:'diets', vjStatSalenHoy:'leave today',
     vjSearchPh:'Search guest, room or group...',
     vjEmpty:'No guest data yet. Run "Seed Viajeros" from GitHub Actions to populate Firebase.',
@@ -4096,6 +4108,8 @@ const UI = {
     // Viajeros module
     tabViajeros:'PGO',
     vjReportOf:'Relatório de',
+    vjSyncAgoNow:'agora', vjSyncAgoMin:'há {n} min', vjSyncAgoHours:'há {n} h', vjSyncAgoDays:'há {n} d',
+    vjSyncFresh:'Em dia', vjSyncStale:'Atrasado', vjSyncDown:'Sem sincronizar',
     vjStatViajeros:'viajantes', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'saem hoje',
     vjSearchPh:'Buscar viajante, quarto ou grupo...',
     vjEmpty:'Ainda não há dados de viajantes. Rode "Seed Viajeros" no GitHub Actions para popular o Firebase.',
@@ -4397,6 +4411,7 @@ function setTab(tab, el) {
   if (tab === 'comandera') comandaEnter();
   if (tab === 'rol') rolEnter();
   if (tab === 'viajeros') viajerosEnter();
+  else vjStopTick();   // el chip de frescura sólo se refresca con la tab a la vista
   if (tab === 'checklist') chkEnter();
   else {
     // The checklist PIN/image overlays live on <body> (not inside chk-root),
@@ -6854,10 +6869,67 @@ function pgoBannerOpen(filtro){
 function viajerosEnter(){
   if (!VIAJEROS_DATA || Date.now() - VIAJEROS_FETCHED_AT > VIAJEROS_STALE_MS) viajerosFetch();
   else viajerosRender();
+  vjStartTick();
 }
 
 // ── Helpers puros ──
 function vjEsc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Frescura del sync: la fecha del reporte dice de QUÉ DÍA son los datos, no si
+// siguen vivos. Con el sync corriendo cada 30 min, si el workflow se cae la
+// fecha sigue diciendo lo mismo toda la mañana y nadie se entera. Esto responde
+// "¿esto está sincronizando?" de un vistazo.
+// Umbrales (definidos por el owner): ≤1h al día · 1-3h atrasado · >3h caído.
+// No reusa rolFormatLastUpdate(): aquel dice "hace minutos" para todo lo que
+// baje de una hora, y acá la diferencia entre hace 4 min y hace 50 ES la señal.
+// Devuelve null si el timestamp falta, es inválido o viene del futuro — el
+// llamador esconde el punto en vez de mostrar un dato en el que no se puede
+// confiar.
+const VJ_SYNC_FRESH_MS = 60 * 60 * 1000;        // hasta acá, al día
+const VJ_SYNC_STALE_MS = 3 * 60 * 60 * 1000;    // hasta acá, atrasado
+function vjFreshness(updatedAt){
+  const ts = Number(updatedAt);
+  if (!ts || !isFinite(ts)) return null;
+  const diff = Date.now() - ts;
+  if (diff < 0) return null;                     // futuro: reloj desalineado
+  let texto;
+  const min = Math.floor(diff / 60000);
+  if (min < 1)          texto = t('vjSyncAgoNow');
+  else if (diff < VJ_SYNC_FRESH_MS) texto = t('vjSyncAgoMin').replace('{n}', min);
+  else if (diff < 86400000)         texto = t('vjSyncAgoHours').replace('{n}', Math.floor(diff / 3600000));
+  else                              texto = t('vjSyncAgoDays').replace('{n}', Math.floor(diff / 86400000));
+  const cls   = diff < VJ_SYNC_FRESH_MS ? 'is-fresh' : diff < VJ_SYNC_STALE_MS ? 'is-stale' : 'is-down';
+  const estado = cls === 'is-fresh' ? t('vjSyncFresh') : cls === 'is-stale' ? t('vjSyncStale') : t('vjSyncDown');
+  return { cls, texto, estado };
+}
+// Pinta el chip de la cabecera: punto de estado + fecha del reporte + hace X.
+// Se llama desde vjRender y desde el tick, así que no reconstruye nada más.
+function vjPaintUpdated(){
+  const el = document.getElementById('vj-updated');
+  if (!el || !VIAJEROS_DATA) return;
+  const f = vjFreshness(VIAJEROS_DATA.updatedAt);
+  // El estado va también en el title: el color no puede ser el único portador
+  // del mensaje (daltonismo, y un iPhone al sol).
+  const punto = f ? `<span class="vj-dot ${f.cls}" title="${vjEsc(f.estado)}"></span>` : '';
+  const hace  = f ? ` · ${vjEsc(f.texto)}` : '';
+  el.innerHTML = `${punto}${vjEsc(t('vjReportOf'))} ${vjEsc(vjShortDate(VIAJEROS_DATA.date))}${hace}`;
+}
+// Tick liviano: el "hace X" se calcula al renderizar y quedaría congelado con la
+// tab abierta — el punto seguiría verde mientras pasan las horas. Sólo repinta
+// ese chip, nunca el módulo. Mismo patrón que comandaStartTimerInterval.
+let VIAJEROS_TICK = null;
+function vjStartTick(){
+  if (VIAJEROS_TICK) return;
+  VIAJEROS_TICK = setInterval(() => {
+    if (currentTab !== 'viajeros') return vjStopTick();
+    vjPaintUpdated();
+  }, 30000);
+}
+function vjStopTick(){
+  if (!VIAJEROS_TICK) return;
+  clearInterval(VIAJEROS_TICK);
+  VIAJEROS_TICK = null;
+}
 function vjIsoLocal(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function vjTodayIso(){ return vjIsoLocal(new Date()); }
 function vjTomorrowIso(){ return vjIsoLocal(new Date(Date.now() + 86400000)); }
@@ -7007,7 +7079,7 @@ function viajerosRender(){
       </div>
       <div id="vj-body"></div>`;
   }
-  document.getElementById('vj-updated').textContent  = `${t('vjReportOf')} ${vjShortDate(VIAJEROS_DATA.date)}`;
+  vjPaintUpdated();
   document.getElementById('vj-search').placeholder   = t('vjSearchPh');
   vjSyncNumpad();
   vjRenderStats(); vjRenderChips(); vjRenderBody();

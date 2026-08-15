@@ -307,7 +307,12 @@ def build_doc(rows, date_str, source):
         habs.setdefault(hab, []).append(traveler)
     return {
         "date":      date_str,
-        "updatedAt": int(datetime.datetime.utcnow().timestamp() * 1000),
+        # utcnow() devuelve un datetime NAIVE, y .timestamp() interpreta los
+        # naive como hora LOCAL: corrido desde Chile el updatedAt salía +4h en
+        # el futuro. En el runner de GitHub (UTC) daba bien de casualidad. Ahora
+        # que la app usa este valor para el indicador de frescura, un timestamp
+        # futuro haría que el punto de estado se escondiera solo.
+        "updatedAt": int(datetime.datetime.now(datetime.timezone.utc).timestamp() * 1000),
         "source":    source,
         "habs":      habs,
     }
