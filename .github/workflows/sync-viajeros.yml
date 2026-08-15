@@ -3,11 +3,18 @@ name: Sync Viajeros (PGO)
 # Fase 2: entra a PGO (portal web), lee el "Reporte Geos" + "Dietas" del día y
 # escribe /viajeros/current en Firebase — el reemplazo automático del seed manual.
 #
-# Corre solo a medianoche de Chile (04:00 UTC en invierno = 00:00 CLT; en
-# horario de verano queda 01:00 CLT — igual de madrugada), así a las 06:00 el
-# handbook ya tiene los datos del día. También corre a mano desde la UI de
-# Actions. El cron pasa la fecha de HOY: PGO abre por defecto en el día
-# siguiente, así que sin --date poblaría mañana.
+# Corre CADA 30 MINUTOS, todo el día. Antes corría una sola vez a medianoche de
+# Chile, y eso perdía todos los check-in del día: un huésped que llegaba a las
+# 14:00 no aparecía en el handbook hasta la madrugada siguiente, así que el
+# garzón lo atendía sin ver sus alergias ni restricciones. Los minutos de
+# Actions son gratis (repo público), así que el límite no es el costo: es no
+# golpear de más el portal de PGO y que GitHub atrasa los cron bajo carga
+# (5-20 min), atraso que a 30 min de intervalo todavía no domina.
+# También corre a mano desde la UI de Actions.
+#
+# El cron pasa la fecha de HOY EN CHILE: PGO abre por defecto en el día
+# siguiente, así que sin --date poblaría mañana. La zona horaria es esencial
+# ahora que se corre a toda hora — ver la nota en el paso "Sync desde PGO".
 # Ojo: GitHub atrasa los cron en horas de carga; si un día importa el minuto
 # exacto, disparar a mano.
 # Nota: el botón "Run workflow" recién aparece en la UI de Actions cuando este
@@ -21,7 +28,7 @@ name: Sync Viajeros (PGO)
 
 on:
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch:
     inputs:
       date:
@@ -41,9 +48,20 @@ on:
         type: boolean
         default: false
 
+# Con 48 corridas al día y un job de varios minutos, el solape deja de ser
+# hipotético: dos corridas escribiendo viajeros/current a la vez podrían dejar
+# el doc mezclado. Se encolan en vez de cancelarse — cancelar a mitad de una
+# escritura es justo lo que no se quiere.
+concurrency:
+  group: sync-viajeros
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # Sin tope, una corrida colgada en el login de PGO ocupa el runner hasta el
+    # límite de 6 horas de GitHub y se encima con decenas de corridas siguientes.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4.2.2
 
@@ -65,10 +83,17 @@ jobs:
         run: |
           ARGS="--from-pgo"
           FECHA="${{ inputs.date }}"
-          # En el cron no hay inputs: se usa la fecha de hoy (a las 10:00 UTC ya
-          # es el mismo día en Chile).
+          # En el cron no hay inputs: se usa la fecha de HOY EN CHILE.
+          # La zona horaria NO es un detalle. Con `date -u +%F` esto andaba de
+          # casualidad, porque la única corrida era a las 04:00 UTC = 00:00 en
+          # Chile del mismo día. Corriendo cada 30 min, las corridas de la franja
+          # 00:00-03:59 UTC caen a las 20:00-00:00 de Chile — plena cena — donde
+          # el día UTC ya es el SIGUIENTE: habrían traído el roster de mañana.
+          # Y la app no valida la fecha, sólo la muestra como etiqueta, así que
+          # el error sería invisible. America/Santiago además absorbe solo el
+          # cambio de horario de verano (UTC-4 en invierno, UTC-3 en verano).
           if [ -z "$FECHA" ] && [ "${{ github.event_name }}" = "schedule" ]; then
-            FECHA="$(date -u +%F)"
+            FECHA="$(TZ='America/Santiago' date +%F)"
           fi
           if [ -n "$FECHA" ]; then ARGS="$ARGS --date $FECHA"; fi
           if [ "${{ inputs.dump_html }}" = "true" ]; then ARGS="$ARGS --dump-html --debug"; fi
