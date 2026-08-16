@@ -361,6 +361,7 @@ PGO_ARRIVAL_PATH  = os.environ.get("PGO_ARRIVAL_PATH")  or "/arrival-report"
 PGO_BIRTHDAY_PATH = os.environ.get("PGO_BIRTHDAY_PATH") or "/birthday-report"
 PGO_COMEDOR_PATH  = os.environ.get("PGO_COMEDOR_PATH")  or "/comedor"
 PGO_EXPLORE_PATHS = {
+    "inout":    "(GraphQL reportInOut)",
     "arrival":  PGO_ARRIVAL_PATH,
     "birthday": PGO_BIRTHDAY_PATH,
     "comedor":  PGO_COMEDOR_PATH,
@@ -370,6 +371,10 @@ PGO_EXPLORE_PATHS = {
 # hacia adelante para ver quién llega hoy más tarde y mañana.
 PGO_ARRIVAL_BACK = int(os.environ.get("PGO_ARRIVAL_BACK") or 10)
 PGO_ARRIVAL_FWD  = int(os.environ.get("PGO_ARRIVAL_FWD")  or 1)
+# Atacama = 2 (code EATA). Torres del Paine es el 1: pedirle al hotel equivocado
+# devuelve datos válidos DE OTRO LODGE y no se nota mirando el resultado.
+PGO_HOTEL_ID = int(os.environ.get("PGO_HOTEL_ID") or 2)
+PGO_GQL_URL  = os.environ.get("PGO_GQL_URL") or "https://backend.pgo-explora.com"
 PGO_DATE_FMT    = os.environ.get("PGO_DATE_FMT")    or "%d-%m-%Y"   # como se ve en el input: 31-07-2026
 # Selector del input de fecha y del botón refrescar (texto visible, robusto a
 # cambios de clases). Sobrescribibles por env si el markup cambia.
@@ -1287,6 +1292,84 @@ def pgo_resolve_hotel(page):
         print(f"[explore]   id={h.get('id'):>3}  code={h.get('code'):<8} {h.get('name')}{marca}")
 
 
+# ── Horas de movimiento (GraphQL) ────────────────────────────────────────────
+# Qué hora manda para decir que alguien "ya no está": la del TRANSPORTE, no la
+# del checkout. El checkout es administrativo (mediodía nominal); lo que corta
+# de verdad el consumo en el comedor es cuándo se suben a la van. Decisión del
+# owner (2026-08-16). Cuando no hay transporte registrado se cae al checkout, y
+# si tampoco hay, al borde del día — nunca se inventa una hora intermedia.
+_INOUT_FIELDS = """
+  room checkin checkout guestCount confirmationNumber
+  arrivalTransportDatetime departureTransportDatetime
+  arrivalStatus departureStatus
+"""
+
+
+def _iso_dt(v):
+    """Normaliza los formatos de fecha-hora de PGO a 'YYYY-MM-DDTHH:MM' o ''."""
+    s = str(v or "").strip()
+    if not s or s.lower() in ("none", "null"):
+        return ""
+    s = s.replace("/", "-")
+    m = re.search(r"(\d{4})-(\d{2})-(\d{2})[T ]?(\d{2}):(\d{2})", s)
+    if m:
+        return f"{m.group(1)}-{m.group(2)}-{m.group(3)}T{m.group(4)}:{m.group(5)}"
+    m = re.search(r"(\d{1,2})-(\d{1,2})-(\d{4})[T ]?(\d{2}):(\d{2})", s)   # DD-MM-YYYY
+    if m:
+        return f"{m.group(3)}-{int(m.group(2)):02d}-{int(m.group(1)):02d}T{m.group(4)}:{m.group(5)}"
+    m = re.search(r"(\d{4})-(\d{2})-(\d{2})", s)                           # sólo fecha
+    if m:
+        return f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+    return ""
+
+
+def pgo_fetch_inout(page, date_str):
+    """reportInOut del día → {hab: {inAt, outAt, ...}} con HORAS reales.
+
+    Se cruza por HABITACIÓN, no por nombre: el movimiento es de la reserva
+    (todos los de una hab suben a la misma van), y cruzar por nombre es
+    justo lo que rompe el mojibake de PGO.
+    """
+    q = """query ($hotelId: ID!, $date: Date!) {
+             reportInOut(hotelId: $hotelId, date: $date) {
+               cantTravellerIn cantTravellerOut cantTravellerTodayNight
+               travellerIn { %s }
+               travellerOut { %s }
+             }
+           }""" % (_INOUT_FIELDS, _INOUT_FIELDS)
+    try:
+        res = pgo_graphql(page, q, {"hotelId": str(PGO_HOTEL_ID), "date": date_str})
+    except Exception as e:
+        print(f"[sync-viajeros] reportInOut: no se pudo consultar ({type(e).__name__}: {e})")
+        return {}, {}
+    if res.get("errors"):
+        print(f"[sync-viajeros] reportInOut devolvió errores: {str(res['errors'])[:300]}")
+    data = (res.get("data") or {}).get("reportInOut") or {}
+    if not data:
+        return {}, {}
+    tot = {k: data.get(k) for k in ("cantTravellerIn", "cantTravellerOut", "cantTravellerTodayNight")}
+    horas = {}
+    for clave, lista in (("in", data.get("travellerIn") or []),
+                         ("out", data.get("travellerOut") or [])):
+        for r in lista:
+            hab_raw = str(r.get("room") or "").strip()
+            hab = re.sub(r"\D", "", hab_raw).zfill(2) if re.search(r"\d", hab_raw) else hab_raw
+            if not hab:
+                continue
+            e = horas.setdefault(hab, {})
+            if clave == "in":
+                # Transporte primero; si no hay, el checkin administrativo.
+                e["inAt"] = (_iso_dt(r.get("arrivalTransportDatetime"))
+                             or _iso_dt(r.get("checkin")))
+                e["inSrc"] = "transporte" if _iso_dt(r.get("arrivalTransportDatetime")) else "checkin"
+            else:
+                e["outAt"] = (_iso_dt(r.get("departureTransportDatetime"))
+                              or _iso_dt(r.get("checkout")))
+                e["outSrc"] = "transporte" if _iso_dt(r.get("departureTransportDatetime")) else "checkout"
+    print(f"[sync-viajeros] reportInOut: {tot} · {len(horas)} habitaciones con movimiento")
+    return horas, tot
+
+
 def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
     """Abre sesión en PGO y perfila los reportes indicados. NO escribe nada."""
     _pgo_require()
@@ -1336,7 +1419,28 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
             pgo_introspect_types(page, PGO_TYPES_INTERES, max_depth=2)
             pgo_introspect_types(page, PGO_TYPES_GRANDES, max_depth=0,
                                  _filtro=_GQL_CAMPO_INTERES)
+        # "inout" no es una página: es la query GraphQL de horas. Se prueba acá
+        # antes de cablearla al sync productivo.
+        if "inout" in paths:
+            print(f"\n[explore] ===== inout (GraphQL reportInOut · hotelId={PGO_HOTEL_ID}) =====")
+            horas, tot = pgo_fetch_inout(page, date_str or datetime.date.today().isoformat())
+            print(f"[explore] totales: {tot}")
+            con_in  = sum(1 for v in horas.values() if v.get("inAt"))
+            con_out = sum(1 for v in horas.values() if v.get("outAt"))
+            src = {}
+            for v in horas.values():
+                for k in ("inSrc", "outSrc"):
+                    if v.get(k):
+                        src[f"{k}={v[k]}"] = src.get(f"{k}={v[k]}", 0) + 1
+            print(f"[explore] habs con hora de llegada: {con_in} · con hora de salida: {con_out}")
+            print(f"[explore] origen del dato: {src or '(ninguno)'}")
+            # Sólo el FORMATO de las horas, sin ligarlas a ninguna habitación.
+            muestras = sorted({v[k] for v in horas.values() for k in ("inAt", "outAt") if v.get(k)})[:6]
+            print(f"[explore] formato de las marcas: {muestras}")
+
         for nombre, path in paths.items():
+            if nombre == "inout":
+                continue
             print(f"\n[explore] ===== {nombre}  ({path}) =====")
             try:
                 rows = _pgo_read_report(page, path, fecha,
