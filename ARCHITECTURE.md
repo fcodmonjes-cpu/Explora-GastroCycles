@@ -23,7 +23,8 @@ que es operacional (turnos, postres, pedidos, comandas).
 - Manual de coctelería (con o sin alcohol)
 - Manual de café + sistema mesero ↔ barista para pedidos al espresso
 - Comandera de mesa (E-Check) PIN-gateada para registrar pedidos
-- Panel operativo (roster del turno + ventana viva de tips de vino)
+- Panel operativo (roster del turno + clima de terraza para el montaje)
+- Ventana viva de tips de vino, intercalada en el listado de platos
 - Corcho digital de viajeros: dietas, alergias y restricciones por
   habitación, con filtros y contadores (módulo `viajeros`)
 
@@ -49,6 +50,7 @@ que es operacional (turnos, postres, pedidos, comandas).
 | Hosting | Vercel (auto-deploy por branch) | `main` → `gastrocycles.vercel.app` (producción). `staging` → URL fija para QA desde iPhone. `feature/*` y `fix/*` → preview por commit. Ver sección 12. |
 | Tipografía | Cormorant Garamond (italic 500/700) + Courier Prime monospace | Cargadas vía Google Fonts. Family declarada en CSS desde el inicio; sólo recientemente se cargó la real. |
 | Instalable | PWA: `manifest.webmanifest` + `sw.js` (service worker propio, ~50 líneas) | Se agrega al home screen y abre sin chrome del browser. Network-first: el cache es red de emergencia, no fuente de verdad. Ver §2.1. |
+| Clima | Open-Meteo (REST, sin API key) | **Único tercero fuera de Firebase.** Gratis, CORS abierto y sin registro — en una app sin build step, una API key quedaría visible en el HTML. Si cae, el módulo se apaga solo. Ver §3.2. |
 | Telemetría | Vercel Analytics (`/_vercel/insights/script.js`) | Pageviews ligeros, sin más. Da 404 en local — solo existe en el deploy de Vercel. |
 
 **Por qué no hay framework.** El programa es lo bastante chico para que
@@ -99,27 +101,33 @@ mancha. Cada contexto usa la marca que aguanta su tamaño.
 ## 3. Las cinco pantallas (topología)
 
 Header común arriba (título + subtítulo + selector de idioma + logo).
-Debajo, un wrapper "ops-strip" con el panel de staffing (turno activo,
-viajeros) y una **ventana viva de tips de vino** (módulo `winetips`, que
-reemplazó al strip de Postres/86 el 2026-06-22). Después, la fila de tabs:
+Debajo, un wrapper "ops-strip" con el **clima de terraza** (módulo `wx`,
+§3.2) y el panel de staffing (turno activo, viajeros). Después, la fila
+de tabs:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ The ATA Handbook                              [ES][EN][PT]  │
 │ El detalle, a mano.                                          │
 ├─────────────────────────────────────────────────────────────┤
+│  22° · ráfagas 53 km/h 15:00                        2.450 m │  ← wx
+├─────────────────────────────────────────────────────────────┤
 │  AM            72 VIAJEROS                                   │
 │  Senior  Percy                                               │
 │  Comedor Nicolás · Sebastián · Diego · Viviana              │
 │  Apoyo   Victor                                              │
-│                                                              │
-│  TERROIR  ·····························  (rota cada 15s) ···· │
-│  Talinay: viñas casi sobre roca caliza, a 12 km del mar.    │
 ├─────────────────────────────────────────────────────────────┤
 │ [Menú] [Vinos] [PGO] [Comande] [Rol] [Café]                 │
 └─────────────────────────────────────────────────────────────┘
                     (contenido de la tab activa)
 ```
+
+**Los tips de vino ya no viven acá.** Hasta el 2026-08-16 `winetips`
+ocupaba la ops-strip; desde entonces se aloja **dentro del listado de
+platos**, justo antes de Principales (ver §3.1). El tip le habla al plato
+que viene, así que se lee donde se está eligiendo qué recomendar. El
+mecanismo que lo hace posible —mover un nodo con estado vivo a través de
+un `innerHTML`— es el patrón **park/place** de §5.
 
 | Tab | Propósito | Datos | PIN |
 |---|---|---|---|
@@ -131,7 +139,8 @@ reemplazó al strip de Postres/86 el 2026-06-22). Después, la fila de tabs:
 
 Los datos del Café (módulo Service Mode) y los del E-Check tienen su
 propia capa de Firebase. Del header, **staffing** escribe/lee Firebase; la
-**ventana de tips de vino** es 100% estática (sin Firebase). Los módulos
+**ventana de tips de vino** es 100% estática (sin Firebase) y el **clima**
+no toca Firebase tampoco: sale de Open-Meteo (§3.2). Los módulos
 **Postres/86** quedaron latentes el 2026-06-22 (ver §4).
 
 ### 3.1 La vista Menú (rediseño del 2026-08-10)
@@ -153,8 +162,14 @@ BUFFET ──────────── 6 bandejas
   ┌ HOJAS ─┐ ┌ VEG.FIRMES ─┐   ← slots FIJOS: la bandeja no cambia,
   └────────┘ └─────────────┘      cambia el plato que la ocupa
 SOPA DEL DÍA ─── (ancho completo)
+─ TERROIR · tip de vino ────── ← hueco de winetips (park/place, §5)
 PRINCIPALES ─ 4 · POSTRES ─ 3
 ```
+
+El hueco de los tips cae **justo antes de Principales** en los dos
+servicios: bajo la sopa en Almuerzo y bajo la entrada en Cena — misma
+posición relativa. En **BAR no se muestra**, y es deliberado: esa carta no
+tiene sopa ni principales donde anclarlo. En búsqueda tampoco.
 
 **Dos ideas la sostienen.**
 
@@ -197,6 +212,41 @@ no la identidad del item, así que el motor de pedidos/batches/tally queda
 intacto. La "comanda completa" es ahora una **vista única** (sin toggle):
 tira de totales por producto para cocina + detalle por asiento con las
 notas/pedidos especiales siempre visibles y sin hora de envío.
+
+### 3.2 Clima de terraza (módulo `wx`)
+
+Primer elemento bajo el header, **una sola línea**, visible desde
+cualquier tab:
+
+```
+22° · ráfagas 53 km/h 15:00                          2.450 m
+```
+
+**No muestra "el clima": muestra el pico de ráfaga de la ventana de
+almuerzo.** El almuerzo se sirve en la terraza y lo que arruina un montaje
+no es el frío sino la ráfaga, que en San Pedro tiene una curva diaria muy
+marcada — entra pasado el mediodía. El dato accionable es *cuánto va a
+soplar entre las 12 y las 16, y a qué hora*, no la temperatura.
+
+| Decisión | Por qué |
+|---|---|
+| **Open-Meteo**, sin API key | Único tercero fuera de Firebase. CORS abierto y sin registro: en una app sin build step, una key quedaría visible en el HTML o exigiría un proxy. |
+| Umbrales **30** (gold) / **45** km/h (coral) | Bajo 30 la ráfaga ni se nombra: la línea dice temperatura y viento. Aparece algo que leer sólo cuando hay algo que decidir. |
+| Los dos datos **se turnan**, no compiten | En calma manda el viento actual; con ráfaga sobre umbral ella toma el lugar. Además es lo que hace que la línea entre en el ancho de un iPhone. |
+| Si el servicio de hoy ya pasó, muestra **mañana** | A las 18:00, saber que hubo viento a las 14:00 no sirve para montar nada. Corta en `nowHour >= WX_LUNCH_TO`. |
+| Altitud **fija** (2.450 m), no del pronóstico | Es un dato del lodge: se muestra siempre, aun sin red. Open-Meteo reporta 2.444 m para la celda, lo que la confirma. |
+| Cache en `localStorage`, 20 min | Evita pegarle a la API en cada carga y sobrevive cortes cortos. |
+
+**Alto fijo, no negociable.** El bloque vive **arriba de `.main-tabs`** y
+los datos llegan por red *después* del primer paint. Sin alto reservado,
+las tabs saltan bajo el dedo del garzón justo al llegar el pronóstico —
+pasó, medido en 23 px. Se verifica midiendo el Y de `.main-tabs` en los
+estados *cargando · sin red · calmo · ojo · alerta*, más el peor caso de
+largo (ráfaga de 3 dígitos + "mañana"): debe ser idéntico en todos.
+
+Si Open-Meteo cae, el módulo se apaga solo (`WX_ERROR`) y el resto de la
+ops-strip queda intacto. Estado en STATE TOP (`WX_LAT`, `WX_ALT_M`,
+`WX_GUST_*`, `WX_LUNCH_*`, `WX_DATA`); sin Firebase.
 
 ---
 
@@ -403,6 +453,44 @@ const COMANDA_SOURCES = [
   //   items: () => JUICES.map(...) }
 ];
 ```
+
+**Park / place** (alojar un nodo con estado vivo dentro de un render que
+usa `innerHTML`). El módulo `winetips` tiene estado que no vive en
+variables sino **en el propio nodo**: un timer de 15 s, la animación del
+hilo dorado y el cross-fade. Cuando pasó a mostrarse dentro del listado de
+platos (§3.1), apareció el conflicto: `renderDishes()` reescribe
+`grid.innerHTML`, y todo nodo que esté adentro se destruye.
+
+La solución no es re-crearlo (perdería el estado) sino **moverlo**:
+
+```js
+// El HTML del menú sólo deja un HUECO vacío…
+function winetipsSlot(){ return '<div id="winetips-slot"></div>'; }
+
+// …y el nodo real entra y sale de él. appendChild MUEVE, no clona:
+// conserva listeners, timers y animaciones en curso.
+function winetipsPark(){    // ANTES de cada innerHTML → a la casa oculta
+  const n = document.getElementById('winetips');
+  const home = document.getElementById('winetips-home');
+  if (n && home && n.parentNode !== home) home.appendChild(n);
+}
+function winetipsPlace(){   // DESPUÉS del render → al hueco, si lo hay
+  const n = document.getElementById('winetips');
+  const slot = document.getElementById('winetips-slot');
+  if (n && slot && n.parentNode !== slot) slot.appendChild(n);
+}
+```
+
+> **El park es la mitad que se olvida.** Sin él, el primer render se ve
+> perfecto —el nodo entra al hueco— y **el segundo lo mata**: el
+> `innerHTML` lo borra con el resto y a partir de ahí `getElementById`
+> devuelve `null` para siempre. El bug no se ve en pantalla al primer
+> vistazo; se detecta consultando el DOM tras varios renders seguidos.
+> Regla: **park antes de tocar `innerHTML`, place después.** Ambas
+> idempotentes, así llamarlas de más no cuesta nada.
+
+Cuando no hay hueco (Bar, búsqueda, otra tab) el nodo se queda en su
+contenedor "casa" oculto, que existe justo para eso.
 
 **DOM diff** (no innerHTML completo). En la cola del barista, en lugar
 de reescribir todo el listado en cada update, el render diff-ea: solo
@@ -644,7 +732,8 @@ Mapa de regiones aproximadas (los rangos cambian a medida que crece;
 | Módulo Café | 2700-3700 | COFFEE_DATA + manual + modo servicio (waiter+barista+history) |
 | Módulo Staffing | 3700-3800 | Fetch + render del roster |
 | Módulo Desserts / 86 | 3800-3900 | Strip + form de postres/86 — **latente** desde 2026-06-22 (markup en `<template id="latent-postres-86">`, activadores JS comentados) |
-| Módulo Wine tips | — | `winetips` en la ops-strip: rota `WINE_TIPS` (68, trilingüe, estático) cada 15s en orden barajado; reemplazó a Postres/86 |
+| Módulo Wine tips | — | `winetips`: rota `WINE_TIPS` (68, trilingüe, estático) cada 15s en orden barajado; reemplazó a Postres/86. **Ya no vive en la ops-strip**: desde 2026-08-16 se aloja en el listado de platos vía park/place (`winetipsSlot`/`Park`/`Place`, §5), con casa oculta en `#winetips-home` |
+| Módulo Clima (`wx`) | tras `winetips` | Ráfagas de la ventana de almuerzo + altitud, en una línea sobre las tabs. `wxUrl`/`wxPeakGust`/`wxFetch`/`wxRender` + cache `localStorage`. Open-Meteo, sin Firebase — ver §3.2 |
 | Módulo Comandera | 3900-4200 | Gate + home + new + active + drag + history |
 | Módulo Viajeros | ~5260-5525 (+ CSS ~1377, STATE TOP ~2500, UI ~2682) | Corcho de dietas por hab: stats/chips filtrantes, búsqueda con teclado numérico plegable, grilla con roster (primer nombre + bandera `VJ_NAC` en vez de esferas de iniciales), modal por hab. Read-only `/viajeros/current` |
 | Módulo Rol | 5500-6260 | PIN gate + lectura semanal del roster |
@@ -738,6 +827,12 @@ está en exploración** — y cada una tiene su URL de Vercel distinta.
    lente de restricciones se verificó que prender/apagar ejes deja los chips, la
    fila de acciones y la grilla exactamente donde estaban, y que el riel del
    selector de día mide 33 px tanto en almuerzo como en bar.
+   **El caso más traicionero no es un toggle sino un dato que llega por red**,
+   porque nadie lo está mirando cuando ocurre: el clima (§3.2) pinta después del
+   primer paint y, sin alto reservado, empujaba `.main-tabs` 23 px hacia abajo —
+   justo cuando el garzón va a tocarlas. Para esos módulos hay que recorrer
+   *todos* los estados, no sólo el feliz: cargando · sin red · cada umbral · y
+   el peor caso de largo del texto. El Y del vecino debe ser idéntico en todos.
 8. **Screenshots headless con viewport real.** `chrome --headless=new` ignora
    `--window-size` para el layout y renderiza más ancho de lo pedido, lo que
    simula desbordes que no existen. La vuelta: un wrapper con un `<iframe>` de
