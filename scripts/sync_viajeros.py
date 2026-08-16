@@ -49,6 +49,7 @@ Modos:
   python scripts/sync_viajeros.py --from-pgo [--date D]  → login en PGO + reportes del día y escribe (fase 2)
   python scripts/sync_viajeros.py --debug                → imprime resumen, no escribe
   python scripts/sync_viajeros.py --emit-json out.json   → dump del doc (dev local)
+  python scripts/sync_viajeros.py --explore --introspect         → lista las queries GraphQL del backend de PGO
   python scripts/sync_viajeros.py --explore                     → perfila los reportes NUEVOS (arrival/birthday/comedor) sin escribir nada
   python scripts/sync_viajeros.py --explore arrival             → sólo uno (o "arrival,comedor")
   python scripts/sync_viajeros.py --from-pgo --dump-html --debug → guarda el HTML de PGO para ajustar selectores
@@ -1130,7 +1131,73 @@ def pgo_api_probe(page, api_calls):
     page.on("response", _on_resp)
 
 
-def pgo_explore(paths, date_str, dump=False, trace_net=False):
+def pgo_graphql(page, query, variables=None, endpoint="/api/"):
+    """Ejecuta GraphQL desde el contexto de la página YA autenticada.
+
+    Hacerlo con page.evaluate (y no con requests) es lo que evita reimplementar
+    el login: el fetch sale del propio origen, heredando cookies y headers de
+    la sesión que Playwright ya abrió.
+    """
+    return page.evaluate(
+        """async ([url, q, v]) => {
+             const r = await fetch(url, {
+               method: 'POST',
+               headers: {'Content-Type': 'application/json'},
+               credentials: 'include',
+               body: JSON.stringify({query: q, variables: v || {}})
+             });
+             try { return await r.json(); } catch(e) { return {error: 'no-json', status: r.status}; }
+           }""",
+        ["https://backend.pgo-explora.com" + endpoint, query, variables or {}])
+
+
+# Palabras por las que vale la pena filtrar el esquema: lo que buscamos son las
+# queries de llegadas/salidas, comedor y cumpleaños.
+_GQL_INTERES = re.compile(
+    r"arriv|llegad|checkin|check_in|checkout|check_out|inout|in_out|depart|salid|"
+    r"birth|cumple|comedor|dining|meal|food|breakfast|desayun|lunch|almuerz|dinner|cena|"
+    r"reserv|traveller|traveler|viajer|room|hab|occupancy|stay", re.I)
+
+
+def pgo_introspect(page):
+    """Lista las queries del esquema GraphQL de PGO (nombres y argumentos).
+
+    Es lo que reemplaza a adivinar: en vez de probar selectores o nombres de
+    query a ciegas, el propio backend dice qué existe y qué argumentos toma.
+    """
+    q = """{ __schema { queryType { name fields {
+              name
+              args { name type { name kind ofType { name kind } } }
+              type { name kind ofType { name kind } }
+            } } } }"""
+    try:
+        data = pgo_graphql(page, q)
+    except Exception as e:
+        print(f"[explore] introspección: fallo al consultar ({type(e).__name__}: {e})")
+        return
+    if not isinstance(data, dict) or not data.get("data", {}).get("__schema"):
+        print(f"[explore] introspección no disponible. Respuesta: {str(data)[:300]}")
+        return
+    fields = data["data"]["__schema"]["queryType"]["fields"] or []
+    print(f"\n[explore] === Esquema GraphQL: {len(fields)} queries ===")
+
+    def _tname(t):
+        if not t:
+            return "?"
+        return t.get("name") or (t.get("ofType") or {}).get("name") or t.get("kind") or "?"
+
+    relevantes = [f for f in fields if _GQL_INTERES.search(f["name"])]
+    print(f"[explore] --- {len(relevantes)} relacionadas con llegadas/comedor/viajeros ---")
+    for f in sorted(relevantes, key=lambda x: x["name"]):
+        args = ", ".join(f"{a['name']}: {_tname(a.get('type'))}" for a in (f.get("args") or []))
+        print(f"[explore]   {f['name']}({args}) -> {_tname(f.get('type'))}")
+    print("[explore] --- resto (sólo nombres) ---")
+    otros = sorted(f["name"] for f in fields if f not in relevantes)
+    for i in range(0, len(otros), 6):
+        print("[explore]   " + " · ".join(otros[i:i + 6]))
+
+
+def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
     """Abre sesión en PGO y perfila los reportes indicados. NO escribe nada."""
     _pgo_require()
     from playwright.sync_api import sync_playwright
@@ -1171,6 +1238,10 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False):
         # Sin esto todo reporte sale vacío: PGO abre en Torres del Paine.
         page.goto(PGO_BASE_URL + PGO_GEOS_PATH, wait_until="networkidle", timeout=60000)
         _pgo_set_destino(page, PGO_DESTINO)
+        # La introspección va PRIMERO: si el esquema contesta, deja de tener
+        # sentido adivinar selectores para los reportes que no renderizan.
+        if introspect:
+            pgo_introspect(page)
         for nombre, path in paths.items():
             print(f"\n[explore] ===== {nombre}  ({path}) =====")
             try:
@@ -1455,7 +1526,8 @@ def main():
             raise SystemExit(f"[explore] Nada que explorar. Disponibles: {', '.join(PGO_EXPLORE_PATHS)}")
         print(f"[explore] Reportes a perfilar: {', '.join(paths)}")
         pgo_explore(paths, _arg_value("--date"), dump="--dump-html" in sys.argv,
-                    trace_net="--trace-net" in sys.argv)
+                    trace_net="--trace-net" in sys.argv,
+                    introspect="--introspect" in sys.argv)
         print("\n[explore] Listo — Firebase NO fue modificado.")
         return
 
@@ -1466,7 +1538,8 @@ def main():
               f"({date_str or 'fecha por defecto de PGO'})...")
         geos, dietas, date_str = pgo_fetch(date_str,
                                            dump="--dump-html" in sys.argv,
-                                           trace_net="--trace-net" in sys.argv)
+                                           trace_net="--trace-net" in sys.argv,
+                    introspect="--introspect" in sys.argv)
         print(f"[sync-viajeros] Fecha efectiva del reporte: {date_str}")
         rows = parse_pgo(geos, dietas, date_str)
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")

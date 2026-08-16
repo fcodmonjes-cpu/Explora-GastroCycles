@@ -47,6 +47,10 @@ on:
         description: "Leer PGO y mostrar el resumen SIN escribir en Firebase."
         type: boolean
         default: false
+      introspect:
+        description: "Calibración: lista las queries GraphQL del backend de PGO. Sólo con explore."
+        type: boolean
+        default: false
       explore:
         description: "Calibración: perfila los reportes NUEVOS sin escribir nada. Vacío = no explorar. 'all' o 'arrival,birthday,comedor'."
         required: false
@@ -95,6 +99,7 @@ jobs:
             if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
             if [ "${{ inputs.dump_html }}" = "true" ]; then ARGS="$ARGS --dump-html"; fi
             if [ "${{ inputs.trace_net }}" = "true" ]; then ARGS="$ARGS --trace-net"; fi
+            if [ "${{ inputs.introspect }}" = "true" ]; then ARGS="$ARGS --introspect"; fi
             echo "Ejecutando (calibración, no escribe): sync_viajeros.py $ARGS"
             python scripts/sync_viajeros.py $ARGS
             exit $?
