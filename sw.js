@@ -14,9 +14,13 @@
 // 'install' que llame a self.registration.unregister(). Sin eso, un service
 // worker sobrevive a los deploys.
 
-const CACHE = 'ata-handbook-v1';
+// Al cambiar un archivo del CORE hay que subir la versión del cache: 'activate'
+// borra todo bucket que no se llame igual, y sin ese bump los teléfonos que ya
+// tienen la app siguen sirviendo la copia vieja desde el cache.
+const CACHE = 'ata-handbook-v2';
 const CORE  = ['/', '/index.html', '/favicon.svg', '/manifest.webmanifest',
-               '/assets/icon-180.png', '/assets/icon-192.png', '/assets/icon-512.png'];
+               '/assets/icon-180-v2.png', '/assets/icon-192-v2.png',
+               '/assets/icon-512-v2.png', '/assets/icon-512-maskable-v2.png'];
 
 self.addEventListener('install', e => {
   // skipWaiting: la versión nueva toma el control en la siguiente carga, sin

@@ -19,10 +19,17 @@
      browser, como una app. En iOS mandan las metas apple-*; el manifest es
      para Android/Chrome. El apple-touch-icon tiene que ser PNG: iOS ignora el
      SVG y cae a una captura de pantalla como ícono.
+     El ícono de la app es el telón de intro destilado: ATA en sienna sobre una
+     regla dorada que mide justo el ancho de HANDBOOK. El favicon NO lo copia y
+     sigue siendo la "A." — a 16 px en una pestaña el lockup de tres partes es
+     una mancha; cada contexto usa la marca que aguanta su tamaño.
+     Los nombres llevan -v2 a propósito: iOS y el service worker guardan el
+     ícono por URL, así que un archivo reescrito en sitio no se actualiza.
+     Si algún día cambia el arte, subir a -v3 acá, en el manifest y en sw.js.
      black-translucent = el fondo del programa pasa por debajo de la barra de
      estado; el texto no se mete ahí gracias al safe-area de .app. -->
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon-180-v2.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
