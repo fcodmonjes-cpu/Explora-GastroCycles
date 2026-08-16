@@ -918,9 +918,19 @@ def _pgo_logged_in(page):
 _MOJIBAKE = re.compile(r"[ÃÂ][\x80-\xbf©®¡¿]|Ã©|Ã±|Ãº|Ã¡|Ã³")
 
 
+# Tokens que NO son datos personales y sí son necesarios para entender la
+# columna: sin esto "IN 09:45" salía como "xx 09:45" y no se sabía si la hora
+# era de entrada o de salida.
+_SAFE_TOKENS = {"IN", "OUT", "AM", "PM", "DT", "DR", "NO", "SI", "N/A", "-", "OK",
+                "CI", "CO", "IN/OUT", "ADT", "CHD", "PAX", "VIP"}
+
+
 def _mask_value(v):
-    """Enmascara letras, conserva dígitos y símbolos (para leer formatos)."""
-    return re.sub(r"[^\W\d_]", "x", str(v or ""), flags=re.UNICODE)
+    """Enmascara letras, conserva dígitos, símbolos y tokens estructurales."""
+    def _tok(m):
+        w = m.group(0)
+        return w if w.upper() in _SAFE_TOKENS else re.sub(r"[^\W\d_]", "x", w, flags=re.UNICODE)
+    return re.sub(r"[^\W\d_]+", _tok, str(v or ""), flags=re.UNICODE)
 
 
 def _pgo_profile(nombre, rows, muestras=3):
@@ -1063,10 +1073,11 @@ def _pgo_prepare_report(page, kind, date_str):
     page.wait_for_timeout(1200)
 
 
-def pgo_explore(paths, date_str, dump=False):
+def pgo_explore(paths, date_str, dump=False, trace_net=False):
     """Abre sesión en PGO y perfila los reportes indicados. NO escribe nada."""
     _pgo_require()
     from playwright.sync_api import sync_playwright
+    api_calls = []
     fecha = datetime.date.fromisoformat(date_str).strftime(PGO_DATE_FMT) if date_str else None
     launch_kw = {"headless": True}
     if os.environ.get("PGO_CHROMIUM"):
@@ -1074,6 +1085,18 @@ def pgo_explore(paths, date_str, dump=False):
     with sync_playwright() as pw:
         browser = pw.chromium.launch(**launch_kw)
         page = browser.new_context(locale="es-CL").new_page()
+        # La SPA pide sus datos por XHR. Si el reporte no renderiza tabla (el de
+        # llegadas no la tiene), la API interna es la única vía razonable — y de
+        # paso es más estable que pelear con un date-picker.
+        if trace_net:
+            def _on_resp(resp):
+                try:
+                    if resp.request.resource_type in ("xhr", "fetch"):
+                        api_calls.append((page.url.split("/")[-1] or "?",
+                                          f"{resp.request.method} {resp.status} {resp.url}"))
+                except Exception:
+                    pass
+            page.on("response", _on_resp)
         base = PGO_BASE_URL
         try:
             page.goto(base + PGO_GEOS_PATH, wait_until="networkidle", timeout=60000)
@@ -1112,6 +1135,10 @@ def pgo_explore(paths, date_str, dump=False):
             except Exception as e:
                 print(f"[explore] {nombre}: error inesperado: {type(e).__name__}: {e}")
         browser.close()
+    if trace_net and api_calls:
+        print("\n[explore] === XHR/fetch observados (candidatos a API directa) ===")
+        for origen, c in dict.fromkeys(api_calls):
+            print(f"[explore]   [{origen}] {c}")
 
 
 def pgo_fetch(date_str, dump=False, trace_net=False):
@@ -1373,7 +1400,8 @@ def main():
         if not paths:
             raise SystemExit(f"[explore] Nada que explorar. Disponibles: {', '.join(PGO_EXPLORE_PATHS)}")
         print(f"[explore] Reportes a perfilar: {', '.join(paths)}")
-        pgo_explore(paths, _arg_value("--date"), dump="--dump-html" in sys.argv)
+        pgo_explore(paths, _arg_value("--date"), dump="--dump-html" in sys.argv,
+                    trace_net="--trace-net" in sys.argv)
         print("\n[explore] Listo — Firebase NO fue modificado.")
         return
 
