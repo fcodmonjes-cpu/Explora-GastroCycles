@@ -48,12 +48,51 @@ que es operacional (turnos, postres, pedidos, comandas).
 | Datos en vivo | Firebase Realtime Database (compat SDK 10.12) | WebSocket para tiempo real + REST para fetches puntuales. Reglas abiertas en prototipo, fáciles de lockear con auth para producción. |
 | Hosting | Vercel (auto-deploy por branch) | `main` → `gastrocycles.vercel.app` (producción). `staging` → URL fija para QA desde iPhone. `feature/*` y `fix/*` → preview por commit. Ver sección 12. |
 | Tipografía | Cormorant Garamond (italic 500/700) + Courier Prime monospace | Cargadas vía Google Fonts. Family declarada en CSS desde el inicio; sólo recientemente se cargó la real. |
-| Telemetría | Vercel Analytics (`/_vercel/insights/script.js`) | Pageviews ligeros, sin más. |
+| Instalable | PWA: `manifest.webmanifest` + `sw.js` (service worker propio, ~50 líneas) | Se agrega al home screen y abre sin chrome del browser. Network-first: el cache es red de emergencia, no fuente de verdad. Ver §2.1. |
+| Telemetría | Vercel Analytics (`/_vercel/insights/script.js`) | Pageviews ligeros, sin más. Da 404 en local — solo existe en el deploy de Vercel. |
 
 **Por qué no hay framework.** El programa es lo bastante chico para que
 el costo cognitivo de un framework supere su beneficio. Lo bastante
 grande para que algunas convenciones internas hagan la diferencia.
 La complejidad la maneja la disciplina de patrones, no la dependencia.
+
+### 2.1 PWA — el handbook instalado en el home screen
+
+**Está activa, no es potencial.** El garzón agrega el handbook a la
+pantalla de inicio y se abre sin barra de URL ni pestañas, como una app.
+Tres archivos en la raíz la sostienen, ninguno con build step:
+
+| Archivo | Rol |
+|---|---|
+| `manifest.webmanifest` | Nombre, `display:standalone`, colores, y los íconos de Android/Chrome. |
+| `sw.js` | Service worker. **Network-first**, cache solo como red de emergencia. |
+| `index.html` `<head>` | Metas `apple-*` + `apple-touch-icon`. En iOS mandan estas, no el manifest. |
+
+**Por qué network-first y no cache-first.** Es la decisión que define el
+service worker y va contra el default de la mayoría de las PWA. Esto es
+una herramienta de operación en vivo: mostrar un menú viejo a hora de
+servicio es peor que no mostrar nada. Siempre se pide a la red primero;
+el cache entra solo cuando se cae el wifi del lodge. Por lo mismo el SW
+**no toca Firebase ni terceros** — los datos vivos nunca se cachean.
+
+**Los íconos llevan versión en el nombre** (`icon-180-v2.png`, …). iOS y
+el service worker guardan el ícono por URL: un archivo reescrito en sitio
+NO se actualiza en un teléfono que ya tiene la app instalada. Al cambiar
+el arte hay que subir el sufijo en los tres lugares —
+`index.html`, `manifest.webmanifest` y el `CORE` de `sw.js` — y subir
+también `CACHE` (`ata-handbook-vN`), sin lo cual el `activate` del SW no
+descarta el bucket viejo. **Aun haciendo todo bien, un iPhone que ya tiene
+la app en el home screen no relee el ícono: hay que borrarla y volver a
+agregarla.** El contenido sí se actualiza solo.
+
+El `maskable` es un archivo **propio**, con el lockup al 78 %: Android
+recorta a un círculo del 80 %, así que reusar ahí el ícono `any` (como se
+hacía hasta 2026-08-16) le comía los bordes a la marca.
+
+**El arte es el telón de intro destilado** — ATA en sienna sobre una regla
+dorada que mide justo el ancho de HANDBOOK. El favicon NO lo copia y sigue
+siendo la "A.": a 16 px en una pestaña un lockup de tres partes es una
+mancha. Cada contexto usa la marca que aguanta su tamaño.
 
 ---
 
@@ -534,14 +573,12 @@ buckets existentes y agregar".
 string libre. Reemplazar el textarea por un botón de dictado del
 navegador es una línea de Web Speech API.
 
-**PWA (instalable como app).** Un `manifest.json` + meta tags Apple +
-service worker mínimo lo convierten en una app instalable en el home
-screen. Sin barra de URL, sin pestañas, mejor experiencia para el
-mesero.
-
-**Modo offline.** Firebase compat SDK ya cachea. Con una capa pequeña
-encima (queue de writes pendientes en localStorage) se podría ingresar
-pedidos sin red y sincronizar al recuperar conexión.
+**Modo offline.** La PWA (§2.1) ya sirve el shell desde cache cuando se
+cae la red, pero solo para *leer*: un pedido que se tapea sin conexión se
+pierde. Con una capa pequeña encima (queue de writes pendientes en
+localStorage, drenada al volver online) se podría ingresar pedidos sin
+red. El patrón de cola coalescente de §5 es la mitad del trabajo ya
+hecha: falta que sobreviva a un reload.
 
 ---
 
@@ -577,8 +614,12 @@ Hay decisiones conscientes de prototipo. Listarlas explícitas:
 
 ## 10. Anatomía del archivo
 
-`index.html` es **el único archivo** de la app (~7400 líneas tras los
-módulos Checklist y Viajeros). Antes existía un duplicado `explora_atacama_app.V2.html`
+`index.html` es **el único archivo de programa** de la app (~7400 líneas
+tras los módulos Checklist y Viajeros): todo el CSS, el markup y el JS
+viven ahí. Lo acompañan, en la raíz, los tres archivos de la PWA
+(`manifest.webmanifest`, `sw.js`, `favicon.svg` — ver §2.1) y `assets/`
+con los íconos; ninguno tiene lógica de la app.
+Antes existía un duplicado `explora_atacama_app.V2.html`
 como fuente de verdad mientras `index.html` quedaba como copia desplegada
 — esa convención fue retirada el 2026-05-22 cuando la arquitectura de
 branches (sección 12) reemplazó la necesidad de mantener dos versiones
