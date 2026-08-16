@@ -220,6 +220,38 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   .winetips-thread.run { animation: none; }
 }
 
+/* ── Clima de terraza (wx) ─────────────────────────────────────────────────
+   El almuerzo se sirve afuera, así que el dato que decide el montaje es la
+   RÁFAGA, no la temperatura. Se lee como una línea más de la ops-strip:
+   mismo mono discreto que staffing y winetips, sin caja ni ícono.
+   ALTO FIJO (min-height): el bloque vive ARRIBA de .main-tabs, y como el
+   clima llega por red DESPUÉS del primer paint, sin un alto reservado las
+   tabs saltarían bajo el dedo justo cuando el garzón va a tocarlas.
+   Los estados usan la paleta existente: gold = ojo, coral = alerta. */
+/* El alto real (69.5px) lo garantizan las dos .wx-line con su min-height, no
+   este valor: el bloque mide igual esté cargando, con datos o sin red, así el
+   clima —que llega por red DESPUÉS del primer paint— nunca empuja las tabs
+   mientras alguien las está tocando. El min-height queda de red de seguridad
+   por si alguna vez se toca el markup. Verificado midiendo el Y de .main-tabs
+   en los 5 estados: idéntico en todos (ver §12.7). */
+.wx { border-top: 0.5px solid var(--border); padding-top: 0.8rem; margin-top: 0.8rem; min-height: 69px; }
+.wx-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.wx-topic { font-family: 'Courier Prime','Courier New',monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); }
+/* La altitud es un dato fijo del lodge, no del pronóstico: se anota al margen,
+   como una cota en un plano, y por eso no comparte el color de los valores. */
+.wx-alt { font-family: 'Courier Prime','Courier New',monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--text-tertiary); white-space: nowrap; }
+.wx-body { font-family: 'Courier Prime','Courier New',monospace; font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-top: 4px; }
+/* Dos líneas SIEMPRE, una por idea: arriba el ahora, abajo el almuerzo.
+   nowrap + alto reservado por línea = el alto del bloque no depende del texto,
+   así ni un idioma más largo ni una ráfaga de tres dígitos lo hacen crecer. */
+.wx-line { min-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wx-sep { opacity: 0.4; margin: 0 6px; }
+.wx-temp { color: var(--text); }
+/* Sin ráfaga preocupante el dato no se pinta: sólo se enciende cuando importa. */
+.wx-gust.is-watch { color: var(--gold); }
+.wx-gust.is-alert { color: var(--coral); }
+.wx-when { color: var(--text-tertiary); }
+
 /* ── Comandera module ────────────────────────────────────────────────────── */
 .cmd-root {
   font-family: 'Courier Prime','Courier New',monospace;
@@ -1580,6 +1612,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    strip because they're reference-y and benefit from the roster.
    Click on the panel re-expands (handled in JS as a toggle, optional). */
 body.in-checklist .winetips { display:none; }
+/* El clima se colapsa igual que los tips: en Checklist manda la tarea, y el
+   viento ya se consultó al montar. Reaparece al volver a cualquier otra tab. */
+body.in-checklist .wx { display:none; }
 body.in-checklist .staffing-panel { margin-bottom:0; }
 body.in-checklist .staffing-panel .staffing-row { display:none; }
 body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
@@ -1975,6 +2010,22 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
         <div class="winetips-body"  id="winetips-body"></div>
       </div>
       <div class="winetips-thread" id="winetips-thread"></div>
+    </div>
+
+    <!-- Clima de terraza — Open-Meteo, sin API key. Va al FINAL de la ops-strip
+         a propósito: metido entre staffing y winetips rompería el selector
+         adyacente `.staffing-panel:not(:empty) + .winetips`, que es quien pone
+         la línea divisoria de arriba. Estructura fija; wxRender() sólo parcha
+         los valores, nunca reescribe el bloque. -->
+    <div class="wx" id="wx">
+      <div class="wx-head">
+        <span class="wx-topic" id="wx-topic"></span>
+        <span class="wx-alt"   id="wx-alt"></span>
+      </div>
+      <div class="wx-body">
+        <div class="wx-line" id="wx-now"></div>
+        <div class="wx-line" id="wx-gust"></div>
+      </div>
     </div>
 
     <!-- LATENTE — Postres (/desserts, 4h) y 86 (/eightysix). Retirados de
@@ -3557,6 +3608,21 @@ let VIAJEROS_HAB_OPEN      = null;   // hab abierta en el modal de detalle
 let VIAJEROS_NUMPAD_OPEN   = false;  // teclado numérico incorporado plegado/desplegado
 let VIAJEROS_SHOW_OUT      = false;  // salientes del día ocultos por defecto en las vistas por hab
 
+// ── Clima de terraza (módulo wx) ────────────────────────────────────────────
+// El almuerzo se sirve en la terraza: lo que decide el montaje no es la
+// temperatura sino la RÁFAGA. Por eso el módulo no muestra un pronóstico
+// genérico, sino el pico de ráfaga dentro de la ventana de servicio.
+const WX_LAT = -22.9087, WX_LON = -68.2;      // San Pedro de Atacama
+const WX_ALT_M = 2450;                        // altitud del lodge (API da 2444 para la celda)
+const WX_GUST_WATCH = 30;                     // km/h — "ojo"
+const WX_GUST_ALERT = 45;                     // km/h — vuelan servilletas
+const WX_LUNCH_FROM = 12, WX_LUNCH_TO = 16;   // ventana de servicio en terraza
+const WX_REFRESH_MS   = 15 * 60 * 1000;       // la API misma se actualiza cada 15 min
+const WX_CACHE_KEY    = 'ata_wx_v1';
+const WX_CACHE_TTL_MS = 20 * 60 * 1000;       // cache local: sobrevive recargas y cortes cortos
+let   WX_DATA  = null;   // { tempC, windKmh, gustKmh, peak:{gustKmh,hour,tomorrow}|null } | null
+let   WX_ERROR = false;
+
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
 // ════════════════════════════════════════════════════════════════════════════
@@ -3751,6 +3817,10 @@ const UI = {
     vjSinRestriccion:'Sin restricciones',
     vjNoResults:'Sin resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Borrar', vjClear:'Limpiar',
+    // --- Clima de terraza (wx) ---
+    wxTopic:'Terraza · San Pedro', wxMasl:'m s.n.m.', wxWind:'viento',
+    wxGusts:'ráfagas', wxAt:'a las', wxTomorrow:'mañana',
+    wxCalm:'sin ráfagas fuertes al almuerzo', wxNoData:'sin datos de clima',
     vjTagMariscos:'Mariscos', vjTagGluten:'Gluten', vjTagLactosa:'Lactosa', vjTagSesamo:'Sésamo', vjTagPescado:'Pescado', vjTagAjo:'Ajo', vjTagFrutosSecos:'Frutos secos', vjTagFrutillas:'Frutillas', vjTagPina:'Piña', vjTagCilantro:'Cilantro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Trufa', vjTagChampinones:'Champiñones', vjTagPollo:'Pollo',
     vjTagVegetariana:'Vegetariano', vjTagVegana:'Vegano', vjTagPescetariana:'Pescetariano', vjTagSinGluten:'Sin gluten', vjTagSinLactosa:'Sin lactosa', vjTagSinCerdo:'Sin cerdo', vjTagSinCarnesRojas:'Sin carnes rojas', vjTagSinCordero:'Sin cordero', vjTagSinMariscos:'Sin mariscos', vjTagSinPescado:'Sin pescado', vjTagSinFritura:'Sin fritura', vjTagSinSesamo:'Sin sésamo', vjTagSinAjo:'Sin ajo', vjTagSinFrutosSecos:'Sin frutos secos', vjTagSinFrutillas:'Sin frutillas', vjTagSinPina:'Sin piña', vjTagSinAzucar:'Sin azúcar', vjTagSinCilantro:'Sin cilantro', vjTagSinQuinoa:'Sin quinoa', vjTagSinTrufa:'Sin trufa', vjTagSinChampinones:'Sin champiñones', vjTagSinPollo:'Sin pollo',
     vjTagDiabetico:'Diabético', vjTagEmbarazada:'Embarazada'
@@ -3939,6 +4009,10 @@ const UI = {
     vjSinRestriccion:'No restrictions',
     vjNoResults:'No matches for this filter',
     vjNumpadToggle:'Number pad', vjDelete:'Delete', vjClear:'Clear',
+    // --- Clima de terraza (wx) — EN/PT propuestos, pendientes de revisión ---
+    wxTopic:'Terrace · San Pedro', wxMasl:'m.a.s.l.', wxWind:'wind',
+    wxGusts:'gusts', wxAt:'at', wxTomorrow:'tomorrow',
+    wxCalm:'no strong gusts at lunch', wxNoData:'weather unavailable',
     vjTagMariscos:'Shellfish', vjTagGluten:'Gluten', vjTagLactosa:'Lactose', vjTagSesamo:'Sesame', vjTagPescado:'Fish', vjTagAjo:'Garlic', vjTagFrutosSecos:'Tree nuts', vjTagFrutillas:'Strawberries', vjTagPina:'Pineapple', vjTagCilantro:'Cilantro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Truffle', vjTagChampinones:'Mushrooms', vjTagPollo:'Chicken',
     vjTagVegetariana:'Vegetarian', vjTagVegana:'Vegan', vjTagPescetariana:'Pescatarian', vjTagSinGluten:'Gluten-free', vjTagSinLactosa:'Lactose-free', vjTagSinCerdo:'No pork', vjTagSinCarnesRojas:'No red meat', vjTagSinCordero:'No lamb', vjTagSinMariscos:'No shellfish', vjTagSinPescado:'No fish', vjTagSinFritura:'No fried food', vjTagSinSesamo:'No sesame', vjTagSinAjo:'No garlic', vjTagSinFrutosSecos:'No nuts', vjTagSinFrutillas:'No strawberries', vjTagSinPina:'No pineapple', vjTagSinAzucar:'Sugar-free', vjTagSinCilantro:'No cilantro', vjTagSinQuinoa:'No quinoa', vjTagSinTrufa:'No truffle', vjTagSinChampinones:'No mushrooms', vjTagSinPollo:'No chicken',
     vjTagDiabetico:'Diabetic', vjTagEmbarazada:'Pregnant'
@@ -4127,6 +4201,10 @@ const UI = {
     vjSinRestriccion:'Sem restrições',
     vjNoResults:'Sem resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Apagar', vjClear:'Limpar',
+    // --- Clima de terraça (wx) — EN/PT propostos, pendentes de revisão ---
+    wxTopic:'Terraço · San Pedro', wxMasl:'m acima do mar', wxWind:'vento',
+    wxGusts:'rajadas', wxAt:'às', wxTomorrow:'amanhã',
+    wxCalm:'sem rajadas fortes no almoço', wxNoData:'sem dados do tempo',
     vjTagMariscos:'Frutos do mar', vjTagGluten:'Glúten', vjTagLactosa:'Lactose', vjTagSesamo:'Gergelim', vjTagPescado:'Peixe', vjTagAjo:'Alho', vjTagFrutosSecos:'Oleaginosas', vjTagFrutillas:'Morangos', vjTagPina:'Abacaxi', vjTagCilantro:'Coentro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Trufa', vjTagChampinones:'Cogumelos', vjTagPollo:'Frango',
     vjTagVegetariana:'Vegetariano', vjTagVegana:'Vegano', vjTagPescetariana:'Pescetariano', vjTagSinGluten:'Sem glúten', vjTagSinLactosa:'Sem lactose', vjTagSinCerdo:'Sem porco', vjTagSinCarnesRojas:'Sem carnes vermelhas', vjTagSinCordero:'Sem cordeiro', vjTagSinMariscos:'Sem frutos do mar', vjTagSinPescado:'Sem peixe', vjTagSinFritura:'Sem fritura', vjTagSinSesamo:'Sem gergelim', vjTagSinAjo:'Sem alho', vjTagSinFrutosSecos:'Sem oleaginosas', vjTagSinFrutillas:'Sem morangos', vjTagSinPina:'Sem abacaxi', vjTagSinAzucar:'Sem açúcar', vjTagSinCilantro:'Sem coentro', vjTagSinQuinoa:'Sem quinoa', vjTagSinTrufa:'Sem trufa', vjTagSinChampinones:'Sem cogumelos', vjTagSinPollo:'Sem frango',
     vjTagDiabetico:'Diabético', vjTagEmbarazada:'Grávida'
@@ -6803,6 +6881,121 @@ function winetipsStart(){
 }
 onI18nChange(winetipsRender);
 winetipsStart();
+
+// ── Clima de terraza (módulo wx) ─────────────────────────────────────────
+// Fuente: Open-Meteo (https://api.open-meteo.com) — sin API key, CORS abierto,
+// gratis. Es el único tercero fuera de Firebase; si algún día cae, el módulo
+// se apaga solo y el resto de la ops-strip sigue intacto.
+//
+// QUÉ RESUELVE: el almuerzo se sirve en la terraza. Lo que arruina un montaje
+// no es el frío sino la ráfaga, y en San Pedro la ráfaga tiene una curva diaria
+// muy marcada: entra pasado el mediodía. Por eso el módulo no muestra "el
+// clima" sino el PICO DE RÁFAGA dentro de la ventana de servicio, con su hora.
+//
+// Estado (WX_LAT, WX_ALT_M, WX_GUST_*, WX_DATA…) vive en STATE TOP.
+// Sin Firebase: es un GET a un tercero + cache en localStorage.
+function wxUrl(){
+  return 'https://api.open-meteo.com/v1/forecast'
+    + '?latitude='  + WX_LAT + '&longitude=' + WX_LON
+    + '&current=temperature_2m,wind_speed_10m,wind_gusts_10m'
+    + '&hourly=wind_gusts_10m'
+    + '&wind_speed_unit=kmh&timezone=America%2FSantiago&forecast_days=2';
+}
+// Pico de ráfaga en la ventana de almuerzo. Si el servicio de hoy ya pasó,
+// mira el de mañana: a las 18:00 saber que hubo viento a las 14:00 no sirve
+// para montar nada; saber cómo viene mañana, sí.
+function wxPeakGust(hourly, nowHour, todayStr){
+  if (!hourly || !hourly.time || !hourly.wind_gusts_10m) return null;
+  const tomorrow = nowHour >= WX_LUNCH_TO;
+  let best = null;
+  for (let i = 0; i < hourly.time.length; i++){
+    const stamp = hourly.time[i];                 // 'YYYY-MM-DDTHH:00'
+    const isToday = stamp.slice(0, 10) === todayStr;
+    if (tomorrow ? isToday : !isToday) continue;  // sólo el día que interesa
+    const h = parseInt(stamp.slice(11, 13), 10);
+    if (h < WX_LUNCH_FROM || h > WX_LUNCH_TO) continue;
+    const g = hourly.wind_gusts_10m[i];
+    if (g == null) continue;
+    if (!best || g > best.gustKmh) best = { gustKmh: g, hour: h, tomorrow };
+  }
+  return best;
+}
+function wxCacheRead(){
+  try {
+    const raw = localStorage.getItem(WX_CACHE_KEY);
+    if (!raw) return null;
+    const c = JSON.parse(raw);
+    return (Date.now() - c.at < WX_CACHE_TTL_MS) ? c.data : null;
+  } catch(e){ return null; }
+}
+function wxCacheWrite(data){
+  try { localStorage.setItem(WX_CACHE_KEY, JSON.stringify({ at: Date.now(), data })); }
+  catch(e){ /* modo privado de iOS: sin cache, el módulo igual funciona */ }
+}
+async function wxFetch(force){
+  if (!force){
+    const hit = wxCacheRead();
+    if (hit){ WX_DATA = hit; WX_ERROR = false; wxRender(); return; }
+  }
+  try {
+    const r = await fetch(wxUrl(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    const now = new Date();
+    // Fecha local de Chile tal como la etiqueta la propia API (timezone=Santiago),
+    // no la del teléfono: un celular en otra zona horaria elegiría el día equivocado.
+    const todayStr = (j.current && j.current.time ? j.current.time : '').slice(0, 10)
+                     || now.toISOString().slice(0, 10);
+    const nowHour  = parseInt((j.current && j.current.time || '').slice(11, 13), 10);
+    WX_DATA = {
+      tempC:   j.current ? j.current.temperature_2m : null,
+      windKmh: j.current ? j.current.wind_speed_10m : null,
+      gustKmh: j.current ? j.current.wind_gusts_10m : null,
+      peak:    wxPeakGust(j.hourly, isNaN(nowHour) ? 0 : nowHour, todayStr)
+    };
+    WX_ERROR = false;
+    wxCacheWrite(WX_DATA);
+  } catch(e){
+    console.warn('wx: sin datos de clima', e);
+    if (!WX_DATA) WX_ERROR = true;      // si ya había datos, se mantienen en pantalla
+  }
+  wxRender();
+}
+function wxRender(){
+  const elT = document.getElementById('wx-topic');
+  const elA = document.getElementById('wx-alt');
+  const elN = document.getElementById('wx-now');
+  const elG = document.getElementById('wx-gust');
+  if (!elT || !elA || !elN || !elG) return;
+  elT.textContent = t('wxTopic');
+  // La altitud es un dato fijo del lodge: se muestra siempre, incluso sin red.
+  elA.textContent = WX_ALT_M.toLocaleString('es-CL') + ' ' + t('wxMasl');
+  if (!WX_DATA){
+    elN.textContent = WX_ERROR ? t('wxNoData') : '·  ·  ·';
+    elG.textContent = '';
+    return;
+  }
+  const d = WX_DATA;
+  // Línea 1 — el ahora.
+  elN.innerHTML = '<span class="wx-temp">' + Math.round(d.tempC) + '°</span>'
+                + '<span class="wx-sep">·</span>'
+                + t('wxWind') + ' ' + Math.round(d.windKmh) + ' km/h';
+  // Línea 2 — el almuerzo. Sin ráfaga sobre umbral se dice explícitamente que
+  // está calmo: un renglón vacío se lee como "falló", no como "no hay viento".
+  if (!d.peak){ elG.textContent = ''; return; }
+  const cls = d.peak.gustKmh >= WX_GUST_ALERT ? 'is-alert'
+            : d.peak.gustKmh >= WX_GUST_WATCH ? 'is-watch' : '';
+  if (!cls){ elG.innerHTML = '<span class="wx-when">' + t('wxCalm') + '</span>'; return; }
+  const when = String(d.peak.hour).padStart(2, '0') + ':00';
+  elG.innerHTML = '<span class="wx-gust ' + cls + '">' + t('wxGusts') + ' '
+                + Math.round(d.peak.gustKmh) + ' km/h</span>'
+                + ' <span class="wx-when">'
+                + (d.peak.tomorrow ? t('wxTomorrow') + ' ' : '')
+                + t('wxAt') + ' ' + when + '</span>';
+}
+onI18nChange(wxRender);
+wxFetch();
+setInterval(() => wxFetch(true), WX_REFRESH_MS);
 
 // ── Viajeros module ──────────────────────────────────────────────────────────
 // El corcho de tarjetas de huéspedes, digitalizado. Vista general por hab +
