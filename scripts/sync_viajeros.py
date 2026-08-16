@@ -288,7 +288,7 @@ def fb_key(valor, fallback="SIN HAB"):
     return k or fallback
 
 
-def build_doc(rows, date_str, source):
+def build_doc(rows, date_str, source, horas=None, totales=None):
     habs = {}
     for i, (hab, nombre, edad, nac, grupo, in_d, out_d, obs) in enumerate(rows):
         hab_ok = fb_key(hab)
@@ -307,8 +307,26 @@ def build_doc(rows, date_str, source):
             "obs":    obs.strip(),
             # "foto": <url> — hook para la cédula futura; ausente = avatar iniciales
         }
+        # Horas REALES de movimiento (GraphQL reportInOut), por habitación: la
+        # app las usa para contar quién está de verdad a esta hora en vez de
+        # descontar desde medianoche a todo el que sale hoy. Se agregan sólo si
+        # existen — el shape viejo (in/out por fecha) queda intacto.
+        h = (horas or {}).get(hab) or {}
+        if h.get("inAt"):
+            traveler["inAt"]  = h["inAt"]
+            traveler["inSrc"] = h.get("inSrc", "")
+        if h.get("outAt"):
+            traveler["outAt"]  = h["outAt"]
+            traveler["outSrc"] = h.get("outSrc", "")
         habs.setdefault(hab, []).append(traveler)
+    doc_extra = {}
+    if totales:
+        # Contadores del propio PGO. No reemplazan el conteo por hora de la app
+        # (que es el que envejece bien), pero sirven de contraste: si difieren
+        # mucho, algo se está perdiendo en el cruce.
+        doc_extra["pgoCounts"] = {k: v for k, v in totales.items() if v is not None}
     return {
+        **doc_extra,
         "date":      date_str,
         # utcnow() devuelve un datetime NAIVE, y .timestamp() interpreta los
         # naive como hora LOCAL: corrido desde Chile el updatedAt salía +4h en
@@ -1557,13 +1575,21 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         geos   = _pgo_read_report(page, PGO_GEOS_PATH,   fecha, "geos"   if dump else None)
         fecha_iso = date_str or _pgo_fecha_visible(page)
         dietas = _pgo_read_report(page, PGO_DIETAS_PATH, fecha, "dietas" if dump else None)
+        # Horas reales de movimiento por GraphQL (enfoque híbrido: el roster
+        # sigue saliendo del HTML, que funciona; esto es lo nuevo). Si falla,
+        # devuelve vacío y el sync continúa sin horas en vez de caerse.
+        try:
+            horas, totales = pgo_fetch_inout(page, fecha_iso or datetime.date.today().isoformat())
+        except Exception as e:
+            print(f"[sync-viajeros] Aviso: sin horas de movimiento ({type(e).__name__}: {e})")
+            horas, totales = {}, {}
         browser.close()
 
     if trace_net and api_calls:
         print("[sync-viajeros] Llamadas XHR/fetch detectadas (candidatas a API directa):")
         for c in dict.fromkeys(api_calls):
             print("   ", c)
-    return geos, dietas, (fecha_iso or datetime.date.today().isoformat())
+    return geos, dietas, (fecha_iso or datetime.date.today().isoformat()), horas, totales
 
 
 # Mapeo encabezado de PGO (ya normalizado) → campo interno. Varios alias por si
@@ -1734,14 +1760,14 @@ def main():
         date_str = _arg_value("--date")   # None = usar el día que PGO ya muestra
         print("[sync-viajeros] PGO — login y lectura de reportes "
               f"({date_str or 'fecha por defecto de PGO'})...")
-        geos, dietas, date_str = pgo_fetch(date_str,
-                                           dump="--dump-html" in sys.argv,
-                                           trace_net="--trace-net" in sys.argv,
-                    introspect="--introspect" in sys.argv)
+        geos, dietas, date_str, horas, totales = pgo_fetch(
+            date_str,
+            dump="--dump-html" in sys.argv,
+            trace_net="--trace-net" in sys.argv)
         print(f"[sync-viajeros] Fecha efectiva del reporte: {date_str}")
         rows = parse_pgo(geos, dietas, date_str)
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
-        doc = build_doc(rows, date_str, "pgo")
+        doc = build_doc(rows, date_str, "pgo", horas, totales)
     else:
         doc = build_doc(SEED_ROWS, REPORT_DATE, "seed")
 
