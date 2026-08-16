@@ -986,6 +986,54 @@ def _pgo_fill_inputs(page, selector, valores):
     return n
 
 
+def _pgo_close_overlay(page):
+    """Cierra el panel flotante del date-picker de Element UI.
+
+    Si queda abierto tapa la grilla y, peor, sobrevive a la navegación: el
+    reporte SIGUIENTE hereda el overlay y su propio click de fecha expira.
+    """
+    for _ in range(3):
+        try:
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(150)
+            if not page.query_selector(".el-picker-panel:not([style*='display: none'])"):
+                return True
+            page.mouse.click(5, 5)          # click fuera de cualquier panel
+            page.wait_for_timeout(200)
+        except Exception:
+            break
+    return False
+
+
+def _pgo_fill_range(page, desde, hasta):
+    """Range-picker de Element UI: los dos extremos en UNA sola interacción.
+
+    Clickear cada input por separado reabre el panel y descarta lo tipeado. El
+    flujo que funciona es: click en el primero, tipear, Enter (el foco salta al
+    segundo), tipear, Enter, y recién ahí cerrar el panel.
+    """
+    campos = page.query_selector_all(".el-range-input")
+    if len(campos) < 2:
+        return 0
+    try:
+        campos[0].click()
+        page.wait_for_timeout(250)
+        for el, val in ((campos[0], desde), (campos[1], hasta)):
+            try:
+                el.fill("")
+            except Exception:
+                el.press("Control+a")
+            el.type(val, delay=45)
+            page.wait_for_timeout(150)
+            el.press("Enter")
+            page.wait_for_timeout(350)
+    except Exception as e:
+        print(f"[sync-viajeros] (range-picker: {type(e).__name__}: {e})")
+        return 0
+    _pgo_close_overlay(page)
+    return 2
+
+
 def _pgo_prepare_report(page, kind, date_str):
     """Prepara los filtros propios de cada reporte nuevo.
 
@@ -1000,7 +1048,7 @@ def _pgo_prepare_report(page, kind, date_str):
         # hoy. El check-out puede caer bastante más adelante que el rango.
         desde = (d - datetime.timedelta(days=PGO_ARRIVAL_BACK)).strftime("%d-%m-%Y")
         hasta = (d + datetime.timedelta(days=PGO_ARRIVAL_FWD)).strftime("%d-%m-%Y")
-        n = _pgo_fill_inputs(page, ".el-range-input", [desde, hasta])
+        n = _pgo_fill_range(page, desde, hasta)
         print(f"[sync-viajeros] arrival: rango {desde} → {hasta} ({n} campos escritos)")
     elif kind == "birthday":
         mes = d.strftime("%m-%Y")
@@ -1009,6 +1057,9 @@ def _pgo_prepare_report(page, kind, date_str):
     else:
         return
     _pgo_click_text(page, "buscar", "refrescar", "consultar")
+    # El panel del picker sobrevive a la navegación y rompe el reporte
+    # siguiente: cerrarlo SIEMPRE, aunque este reporte ya haya cargado.
+    _pgo_close_overlay(page)
     page.wait_for_timeout(1200)
 
 
