@@ -47,6 +47,10 @@ on:
         description: "Leer PGO y mostrar el resumen SIN escribir en Firebase."
         type: boolean
         default: false
+      explore:
+        description: "Calibración: perfila los reportes NUEVOS sin escribir nada. Vacío = no explorar. 'all' o 'arrival,birthday,comedor'."
+        required: false
+        default: ""
 
 # Con 48 corridas al día y un job de varios minutos, el solape deja de ser
 # hipotético: dos corridas escribiendo viajeros/current a la vez podrían dejar
@@ -81,6 +85,20 @@ jobs:
           PGO_PASS:     ${{ secrets.PGO_PASS }}
           FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
         run: |
+          # --explore es un modo aparte: perfila los reportes nuevos y sale sin
+          # construir el doc ni tocar Firebase. Corta antes de armar el resto de
+          # los flags para que no se mezcle con el sync productivo.
+          EXPLORE="${{ inputs.explore }}"
+          if [ -n "$EXPLORE" ]; then
+            ARGS="--explore"
+            if [ "$EXPLORE" != "all" ]; then ARGS="$ARGS $EXPLORE"; fi
+            if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
+            if [ "${{ inputs.dump_html }}" = "true" ]; then ARGS="$ARGS --dump-html"; fi
+            echo "Ejecutando (calibración, no escribe): sync_viajeros.py $ARGS"
+            python scripts/sync_viajeros.py $ARGS
+            exit $?
+          fi
+
           ARGS="--from-pgo"
           FECHA="${{ inputs.date }}"
           # En el cron no hay inputs: se usa la fecha de HOY EN CHILE.
@@ -106,6 +124,7 @@ jobs:
       # alergias). Retención mínima y sólo para depurar selectores.
       - name: Subir HTML de depuración
         if: ${{ always() && inputs.dump_html }}
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: pgo-dump

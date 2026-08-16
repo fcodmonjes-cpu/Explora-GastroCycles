@@ -49,6 +49,8 @@ Modos:
   python scripts/sync_viajeros.py --from-pgo [--date D]  → login en PGO + reportes del día y escribe (fase 2)
   python scripts/sync_viajeros.py --debug                → imprime resumen, no escribe
   python scripts/sync_viajeros.py --emit-json out.json   → dump del doc (dev local)
+  python scripts/sync_viajeros.py --explore                     → perfila los reportes NUEVOS (arrival/birthday/comedor) sin escribir nada
+  python scripts/sync_viajeros.py --explore arrival             → sólo uno (o "arrival,comedor")
   python scripts/sync_viajeros.py --from-pgo --dump-html --debug → guarda el HTML de PGO para ajustar selectores
   python scripts/sync_viajeros.py --from-pgo --trace-net --debug → lista las llamadas XHR de la SPA (descubrir API)
   (combinables: --from-pgo --debug lee PGO y muestra el resumen sin tocar Firebase;
@@ -351,6 +353,17 @@ def build_doc(rows, date_str, source):
 PGO_BASE_URL    = (os.environ.get("PGO_BASE_URL") or "https://www.pgo-explora.com").rstrip("/")
 PGO_GEOS_PATH   = os.environ.get("PGO_GEOS_PATH")   or "/report-geos"
 PGO_DIETAS_PATH = os.environ.get("PGO_DIETAS_PATH") or "/dietas"
+# Reportes que todavía NO alimentan el doc: se leen sólo con --explore mientras
+# se calibran los mapeos de columnas. Cuando cada uno entre al pipeline, pasa a
+# usarse en pgo_fetch como los dos de arriba.
+PGO_ARRIVAL_PATH  = os.environ.get("PGO_ARRIVAL_PATH")  or "/arrival-report"
+PGO_BIRTHDAY_PATH = os.environ.get("PGO_BIRTHDAY_PATH") or "/birthday-report"
+PGO_COMEDOR_PATH  = os.environ.get("PGO_COMEDOR_PATH")  or "/comedor"
+PGO_EXPLORE_PATHS = {
+    "arrival":  PGO_ARRIVAL_PATH,
+    "birthday": PGO_BIRTHDAY_PATH,
+    "comedor":  PGO_COMEDOR_PATH,
+}
 PGO_DATE_FMT    = os.environ.get("PGO_DATE_FMT")    or "%d-%m-%Y"   # como se ve en el input: 31-07-2026
 # Selector del input de fecha y del botón refrescar (texto visible, robusto a
 # cambios de clases). Sobrescribibles por env si el markup cambia.
@@ -882,6 +895,91 @@ def _pgo_logged_in(page):
         return True
 
 
+# ── Descubrimiento de reportes nuevos (--explore) ────────────────────────────
+# Calibrar un extractor a ciegas cuesta una corrida de CI por suposición (§4.1
+# de ARCHITECTURE). Esto imprime lo justo para acertar a la primera: qué
+# columnas trae cada reporte y con QUÉ FORMATO vienen los valores.
+#
+# Privacidad: las letras se enmascaran con 'x' y sólo sobreviven dígitos y
+# puntuación — que es exactamente lo que hace falta para leer un formato.
+# "Chenjie Yuan" → "xxxxxxx xxxx"; "14:30" y "31-08-2026" quedan intactos.
+_MOJIBAKE = re.compile(r"[ÃÂ][\x80-\xbf©®¡¿]|Ã©|Ã±|Ãº|Ã¡|Ã³")
+
+
+def _mask_value(v):
+    """Enmascara letras, conserva dígitos y símbolos (para leer formatos)."""
+    return re.sub(r"[^\W\d_]", "x", str(v or ""), flags=re.UNICODE)
+
+
+def _pgo_profile(nombre, rows, muestras=3):
+    """Imprime columnas + formato enmascarado + señales de mojibake."""
+    if not rows:
+        print(f"[explore] {nombre}: 0 filas")
+        return
+    cols = list(rows[0].keys())
+    print(f"[explore] ── {nombre}: {len(rows)} filas · {len(cols)} columnas ──")
+    for c in cols:
+        vals = [r.get(c, "") for r in rows if str(r.get(c, "")).strip()]
+        ejemplos = " | ".join(_mask_value(v)[:26] for v in vals[:muestras]) or "(vacía)"
+        # Señales útiles para el mapeo: ¿hay horas? ¿fechas? ¿mojibake?
+        marcas = []
+        if any(re.search(r"\d{1,2}:\d{2}", str(v)) for v in vals):  marcas.append("HORA")
+        if any(re.search(r"\d{1,2}[-/]\d{1,2}", str(v)) for v in vals): marcas.append("FECHA")
+        n_moji = sum(1 for v in vals if _MOJIBAKE.search(str(v)))
+        if n_moji: marcas.append(f"MOJIBAKE×{n_moji}")
+        tag = ("  ← " + " ".join(marcas)) if marcas else ""
+        print(f"[explore]   {c!r:34} llenas={len(vals):>3}  {ejemplos}{tag}")
+
+
+def pgo_explore(paths, date_str, dump=False):
+    """Abre sesión en PGO y perfila los reportes indicados. NO escribe nada."""
+    _pgo_require()
+    from playwright.sync_api import sync_playwright
+    fecha = datetime.date.fromisoformat(date_str).strftime(PGO_DATE_FMT) if date_str else None
+    launch_kw = {"headless": True}
+    if os.environ.get("PGO_CHROMIUM"):
+        launch_kw["executable_path"] = os.environ["PGO_CHROMIUM"]
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(**launch_kw)
+        page = browser.new_context(locale="es-CL").new_page()
+        base = PGO_BASE_URL
+        try:
+            page.goto(base + PGO_GEOS_PATH, wait_until="networkidle", timeout=60000)
+        except Exception as e:
+            if "ERR_NAME_NOT_RESOLVED" not in str(e):
+                raise
+            alt = (base.replace("://www.", "://", 1) if "://www." in base
+                   else base.replace("://", "://www.", 1))
+            print(f"[explore] {base} no resuelve; reintento con {alt}")
+            page.goto(alt + PGO_GEOS_PATH, wait_until="networkidle", timeout=60000)
+            base = alt
+        globals()["PGO_BASE_URL"] = base
+        if not _pgo_logged_in(page):
+            _pgo_login(page)
+            page.wait_for_load_state("networkidle", timeout=60000)
+            for _ in range(40):
+                page.wait_for_timeout(500)
+                if _pgo_logged_in(page) or _pgo_error_msg(page):
+                    break
+            if not _pgo_logged_in(page):
+                raise SystemExit("[explore] No pude iniciar sesión (ver §4.1: PGO_USER es el RUT).")
+        # Sin esto todo reporte sale vacío: PGO abre en Torres del Paine.
+        page.goto(PGO_BASE_URL + PGO_GEOS_PATH, wait_until="networkidle", timeout=60000)
+        _pgo_set_destino(page, PGO_DESTINO)
+        for nombre, path in paths.items():
+            print(f"\n[explore] ===== {nombre}  ({path}) =====")
+            try:
+                rows = _pgo_read_report(page, path, fecha, f"explore-{nombre}" if dump else None)
+                _pgo_profile(nombre, rows)
+            except SystemExit as e:
+                # Un reporte que no se deja leer no debe abortar los demás: el
+                # mapa de estructura ya quedó impreso por _pgo_read_report.
+                print(f"[explore] {nombre}: no pude extraer la grilla. {e}")
+            except Exception as e:
+                print(f"[explore] {nombre}: error inesperado: {type(e).__name__}: {e}")
+        browser.close()
+
+
 def pgo_fetch(date_str, dump=False, trace_net=False):
     """Login en PGO + lectura de Geos y Dietas del día → (geos_rows, dietas_rows)."""
     _pgo_require()
@@ -1132,6 +1230,19 @@ def _arg_value(flag):
 
 
 def main():
+    # --explore corta antes que todo lo demás: sólo lee y perfila, nunca escribe
+    # Firebase ni construye el doc. Es el modo de calibración de §4.1.
+    if "--explore" in sys.argv:
+        cual = _arg_value("--explore")
+        paths = (PGO_EXPLORE_PATHS if not cual or cual.startswith("--")
+                 else {k: v for k, v in PGO_EXPLORE_PATHS.items() if k in cual.split(",")})
+        if not paths:
+            raise SystemExit(f"[explore] Nada que explorar. Disponibles: {', '.join(PGO_EXPLORE_PATHS)}")
+        print(f"[explore] Reportes a perfilar: {', '.join(paths)}")
+        pgo_explore(paths, _arg_value("--date"), dump="--dump-html" in sys.argv)
+        print("\n[explore] Listo — Firebase NO fue modificado.")
+        return
+
     from_pgo = "--from-pgo" in sys.argv
     if from_pgo:
         date_str = _arg_value("--date")   # None = usar el día que PGO ya muestra
