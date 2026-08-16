@@ -1073,6 +1073,63 @@ def _pgo_prepare_report(page, kind, date_str):
     page.wait_for_timeout(1200)
 
 
+_SECRET_KEY_RX = re.compile(r"token|auth|password|clave|secret|jwt|apikey|api_key|bearer", re.I)
+
+
+def _shape(obj, depth=0, max_depth=4):
+    """Esqueleto de un JSON: claves y TIPOS, nunca valores.
+
+    Es lo que permite entender la forma de una respuesta de la API sin volcar
+    datos de huéspedes al log de CI. De las listas describe sólo el 1er ítem.
+    """
+    pad = "  " * depth
+    if depth >= max_depth:
+        return f"{pad}…"
+    if isinstance(obj, dict):
+        if not obj:
+            return f"{pad}{{}}"
+        out = []
+        for k, v in list(obj.items())[:25]:
+            if isinstance(v, (dict, list)):
+                out.append(f"{pad}{k}:\n{_shape(v, depth + 1, max_depth)}")
+            else:
+                out.append(f"{pad}{k}: <{type(v).__name__}>")
+        return "\n".join(out)
+    if isinstance(obj, list):
+        return f"{pad}[{len(obj)} ítems]" + (f"\n{_shape(obj[0], depth + 1, max_depth)}" if obj else "")
+    return f"{pad}<{type(obj).__name__}>"
+
+
+def _redact(s, limit=1200):
+    """Enmascara valores de claves sensibles en un cuerpo de request."""
+    s = str(s or "")
+    s = re.sub(r'("(?:[^"]*(?:token|auth|password|clave|secret|jwt|key)[^"]*)"\s*:\s*")[^"]*',
+               r"\1***", s, flags=re.I)
+    return s[:limit] + ("…" if len(s) > limit else "")
+
+
+def pgo_api_probe(page, api_calls):
+    """Registra los POST a la API de PGO: query enviada + forma de la respuesta."""
+    def _on_resp(resp):
+        try:
+            req = resp.request
+            if req.resource_type not in ("xhr", "fetch"):
+                return
+            if "backend.pgo-explora.com" not in resp.url:
+                return
+            entry = {"pagina": page.url.rstrip("/").split("/")[-1] or "?",
+                     "url": resp.url, "metodo": req.method, "status": resp.status,
+                     "req": _redact(req.post_data), "shape": None}
+            try:
+                entry["shape"] = _shape(resp.json())
+            except Exception:
+                entry["shape"] = "(respuesta no-JSON)"
+            api_calls.append(entry)
+        except Exception:
+            pass
+    page.on("response", _on_resp)
+
+
 def pgo_explore(paths, date_str, dump=False, trace_net=False):
     """Abre sesión en PGO y perfila los reportes indicados. NO escribe nada."""
     _pgo_require()
@@ -1089,14 +1146,7 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False):
         # llegadas no la tiene), la API interna es la única vía razonable — y de
         # paso es más estable que pelear con un date-picker.
         if trace_net:
-            def _on_resp(resp):
-                try:
-                    if resp.request.resource_type in ("xhr", "fetch"):
-                        api_calls.append((page.url.split("/")[-1] or "?",
-                                          f"{resp.request.method} {resp.status} {resp.url}"))
-                except Exception:
-                    pass
-            page.on("response", _on_resp)
+            pgo_api_probe(page, api_calls)
         base = PGO_BASE_URL
         try:
             page.goto(base + PGO_GEOS_PATH, wait_until="networkidle", timeout=60000)
@@ -1136,9 +1186,13 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False):
                 print(f"[explore] {nombre}: error inesperado: {type(e).__name__}: {e}")
         browser.close()
     if trace_net and api_calls:
-        print("\n[explore] === XHR/fetch observados (candidatos a API directa) ===")
-        for origen, c in dict.fromkeys(api_calls):
-            print(f"[explore]   [{origen}] {c}")
+        print(f"\n[explore] === API de PGO: {len(api_calls)} llamadas ===")
+        for i, c in enumerate(api_calls, 1):
+            print(f"\n[explore] --- #{i} desde '{c['pagina']}' · {c['metodo']} {c['status']} {c['url']}")
+            print(f"[explore] request: {c['req']}")
+            print("[explore] respuesta (esqueleto, sin valores):")
+            for ln in str(c["shape"]).splitlines()[:40]:
+                print(f"[explore]   {ln}")
 
 
 def pgo_fetch(date_str, dump=False, trace_net=False):
