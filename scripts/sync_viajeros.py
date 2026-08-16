@@ -1197,6 +1197,64 @@ def pgo_introspect(page):
         print("[explore]   " + " · ".join(otros[i:i + 6]))
 
 
+# Tipos cuya forma hay que conocer para mapear los reportes nuevos.
+PGO_TYPES_INTERES = [
+    "TypeTravellersInOut", "ReportDinningRoomType", "BirthdayReportType",
+    "ReservationType", "TravellerType", "LuchOutType",
+]
+
+
+def _gql_tname(t, depth=0):
+    """Nombre legible de un tipo GraphQL, desenvolviendo NON_NULL/LIST."""
+    if not t or depth > 4:
+        return "?"
+    n = t.get("name")
+    if n:
+        return n
+    k = t.get("kind") or "?"
+    inner = _gql_tname(t.get("ofType"), depth + 1)
+    return f"[{inner}]" if k == "LIST" else (f"{inner}!" if k == "NON_NULL" else inner)
+
+
+def pgo_introspect_types(page, nombres):
+    """Imprime los campos de cada tipo: nombre y tipo, sin ningún valor."""
+    for nom in nombres:
+        q = ('{ __type(name: "%s") { name kind fields { name type '
+             '{ name kind ofType { name kind ofType { name kind } } } } } }' % nom)
+        try:
+            data = pgo_graphql(page, q)
+            t = (data.get("data") or {}).get("__type")
+        except Exception as e:
+            print(f"[explore] tipo {nom}: error {type(e).__name__}")
+            continue
+        if not t:
+            print(f"[explore] tipo {nom}: no existe en el esquema")
+            continue
+        campos = t.get("fields") or []
+        print(f"\n[explore] === {t['name']} ({t.get('kind')}) · {len(campos)} campos ===")
+        for f in campos:
+            print(f"[explore]   {f['name']:32} {_gql_tname(f.get('type'))}")
+
+
+def pgo_resolve_hotel(page):
+    """Lista los hoteles con su id y código.
+
+    El dashboard pide hotelId 1 y arrival-report pide 2: consultar con el id
+    equivocado devuelve datos válidos DE OTRO LODGE, y eso no se nota mirando.
+    Nombres de hotel — no hay datos personales acá.
+    """
+    try:
+        data = pgo_graphql(page, "{ hotelsList { id code name } defaultHotelSelected }")
+        d = data.get("data") or {}
+    except Exception as e:
+        print(f"[explore] hotelsList: error {type(e).__name__}: {e}")
+        return
+    print(f"\n[explore] === Hoteles (defaultHotelSelected={d.get('defaultHotelSelected')}) ===")
+    for h in (d.get("hotelsList") or []):
+        marca = "  ← ATACAMA" if "atacama" in str(h.get("name", "")).lower() else ""
+        print(f"[explore]   id={h.get('id'):>3}  code={h.get('code'):<8} {h.get('name')}{marca}")
+
+
 def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
     """Abre sesión en PGO y perfila los reportes indicados. NO escribe nada."""
     _pgo_require()
@@ -1241,7 +1299,9 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
         # La introspección va PRIMERO: si el esquema contesta, deja de tener
         # sentido adivinar selectores para los reportes que no renderizan.
         if introspect:
+            pgo_resolve_hotel(page)
             pgo_introspect(page)
+            pgo_introspect_types(page, PGO_TYPES_INTERES)
         for nombre, path in paths.items():
             print(f"\n[explore] ===== {nombre}  ({path}) =====")
             try:
