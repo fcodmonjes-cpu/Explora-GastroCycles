@@ -1197,11 +1197,19 @@ def pgo_introspect(page):
         print("[explore]   " + " · ".join(otros[i:i + 6]))
 
 
-# Tipos cuya forma hay que conocer para mapear los reportes nuevos.
+# Tipos cuya forma hay que conocer para mapear los reportes nuevos. Los
+# anidados (TypeTravellerIn, DetailType…) los descubre la recursión sola.
 PGO_TYPES_INTERES = [
     "TypeTravellersInOut", "ReportDinningRoomType", "BirthdayReportType",
-    "ReservationType", "TravellerType", "LuchOutType",
+    "LuchOutType",
 ]
+# ReservationType tiene 135 campos: se filtra a lo que sirve para horas,
+# habitación, fechas y pax, o el log se vuelve ilegible.
+PGO_TYPES_GRANDES = ["ReservationType", "TravellerType"]
+_GQL_CAMPO_INTERES = re.compile(
+    r"hour|time|hora|arriv|llegad|checkin|check_in|checkout|check_out|in$|out$|"
+    r"date|fecha|room|hab|pax|adult|child|niñ|nino|name|nombre|nationality|nacional|"
+    r"age|edad|group|grupo|status|estado|meal|comida|diet|breakfast|lunch|dinner", re.I)
 
 
 def _gql_tname(t, depth=0):
@@ -1216,14 +1224,30 @@ def _gql_tname(t, depth=0):
     return f"[{inner}]" if k == "LIST" else (f"{inner}!" if k == "NON_NULL" else inner)
 
 
-def pgo_introspect_types(page, nombres):
-    """Imprime los campos de cada tipo: nombre y tipo, sin ningún valor."""
+_GQL_ESCALARES = {"String", "Int", "Float", "Boolean", "ID", "Date", "DateTime",
+                  "Time", "JSONString", "Decimal", "UUID"}
+
+
+def pgo_introspect_types(page, nombres, max_depth=2, _vistos=None, _depth=0, _filtro=None):
+    """Campos de cada tipo, siguiendo los tipos anidados de forma RECURSIVA.
+
+    Sin recursión haría falta una corrida de CI por nivel: TypeTravellersInOut
+    apunta a TypeTravellerIn, que es donde viven las horas. Sólo esquema —
+    nombres y tipos de campo, jamás valores.
+
+    `_filtro` recorta los tipos gigantes (ReservationType tiene 135 campos) a lo
+    que de verdad importa, para que el log siga siendo legible.
+    """
+    vistos = _vistos if _vistos is not None else set()
+    pendientes = []
     for nom in nombres:
+        if not nom or nom in vistos or nom in _GQL_ESCALARES:
+            continue
+        vistos.add(nom)
         q = ('{ __type(name: "%s") { name kind fields { name type '
              '{ name kind ofType { name kind ofType { name kind } } } } } }' % nom)
         try:
-            data = pgo_graphql(page, q)
-            t = (data.get("data") or {}).get("__type")
+            t = (pgo_graphql(page, q).get("data") or {}).get("__type")
         except Exception as e:
             print(f"[explore] tipo {nom}: error {type(e).__name__}")
             continue
@@ -1231,9 +1255,17 @@ def pgo_introspect_types(page, nombres):
             print(f"[explore] tipo {nom}: no existe en el esquema")
             continue
         campos = t.get("fields") or []
-        print(f"\n[explore] === {t['name']} ({t.get('kind')}) · {len(campos)} campos ===")
-        for f in campos:
-            print(f"[explore]   {f['name']:32} {_gql_tname(f.get('type'))}")
+        campos_m = [f for f in campos if not _filtro or _filtro.search(f["name"])]
+        recorte = f" (mostrando {len(campos_m)} de {len(campos)})" if len(campos_m) != len(campos) else ""
+        print(f"\n[explore] === {t['name']} ({t.get('kind')}) · {len(campos)} campos{recorte} ===")
+        for f in campos_m:
+            tn = _gql_tname(f.get("type"))
+            print(f"[explore]   {f['name']:34} {tn}")
+            base = tn.strip("[]!")
+            if base not in _GQL_ESCALARES and base not in vistos:
+                pendientes.append(base)
+    if pendientes and _depth < max_depth:
+        pgo_introspect_types(page, pendientes, max_depth, vistos, _depth + 1, _filtro)
 
 
 def pgo_resolve_hotel(page):
@@ -1301,7 +1333,9 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
         if introspect:
             pgo_resolve_hotel(page)
             pgo_introspect(page)
-            pgo_introspect_types(page, PGO_TYPES_INTERES)
+            pgo_introspect_types(page, PGO_TYPES_INTERES, max_depth=2)
+            pgo_introspect_types(page, PGO_TYPES_GRANDES, max_depth=0,
+                                 _filtro=_GQL_CAMPO_INTERES)
         for nombre, path in paths.items():
             print(f"\n[explore] ===== {nombre}  ({path}) =====")
             try:
