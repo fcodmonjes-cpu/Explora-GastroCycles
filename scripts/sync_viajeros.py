@@ -364,6 +364,11 @@ PGO_EXPLORE_PATHS = {
     "birthday": PGO_BIRTHDAY_PATH,
     "comedor":  PGO_COMEDOR_PATH,
 }
+# Ventana del reporte de llegadas. Hacia atrás lo suficiente para alcanzar a
+# todos los que siguen en casa (estadía típica de 3-4 noches, con margen);
+# hacia adelante para ver quién llega hoy más tarde y mañana.
+PGO_ARRIVAL_BACK = int(os.environ.get("PGO_ARRIVAL_BACK") or 10)
+PGO_ARRIVAL_FWD  = int(os.environ.get("PGO_ARRIVAL_FWD")  or 1)
 PGO_DATE_FMT    = os.environ.get("PGO_DATE_FMT")    or "%d-%m-%Y"   # como se ve en el input: 31-07-2026
 # Selector del input de fecha y del botón refrescar (texto visible, robusto a
 # cambios de clases). Sobrescribibles por env si el markup cambia.
@@ -705,11 +710,18 @@ def _pgo_structure_report(page):
               f"clase='{r['cls']}' 1er_hijo='{r['muestra']}'")
 
 
-def _pgo_read_report(page, path, fecha, dump_name=None):
-    """Abre un reporte, fija la fecha y devuelve [{encabezado_normalizado: valor}]."""
+def _pgo_read_report(page, path, fecha, dump_name=None, kind=None, date_iso=None):
+    """Abre un reporte, fija la fecha y devuelve [{encabezado_normalizado: valor}].
+
+    `kind` (arrival/birthday) selecciona un preparador de filtros propio: esos
+    reportes NO usan el input DD-MM-YYYY + REFRESCAR de los demás. Sin `kind`
+    el comportamiento es exactamente el de siempre.
+    """
     url = PGO_BASE_URL + path
     page.goto(url, wait_until="networkidle", timeout=60000)
-    if fecha:
+    if kind in ("arrival", "birthday"):
+        _pgo_prepare_report(page, kind, date_iso)
+    elif fecha:
         _pgo_set_date(page, fecha)
     else:
         _pgo_refrescar(page)
@@ -931,6 +943,75 @@ def _pgo_profile(nombre, rows, muestras=3):
         print(f"[explore]   {c!r:34} llenas={len(vals):>3}  {ejemplos}{tag}")
 
 
+def _pgo_click_text(page, *textos):
+    """Click en el primer botón visible cuyo texto coincida (case-insensitive)."""
+    for txt in textos:
+        try:
+            btn = page.get_by_role("button", name=re.compile(txt, re.I)).first
+            if btn and btn.is_visible():
+                btn.click()
+                print(f"[sync-viajeros] Botón '{txt}' clickeado.")
+                return True
+        except Exception:
+            pass
+    return False
+
+
+def _pgo_fill_inputs(page, selector, valores):
+    """Tipea valores en inputs de Element UI, tecla por tecla.
+
+    fill() setea el valor de una sola vez y los componentes de Element UI lo
+    descartan (misma trampa que el RUT del login, §4.1). Además cada campo se
+    confirma con Enter, que es lo que cierra el panel del date-picker.
+    """
+    campos = page.query_selector_all(selector)
+    if not campos:
+        return 0
+    n = 0
+    for el, val in zip(campos, valores):
+        try:
+            el.click()
+            page.wait_for_timeout(150)
+            try:
+                el.fill("")
+            except Exception:
+                el.press("Control+a")
+            el.type(val, delay=45)
+            page.wait_for_timeout(120)
+            el.press("Enter")
+            page.wait_for_timeout(250)
+            n += 1
+        except Exception as e:
+            print(f"[sync-viajeros] (no pude escribir '{val}' en {selector}: {type(e).__name__})")
+    return n
+
+
+def _pgo_prepare_report(page, kind, date_str):
+    """Prepara los filtros propios de cada reporte nuevo.
+
+    Ninguno usa el patrón de _pgo_set_date (input DD-MM-YYYY + REFRESCAR):
+      · arrival  → date-picker de RANGO (.el-range-input), formato DD-MM-YYYY
+      · birthday → dos inputs de MES (.el-input__inner), formato MM-YYYY
+      · comedor  → el de siempre; lo maneja _pgo_read_report
+    """
+    d = datetime.date.fromisoformat(date_str) if date_str else datetime.date.today()
+    if kind == "arrival":
+        # Rango que cubre a los in-house: llegadas de los últimos días y las de
+        # hoy. El check-out puede caer bastante más adelante que el rango.
+        desde = (d - datetime.timedelta(days=PGO_ARRIVAL_BACK)).strftime("%d-%m-%Y")
+        hasta = (d + datetime.timedelta(days=PGO_ARRIVAL_FWD)).strftime("%d-%m-%Y")
+        n = _pgo_fill_inputs(page, ".el-range-input", [desde, hasta])
+        print(f"[sync-viajeros] arrival: rango {desde} → {hasta} ({n} campos escritos)")
+    elif kind == "birthday":
+        mes = d.strftime("%m-%Y")
+        n = _pgo_fill_inputs(page, ".el-input__inner", [mes, mes])
+        print(f"[sync-viajeros] birthday: mes {mes} ({n} campos escritos)")
+    else:
+        return
+    _pgo_click_text(page, "buscar", "refrescar", "consultar")
+    page.wait_for_timeout(1200)
+
+
 def pgo_explore(paths, date_str, dump=False):
     """Abre sesión en PGO y perfila los reportes indicados. NO escribe nada."""
     _pgo_require()
@@ -969,7 +1050,9 @@ def pgo_explore(paths, date_str, dump=False):
         for nombre, path in paths.items():
             print(f"\n[explore] ===== {nombre}  ({path}) =====")
             try:
-                rows = _pgo_read_report(page, path, fecha, f"explore-{nombre}" if dump else None)
+                rows = _pgo_read_report(page, path, fecha,
+                                        f"explore-{nombre}" if dump else None,
+                                        kind=nombre, date_iso=date_str)
                 _pgo_profile(nombre, rows)
             except SystemExit as e:
                 # Un reporte que no se deja leer no debe abortar los demás: el
