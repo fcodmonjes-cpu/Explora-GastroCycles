@@ -94,6 +94,7 @@ jobs:
             if [ "$EXPLORE" != "all" ]; then ARGS="$ARGS $EXPLORE"; fi
             if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
             if [ "${{ inputs.dump_html }}" = "true" ]; then ARGS="$ARGS --dump-html"; fi
+            if [ "${{ inputs.trace_net }}" = "true" ]; then ARGS="$ARGS --trace-net"; fi
             echo "Ejecutando (calibración, no escribe): sync_viajeros.py $ARGS"
             python scripts/sync_viajeros.py $ARGS
             exit $?
