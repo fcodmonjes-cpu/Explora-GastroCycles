@@ -2126,8 +2126,24 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         _pgo_set_destino(page, PGO_DESTINO)
 
         # 3) Reportes del día
-        geos   = _pgo_read_report(page, PGO_GEOS_PATH,   fecha, "geos"   if dump else None)
+        # El roster sale de la API desde el 2026-08-17: verificado contra el HTML
+        # campo por campo, 0 diferencias en los 7 campos sobre 70 filas (§4.2).
+        # El scraping de Geos queda como RESPALDO automático: si la query falla,
+        # el sync no se cae — vuelve a leer la tabla. Es el corazón del módulo,
+        # así que conserva las dos vías.
         fecha_iso = date_str or _pgo_fecha_visible(page)
+        geos = []
+        roster_api = None
+        try:
+            roster_api = pgo_fetch_roster(page, fecha_iso or datetime.date.today().isoformat())
+            if not roster_api:
+                raise ValueError("la API devolvió 0 viajeros")
+        except Exception as e:
+            print(f"[sync-viajeros] roster por API falló ({type(e).__name__}: {e}); "
+                  "vuelvo al Reporte Geos por HTML.")
+            roster_api = None
+        if roster_api is None:
+            geos = _pgo_read_report(page, PGO_GEOS_PATH, fecha, "geos" if dump else None)
         dietas = _pgo_read_report(page, PGO_DIETAS_PATH, fecha, "dietas" if dump else None)
         # Horas reales de movimiento por GraphQL (enfoque híbrido: el roster
         # sigue saliendo del HTML, que funciona; esto es lo nuevo). Si falla,
@@ -2169,7 +2185,7 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         print("[sync-viajeros] Llamadas XHR/fetch detectadas (candidatas a API directa):")
         for c in dict.fromkeys(api_calls):
             print("   ", c)
-    return geos, dietas, (fecha_iso or datetime.date.today().isoformat()), horas, totales, comedor, cumples
+    return geos, dietas, (fecha_iso or datetime.date.today().isoformat()), horas, totales, comedor, cumples, roster_api
 
 
 # Mapeo encabezado de PGO (ya normalizado) → campo interno. Varios alias por si
@@ -2218,6 +2234,26 @@ def _pgo_inout(val, year):
     if len(ds) == 1:
         return iso(*ds[0]), ""
     return "", ""
+
+
+def parse_roster_con_dietas(roster_rows, dietas_rows):
+    """Roster de la API + observaciones del reporte de Dietas, cruzadas por nombre.
+
+    El roster ya viene en el formato final; lo único que falta es pegarle la
+    observación, que sigue saliendo del HTML porque ahí hay más señal.
+    """
+    diet = {}
+    for r in (_remap(x, PGO_DIET_COLS) for x in dietas_rows):
+        if r.get("nombre"):
+            diet[norm_key(r["nombre"])] = (r.get("obs") or "").strip()
+    out, con_obs = [], 0
+    for hab, nombre, edad, nac, grupo, ind, outd, _ in roster_rows:
+        obs = diet.get(norm_key(nombre), "")
+        if obs:
+            con_obs += 1
+        out.append((hab, nombre, edad, nac, grupo, ind, outd, obs))
+    print(f"[sync-viajeros] cruce dietas→roster: {con_obs} de {len(dietas_rows)} observaciones pegadas")
+    return out
 
 
 def parse_pgo(geos_rows, dietas_rows, date_str):
@@ -2340,12 +2376,17 @@ def main():
         date_str = _arg_value("--date")   # None = usar el día que PGO ya muestra
         print("[sync-viajeros] PGO — login y lectura de reportes "
               f"({date_str or 'fecha por defecto de PGO'})...")
-        geos, dietas, date_str, horas, totales, comedor, cumples = pgo_fetch(
+        geos, dietas, date_str, horas, totales, comedor, cumples, roster_api = pgo_fetch(
             date_str,
             dump="--dump-html" in sys.argv,
             trace_net="--trace-net" in sys.argv)
         print(f"[sync-viajeros] Fecha efectiva del reporte: {date_str}")
-        rows = parse_pgo(geos, dietas, date_str)
+        if roster_api is not None:
+            # Las observaciones se siguen cruzando desde el reporte de Dietas:
+            # los campos de dieta de la API traen menos casos (§4.2).
+            rows = parse_roster_con_dietas(roster_api, dietas)
+        else:
+            rows = parse_pgo(geos, dietas, date_str)
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
         doc = build_doc(rows, date_str, "pgo", horas, totales, comedor, cumples)
     else:
