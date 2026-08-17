@@ -288,7 +288,7 @@ def fb_key(valor, fallback="SIN HAB"):
     return k or fallback
 
 
-def build_doc(rows, date_str, source, horas=None, totales=None):
+def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None):
     habs = {}
     for i, (hab, nombre, edad, nac, grupo, in_d, out_d, obs) in enumerate(rows):
         hab_ok = fb_key(hab)
@@ -323,6 +323,8 @@ def build_doc(rows, date_str, source, horas=None, totales=None):
                 traveler[k] = h[k]
         habs.setdefault(hab, []).append(traveler)
     doc_extra = {}
+    if comedor and comedor.get("grupos"):
+        doc_extra["comedor"] = comedor
     if totales:
         # Contadores del propio PGO. No reemplazan el conteo por hora de la app
         # (que es el que envejece bien), pero sirven de contraste: si difieren
@@ -1355,6 +1357,70 @@ def _iso_dt(v):
     return ""
 
 
+# ── Reporte de comedor ───────────────────────────────────────────────────────
+# Agrupa a los in-house por grupo de reserva y dice cuántos cubiertos hay por
+# servicio. dt = desayuno TEMPRANO (excursión o vuelo antes de que abra el
+# comedor), dr = desayuno REGULAR; los desayunos son dt + dr. Confirmado por el
+# owner (2026-08-16).
+PGO_COMEDOR_COLS = {
+    "grupo": "grupo", "habitaciones": "habs", "habitacion": "habs",
+    "n": "n", "pax": "n",
+    "am in/out": "mov", "in/out": "mov",
+    "dt": "dt", "dr": "dr",
+    "almuerzos": "almuerzos", "almuerzo": "almuerzos",
+    "cena": "cena", "cenas": "cena",
+    "observaciones": "obs", "observacion": "obs",
+}
+
+
+def fix_mojibake(s):
+    """Repara UTF-8 servido como latin-1: 'PÃ©rez' → 'Pérez'.
+
+    PGO lo hace en varios reportes. Importa porque estos textos se muestran en
+    la app, y porque cualquier cruce por nombre falla si un lado viene torcido.
+    Si el round-trip no es reversible se devuelve el original: nunca se empeora.
+    """
+    t = str(s or "")
+    if not _MOJIBAKE.search(t):
+        return t
+    try:
+        arreglado = t.encode("latin-1").decode("utf-8")
+        return arreglado if arreglado and "�" not in arreglado else t
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return t
+
+
+def parse_comedor(rows):
+    """Filas del reporte → grupos + totales por servicio."""
+    grupos, tot = [], {"dt": 0, "dr": 0, "almuerzos": 0, "cena": 0, "n": 0}
+    for raw in rows:
+        r = _remap(raw, PGO_COMEDOR_COLS)
+        n = _to_int(r.get("n"))
+        if not n and not (r.get("grupo") or r.get("habs")):
+            continue
+        habs = [h.zfill(2) for h in re.findall(r"\d+", str(r.get("habs") or ""))]
+        g = {
+            "grupo": fix_mojibake(r.get("grupo")).strip(),
+            "habs":  habs,
+            "n":     n,
+            "dt":    _to_int(r.get("dt")),
+            "dr":    _to_int(r.get("dr")),
+            "almuerzos": _to_int(r.get("almuerzos")),
+            "cena":  _to_int(r.get("cena")),
+        }
+        mov = str(r.get("mov") or "").strip()
+        if mov:
+            g["mov"] = mov            # "IN 09:45" — hora PLANIFICADA, redondeada
+        obs = fix_mojibake(r.get("obs")).strip()
+        if obs:
+            g["obs"] = obs
+        for k in ("dt", "dr", "almuerzos", "cena", "n"):
+            tot[k] += g[k] if k != "n" else n
+        grupos.append(g)
+    tot["desayunos"] = tot["dt"] + tot["dr"]
+    return {"grupos": grupos, "totales": tot}
+
+
 def pgo_probe_arrival(page, date_str):
     """¿Qué campo marca la llegada AL LODGE y no la salida del vuelo?
 
@@ -1664,13 +1730,23 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         except Exception as e:
             print(f"[sync-viajeros] Aviso: sin horas de movimiento ({type(e).__name__}: {e})")
             horas, totales = {}, {}
+        # Comedor: cubiertos por servicio segun PGO. Es una SEGUNDA opinion
+        # frente al conteo por presencia que hace la app; si divergen, algo se
+        # perdio en el cruce. Que falle no debe tumbar el sync.
+        try:
+            comedor = parse_comedor(_pgo_read_report(page, PGO_COMEDOR_PATH, fecha,
+                                                     "comedor" if dump else None))
+            print(f"[sync-viajeros] comedor: {len(comedor['grupos'])} grupos · {comedor['totales']}")
+        except Exception as e:
+            print(f"[sync-viajeros] Aviso: sin reporte de comedor ({type(e).__name__}: {e})")
+            comedor = None
         browser.close()
 
     if trace_net and api_calls:
         print("[sync-viajeros] Llamadas XHR/fetch detectadas (candidatas a API directa):")
         for c in dict.fromkeys(api_calls):
             print("   ", c)
-    return geos, dietas, (fecha_iso or datetime.date.today().isoformat()), horas, totales
+    return geos, dietas, (fecha_iso or datetime.date.today().isoformat()), horas, totales, comedor
 
 
 # Mapeo encabezado de PGO (ya normalizado) → campo interno. Varios alias por si
@@ -1841,14 +1917,14 @@ def main():
         date_str = _arg_value("--date")   # None = usar el día que PGO ya muestra
         print("[sync-viajeros] PGO — login y lectura de reportes "
               f"({date_str or 'fecha por defecto de PGO'})...")
-        geos, dietas, date_str, horas, totales = pgo_fetch(
+        geos, dietas, date_str, horas, totales, comedor = pgo_fetch(
             date_str,
             dump="--dump-html" in sys.argv,
             trace_net="--trace-net" in sys.argv)
         print(f"[sync-viajeros] Fecha efectiva del reporte: {date_str}")
         rows = parse_pgo(geos, dietas, date_str)
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
-        doc = build_doc(rows, date_str, "pgo", horas, totales)
+        doc = build_doc(rows, date_str, "pgo", horas, totales, comedor)
     else:
         doc = build_doc(SEED_ROWS, REPORT_DATE, "seed")
 
