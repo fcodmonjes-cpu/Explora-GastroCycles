@@ -374,7 +374,7 @@ Esta sección existe para no volver a descubrirlo desde cero.
 | | Frontend (HTML) | Backend (GraphQL) |
 |---|---|---|
 | Cómo | Playwright + Chromium navegan y leen `<table>` | Un POST a `backend.pgo-explora.com` |
-| Hoy alimenta | roster (Geos), Dietas, comedor, cumpleaños | horas de movimiento (`reportInOut`) |
+| Hoy alimenta | Dietas, comedor, cumpleaños · **Geos queda de respaldo** | **roster** (`travellersInhouse`) + horas (`reportInOut`) |
 | Costo | ~40-60 s: bajar Chromium, login, destino, 4 navegaciones | milisegundos, una llamada |
 | Se rompe con | cualquier cambio de UI: clases, botones, date-pickers | sólo si cambia el contrato de datos |
 | Descubrimiento | prueba y error contra el HTML | **introspección**: el esquema se autodocumenta |
@@ -410,18 +410,70 @@ Tres hallazgos de la migración parcial, todos verificados contra datos reales:
   que dejó el login de Playwright. Migrar del todo exige replicar la
   autenticación fuera del browser — el paso que falta.
 
-**Recomendación: migrar el resto a la API, por etapas.** El frontend de un
-portal cambia mucho más seguido que su contrato de datos, así que la API es la
-superficie estable. El orden sugerido, de mayor a menor ganancia:
+#### El roster ya migró (2026-08-17)
 
-1. **Roster (Geos)** — es el corazón del módulo y hoy depende de leer una tabla.
-2. **Dietas** — de paso desaparece el mojibake en el campo más delicado.
-3. **Comedor** — además se recuperan las horas sin redondear.
-4. **Cumpleaños** — el más chico, y el que hoy necesita un preparador de
+`travellersInhouse(hotelId, date)` reemplazó al scraping del Reporte Geos.
+Devuelve `ReservationType` (135 campos): la reserva aporta `room`, `checkin` y
+`checkout`, y el **`traveller` anidado** (`TravellerType`, 93 campos) aporta
+`firstName`, `lastName`, `age`, `nationality` y `group`.
+
+**El criterio para migrar no fue que existiera la query, fue el cruce.** Que
+los totales coincidan no alcanza: si el desglose por persona difiere, los
+totales igual cuadran pero cada dieta se le asigna a otro viajero, y eso no se
+nota mirando la pantalla. Se comparó nombre por nombre y campo por campo:
+
+```
+API 70 · HTML 70 · sólo API 0 · sólo HTML 0
+hab 0 · nombre 0 · edad 0 · nac 0 · grupo 0 · in 0 · out 0   (difieren)
+```
+
+**El HTML NO se borró: quedó de respaldo automático.** Si la query falla o
+devuelve 0 viajeros, el sync vuelve a leer la tabla en vez de caerse. Es el
+corazón del módulo y de él cuelgan las dietas.
+
+#### Las dietas NO se migran, y esto se midió
+
+La intuición decía que `dietReq` / `foodRestrictions` / `dietReqObs` iban a
+reemplazar el parseo de texto libre. **Medido el 2026-08-17, es al revés:**
+
+| Fuente | Casos con dato |
+|---|---|
+| Reporte HTML de Dietas | **9** |
+| API `dietReq` | 4 |
+| API `foodRestrictions` | 5 |
+
+Los campos existen porque el sistema los soporta, no porque el equipo los
+llene. Migrar ahí **perdería la mitad de las restricciones**.
+
+⚠️ **`hasFoodReq` es una trampa:** viene `True` en 60 de 70. No significa
+"tiene restricción" —sería el 86 % de los huéspedes— sino que se completó el
+formulario. Apoyarse en él marcaría 60 personas con restricciones inexistentes:
+el error opuesto al que se viene corrigiendo, y peor, porque *parece* dato
+estructurado. Además todos esos campos traen HTML embebido (`<strong>`, `<br>`)
+que habría que limpiar antes de pasarlo por `obs_to_tags`.
+
+Lo que sí conviene algún día: sumar `dietReq` (códigos canónicos tipo `LACTFRE`)
+como fuente **adicional**, en unión y nunca en reemplazo.
+
+**Qué falta migrar**, de mayor a menor ganancia:
+
+1. **Comedor** — se recuperarían las horas sin redondear.
+2. **Cumpleaños** — el más chico, y el que hoy necesita un preparador de
    filtros propio (dos inputs de MES + botón BUSCAR, distinto de todo el resto).
 
 El login por navegador puede quedarse: es barato comparado con navegar cuatro
 reportes, y resuelve la sesión sin ingeniería inversa del token.
+
+**La huella importa tanto como la vía.** El cron bajó de cada 30 min a cada 2 h
+en franja de operación (48 → 9 corridas diarias, los 7 días). El motivo no es
+técnico: cada corrida es un login a PGO con la cuenta personal del owner, y 48
+accesos diarios —muchos de madrugada, desde IPs de GitHub en EE.UU.— saltan en
+cualquier listado ordenado por hora. **Cambiar de API a HTML no habría movido
+esa aguja**: las dos vías hacen el mismo login con la misma frecuencia, y el
+HTML es más ruidoso (cuatro navegaciones contra una llamada). Lo que la mueve
+es la frecuencia, el horario, y avisarle a quien administra PGO.
+La introspección (`__schema`) es la llamada más delatora —ningún frontend la
+hace— y por eso vive sólo en `--explore`, nunca en el sync productivo.
 
 **Cómo explorar sin adivinar** (`--explore`, ver la cabecera del script):
 
