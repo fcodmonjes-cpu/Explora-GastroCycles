@@ -1869,6 +1869,9 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 /* Discrepancia con el conteo de PGO: una nota al margen, no una alarma. */
 /* Cumpleaños en el banner: mismo lenguaje que los demás contadores, sólo que
    el "número" es la torta. Aparece únicamente cuando hay uno. */
+/* Reporte de otro día: coral y a la vista. No compite con nada porque sólo
+   aparece cuando el dato está mal, y desaparece solo al revalidar. */
+#vj-updated.is-otro-dia { color:var(--coral); }
 .pgo-cumple-line { display:flex; justify-content:center; margin:0 0 0.55rem; }
 .pgo-cumple-line[hidden] { display:none; }
 .pgo-cumple-btn { display:inline-flex; align-items:center; gap:7px; padding:5px 14px;
@@ -3893,6 +3896,7 @@ const UI = {
     vjHab:'Hab', vjYears:'años', vjNino:'menor', vjNinoPl:'menores',
     vjSaleHoy:'sale hoy', vjSaleManana:'sale mañana', vjLlegaHoy:'llegó hoy',
     vjVerSalientes:'ver salientes', vjOcultarSalientes:'ocultar salientes',
+    vjSyncOtherDay:'NO ES DE HOY · actualizando',
     vjStatRestric:'restricciones',
     vjRevisar:'revisar observación',
     vjSinRestriccion:'Sin restricciones',
@@ -4089,6 +4093,7 @@ const UI = {
     vjHab:'Room', vjYears:'yrs', vjNino:'minor', vjNinoPl:'minors',
     vjSaleHoy:'leaves today', vjSaleManana:'leaves tomorrow', vjLlegaHoy:'arrived today',
     vjVerSalientes:'show departures', vjOcultarSalientes:'hide departures',
+    vjSyncOtherDay:'NOT TODAY’S · refreshing',
     vjStatRestric:'restrictions',
     vjRevisar:'check note',
     vjSinRestriccion:'No restrictions',
@@ -4285,6 +4290,7 @@ const UI = {
     vjHab:'Quarto', vjYears:'anos', vjNino:'menor', vjNinoPl:'menores',
     vjSaleHoy:'sai hoje', vjSaleManana:'sai amanhã', vjLlegaHoy:'chegou hoje',
     vjVerSalientes:'ver saídas', vjOcultarSalientes:'ocultar saídas',
+    vjSyncOtherDay:'NÃO É DE HOJE · atualizando',
     vjStatRestric:'restrições',
     vjRevisar:'verificar observação',
     vjSinRestriccion:'Sem restrições',
@@ -7166,7 +7172,9 @@ function viajerosUrl(){ return `${CF_FIREBASE_CONFIG.databaseURL}/${VIAJEROS_PAT
 
 async function viajerosFetch(){
   try {
-    const resp = await fetch(viajerosUrl());
+    // no-store: el doc de viajeros es dato vivo. Sin esto, un tablet que
+    // reabre la app puede resolver el GET desde el cache del navegador.
+    const resp = await fetch(viajerosUrl(), { cache: 'no-store' });
     const raw  = await resp.json();
     VIAJEROS_DATA = (raw && raw.habs) ? raw : null;
     VIAJEROS_LOAD_ERROR = false;
@@ -7297,9 +7305,15 @@ function vjPaintUpdated(){
   const f = vjFreshness(VIAJEROS_DATA.updatedAt);
   // El estado va también en el title: el color no puede ser el único portador
   // del mensaje (daltonismo, y un iPhone al sol).
-  const punto = f ? `<span class="vj-dot ${f.cls}" title="${vjEsc(f.estado)}"></span>` : '';
-  const hace  = f ? ` · ${vjEsc(f.texto)}` : '';
+  // Un reporte de OTRO DÍA no es "un poco viejo": es el día equivocado, y en un
+  // tablet que reabre la PWA suspendida era justo lo que se veía sin aviso.
+  // Manda sobre el cálculo de minutos y se dice con palabras, no sólo con color.
+  const otroDia = VIAJEROS_DATA.date && VIAJEROS_DATA.date !== vjTodayIso();
+  const cls   = otroDia ? 'is-down' : (f ? f.cls : '');
+  const punto = `<span class="vj-dot ${cls}" title="${vjEsc(otroDia ? t('vjSyncOtherDay') : (f ? f.estado : ''))}"></span>`;
+  const hace  = otroDia ? ` · ${vjEsc(t('vjSyncOtherDay'))}` : (f ? ` · ${vjEsc(f.texto)}` : '');
   el.innerHTML = `${punto}${vjEsc(t('vjReportOf'))} ${vjEsc(vjShortDate(VIAJEROS_DATA.date))}${hace}`;
+  el.classList.toggle('is-otro-dia', !!otroDia);
 }
 // Tick liviano: el "hace X" se calcula al renderizar y quedaría congelado con la
 // tab abierta — el punto seguiría verde mientras pasan las horas. Sólo repinta
@@ -14176,9 +14190,54 @@ const CHK_SEED = {
      app siempre pide a la red, el cache solo salva cuando el wifi se corta.
      Si alguna vez hay que desinstalarlo, la receta está en sw.js. -->
 <script>
+// ── Revalidación al despertar ────────────────────────────────────────────
+// EL PROBLEMA REAL: instalada como PWA, la app casi nunca se cierra — se
+// SUSPENDE. Al volver al tablet a la mañana siguiente, el JS sigue vivo con las
+// variables cargadas ayer y nada vuelve a preguntar: se ven los datos de ayer
+// sin ningún aviso. No es cache del service worker ni HTTP; es estado en
+// memoria que sobrevive días.
+//
+// iOS suspende la app apenas se va a background y la revive tal cual estaba, así
+// que 'visibilitychange' es la señal que importa ahí. Android además restaura
+// desde bfcache al volver atrás, y en ese caso 'visibilitychange' NO dispara —
+// por eso también se escucha 'pageshow' con event.persisted.
+const PWA_REVALIDA_MS = 60 * 1000;   // margen para no re-pedir en cada parpadeo
+let  _PWA_ULTIMA_REVALIDA = Date.now();
+
+function pwaRevalidar(motivo){
+  const ahora = Date.now();
+  // Si el doc que tenemos es de otro DÍA, se revalida sí o sí: es exactamente
+  // el caso "abro el tablet a la mañana y veo el reporte de ayer".
+  const otroDia = !!(VIAJEROS_DATA && VIAJEROS_DATA.date && VIAJEROS_DATA.date !== vjTodayIso());
+  if (!otroDia && ahora - _PWA_ULTIMA_REVALIDA < PWA_REVALIDA_MS) return;
+  _PWA_ULTIMA_REVALIDA = ahora;
+  console.info('[pwa] revalidando (' + motivo + (otroDia ? ', doc de otro día' : '') + ')');
+  try { viajerosFetch(); } catch(e){}
+  try { staffingFetch(); } catch(e){}
+  try { wxFetch(true); }  catch(e){}
+  // Y de paso preguntar si hay una versión nueva del programa.
+  if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistration){
+    navigator.serviceWorker.getRegistration().then(r => { if (r) r.update(); }).catch(() => {});
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') pwaRevalidar('visible');
+});
+window.addEventListener('pageshow', e => pwaRevalidar(e.persisted ? 'bfcache' : 'pageshow'));
+window.addEventListener('online',  () => pwaRevalidar('online'));
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});   // falla en silencio: la app funciona igual sin SW
+    // updateViaCache:'none' — sin esto el navegador puede servir sw.js desde su
+    // propio cache HTTP hasta 24 h, y la app sigue corriendo código viejo
+    // aunque el deploy ya esté publicado.
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+      .then(reg => {
+        // Chequeo periódico mientras la app está abierta: en una PWA que vive
+        // días, el 'load' inicial es la única oportunidad que había de mirar.
+        setInterval(() => { try { reg.update(); } catch(e){} }, 30 * 60 * 1000);
+      })
+      .catch(() => {});   // falla en silencio: la app funciona igual sin SW
   });
 }
 </script>
