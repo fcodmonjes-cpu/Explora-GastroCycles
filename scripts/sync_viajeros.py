@@ -311,7 +311,16 @@ def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None):
         # app las usa para contar quién está de verdad a esta hora en vez de
         # descontar desde medianoche a todo el que sale hoy. Se agregan sólo si
         # existen — el shape viejo (in/out por fecha) queda intacto.
+        # OJO: la hora se aplica SÓLO a quien efectivamente se mueve hoy. Una
+        # habitación se reocupa el mismo día (sale uno 07:00, entra otro 17:30);
+        # cruzar por hab a secas le pegaba el outAt del que se fue al que recién
+        # llegaba, y el intervalo quedaba invertido — esa persona no aparecía
+        # presente en NINGÚN servicio.
         h = (horas or {}).get(hab) or {}
+        if in_d and in_d != date_str:
+            h = {k: v for k, v in h.items() if not k.startswith("in")}
+        if out_d and out_d != date_str:
+            h = {k: v for k, v in h.items() if not k.startswith("out")}
         if h.get("inAt"):
             traveler["inAt"]  = h["inAt"]
             traveler["inSrc"] = h.get("inSrc", "")
@@ -821,7 +830,12 @@ def _pgo_read_report(page, path, fecha, dump_name=None, kind=None, date_iso=None
     headers = [norm_key(h) for h in data["headers"]]
     out = []
     for cells in data["rows"]:
-        out.append({headers[i]: cells[i] for i in range(min(len(headers), len(cells)))})
+        # fix_mojibake acá y no más abajo: es el ÚNICO punto por el que pasan
+        # todas las tablas de PGO, así ningún reporte nuevo hereda el problema.
+        # Además el cruce Geos↔Dietas es por nombre normalizado: si un lado
+        # viniera con "PÃ©rez" y el otro con "Pérez", el viajero no cruzaría.
+        out.append({headers[i]: fix_mojibake(cells[i])
+                    for i in range(min(len(headers), len(cells)))})
     print(f"[sync-viajeros] {path}: {len(out)} filas · columnas: {', '.join(headers)}"
           + ("" if fecha_ok else "  ⚠ FECHA NO VERIFICADA"))
     _pgo_read_report.ultima_fecha_ok = fecha_ok

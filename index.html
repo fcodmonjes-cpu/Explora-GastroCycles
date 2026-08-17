@@ -1502,7 +1502,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .pgo-banner[hidden] { display:none; }
 /* Qué servicio está midiendo el número. Sin él, '31 viajeros' es ambiguo:
    no se sabe si es ahora, hoy o el almuerzo. Discreto — es una etiqueta. */
-.pgo-b-srv { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); opacity:0.75; }
+.pgo-b-srv { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); opacity:0.85; margin-right:2px; }
 .pgo-b-item { display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap; background:none; border:0; padding:0; font-family:inherit; cursor:pointer; transition:opacity .15s; }
 .pgo-b-item:active { opacity:0.6; }
 .pgo-b-num { font-size:15px; color:var(--text); line-height:1; }
@@ -1510,9 +1510,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .pgo-b-num.dietas { color:var(--gold); }
 .pgo-b-label { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); }
 .pgo-b-tag { font-size:8px; letter-spacing:0.08em; color:var(--teal); border:0.5px solid rgba(29,158,117,0.45); border-radius:3px; padding:0 3px; }
-.pgo-b-go { margin-left:auto; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); }
 /* Guardado tras hover:hover — en iOS el hover se queda pegado tras el tap. */
-@media (hover:hover){ .pgo-banner:hover .pgo-b-go { color:var(--gold); } }
 
 .checklist-feature-btn {
   display:flex; align-items:center; justify-content:center; gap:10px;
@@ -1855,7 +1853,22 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-dot.is-down  { background:var(--coral); }
 
 /* Stat-chips: contadores tappeables que a la vez son filtros. */
-.vj-stats { display:flex; gap:8px; margin-bottom:0.9rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.vj-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:0.9rem; }
+/* Cubiertos por servicio. Tres celdas de 1/3 = entran siempre, sin el
+   side-scroll que tenían las 5 tarjetas de estadísticas del día. */
+.vj-srv { position:relative; display:flex; flex-direction:column; align-items:center; gap:2px;
+          padding:0.55rem 0.3rem; background:var(--bg-secondary); border:0.5px solid var(--border);
+          border-radius:var(--radius-md); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.vj-srv-num   { font-family:'Courier Prime','Courier New',monospace; font-size:19px; color:var(--text); line-height:1; }
+.vj-srv-label { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
+/* El servicio en curso se marca con el borde, no con relleno: destaca sin gritar. */
+.vj-srv.is-now { border-color:var(--gold); }
+.vj-srv.is-now .vj-srv-num { color:var(--gold); }
+.vj-srv-dot   { color:var(--gold); font-size:7px; vertical-align:middle; }
+.vj-srv.active { border-color:var(--gold); background:var(--gold-light); }
+/* Discrepancia con el conteo de PGO: una nota al margen, no una alarma. */
+.vj-srv-dif { position:absolute; top:3px; right:5px; font-family:'Courier Prime',monospace;
+              font-size:8.5px; color:var(--coral); opacity:0.8; }
 .vj-stats::-webkit-scrollbar { display:none; }
 .vj-stat { flex:0 0 auto; min-width:74px; background:var(--bg-secondary); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:7px 12px 6px; text-align:center; cursor:pointer; transition:border-color .15s; -webkit-user-select:none; user-select:none; }
 .vj-stat-num { display:block; font-family:'Courier Prime','Courier New',monospace; font-size:19px; line-height:1.15; color:var(--text); }
@@ -7112,15 +7125,17 @@ function pgoBannerRender(){
   if (!VIAJEROS_DATA){ el.hidden = true; return; }   // sin datos no se anuncia
   const c = pgoBannerCounts();
   el.hidden = false;
+  // El servicio abre la línea: es el CONTEXTO de los números que siguen, no una
+  // etiqueta al final. Antes iba último y en chico, y se leía como un apéndice.
   el.innerHTML = `
+    ${c.srv ? `<span class="pgo-b-srv">${t('vjSrv' + c.srv.key)}${c.enCurso ? '' : ' ·'}</span>` : ''}
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen(null)">
       <span class="pgo-b-num">${c.viajeros}</span><span class="pgo-b-label">${t('vjStatViajeros')}</span></button>
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('ninos')">
       <span class="pgo-b-num ninos">${c.menores}</span><span class="pgo-b-label">${t('vjStatNinos')}</span><span class="pgo-b-tag">-18</span></button>
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('dietas')">
       <span class="pgo-b-num dietas">${c.dietas}</span><span class="pgo-b-label">${t('vjStatDietas')}</span></button>
-    ${c.srv ? `<span class="pgo-b-srv">${t('vjSrv' + c.srv.key)}${c.enCurso ? '' : ' ›'}</span>` : ''}
-    <span class="pgo-b-go">PGO ›</span>`;
+`;
 }
 // Cada contador entra a PGO ya filtrado por lo que muestra — el número deja de
 // ser un dato y pasa a ser la puerta a los nombres detrás de él.
@@ -7242,7 +7257,14 @@ function vjHasta(tr){ return vjInstante(tr.outAt || tr.out, (tr.out || '9999-12-
 
 // ¿Estuvo en el lodge durante [desde, hasta]? Solapamiento de intervalos.
 function vjPresenteEntre(tr, desde, hasta){
-  return vjDesde(tr) <= hasta && vjHasta(tr) >= desde;
+  const d = vjDesde(tr), h = vjHasta(tr);
+  // Cinturón y tirantes: si el dato viene invertido (salida antes que entrada),
+  // la hora es basura y se cae a las fechas. Pasó de verdad — una hab que se
+  // reocupa el mismo día mezclaba el outAt del saliente con el inAt del
+  // entrante. Se arregló en el script, pero acá no se confía a ciegas.
+  if (h < d) return (tr.in || '0000-01-01') <= hasta.slice(0,10) &&
+                    (tr.out || '9999-12-31') >= desde.slice(0,10);
+  return d <= hasta && h >= desde;
 }
 function vjPresenteAhora(tr, ahora){
   const t = ahora || vjAhoraIso();
@@ -7323,6 +7345,10 @@ function vjMatchesFilter(tr){
   if (f === 'ninos')    return vjIsNino(tr);
   if (f === 'alergias') return vjHasAlergia(tr);
   if (f === 'dietas')   return vjHasDieta(tr);
+  if (f && f.indexOf('srv:') === 0){
+    const srv = VJ_SERVICIOS.find(x => x.key === f.slice(4));
+    if (srv){ const [a,b] = vjVentana(srv); return vjPresenteEntre(tr, a, b); }
+  }
   if (f === 'salenhoy') return tr.out === vjTodayIso();
   return (tr.tags || []).indexOf(f) >= 0;
 }
@@ -7403,24 +7429,34 @@ function viajerosRender(){
   vjRenderStats(); vjRenderChips(); vjRenderBody();
 }
 
+// Cubiertos por servicio, no totales del día. El total ya está en el banner de
+// arriba, y repetirlo acá daba DOS números distintos en la misma pantalla (el
+// banner cuenta por presencia, esto contaba a todos) — peor que no tenerlo.
+// Tres celdas fijas de 1/3: entran sin scroll lateral en un iPhone.
 function vjRenderStats(){
   const el = document.getElementById('vj-stats');
   if (!el) return;
-  const all   = vjAll();
-  const today = vjTodayIso();
-  const stats = [
-    { f:null,       n:all.length,                                cls:'',         label:t('vjStatViajeros') },
-    { f:'ninos',    n:all.filter(vjIsNino).length,               cls:'ninos',    label:t('vjStatNinos') },
-    { f:'alergias', n:all.filter(vjHasAlergia).length,           cls:'alergias', label:t('vjStatAlergias') },
-    { f:'dietas',   n:all.filter(vjHasDieta).length,             cls:'dietas',   label:t('vjStatDietas') },
-    { f:'salenhoy', n:all.filter(tr => tr.out === today).length, cls:'salenhoy', label:t('vjStatSalenHoy') }
-  ];
-  el.innerHTML = stats.map(s => `
-    <div class="vj-stat ${s.cls} ${VIAJEROS_FILTER === s.f && s.f ? 'active' : ''}"
-         onclick="${s.f ? `vjSetFilter('${s.f}')` : 'vjSetFilter(null)'}">
-      <span class="vj-stat-num">${s.n}</span>
-      <span class="vj-stat-label">${s.label}</span>
-    </div>`).join('');
+  const all = vjAll();
+  const act = vjServicioActual();
+  const com = (VIAJEROS_DATA && VIAJEROS_DATA.comedor && VIAJEROS_DATA.comedor.totales) || null;
+  // Lo que PGO dice para el mismo servicio, como segunda opinión.
+  const dePgo = { desayuno: com && com.desayunos, almuerzo: com && com.almuerzos, cena: com && com.cena };
+  el.innerHTML = VJ_SERVICIOS.map(s => {
+    const [a, b] = vjVentana(s);
+    const n      = all.filter(tr => vjPresenteEntre(tr, a, b)).length;
+    const ref    = dePgo[s.key];
+    // Si difiere de PGO por más de 2, algo se perdió en el cruce: se marca sin
+    // gritar. El número que manda sigue siendo el de presencia.
+    const dif    = (typeof ref === 'number' && Math.abs(ref - n) > 2) ? ref : null;
+    const activo = act && act.srv.key === s.key;
+    return `
+      <button type="button" class="vj-srv${activo ? ' is-now' : ''}${VIAJEROS_FILTER === 'srv:' + s.key ? ' active' : ''}"
+              onclick="vjSetFilter('srv:${s.key}')">
+        <span class="vj-srv-num">${n}</span>
+        <span class="vj-srv-label">${t('vjSrv' + s.key)}${activo && act.enCurso ? ' <span class="vj-srv-dot">●</span>' : ''}</span>
+        ${dif !== null ? `<span class="vj-srv-dif" title="PGO: ${dif}">≠${dif}</span>` : ''}
+      </button>`;
+  }).join('');
 }
 
 function vjRenderChips(){
