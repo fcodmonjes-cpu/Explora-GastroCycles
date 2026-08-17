@@ -1740,6 +1740,72 @@ def pgo_probe_roster(page, date_str):
             print(f"[roster]   {c:26} {len(vals):>3} con dato · {[_mask_value(v)[:22] for v in vals[:3]]}")
 
 
+# Campos del roster por API. La reserva manda hab y fechas; la persona, sus
+# datos. Las observaciones NO salen de acá: medido el 2026-08-17, los campos de
+# dieta de la API traen 4-5 casos contra 9 del reporte HTML — migrarlas perdería
+# restricciones. Ver §4.2.
+PGO_ROSTER_QUERY = """query ($hotelId: Int!, $date: Date!) {
+  travellersInhouse(hotelId: $hotelId, date: $date) {
+    room checkin checkout
+    traveller { firstName lastName age nationality nationalityName group }
+  }
+}"""
+
+
+def pgo_fetch_roster(page, date_str):
+    """Roster de in-house por GraphQL → filas en el formato de SEED_ROWS.
+
+    Reemplaza al scraping del Reporte Geos. Verificado contra el HTML nombre por
+    nombre y habitación por habitación: 70/70 idénticos (§4.2).
+    """
+    res = pgo_graphql(page, PGO_ROSTER_QUERY, {"hotelId": PGO_HOTEL_ID, "date": date_str})
+    if res.get("errors"):
+        print(f"[roster] errores: {str(res['errors'])[:300]}")
+    filas = (res.get("data") or {}).get("travellersInhouse") or []
+    out = []
+    for f in filas:
+        hab_raw = str(f.get("room") or "")
+        digits = re.sub(r"\D", "", hab_raw)
+        hab = digits.zfill(2) if digits else hab_raw.strip()
+        ind  = _iso_dt(f.get("checkin"))[:10]
+        outd = _iso_dt(f.get("checkout"))[:10]
+        t = f.get("traveller")
+        for tr in (t if isinstance(t, list) else [t]):
+            if not isinstance(tr, dict):
+                continue
+            nombre = " ".join(str(tr.get(k) or "").strip()
+                              for k in ("firstName", "lastName")).strip()
+            if not nombre:
+                continue
+            out.append((hab, fix_mojibake(nombre), _to_int(tr.get("age")),
+                        str(tr.get("nationality") or "").strip().upper(),
+                        str(tr.get("group") or "").strip(), ind, outd, ""))
+    print(f"[sync-viajeros] roster (API): {len(out)} viajeros en {len({r[0] for r in out})} habitaciones")
+    return out
+
+
+def pgo_compara_roster(api_rows, html_rows):
+    """Compara las filas de las dos vías, campo por campo. Sólo diagnóstico."""
+    def key(r): return norm_key(r[1])
+    A = {key(r): r for r in api_rows}
+    H = {key(r): r for r in html_rows}
+    print(f"[cmp] API {len(api_rows)} filas · HTML {len(html_rows)} filas")
+    print(f"[cmp] sólo API: {len(set(A)-set(H))} · sólo HTML: {len(set(H)-set(A))}")
+    campos = ["hab", "nombre", "edad", "nac", "grupo", "in", "out"]
+    difs = {c: 0 for c in campos}
+    ejemplos = {}
+    for k in set(A) & set(H):
+        for i, c in enumerate(campos):
+            a, h = A[k][i], H[k][i]
+            if str(a).strip() != str(h).strip():
+                difs[c] += 1
+                ejemplos.setdefault(c, (str(a)[:24], str(h)[:24]))
+    for c in campos:
+        ej = f"  ej API={ejemplos[c][0]!r} HTML={ejemplos[c][1]!r}" if c in ejemplos else ""
+        print(f"[cmp]   {c:8} difieren en {difs[c]:>3} de {len(set(A)&set(H))}{ej}")
+    return difs
+
+
 def pgo_probe_dietas(page, date_str, dietas_rows=None):
     """¿Los campos de dieta de TravellerType vienen poblados?
 
@@ -1938,6 +2004,9 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
                 pgo_cruce_roster(page, date_str or datetime.date.today().isoformat(), _geos)
                 _diet = _pgo_read_report(page, PGO_DIETAS_PATH, _f)
                 pgo_probe_dietas(page, date_str or datetime.date.today().isoformat(), _diet)
+                _iso = date_str or datetime.date.today().isoformat()
+                pgo_compara_roster(pgo_fetch_roster(page, _iso),
+                                   parse_pgo(_geos, _diet, _iso))
             except Exception as e:
                 print(f"[cruce] no pude comparar contra el HTML: {type(e).__name__}: {e}")
 
