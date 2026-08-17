@@ -1350,25 +1350,34 @@ def pgo_probe_arrival(page, date_str):
     de hora del tipo y muestra sus valores para poder compararlos entre sí.
     Sólo horas, nunca ligadas a un nombre.
     """
-    q = """{ __type(name: "TypeTravellerIn") { fields { name type { name kind ofType { name } } } } }"""
+    for tipo, lista in (("TypeTravellerIn", "travellerIn"), ("TypeTravellerOut", "travellerOut")):
+        _probe_tipo(page, date_str, tipo, lista)
+
+
+def _probe_tipo(page, date_str, tipo, lista):
+    q = """{ __type(name: "%s") { fields { name type { name kind ofType { name } } } } }""" % tipo
     try:
         res = pgo_graphql(page, q)
         campos = [f["name"] for f in
                   (((res.get("data") or {}).get("__type") or {}).get("fields") or [])]
     except Exception as e:
-        print(f"[probe] no pude introspeccionar TypeTravellerIn: {e}")
+        print(f"[probe] no pude introspeccionar {tipo}: {e}")
         return
-    rx = re.compile(r"arriv|checkin|check_in|transport|flight|hour|hora|time|datetime|llegad|ingres", re.I)
+    if not campos:
+        print(f"[probe] {tipo}: sin campos (¿el tipo no existe?)")
+        return
+    print(f"\n[probe] ══ {tipo} ══")
+    rx = re.compile(r"arriv|depart|checkin|checkout|check_in|check_out|transport|flight|hour|hora|time|datetime|llegad|salid|ingres", re.I)
     cand = [c for c in campos if rx.search(c)]
-    print(f"[probe] TypeTravellerIn: {len(campos)} campos · {len(cand)} candidatos de llegada/hora")
+    print(f"[probe] {tipo}: {len(campos)} campos · {len(cand)} candidatos de hora")
     print(f"[probe] candidatos: {cand}")
     if not cand:
         return
     # Pedirlos todos juntos: si uno no es escalar, GraphQL lo dice y se descarta.
     sel = " ".join(cand)
     q2 = """query ($hotelId: ID!, $date: Date!) {
-              reportInOut(hotelId: $hotelId, date: $date) { travellerIn { room %s } }
-            }""" % sel
+              reportInOut(hotelId: $hotelId, date: $date) { %s { room %s } }
+            }""" % (lista, sel)
     try:
         res2 = pgo_graphql(page, q2, {"hotelId": str(PGO_HOTEL_ID), "date": date_str})
     except Exception as e:
@@ -1376,8 +1385,8 @@ def pgo_probe_arrival(page, date_str):
         return
     if res2.get("errors"):
         print(f"[probe] errores (campos no escalares se descartan): {str(res2['errors'])[:400]}")
-    filas = (((res2.get("data") or {}).get("reportInOut") or {}).get("travellerIn") or [])
-    print(f"[probe] {len(filas)} llegadas hoy. Valores por campo (sin habitación):")
+    filas = (((res2.get("data") or {}).get("reportInOut") or {}).get(lista) or [])
+    print(f"[probe] {len(filas)} filas en {lista}. Valores por campo (sin habitación):")
     for c in cand:
         vals = [str(r.get(c)) for r in filas if r.get(c) not in (None, "", "None")]
         if vals:
