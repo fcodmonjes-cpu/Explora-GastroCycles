@@ -1500,6 +1500,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    caja ni animación. Vuelve a mandar la ops-strip, que es lo que corresponde. */
 .pgo-banner { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 16px; margin:0 0 1.3rem; padding:0.5rem 0 0.7rem; border-bottom:0.5px solid var(--border); font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
 .pgo-banner[hidden] { display:none; }
+/* Qué servicio está midiendo el número. Sin él, '31 viajeros' es ambiguo:
+   no se sabe si es ahora, hoy o el almuerzo. Discreto — es una etiqueta. */
+.pgo-b-srv { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); opacity:0.75; }
 .pgo-b-item { display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap; background:none; border:0; padding:0; font-family:inherit; cursor:pointer; transition:opacity .15s; }
 .pgo-b-item:active { opacity:0.6; }
 .pgo-b-num { font-size:15px; color:var(--text); line-height:1; }
@@ -3622,6 +3625,20 @@ let VIAJEROS_HAB_OPEN      = null;   // hab abierta en el modal de detalle
 let VIAJEROS_NUMPAD_OPEN   = false;  // teclado numérico incorporado plegado/desplegado
 let VIAJEROS_SHOW_OUT      = false;  // salientes del día ocultos por defecto en las vistas por hab
 
+// ── Ventanas de servicio (para el conteo por hora) ──────────────────────────
+// Un viajero cuenta para un servicio si ESTABA EN EL LODGE mientras el servicio
+// ocurría — no si "está hoy". Con las horas reales de PGO (inAt/outAt, que son
+// checkin/checkout, no los vuelos) el conteo deja de descontar desde medianoche
+// a quien se va a las 16:00.
+// Horarios definidos por el owner (2026-08-16). El almuerzo se extiende a las
+// 15:00 porque en la práctica se estira, y la cena cierra 22:00 pero quien
+// llega justo a esa hora igual cena — por eso el borde se toma inclusivo.
+const VJ_SERVICIOS = [
+  { key:'desayuno', from:'06:00', to:'09:30' },
+  { key:'almuerzo', from:'12:30', to:'15:00' },   // 14:30 nominal, se estira a 15:00
+  { key:'cena',     from:'19:30', to:'22:00' }
+];
+
 // ── Clima de terraza (módulo wx) ────────────────────────────────────────────
 // El almuerzo se sirve en la terraza: lo que decide el montaje no es la
 // temperatura sino la RÁFAGA. Por eso el módulo no muestra un pronóstico
@@ -3832,6 +3849,7 @@ const UI = {
     vjNoResults:'Sin resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Borrar', vjClear:'Limpiar',
     // --- Clima de terraza (wx) ---
+    vjSrvdesayuno:'desayuno', vjSrvalmuerzo:'almuerzo', vjSrvcena:'cena',
     wxMasl:'m', wxWind:'viento', wxGusts:'ráfagas',
     wxTomorrow:'mañana', wxNoData:'sin datos de clima',
     vjTagMariscos:'Mariscos', vjTagGluten:'Gluten', vjTagLactosa:'Lactosa', vjTagSesamo:'Sésamo', vjTagPescado:'Pescado', vjTagAjo:'Ajo', vjTagFrutosSecos:'Frutos secos', vjTagFrutillas:'Frutillas', vjTagPina:'Piña', vjTagCilantro:'Cilantro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Trufa', vjTagChampinones:'Champiñones', vjTagPollo:'Pollo',
@@ -4023,6 +4041,7 @@ const UI = {
     vjNoResults:'No matches for this filter',
     vjNumpadToggle:'Number pad', vjDelete:'Delete', vjClear:'Clear',
     // --- Clima de terraza (wx) — EN/PT propuestos, pendientes de revisión ---
+    vjSrvdesayuno:'breakfast', vjSrvalmuerzo:'lunch', vjSrvcena:'dinner',
     wxMasl:'m', wxWind:'wind', wxGusts:'gusts',
     wxTomorrow:'tomorrow', wxNoData:'weather unavailable',
     vjTagMariscos:'Shellfish', vjTagGluten:'Gluten', vjTagLactosa:'Lactose', vjTagSesamo:'Sesame', vjTagPescado:'Fish', vjTagAjo:'Garlic', vjTagFrutosSecos:'Tree nuts', vjTagFrutillas:'Strawberries', vjTagPina:'Pineapple', vjTagCilantro:'Cilantro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Truffle', vjTagChampinones:'Mushrooms', vjTagPollo:'Chicken',
@@ -4214,6 +4233,7 @@ const UI = {
     vjNoResults:'Sem resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Apagar', vjClear:'Limpar',
     // --- Clima de terraça (wx) — EN/PT propostos, pendentes de revisão ---
+    vjSrvdesayuno:'café da manhã', vjSrvalmuerzo:'almoço', vjSrvcena:'jantar',
     wxMasl:'m', wxWind:'vento', wxGusts:'rajadas',
     wxTomorrow:'amanhã', wxNoData:'sem dados do tempo',
     vjTagMariscos:'Frutos do mar', vjTagGluten:'Glúten', vjTagLactosa:'Lactose', vjTagSesamo:'Gergelim', vjTagPescado:'Peixe', vjTagAjo:'Alho', vjTagFrutosSecos:'Oleaginosas', vjTagFrutillas:'Morangos', vjTagPina:'Abacaxi', vjTagCilantro:'Coentro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Trufa', vjTagChampinones:'Cogumelos', vjTagPollo:'Frango',
@@ -7070,11 +7090,21 @@ async function viajerosFetch(){
 // Resumen del día donde antes estaba el botón de Checklist. "Viajeros" son los
 // que van a estar en el servicio: total del reporte MENOS los que salen hoy —
 // misma regla con la que las vistas por hab esconden a los salientes.
+// El conteo se calcula EN EL CLIENTE contra el reloj de quien mira, no en el
+// script: un número escrito por el sync envejece hasta la corrida siguiente,
+// mientras que éste es exacto a las 15:04 y a las 15:05.
+// Antes se descontaba a todo el que salía hoy desde las 00:00 — alguien con
+// checkout 16:00 desaparecía del almuerzo aunque estuviera sentado ahí.
 function pgoBannerCounts(){
-  const all   = vjAll();
-  const queda = all.filter(tr => !vjSaleHoy(tr));
-  return { viajeros: queda.length, menores: queda.filter(vjIsNino).length,
-           dietas: queda.filter(vjHasDieta).length, alergias: queda.filter(vjHasAlergia).length };
+  const all = vjAll();
+  const act = vjServicioActual();
+  const srv = act && act.srv;
+  const dentro = srv
+    ? (() => { const [a,b] = vjVentana(srv); return all.filter(tr => vjPresenteEntre(tr, a, b)); })()
+    : all.filter(tr => vjPresenteAhora(tr));
+  return { viajeros: dentro.length, menores: dentro.filter(vjIsNino).length,
+           dietas: dentro.filter(vjHasDieta).length, alergias: dentro.filter(vjHasAlergia).length,
+           srv, enCurso: !!(act && act.enCurso) };
 }
 function pgoBannerRender(){
   const el = document.getElementById('pgo-banner');
@@ -7089,6 +7119,7 @@ function pgoBannerRender(){
       <span class="pgo-b-num ninos">${c.menores}</span><span class="pgo-b-label">${t('vjStatNinos')}</span><span class="pgo-b-tag">-18</span></button>
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('dietas')">
       <span class="pgo-b-num dietas">${c.dietas}</span><span class="pgo-b-label">${t('vjStatDietas')}</span></button>
+    ${c.srv ? `<span class="pgo-b-srv">${t('vjSrv' + c.srv.key)}${c.enCurso ? '' : ' ›'}</span>` : ''}
     <span class="pgo-b-go">PGO ›</span>`;
 }
 // Cada contador entra a PGO ya filtrado por lo que muestra — el número deja de
@@ -7193,6 +7224,55 @@ function vjFlag(nac){ return VJ_NAC[String(nac || '').trim().toUpperCase()] || '
 function vjFirstName(nombre){ return String(nombre || '').trim().split(/\s+/)[0] || ''; }
 function vjIsNino(tr){ return typeof tr.edad === 'number' && tr.edad <= VIAJEROS_NINO_MAX; }
 function vjSaleHoy(tr){ return tr.out === vjTodayIso(); }
+
+// ── Presencia real en el lodge ──────────────────────────────────────────────
+// PGO entrega inAt/outAt sólo para las habitaciones CON MOVIMIENTO del día. El
+// resto son estadías en curso: llegaron antes y se van después, así que están
+// todo el día. Por eso la ausencia de hora no significa "no está" sino "está
+// desde/hasta el borde del día" — tratarla como dato faltante haría desaparecer
+// a la mayoría de los viajeros del conteo.
+function vjInstante(iso, fallback){
+  if (!iso) return fallback;
+  return (iso.length > 10) ? iso : (iso + (fallback.slice(10) || 'T00:00'));
+}
+// Marca de entrada/salida como 'YYYY-MM-DDTHH:MM', con el borde del día cuando
+// no hay hora. Se compara como string: el formato ISO ordena lexicográficamente.
+function vjDesde(tr){ return vjInstante(tr.inAt  || tr.in,  (tr.in  || '0000-01-01') + 'T00:00'); }
+function vjHasta(tr){ return vjInstante(tr.outAt || tr.out, (tr.out || '9999-12-31') + 'T23:59'); }
+
+// ¿Estuvo en el lodge durante [desde, hasta]? Solapamiento de intervalos.
+function vjPresenteEntre(tr, desde, hasta){
+  return vjDesde(tr) <= hasta && vjHasta(tr) >= desde;
+}
+function vjPresenteAhora(tr, ahora){
+  const t = ahora || vjAhoraIso();
+  return vjPresenteEntre(tr, t, t);
+}
+function vjAhoraIso(){
+  const d = new Date();
+  return vjIsoLocal(d) + 'T' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+// Ventana de un servicio en una fecha dada → ['...T06:00', '...T09:30'].
+function vjVentana(srv, diaIso){
+  const d = diaIso || vjTodayIso();
+  return [d + 'T' + srv.from, d + 'T' + srv.to];
+}
+// El servicio en curso, o el próximo del día si estamos entre medio. Devuelve
+// null pasada la cena: ahí el conteo relevante vuelve a ser "quién está ahora".
+function vjServicioActual(ahora){
+  const t = ahora || vjAhoraIso();
+  const hhmm = t.slice(11);
+  for (const s of VJ_SERVICIOS){
+    if (hhmm <= s.to) return { srv:s, enCurso: hhmm >= s.from };
+  }
+  return null;
+}
+// Cuántos viajeros hay para un servicio (o ahora mismo si no se pasa ninguno).
+function vjCuentaServicio(list, srv, diaIso){
+  if (!srv) return (list || []).filter(tr => vjPresenteAhora(tr)).length;
+  const [a, b] = vjVentana(srv, diaIso);
+  return (list || []).filter(tr => vjPresenteEntre(tr, a, b)).length;
+}
 // Divide una hab en los que se quedan y los que salen hoy. Las vistas por hab
 // muestran solo `queda` salvo que el usuario pida ver los salientes.
 function vjSplitOut(list){
