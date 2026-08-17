@@ -1672,6 +1672,36 @@ def pgo_fetch_inout(page, date_str):
     return horas, tot
 
 
+def pgo_probe_roster(page, date_str):
+    """¿Puede la API reemplazar al scraping del Reporte Geos?
+
+    No basta con que exista una query: tiene que devolver EL MISMO roster. Esta
+    sonda busca las queries candidatas, muestra sus argumentos y campos, y pide
+    los datos para poder contrastarlos contra las filas del HTML.
+    """
+    # 1) qué queries hay que huelan a roster de in-house
+    q = """{ __schema { queryType { fields {
+              name
+              args { name type { name kind ofType { name kind } } }
+              type { name kind ofType { name kind } }
+            } } } }"""
+    try:
+        res = pgo_graphql(page, q)
+        fields = (((res.get("data") or {}).get("__schema") or {}).get("queryType") or {}).get("fields") or []
+    except Exception as e:
+        print(f"[roster] no pude introspeccionar el schema: {e}")
+        return
+    rx = re.compile(r"inhouse|in_house|traveller|guest|huesped|roster|reservation", re.I)
+    cand = [f for f in fields if rx.search(f["name"])]
+    print(f"[roster] {len(fields)} queries en el schema · {len(cand)} candidatas:")
+    for f in cand:
+        args = ", ".join(f"{a['name']}: {(a['type'].get('name') or (a['type'].get('ofType') or {}).get('name') or a['type'].get('kind'))}"
+                         for a in (f.get("args") or []))
+        t = f.get("type") or {}
+        tn = t.get("name") or (t.get("ofType") or {}).get("name") or t.get("kind")
+        print(f"[roster]   {f['name']}({args}) -> {tn}")
+
+
 def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
     """Abre sesión en PGO y perfila los reportes indicados. NO escribe nada."""
     _pgo_require()
@@ -1740,6 +1770,7 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
             muestras = sorted({v[k] for v in horas.values() for k in ("inAt", "outAt") if v.get(k)})[:6]
             print(f"[explore] formato de las marcas: {muestras}")
             pgo_probe_arrival(page, date_str or datetime.date.today().isoformat())
+            pgo_probe_roster(page, date_str or datetime.date.today().isoformat())
 
         for nombre, path in paths.items():
             if nombre == "inout":
