@@ -288,7 +288,7 @@ def fb_key(valor, fallback="SIN HAB"):
     return k or fallback
 
 
-def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None):
+def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None, cumples=None):
     habs = {}
     for i, (hab, nombre, edad, nac, grupo, in_d, out_d, obs) in enumerate(rows):
         hab_ok = fb_key(hab)
@@ -327,6 +327,9 @@ def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None):
         if h.get("outAt"):
             traveler["outAt"]  = h["outAt"]
             traveler["outSrc"] = h.get("outSrc", "")
+        cum = (cumples or {}).get(norm_key(nombre))
+        if cum:
+            traveler["cumple"] = cum      # 'DD-MM', sin año: la app compara el día
         for k in ("inFlightAt", "inFlight", "outFlightAt", "outFlight"):
             if h.get(k):
                 traveler[k] = h[k]
@@ -1455,6 +1458,33 @@ def fix_mojibake(s):
         return t
 
 
+PGO_CUMPLE_COLS = {
+    "nombre viajero": "nombre", "nombre": "nombre", "viajero": "nombre",
+    "cumpleanos": "cumple", "cumpleaños": "cumple", "fecha": "cumple",
+    "habitacion": "hab", "habitación": "hab",
+    "n confirmacion": "conf", "n confirmación": "conf",
+}
+
+
+def parse_birthday(rows):
+    """Reporte de cumpleaños → {nombre_normalizado: 'DD-MM'}.
+
+    El cruce va por NOMBRE y no por habitación: el reporte trae el mes entero
+    (gente que ya se fue o todavía no llega) y una de cada cinco filas viene
+    sin habitación. Con el mojibake ya reparado en _pgo_read_report, los
+    nombres de los dos reportes normalizan igual.
+    """
+    out = {}
+    for raw in rows:
+        r = _remap(raw, PGO_CUMPLE_COLS)
+        nombre = (r.get("nombre") or "").strip()
+        m = re.search(r"(\d{1,2})[-/](\d{1,2})", str(r.get("cumple") or ""))
+        if not nombre or not m:
+            continue
+        out[norm_key(nombre)] = f"{int(m.group(1)):02d}-{int(m.group(2)):02d}"
+    return out
+
+
 def parse_comedor(rows):
     """Filas del reporte → grupos + totales por servicio."""
     grupos, tot = [], {"dt": 0, "dr": 0, "almuerzos": 0, "cena": 0, "n": 0}
@@ -1812,13 +1842,22 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         except Exception as e:
             print(f"[sync-viajeros] Aviso: sin reporte de comedor ({type(e).__name__}: {e})")
             comedor = None
+        # Cumpleaños del mes. Que falle no debe tumbar el sync.
+        try:
+            cumples = parse_birthday(_pgo_read_report(
+                page, PGO_BIRTHDAY_PATH, fecha, "cumples" if dump else None,
+                kind="birthday", date_iso=fecha_iso))
+            print(f"[sync-viajeros] cumpleaños del mes: {len(cumples)}")
+        except Exception as e:
+            print(f"[sync-viajeros] Aviso: sin reporte de cumpleaños ({type(e).__name__}: {e})")
+            cumples = {}
         browser.close()
 
     if trace_net and api_calls:
         print("[sync-viajeros] Llamadas XHR/fetch detectadas (candidatas a API directa):")
         for c in dict.fromkeys(api_calls):
             print("   ", c)
-    return geos, dietas, (fecha_iso or datetime.date.today().isoformat()), horas, totales, comedor
+    return geos, dietas, (fecha_iso or datetime.date.today().isoformat()), horas, totales, comedor, cumples
 
 
 # Mapeo encabezado de PGO (ya normalizado) → campo interno. Varios alias por si
@@ -1989,14 +2028,14 @@ def main():
         date_str = _arg_value("--date")   # None = usar el día que PGO ya muestra
         print("[sync-viajeros] PGO — login y lectura de reportes "
               f"({date_str or 'fecha por defecto de PGO'})...")
-        geos, dietas, date_str, horas, totales, comedor = pgo_fetch(
+        geos, dietas, date_str, horas, totales, comedor, cumples = pgo_fetch(
             date_str,
             dump="--dump-html" in sys.argv,
             trace_net="--trace-net" in sys.argv)
         print(f"[sync-viajeros] Fecha efectiva del reporte: {date_str}")
         rows = parse_pgo(geos, dietas, date_str)
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
-        doc = build_doc(rows, date_str, "pgo", horas, totales, comedor)
+        doc = build_doc(rows, date_str, "pgo", horas, totales, comedor, cumples)
     else:
         doc = build_doc(SEED_ROWS, REPORT_DATE, "seed")
 

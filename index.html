@@ -1867,6 +1867,11 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-srv-dot   { color:var(--gold); font-size:7px; vertical-align:middle; }
 .vj-srv.active { border-color:var(--gold); background:var(--gold-light); }
 /* Discrepancia con el conteo de PGO: una nota al margen, no una alarma. */
+.vj-cumple { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px;
+             letter-spacing:0.06em; padding:2px 7px; border-radius:999px; margin-right:5px;
+             color:var(--gold); border:0.5px solid rgba(186,117,23,0.45); }
+/* El de HOY se rellena: es el único que exige una acción esta noche. */
+.vj-cumple.hoy { background:var(--gold-light); border-color:var(--gold); color:var(--gold); }
 .vj-srv-dif { position:absolute; top:3px; right:5px; font-family:'Courier Prime',monospace;
               font-size:8.5px; color:var(--coral); opacity:0.8; }
 .vj-stats::-webkit-scrollbar { display:none; }
@@ -3862,6 +3867,7 @@ const UI = {
     vjNoResults:'Sin resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Borrar', vjClear:'Limpiar',
     // --- Clima de terraza (wx) ---
+    vjCumpleHoy:'cumple hoy', vjCumpleEn:'cumple en {n}d',
     vjSrvdesayuno:'desayuno', vjSrvalmuerzo:'almuerzo', vjSrvcena:'cena',
     wxMasl:'m', wxWind:'viento', wxGusts:'ráfagas',
     wxTomorrow:'mañana', wxNoData:'sin datos de clima',
@@ -4054,6 +4060,7 @@ const UI = {
     vjNoResults:'No matches for this filter',
     vjNumpadToggle:'Number pad', vjDelete:'Delete', vjClear:'Clear',
     // --- Clima de terraza (wx) — EN/PT propuestos, pendientes de revisión ---
+    vjCumpleHoy:'birthday today', vjCumpleEn:'birthday in {n}d',
     vjSrvdesayuno:'breakfast', vjSrvalmuerzo:'lunch', vjSrvcena:'dinner',
     wxMasl:'m', wxWind:'wind', wxGusts:'gusts',
     wxTomorrow:'tomorrow', wxNoData:'weather unavailable',
@@ -4246,6 +4253,7 @@ const UI = {
     vjNoResults:'Sem resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Apagar', vjClear:'Limpar',
     // --- Clima de terraça (wx) — EN/PT propostos, pendentes de revisão ---
+    vjCumpleHoy:'aniversário hoje', vjCumpleEn:'aniversário em {n}d',
     vjSrvdesayuno:'café da manhã', vjSrvalmuerzo:'almoço', vjSrvcena:'jantar',
     wxMasl:'m', wxWind:'vento', wxGusts:'rajadas',
     wxTomorrow:'amanhã', wxNoData:'sem dados do tempo',
@@ -7237,6 +7245,19 @@ function vjAvatarEl(tr, extra){
 }
 function vjFlag(nac){ return VJ_NAC[String(nac || '').trim().toUpperCase()] || ''; }
 function vjFirstName(nombre){ return String(nombre || '').trim().split(/\s+/)[0] || ''; }
+// Cumpleaños: PGO da 'DD-MM' sin año, así que se compara sólo día y mes.
+// Devuelve 0 si es hoy, N si faltan N días (hasta 3), o null.
+function vjCumpleEn(tr){
+  if (!tr.cumple) return null;
+  const hoy = vjTodayIso();
+  for (let d = 0; d <= 3; d++){
+    const f = new Date(hoy + 'T12:00');
+    f.setDate(f.getDate() + d);
+    const dd = String(f.getDate()).padStart(2,'0') + '-' + String(f.getMonth()+1).padStart(2,'0');
+    if (dd === tr.cumple) return d;
+  }
+  return null;
+}
 function vjIsNino(tr){ return typeof tr.edad === 'number' && tr.edad <= VIAJEROS_NINO_MAX; }
 function vjSaleHoy(tr){ return tr.out === vjTodayIso(); }
 
@@ -7472,6 +7493,15 @@ function vjRenderChips(){
             onclick="vjSetFilter('${tag}')">${vjEsc(vjTagLabel(tag))}<span class="vj-chip-n">${counts[tag]}</span></button>`).join('');
 }
 
+// El cumpleaños del día se anuncia; los de los próximos 3 días se insinúan.
+// Un cumpleaños que se pasa por alto es de las pocas cosas que el huésped nota.
+function vjCumpleChip(tr){
+  const d = vjCumpleEn(tr);
+  if (d === null) return '';
+  return d === 0
+    ? `<span class="vj-cumple hoy">${t('vjCumpleHoy')}</span>`
+    : `<span class="vj-cumple">${t('vjCumpleEn').replace('{n}', d)}</span>`;
+}
 function vjOutChip(tr){
   if (tr.out === vjTodayIso())    return `<span class="vj-out-chip">${t('vjSaleHoy')}</span>`;
   if (tr.out === vjTomorrowIso()) return `<span class="vj-out-chip">${t('vjSaleManana')}</span>`;
@@ -7553,7 +7583,7 @@ function vjRenderPersonas(){
       ${vjFlag(tr.nac) ? `<span class="vj-person-flag">${vjFlag(tr.nac)}</span>` : vjAvatarEl(tr)}
       <div class="vj-person-main">
         <div class="vj-person-name">${vjEsc(tr.nombre)}<span class="vj-age">${tr.edad ?? ''}</span>${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
-        <div class="vj-person-tags">${vjTagChips(tr)}${vjOutChip(tr)}</div>
+        <div class="vj-person-tags">${vjCumpleChip(tr)}${vjTagChips(tr)}${vjOutChip(tr)}</div>
       </div>
       <span class="vj-person-hab">${t('vjHab')} ${vjEsc(tr.hab)}</span>
     </div>`).join('');
