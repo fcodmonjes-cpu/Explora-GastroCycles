@@ -1701,6 +1701,44 @@ def pgo_probe_roster(page, date_str):
         tn = t.get("name") or (t.get("ofType") or {}).get("name") or t.get("kind")
         print(f"[roster]   {f['name']}({args}) -> {tn}")
 
+    # 2) los campos de ReservationType, que es lo que devuelve travellersInhouse
+    q2 = """{ __type(name: "ReservationType") { fields { name
+              type { name kind ofType { name kind } } } } }"""
+    try:
+        r2 = pgo_graphql(page, q2)
+        campos = (((r2.get("data") or {}).get("__type") or {}).get("fields") or [])
+    except Exception as e:
+        print(f"[roster] no pude leer ReservationType: {e}")
+        return
+    escalares, objetos = [], []
+    for c in campos:
+        t = c["type"]; kind = t.get("kind"); nom = t.get("name") or (t.get("ofType") or {}).get("name")
+        k2 = (t.get("ofType") or {}).get("kind") or kind
+        (objetos if k2 in ("OBJECT", "LIST") or (nom or "").endswith("Type") else escalares).append(c["name"])
+    print(f"[roster] ReservationType: {len(campos)} campos · {len(escalares)} escalares")
+    print(f"[roster]   escalares: {escalares}")
+    print(f"[roster]   anidados : {objetos}")
+
+    # 3) pedir el roster real y contar, para contrastarlo con el HTML
+    rx_util = re.compile(r"room|habit|name|nombre|age|edad|nationality|nac|group|grupo|checkin|checkout|status|confirmation|pax|guest|diet|obs|comment", re.I)
+    sel = [c for c in escalares if rx_util.search(c)] or escalares[:20]
+    q3 = """query ($hotelId: Int!, $date: Date!) {
+              travellersInhouse(hotelId: $hotelId, date: $date) { %s }
+            }""" % " ".join(sel)
+    try:
+        r3 = pgo_graphql(page, q3, {"hotelId": PGO_HOTEL_ID, "date": date_str})
+    except Exception as e:
+        print(f"[roster] la query falló: {e}")
+        return
+    if r3.get("errors"):
+        print(f"[roster] errores: {str(r3['errors'])[:400]}")
+    filas = (r3.get("data") or {}).get("travellersInhouse") or []
+    print(f"[roster] travellersInhouse devolvió {len(filas)} filas (campos pedidos: {sel})")
+    for c in sel:
+        vals = [str(f.get(c)) for f in filas if f.get(c) not in (None, "", "None")]
+        if vals:
+            print(f"[roster]   {c:26} {len(vals):>3} con dato · {[_mask_value(v)[:22] for v in vals[:3]]}")
+
 
 def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
     """Abre sesión en PGO y perfila los reportes indicados. NO escribe nada."""
