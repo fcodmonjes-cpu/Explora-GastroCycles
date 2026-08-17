@@ -1322,7 +1322,7 @@ def pgo_resolve_hotel(page):
 _INOUT_FIELDS = """
   room checkin checkout guestCount confirmationNumber
   arrivalTransportDatetime departureTransportDatetime
-  arrivalTransport departureTransport
+  arrivalTransport departureTransportCarrier departureTransportId
   arrivalStatus departureStatus
 """
 
@@ -1451,7 +1451,12 @@ def pgo_fetch_inout(page, date_str):
                 vuelo = _iso_dt(r.get("departureTransportDatetime"))
                 if vuelo:
                     e["outFlightAt"] = vuelo
-                    e["outFlight"]   = str(r.get("departureTransport") or "").strip()
+                    # No existe un "departureTransport" armado como el de
+                    # llegada: se compone de carrier + id ("LA" + "147").
+                    car = str(r.get("departureTransportCarrier") or "").strip()
+                    num = str(r.get("departureTransportId") or "").strip()
+                    e["outFlight"] = (f"{car} {num}".strip()
+                                      if car and num and car != num else car or num)
     print(f"[sync-viajeros] reportInOut: {tot} · {len(horas)} habitaciones con movimiento")
     return horas, tot
 
