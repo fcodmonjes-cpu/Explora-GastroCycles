@@ -318,6 +318,9 @@ def build_doc(rows, date_str, source, horas=None, totales=None):
         if h.get("outAt"):
             traveler["outAt"]  = h["outAt"]
             traveler["outSrc"] = h.get("outSrc", "")
+        for k in ("inFlightAt", "inFlight", "outFlightAt", "outFlight"):
+            if h.get(k):
+                traveler[k] = h[k]
         habs.setdefault(hab, []).append(traveler)
     doc_extra = {}
     if totales:
@@ -1319,6 +1322,7 @@ def pgo_resolve_hotel(page):
 _INOUT_FIELDS = """
   room checkin checkout guestCount confirmationNumber
   arrivalTransportDatetime departureTransportDatetime
+  arrivalTransport departureTransport
   arrivalStatus departureStatus
 """
 
@@ -1429,15 +1433,25 @@ def pgo_fetch_inout(page, date_str):
             if not hab:
                 continue
             e = horas.setdefault(hab, {})
+            # checkin/checkout son las horas en el LODGE; los *TransportDatetime
+            # son los VUELOS en Calama (verificado con la sonda: LA 144 aterriza
+            # 07:07 y el checkin es 09:55; un checkout de 08:00 vuela 11:11).
+            # Contar por el vuelo sumaría gente que va en la ruta y descontaría
+            # a quien todavía está desayunando acá.
             if clave == "in":
-                # Transporte primero; si no hay, el checkin administrativo.
-                e["inAt"] = (_iso_dt(r.get("arrivalTransportDatetime"))
-                             or _iso_dt(r.get("checkin")))
-                e["inSrc"] = "transporte" if _iso_dt(r.get("arrivalTransportDatetime")) else "checkin"
+                e["inAt"]  = _iso_dt(r.get("checkin"))
+                e["inSrc"] = "checkin"
+                vuelo = _iso_dt(r.get("arrivalTransportDatetime"))
+                if vuelo:
+                    e["inFlightAt"] = vuelo          # informativo: "viene volando"
+                    e["inFlight"]   = str(r.get("arrivalTransport") or "").strip()
             else:
-                e["outAt"] = (_iso_dt(r.get("departureTransportDatetime"))
-                              or _iso_dt(r.get("checkout")))
-                e["outSrc"] = "transporte" if _iso_dt(r.get("departureTransportDatetime")) else "checkout"
+                e["outAt"]  = _iso_dt(r.get("checkout"))
+                e["outSrc"] = "checkout"
+                vuelo = _iso_dt(r.get("departureTransportDatetime"))
+                if vuelo:
+                    e["outFlightAt"] = vuelo
+                    e["outFlight"]   = str(r.get("departureTransport") or "").strip()
     print(f"[sync-viajeros] reportInOut: {tot} · {len(horas)} habitaciones con movimiento")
     return horas, tot
 
