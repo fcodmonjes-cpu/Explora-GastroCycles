@@ -7582,11 +7582,27 @@ function vjRenderStats(){
   }).join('');
 }
 
+// La base sobre la que se cuenta TODO en la vista: el servicio filtrado si hay
+// uno, si no el servicio en curso, y fuera de horario los presentes ahora.
+// Es la misma que usa el banner — sin esto, los chips contaban a todos los del
+// día y mostraban restricciones de gente que ya se había ido.
+function vjBaseServicio(){
+  const f = VIAJEROS_FILTER;
+  let srv = null;
+  if (f && f.indexOf('srv:') === 0) srv = VJ_SERVICIOS.find(x => x.key === f.slice(4));
+  if (!srv){ const act = vjServicioActual(); srv = act && act.srv; }
+  if (!srv) return vjAll().filter(tr => vjPresenteAhora(tr));
+  const [a, b] = vjVentana(srv);
+  return vjAll().filter(tr => vjPresenteEntre(tr, a, b));
+}
 function vjRenderChips(){
   const el = document.getElementById('vj-chips');
   if (!el) return;
   const counts = {};
-  vjAll().forEach(tr => (tr.tags || []).forEach(tag => { counts[tag] = (counts[tag] || 0) + 1; }));
+  // Los chips NO se filtran a sí mismos: al tocar "sin lactosa" la lista se
+  // reduce, pero los chips siguen contando sobre el servicio completo — si no,
+  // quedaría uno solo en pantalla y se perdería el panorama.
+  vjBaseServicio().forEach(tr => (tr.tags || []).forEach(tag => { counts[tag] = (counts[tag] || 0) + 1; }));
   const rank = { alergia:0, dieta:1, cond:2 };
   const tags = Object.keys(counts).sort((a,b) =>
     (rank[vjTagCls(a)] ?? 3) - (rank[vjTagCls(b)] ?? 3) || counts[b] - counts[a] || a.localeCompare(b));
