@@ -1740,6 +1740,53 @@ def pgo_probe_roster(page, date_str):
             print(f"[roster]   {c:26} {len(vals):>3} con dato · {[_mask_value(v)[:22] for v in vals[:3]]}")
 
 
+def pgo_probe_dietas(page, date_str, dietas_rows=None):
+    """¿Los campos de dieta de TravellerType vienen poblados?
+
+    Hoy las restricciones salen de parsear texto libre del reporte de Dietas con
+    regex. Si estos campos traen el dato ESTRUCTURADO por persona, se deja de
+    adivinar. Perfila cobertura y forma; el contenido va enmascarado salvo los
+    booleanos y los códigos cortos, que es lo que define si sirven.
+    """
+    CAMPOS = ["hasFoodReq", "dietReq", "dietReqObs", "foodRestrictions",
+              "hasMedicalReq", "healthCondition", "otherMedicalConditions",
+              "medReqObs", "observation", "allConditionsHtml"]
+    q = """query ($hotelId: Int!, $date: Date!) {
+             travellersInhouse(hotelId: $hotelId, date: $date) {
+               room traveller { firstName %s }
+             }
+           }""" % " ".join(CAMPOS)
+    try:
+        r = pgo_graphql(page, q, {"hotelId": PGO_HOTEL_ID, "date": date_str})
+    except Exception as e:
+        print(f"[dietas] la query falló: {e}"); return
+    if r.get("errors"):
+        print(f"[dietas] errores: {str(r['errors'])[:400]}")
+    filas = (r.get("data") or {}).get("travellersInhouse") or []
+    pers = []
+    for f in filas:
+        t = f.get("traveller")
+        for tr in (t if isinstance(t, list) else [t]):
+            if isinstance(tr, dict): pers.append(tr)
+    print(f"[dietas] ══ {len(pers)} personas ══")
+    for c in CAMPOS:
+        vals = [tr.get(c) for tr in pers if tr.get(c) not in (None, "", "None", False, [], "[]")]
+        if not vals:
+            print(f"[dietas]   {c:24}   0 con dato"); continue
+        # booleanos y códigos cortos se muestran tal cual; el texto libre se enmascara
+        def _v(x):
+            xs = str(x)
+            return xs if (isinstance(x, bool) or len(xs) <= 14) else _mask_value(xs)[:44]
+        largos = [len(str(x)) for x in vals]
+        print(f"[dietas]   {c:24} {len(vals):>3} con dato · len max {max(largos):>4} · {[_v(x) for x in vals[:3]]}")
+    # ¿coincide con lo que hoy leemos del reporte de Dietas?
+    if dietas_rows is not None:
+        print(f"[dietas] el reporte HTML de Dietas trae {len(dietas_rows)} filas hoy")
+        con = sum(1 for tr in pers if tr.get("hasFoodReq") or tr.get("dietReq")
+                  or tr.get("foodRestrictions") or tr.get("dietReqObs"))
+        print(f"[dietas] la API marca con requerimiento alimentario: {con} personas")
+
+
 def pgo_cruce_roster(page, date_str, geos_rows):
     """Cruza el roster de la API contra el del HTML, NOMBRE POR NOMBRE.
 
@@ -1889,6 +1936,8 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
                 _f = datetime.date.fromisoformat(date_str).strftime(PGO_DATE_FMT) if date_str else None
                 _geos = _pgo_read_report(page, PGO_GEOS_PATH, _f)
                 pgo_cruce_roster(page, date_str or datetime.date.today().isoformat(), _geos)
+                _diet = _pgo_read_report(page, PGO_DIETAS_PATH, _f)
+                pgo_probe_dietas(page, date_str or datetime.date.today().isoformat(), _diet)
             except Exception as e:
                 print(f"[cruce] no pude comparar contra el HTML: {type(e).__name__}: {e}")
 
