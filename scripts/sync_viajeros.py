@@ -1322,9 +1322,19 @@ def pgo_resolve_hotel(page):
 _INOUT_FIELDS = """
   room checkin checkout guestCount confirmationNumber
   arrivalTransportDatetime departureTransportDatetime
-  arrivalTransport departureTransportCarrier departureTransportId
+  arrivalTransportCarrier arrivalTransportId
+  departureTransportCarrier departureTransportId
   arrivalStatus departureStatus
 """
+
+
+def _vuelo(carrier, num):
+    """'LA' + '147' -> 'LA 147'. En transporte terrestre PGO repite el mismo
+    código en los dos campos (TUYU/TUYU), y ahí se colapsa a uno solo."""
+    c, n = str(carrier or "").strip(), str(num or "").strip()
+    if c and n and c != n:
+        return f"{c} {n}"
+    return c or n
 
 
 def _iso_dt(v):
@@ -1444,19 +1454,16 @@ def pgo_fetch_inout(page, date_str):
                 vuelo = _iso_dt(r.get("arrivalTransportDatetime"))
                 if vuelo:
                     e["inFlightAt"] = vuelo          # informativo: "viene volando"
-                    e["inFlight"]   = str(r.get("arrivalTransport") or "").strip()
+                    e["inFlight"] = _vuelo(r.get("arrivalTransportCarrier"),
+                                           r.get("arrivalTransportId"))
             else:
                 e["outAt"]  = _iso_dt(r.get("checkout"))
                 e["outSrc"] = "checkout"
                 vuelo = _iso_dt(r.get("departureTransportDatetime"))
                 if vuelo:
                     e["outFlightAt"] = vuelo
-                    # No existe un "departureTransport" armado como el de
-                    # llegada: se compone de carrier + id ("LA" + "147").
-                    car = str(r.get("departureTransportCarrier") or "").strip()
-                    num = str(r.get("departureTransportId") or "").strip()
-                    e["outFlight"] = (f"{car} {num}".strip()
-                                      if car and num and car != num else car or num)
+                    e["outFlight"] = _vuelo(r.get("departureTransportCarrier"),
+                                            r.get("departureTransportId"))
     print(f"[sync-viajeros] reportInOut: {tot} · {len(horas)} habitaciones con movimiento")
     return horas, tot
 
