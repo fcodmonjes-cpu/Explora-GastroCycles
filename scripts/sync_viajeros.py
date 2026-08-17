@@ -203,6 +203,27 @@ FOOD_TOPICS = [
     (r"TRUFA|TRUFFLE|TARTUFO",               "trufa"),
     (r"CHAMPI|HONGO|SETA\b|MUSHROOM|COGUMELO|FUNGH", "champinones"),
     (r"\bPOLLO\b|CHICKEN|\bFRANGO\b",        "pollo"),
+    # --- ampliación 2026-08-17, auditoría contra el reporte real de PGO ---
+    # Pistacho y castaña de cajú entran al paraguas "frutos secos" por la misma
+    # razón que camarón entra en mariscos: la pregunta del salón es del grupo;
+    # el detalle exacto queda en obs, que se muestra completo.
+    (r"PISTACH|CAJU|CASHEW|CASTANHA|CASTANA|ANACARDO|AVELLANA|HAZELNUT|PECAN|MACADAMIA", "frutos-secos"),
+    (r"\bKIWI\b",                            "kiwi"),
+    (r"TOMATE|TOMATO",                       "tomate"),
+    (r"\bHUEVO\b|\bEGGS?\b|\bOVO\b",         "huevo"),
+    (r"\bSOJA\b|\bSOYA\b|\bSOY\b",           "soja"),
+    (r"\bCAFE\b|COFFEE",                     "cafe"),
+    (r"PICANTE|\bAJI\b|SPICY|CHILI",         "picante"),
+    (r"ALCOHOL|\bALCOOL\b",                  "alcohol"),
+    (r"\bCEBOLLA\b|\bONION\b|\bCEBOLA\b",    "cebolla"),
+    (r"PALTA|AGUACATE|AVOCADO",              "palta"),
+    (r"\bMIEL\b|\bHONEY\b",                  "miel"),
+    (r"\bAPIO\b|CELERY",                     "apio"),
+    (r"MOSTAZA|MUSTARD",                     "mostaza"),
+    (r"CITRIC|\bLIMON\b|NARANJA",            "citricos"),
+    (r"\bMANGO\b",                           "mango"),
+    (r"\bCEREZA\b|CHERRY",                   "cereza"),
+    (r"\bMELON\b|\bSANDIA\b",                "melon"),
 ]
 
 # Temas que siempre son dieta (preferencia) o condición, sin importar el modo.
@@ -221,7 +242,10 @@ COND_TOPICS = [
     (r"EMBARAZ|PREGNAN",                     "embarazada"),
 ]
 
-ALLERGY_MODE = re.compile(r"ALERG|ALLERG|CELIAC|INTOLERAN")
+# ALEG(IA) sin R y ALERJ con J son erratas reales del reporte de PGO. Sin
+# contemplarlas, "ALEGIA PISTACHOS" se clasificaba como preferencia y no como
+# ALERGIA — el chip salía ámbar en vez de rojo.
+ALLERGY_MODE = re.compile(r"ALERG|ALEG[IU]|ALERJ|ALLERG|ALLERY|CELIAC|INTOLERAN|ANAFILA")
 # Guard de negación: "I am not allergic to Gluten" NO es una alergia — sin esto
 # el ALLERGY_MODE lo marcaría en rojo. La observación completa manda en el obs.
 NEG_ALLERGY  = re.compile(r"NO ALERG|NOT ALLERGIC|NO SOY ALERG")
@@ -237,6 +261,19 @@ AVOID_MARK   = re.compile(r"\bNO\b|LIBRE|\bSIN\b|EVITA|ALERG|INTOLER|CELIAC")
 def _fold(s):
     """Mayúsculas sin tildes — 'Alergia al ajo' → 'ALERGIA AL AJO'."""
     return unicodedata.normalize("NFD", str(s)).encode("ascii", "ignore").decode().upper()
+
+
+# Etiquetas del propio reporte, no contenido. Si sacándolas no queda nada, la
+# observación estaba vacía; si queda texto, ese texto DICE algo.
+_OBS_ETIQUETAS = re.compile(
+    r"OBSERVACIONES?|REQUERIMIENTOS? ALIMENTARIOS?|ALERGIAS?|COMENTARIOS?|"
+    r"SIN RESTRICCIONES? ALIMENTICIAS?|SIN RESTRICCIONES?|NINGUNA|NINGUNO|N/?A", re.I)
+
+
+def obs_significativa(obs):
+    """¿La observación dice algo, más allá de sus propias etiquetas?"""
+    t = _OBS_ETIQUETAS.sub(" ", _fold(obs))
+    return len(re.sub(r"[^A-Z0-9]", "", t)) >= 3
 
 
 def obs_to_tags(obs):
@@ -305,6 +342,12 @@ def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None, cu
             "out":    out_d,
             "tags":   obs_to_tags(obs),
             "obs":    obs.strip(),
+            # revisar = la observación DICE algo que el script no supo mapear.
+            # Es la red de seguridad: ampliar la taxonomía nunca va a alcanzar
+            # (siempre aparece un alimento nuevo), pero esto garantiza que nada
+            # se pierda EN SILENCIO. La app lo muestra en ámbar en vez de
+            # pintar un tranquilizador "sin restricciones".
+            **({"revisar": True} if (obs_significativa(obs) and not obs_to_tags(obs)) else {}),
             # "foto": <url> — hook para la cédula futura; ausente = avatar iniciales
         }
         # Horas REALES de movimiento (GraphQL reportInOut), por habitación: la

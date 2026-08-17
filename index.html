@@ -1875,6 +1875,10 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 /* La tarjeta del cumpleañero: borde ámbar y un halo apenas perceptible. No es
    un color nuevo — es el gold de la casa, usado con más presencia por una vez. */
 .vj-person.is-cumple { border-color:var(--gold); background:linear-gradient(180deg, var(--gold-light), transparent 70%); box-shadow:0 0 0 1px rgba(186,117,23,0.25), 0 2px 14px rgba(186,117,23,0.16); }
+/* REVISAR: la observación dice algo que el script no supo clasificar. Coral,
+   el mismo de las alertas de ráfaga — pide atención sin fingir un diagnóstico
+   que no tenemos. Nunca se muestra junto a "sin restricciones". */
+.vj-tag.revisar { color:var(--coral); border-color:rgba(216,90,48,0.5); background:var(--coral-light); }
 .vj-cumple { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px;
              letter-spacing:0.06em; padding:2px 7px; border-radius:999px; margin-right:5px;
              color:var(--gold); border:0.5px solid rgba(186,117,23,0.45); }
@@ -3871,6 +3875,7 @@ const UI = {
     vjHab:'Hab', vjYears:'años', vjNino:'menor', vjNinoPl:'menores',
     vjSaleHoy:'sale hoy', vjSaleManana:'sale mañana', vjLlegaHoy:'llegó hoy',
     vjVerSalientes:'ver salientes', vjOcultarSalientes:'ocultar salientes',
+    vjRevisar:'revisar observación',
     vjSinRestriccion:'Sin restricciones',
     vjNoResults:'Sin resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Borrar', vjClear:'Limpiar',
@@ -4065,6 +4070,7 @@ const UI = {
     vjHab:'Room', vjYears:'yrs', vjNino:'minor', vjNinoPl:'minors',
     vjSaleHoy:'leaves today', vjSaleManana:'leaves tomorrow', vjLlegaHoy:'arrived today',
     vjVerSalientes:'show departures', vjOcultarSalientes:'hide departures',
+    vjRevisar:'check note',
     vjSinRestriccion:'No restrictions',
     vjNoResults:'No matches for this filter',
     vjNumpadToggle:'Number pad', vjDelete:'Delete', vjClear:'Clear',
@@ -4259,6 +4265,7 @@ const UI = {
     vjHab:'Quarto', vjYears:'anos', vjNino:'menor', vjNinoPl:'menores',
     vjSaleHoy:'sai hoje', vjSaleManana:'sai amanhã', vjLlegaHoy:'chegou hoje',
     vjVerSalientes:'ver saídas', vjOcultarSalientes:'ocultar saídas',
+    vjRevisar:'verificar observação',
     vjSinRestriccion:'Sem restrições',
     vjNoResults:'Sem resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Apagar', vjClear:'Limpar',
@@ -7410,6 +7417,7 @@ function vjMatchesFilter(tr){
     const srv = VJ_SERVICIOS.find(x => x.key === f.slice(4));
     if (srv){ const [a,b] = vjVentana(srv); return vjPresenteEntre(tr, a, b); }
   }
+  if (f === 'revisar')   return !!tr.revisar;
   if (f === 'cumplehoy') return vjCumpleEn(tr) === 0;
   if (f === 'salenhoy') return tr.out === vjTodayIso();
   return (tr.tags || []).indexOf(f) >= 0;
@@ -7550,7 +7558,15 @@ function vjOutChip(tr){
 }
 function vjTagChips(tr){
   const chips = (tr.tags || []).map(tag => `<span class="vj-tag ${vjTagCls(tag)}">${vjEsc(vjTagLabel(tag))}</span>`);
-  if (!chips.length && !(tr.obs || '').trim()) chips.push(`<span class="vj-tag ok">${t('vjSinRestriccion')}</span>`);
+  // Orden de precedencia, y NINGUNA rama puede terminar en silencio:
+  //  1. hay obs que el script no supo mapear  -> REVISAR, en ámbar
+  //  2. no hay chips y tampoco obs            -> sin restricciones, en verde
+  //  3. hay obs pero sí se mapeó              -> mandan los chips
+  // El caso 1 existía y no se veía: un viajero con "Alergia al Kiwi" quedaba
+  // sin chip alguno porque kiwi no estaba en la taxonomía. Ni verde ni rojo:
+  // invisible. Eso es exactamente lo que no puede pasar.
+  if (tr.revisar) chips.unshift(`<span class="vj-tag revisar">${t('vjRevisar')}</span>`);
+  else if (!chips.length && !(tr.obs || '').trim()) chips.push(`<span class="vj-tag ok">${t('vjSinRestriccion')}</span>`);
   return chips.join('');
 }
 // Ficha completa de un viajero (avatar + nombre + meta + chips + obs). Fuente
