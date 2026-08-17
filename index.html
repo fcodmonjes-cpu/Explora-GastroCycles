@@ -3666,9 +3666,9 @@ const WX_ALT_M = 2450;                        // altitud del lodge (API da 2444 
 const WX_GUST_WATCH = 30;                     // km/h — "ojo"
 const WX_GUST_ALERT = 45;                     // km/h — vuelan servilletas
 const WX_LUNCH_FROM = 12, WX_LUNCH_TO = 16;   // ventana de servicio en terraza
-const WX_REFRESH_MS   = 15 * 60 * 1000;       // la API misma se actualiza cada 15 min
+const WX_REFRESH_MS   = 8 * 60 * 1000;        // el viento cambia rápido en la terraza
 const WX_CACHE_KEY    = 'ata_wx_v1';
-const WX_CACHE_TTL_MS = 20 * 60 * 1000;       // cache local: sobrevive recargas y cortes cortos
+const WX_CACHE_TTL_MS = 8 * 60 * 1000;        // cache local: sobrevive recargas y cortes cortos
 let   WX_DATA  = null;   // { tempC, windKmh, gustKmh, peak:{gustKmh,hour,tomorrow}|null } | null
 let   WX_ERROR = false;
 
@@ -3869,6 +3869,7 @@ const UI = {
     // --- Clima de terraza (wx) ---
     vjCumpleHoy:'cumple hoy', vjCumpleEn:'cumple en {n}d',
     vjSrvdesayuno:'desayuno', vjSrvalmuerzo:'almuerzo', vjSrvcena:'cena',
+    wxUpTo:'hasta',
     wxMasl:'m', wxWind:'viento', wxGusts:'ráfagas',
     wxTomorrow:'mañana', wxNoData:'sin datos de clima',
     vjTagMariscos:'Mariscos', vjTagGluten:'Gluten', vjTagLactosa:'Lactosa', vjTagSesamo:'Sésamo', vjTagPescado:'Pescado', vjTagAjo:'Ajo', vjTagFrutosSecos:'Frutos secos', vjTagFrutillas:'Frutillas', vjTagPina:'Piña', vjTagCilantro:'Cilantro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Trufa', vjTagChampinones:'Champiñones', vjTagPollo:'Pollo',
@@ -4062,6 +4063,7 @@ const UI = {
     // --- Clima de terraza (wx) — EN/PT propuestos, pendientes de revisión ---
     vjCumpleHoy:'birthday today', vjCumpleEn:'birthday in {n}d',
     vjSrvdesayuno:'breakfast', vjSrvalmuerzo:'lunch', vjSrvcena:'dinner',
+    wxUpTo:'up to',
     wxMasl:'m', wxWind:'wind', wxGusts:'gusts',
     wxTomorrow:'tomorrow', wxNoData:'weather unavailable',
     vjTagMariscos:'Shellfish', vjTagGluten:'Gluten', vjTagLactosa:'Lactose', vjTagSesamo:'Sesame', vjTagPescado:'Fish', vjTagAjo:'Garlic', vjTagFrutosSecos:'Tree nuts', vjTagFrutillas:'Strawberries', vjTagPina:'Pineapple', vjTagCilantro:'Cilantro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Truffle', vjTagChampinones:'Mushrooms', vjTagPollo:'Chicken',
@@ -4255,6 +4257,7 @@ const UI = {
     // --- Clima de terraça (wx) — EN/PT propostos, pendentes de revisão ---
     vjCumpleHoy:'aniversário hoje', vjCumpleEn:'aniversário em {n}d',
     vjSrvdesayuno:'café da manhã', vjSrvalmuerzo:'almoço', vjSrvcena:'jantar',
+    wxUpTo:'até',
     wxMasl:'m', wxWind:'vento', wxGusts:'rajadas',
     wxTomorrow:'amanhã', wxNoData:'sem dados do tempo',
     vjTagMariscos:'Frutos do mar', vjTagGluten:'Glúten', vjTagLactosa:'Lactose', vjTagSesamo:'Gergelim', vjTagPescado:'Peixe', vjTagAjo:'Alho', vjTagFrutosSecos:'Oleaginosas', vjTagFrutillas:'Morangos', vjTagPina:'Abacaxi', vjTagCilantro:'Coentro', vjTagQuinoa:'Quinoa', vjTagTrufa:'Trufa', vjTagChampinones:'Cogumelos', vjTagPollo:'Frango',
@@ -6984,6 +6987,9 @@ function wxUrl(){
 // Pico de ráfaga en la ventana de almuerzo. Si el servicio de hoy ya pasó,
 // mira el de mañana: a las 18:00 saber que hubo viento a las 14:00 no sirve
 // para montar nada; saber cómo viene mañana, sí.
+// El pico que sirve es el que TODAVÍA NO PASÓ. Mostrar "ráfagas 58 a las 13:00"
+// a las 15:00 no ayuda a montar nada: ya ocurrió. Se busca desde la hora actual
+// en adelante, y si al servicio de hoy no le queda nada, se pasa al de mañana.
 function wxPeakGust(hourly, nowHour, todayStr){
   if (!hourly || !hourly.time || !hourly.wind_gusts_10m) return null;
   const tomorrow = nowHour >= WX_LUNCH_TO;
@@ -6994,6 +7000,7 @@ function wxPeakGust(hourly, nowHour, todayStr){
     if (tomorrow ? isToday : !isToday) continue;  // sólo el día que interesa
     const h = parseInt(stamp.slice(11, 13), 10);
     if (h < WX_LUNCH_FROM || h > WX_LUNCH_TO) continue;
+    if (!tomorrow && h < nowHour) continue;     // ya pasó: no sirve
     const g = hourly.wind_gusts_10m[i];
     if (g == null) continue;
     if (!best || g > best.gustKmh) best = { gustKmh: g, hour: h, tomorrow };
@@ -7060,15 +7067,25 @@ function wxRender(){
   // viento actual; si hay ráfaga sobre umbral, ella toma el lugar — es el dato
   // con el que se decide, y el viento de este minuto pasa a ser ruido. De paso
   // es lo que hace que la línea entre siempre en el ancho de un iPhone.
-  let html = '<span class="wx-temp">' + Math.round(d.tempC) + '°</span>' + sep;
+  // AHORA primero: viento medio y, si sopla, la ráfaga de este momento. Antes
+  // el viento medio desaparecía apenas había ráfaga, y la ráfaga que se
+  // mostraba era el pico del día — que a las 15:00 ya había pasado.
+  let html = '<span class="wx-temp">' + Math.round(d.tempC) + '°</span>' + sep
+           + t('wxWind') + ' ' + Math.round(d.windKmh);
+  const gAhora = Math.round(d.gustKmh || 0);
+  if (gAhora >= WX_GUST_WATCH){
+    const cNow = gAhora >= WX_GUST_ALERT ? 'is-alert' : 'is-watch';
+    html += '<span class="wx-sep">·</span><span class="wx-gust ' + cNow + '">'
+          + t('wxGusts') + ' ' + gAhora + ' km/h</span>';
+  } else {
+    html += ' km/h';
+  }
+  // Y sólo después, lo que VIENE — con "hasta" para que no se lea como ahora.
   if (cls){
     const when = String(d.peak.hour).padStart(2, '0') + ':00';
-    html += '<span class="wx-gust ' + cls + '">' + t('wxGusts') + ' '
-          + Math.round(d.peak.gustKmh) + ' km/h</span>'
-          + ' <span class="wx-when">'
+    html += ' <span class="wx-when">' + t('wxUpTo') + ' '
+          + Math.round(d.peak.gustKmh) + ' '
           + (d.peak.tomorrow ? t('wxTomorrow') + ' ' : '') + when + '</span>';
-  } else {
-    html += t('wxWind') + ' ' + Math.round(d.windKmh) + ' km/h';
   }
   elN.innerHTML = html;
 }
