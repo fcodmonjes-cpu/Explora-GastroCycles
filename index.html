@@ -1867,6 +1867,14 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-srv-dot   { color:var(--gold); font-size:7px; vertical-align:middle; }
 .vj-srv.active { border-color:var(--gold); background:var(--gold-light); }
 /* Discrepancia con el conteo de PGO: una nota al margen, no una alarma. */
+/* Cumpleaños en el banner: mismo lenguaje que los demás contadores, sólo que
+   el "número" es la torta. Aparece únicamente cuando hay uno. */
+.pgo-b-cumple { display:inline-flex; align-items:center; gap:5px; }
+.pgo-b-cake { width:14px; height:14px; color:var(--gold); flex-shrink:0; }
+.pgo-b-cumple .pgo-b-label { color:var(--gold); }
+/* La tarjeta del cumpleañero: borde ámbar y un halo apenas perceptible. No es
+   un color nuevo — es el gold de la casa, usado con más presencia por una vez. */
+.vj-person.is-cumple { border-color:var(--gold); background:linear-gradient(180deg, var(--gold-light), transparent 70%); box-shadow:0 0 0 1px rgba(186,117,23,0.25), 0 2px 14px rgba(186,117,23,0.16); }
 .vj-cumple { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px;
              letter-spacing:0.06em; padding:2px 7px; border-radius:999px; margin-right:5px;
              color:var(--gold); border:0.5px solid rgba(186,117,23,0.45); }
@@ -7133,6 +7141,18 @@ async function viajerosFetch(){
 // mientras que éste es exacto a las 15:04 y a las 15:05.
 // Antes se descontaba a todo el que salía hoy desde las 00:00 — alguien con
 // checkout 16:00 desaparecía del almuerzo aunque estuviera sentado ahí.
+// Torta monoline, no el emoji: la paleta del handbook es ámbar y el 🎂 mete
+// rosados que no existen en ningún otro lado. Mismo criterio que el globo de
+// comentario del Comande.
+function vjCakeSvg(){
+  return `<svg class="pgo-b-cake" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+     stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M2.6 13.2h10.8V9.7c0-.8-.7-1.5-1.5-1.5H4.1c-.8 0-1.5.7-1.5 1.5z"/>
+    <path d="M2.6 10.7c.9 0 .9.9 1.8.9s.9-.9 1.8-.9.9.9 1.8.9.9-.9 1.8-.9.9.9 1.8.9"/>
+    <path d="M8 8.2V5.9"/>
+    <path d="M8 4.9c.75-.85.35-1.7 0-2.1-.35.4-.75 1.25 0 2.1z" fill="currentColor" stroke="none"/>
+  </svg>`;
+}
 function pgoBannerCounts(){
   const all = vjAll();
   const act = vjServicioActual();
@@ -7142,6 +7162,7 @@ function pgoBannerCounts(){
     : all.filter(tr => vjPresenteAhora(tr));
   return { viajeros: dentro.length, menores: dentro.filter(vjIsNino).length,
            dietas: dentro.filter(vjHasDieta).length, alergias: dentro.filter(vjHasAlergia).length,
+           cumples: dentro.filter(tr => vjCumpleEn(tr) === 0).length,
            srv, enCurso: !!(act && act.enCurso) };
 }
 function pgoBannerRender(){
@@ -7160,6 +7181,8 @@ function pgoBannerRender(){
       <span class="pgo-b-num ninos">${c.menores}</span><span class="pgo-b-label">${t('vjStatNinos')}</span><span class="pgo-b-tag">-18</span></button>
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('dietas')">
       <span class="pgo-b-num dietas">${c.dietas}</span><span class="pgo-b-label">${t('vjStatDietas')}</span></button>
+    ${c.cumples ? `<button type="button" class="pgo-b-item pgo-b-cumple" onclick="pgoBannerOpen('cumplehoy')">
+      ${vjCakeSvg()}<span class="pgo-b-label">${c.cumples > 1 ? c.cumples + ' ' : ''}${t('vjCumpleHoy')}</span></button>` : ''}
 `;
 }
 // Cada contador entra a PGO ya filtrado por lo que muestra — el número deja de
@@ -7387,6 +7410,7 @@ function vjMatchesFilter(tr){
     const srv = VJ_SERVICIOS.find(x => x.key === f.slice(4));
     if (srv){ const [a,b] = vjVentana(srv); return vjPresenteEntre(tr, a, b); }
   }
+  if (f === 'cumplehoy') return vjCumpleEn(tr) === 0;
   if (f === 'salenhoy') return tr.out === vjTodayIso();
   return (tr.tags || []).indexOf(f) >= 0;
 }
@@ -7595,8 +7619,11 @@ function vjRenderHabs(){
 function vjRenderPersonas(){
   const list = vjAll().filter(tr => vjMatchesFilter(tr) && vjMatchesSearch(tr));
   if (!list.length) return `<div class="vj-empty">${t('vjNoResults')}</div>`;
+  // El cumpleañero del día ARRIBA. Un chip discreto a mitad de lista se pasa
+  // por alto, y es justo lo que no puede pasarse por alto: el huésped lo nota.
+  list.sort((a, b) => (vjCumpleEn(a) === 0 ? 0 : 1) - (vjCumpleEn(b) === 0 ? 0 : 1));
   return list.map(tr => `
-    <div class="vj-person" onclick="vjOpenHab('${vjEsc(tr.hab)}')">
+    <div class="vj-person${vjCumpleEn(tr) === 0 ? ' is-cumple' : ''}" onclick="vjOpenHab('${vjEsc(tr.hab)}')">
       ${vjFlag(tr.nac) ? `<span class="vj-person-flag">${vjFlag(tr.nac)}</span>` : vjAvatarEl(tr)}
       <div class="vj-person-main">
         <div class="vj-person-name">${vjEsc(tr.nombre)}<span class="vj-age">${tr.edad ?? ''}</span>${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
