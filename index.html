@@ -7280,8 +7280,13 @@ function vjEsc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&l
 // Devuelve null si el timestamp falta, es inválido o viene del futuro — el
 // llamador esconde el punto en vez de mostrar un dato en el que no se puede
 // confiar.
-const VJ_SYNC_FRESH_MS = 60 * 60 * 1000;        // hasta acá, al día
-const VJ_SYNC_STALE_MS = 3 * 60 * 60 * 1000;    // hasta acá, atrasado
+// Calibrados contra la CADENCIA DEL CRON, que desde 2026-08-17 es cada 2 horas
+// en la franja de operación (antes cada 30 min). Con los umbrales viejos —1 h
+// para el verde— el punto habría quedado naranja la mitad del día sin que nada
+// estuviera mal, y un indicador que alarma siempre deja de leerse.
+// verde: el cron viene corriendo · naranja: se saltó una corrida · rojo: roto.
+const VJ_SYNC_FRESH_MS = 150 * 60 * 1000;       // 2,5 h — un intervalo + margen
+const VJ_SYNC_STALE_MS = 5 * 60 * 60 * 1000;    // 5 h — dos intervalos perdidos
 function vjFreshness(updatedAt){
   const ts = Number(updatedAt);
   if (!ts || !isFinite(ts)) return null;

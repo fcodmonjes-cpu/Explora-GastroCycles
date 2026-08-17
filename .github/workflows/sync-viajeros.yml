@@ -28,7 +28,20 @@ name: Sync Viajeros (PGO)
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    # Cada 2 horas en la franja de operación, LOS 7 DÍAS: el hotel no cierra.
+    # Antes iba cada 30 min (48 corridas/día) y eso significaba 48 logins
+    # diarios a PGO con la cuenta personal del owner, muchos de madrugada y
+    # desde IPs de GitHub en EE.UU. Un patrón así salta en cualquier listado de
+    # accesos ordenado por hora, y el dato no lo justificaba: los check-in y
+    # check-out se mueven en horas, no en minutos.
+    #
+    # GitHub corre el cron en UTC y Chile cambia de huso (UTC-4 invierno /
+    # UTC-3 verano), así que la franja se elige para cubrir la operación en LOS
+    # DOS casos: 09-23 UTC + 01 UTC ≈ 05:00-21:00 en invierno y 06:00-22:00 en
+    # verano. La corrida de la 01 UTC es la que agarra el cierre de la cena.
+    # Total: 9 corridas diarias en vez de 48.
+    - cron: "0 9-23/2 * * *"
+    - cron: "0 1 * * *"
   workflow_dispatch:
     inputs:
       date:
