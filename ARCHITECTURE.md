@@ -366,6 +366,76 @@ tiene datos personales**, por eso `retention-days: 1`.
 declarado no es guardarlos, sino **cómo esa información interactúa con el
 resto de la app**.
 
+### 4.2 PGO: dos vías de extracción, y cuál conviene
+
+PGO se puede leer por **dos caminos distintos**, y hoy el sync usa los dos.
+Esta sección existe para no volver a descubrirlo desde cero.
+
+| | Frontend (HTML) | Backend (GraphQL) |
+|---|---|---|
+| Cómo | Playwright + Chromium navegan y leen `<table>` | Un POST a `backend.pgo-explora.com` |
+| Hoy alimenta | roster (Geos), Dietas, comedor, cumpleaños | horas de movimiento (`reportInOut`) |
+| Costo | ~40-60 s: bajar Chromium, login, destino, 4 navegaciones | milisegundos, una llamada |
+| Se rompe con | cualquier cambio de UI: clases, botones, date-pickers | sólo si cambia el contrato de datos |
+| Descubrimiento | prueba y error contra el HTML | **introspección**: el esquema se autodocumenta |
+
+**El backend está abierto a introspección** — 185 queries, y cada tipo se puede
+interrogar. `reportInOut` devuelve `TypeTravellerIn` / `TypeTravellerOut` con
+~127 campos cada uno. Atacama es **`hotelId: 2`** (Torres del Paine es el 1:
+pedir el equivocado devuelve datos válidos de OTRO lodge y no se nota mirando
+el resultado).
+
+**Lo que decidió la comparación no fue la velocidad, fue la CALIDAD del dato.**
+Tres hallazgos de la migración parcial, todos verificados contra datos reales:
+
+1. **El HTML entrega datos ya cocinados.** El reporte de comedor muestra
+   `IN 09:45`; la API dice que el check-in real fue **09:55**. El front redondea
+   a `:15`/`:45`. Leyendo la pantalla se hereda el redondeo sin saberlo.
+2. **El mojibake es del rendering, no del dato.** `PÃ©rez-Canto` aparece en el
+   HTML; por la API el nombre llega correcto. Todo el trabajo de `fix_mojibake`
+   existe para reparar un daño que la otra vía nunca produce.
+3. **El esquema crece sumando.** `TypeTravellerIn` pasó de 126 a 127 campos en
+   un día, sin romper nada. Un cambio equivalente en el HTML —una clase, un
+   botón— habría dejado el sync en cero filas.
+
+**Las trampas del GraphQL, que también las tiene:**
+
+- **Un campo inválido tumba la respuesta ENTERA.** No degrada: devuelve `errors`
+  y `data:null`. Se ve idéntico a "hoy no hay datos". Por eso `pgo_fetch_inout`
+  imprime `res['errors']` — sin eso se depura a ciegas.
+- **`TypeTravellerIn` y `TypeTravellerOut` NO tienen los mismos campos** pese a
+  tener la misma cantidad. `arrivalTransport` existe sólo en el primero. Costó
+  dos corridas descubrirlo, una por cada campo que difería.
+- **La sesión sigue viniendo del navegador.** Hoy el POST viaja con las cookies
+  que dejó el login de Playwright. Migrar del todo exige replicar la
+  autenticación fuera del browser — el paso que falta.
+
+**Recomendación: migrar el resto a la API, por etapas.** El frontend de un
+portal cambia mucho más seguido que su contrato de datos, así que la API es la
+superficie estable. El orden sugerido, de mayor a menor ganancia:
+
+1. **Roster (Geos)** — es el corazón del módulo y hoy depende de leer una tabla.
+2. **Dietas** — de paso desaparece el mojibake en el campo más delicado.
+3. **Comedor** — además se recuperan las horas sin redondear.
+4. **Cumpleaños** — el más chico, y el que hoy necesita un preparador de
+   filtros propio (dos inputs de MES + botón BUSCAR, distinto de todo el resto).
+
+El login por navegador puede quedarse: es barato comparado con navegar cuatro
+reportes, y resuelve la sesión sin ingeniería inversa del token.
+
+**Cómo explorar sin adivinar** (`--explore`, ver la cabecera del script):
+
+```bash
+python scripts/sync_viajeros.py --explore --introspect   # queries del esquema
+python scripts/sync_viajeros.py --explore inout          # probar reportInOut
+python scripts/sync_viajeros.py --explore comedor        # perfilar un reporte HTML
+```
+
+Todo `--explore` es de sólo lectura: perfila columnas y formatos, enmascara los
+nombres propios y **nunca escribe Firebase**.
+
+---
+
 ---
 
 ## 5. El patrón "módulo"
