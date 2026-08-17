@@ -558,6 +558,33 @@ def _pgo_refrescar(page):
         print(f"[sync-viajeros] Aviso: no pude refrescar ({e}).")
 
 
+def _pgo_fecha_ok(page, esperada):
+    """¿La página quedó en la fecha pedida? Compara contra lo que MUESTRA.
+
+    PGO abre por defecto en el día SIGUIENTE. Si fijar la fecha falla y nadie
+    verifica, el reporte se lee igual y trae el día equivocado — un error que
+    no se nota porque la app sólo muestra la fecha como etiqueta.
+    """
+    if not esperada:
+        return True
+    try:
+        visible = _pgo_fecha_visible(page)
+    except Exception:
+        visible = None
+    if not visible:
+        print("[sync-viajeros] Aviso: no pude leer la fecha en pantalla para verificarla.")
+        return False
+    # _pgo_fecha_visible devuelve ISO; `esperada` viene en el formato del input.
+    try:
+        esp_iso = datetime.datetime.strptime(esperada, PGO_DATE_FMT).date().isoformat()
+    except ValueError:
+        esp_iso = esperada
+    if visible == esp_iso:
+        return True
+    print(f"[sync-viajeros] ⚠ La página quedó en {visible} y se pidió {esp_iso}.")
+    return False
+
+
 def _pgo_set_date(page, fecha):
     """Fija la fecha del reporte y refresca.
 
@@ -598,14 +625,35 @@ def _pgo_set_date(page, fecha):
             page.wait_for_timeout(400)
         page.keyboard.press("Escape")   # cierra el calendario: si queda abierto tapa la tabla
         page.wait_for_timeout(200)
-        btn = page.get_by_text(re.compile(PGO_SEL_REFRESH, re.I)).first
-        if btn.count() > 0:
-            btn.click(timeout=8000)
-            print("[sync-viajeros] REFRESCAR clickeado.")
-        else:
-            print("[sync-viajeros] Aviso: no encontré el botón REFRESCAR.")
+        # El botón primero como ROLE y recién después por texto: get_by_text
+        # suele agarrar un <span> interior que no recibe el click y se va a
+        # timeout (pasaba en /comedor). force=True salta el overlay del
+        # calendario si quedó abierto por encima.
+        clickeado = False
+        for intento in (
+            lambda: page.get_by_role("button", name=re.compile(PGO_SEL_REFRESH, re.I)).first,
+            lambda: page.get_by_text(re.compile(PGO_SEL_REFRESH, re.I)).first,
+        ):
+            try:
+                b = intento()
+                if b.count() > 0:
+                    b.click(timeout=6000)
+                    clickeado = True
+                    break
+            except Exception:
+                continue
+        if not clickeado:
+            try:
+                page.get_by_text(re.compile(PGO_SEL_REFRESH, re.I)).first.click(timeout=4000, force=True)
+                clickeado = True
+            except Exception:
+                pass
+        print(f"[sync-viajeros] {'REFRESCAR clickeado.' if clickeado else 'Aviso: no pude clickear REFRESCAR.'}")
         page.wait_for_load_state("networkidle", timeout=60000)
-        return True
+        # POST-CONDICIÓN: que la página quedó de verdad en la fecha pedida. Sin
+        # esto el reporte cae a la fecha por defecto de PGO (que es MAÑANA) y
+        # los datos salen del día equivocado sin que nada lo denuncie.
+        return _pgo_fecha_ok(page, fecha)
     except Exception as e:
         print(f"[sync-viajeros] Aviso: no pude fijar la fecha ({e}); leo lo que muestre el reporte.")
         return False
@@ -748,10 +796,11 @@ def _pgo_read_report(page, path, fecha, dump_name=None, kind=None, date_iso=None
     """
     url = PGO_BASE_URL + path
     page.goto(url, wait_until="networkidle", timeout=60000)
+    fecha_ok = True
     if kind in ("arrival", "birthday"):
         _pgo_prepare_report(page, kind, date_iso)
     elif fecha:
-        _pgo_set_date(page, fecha)
+        fecha_ok = _pgo_set_date(page, fecha)
     else:
         _pgo_refrescar(page)
     if dump_name:
@@ -773,7 +822,9 @@ def _pgo_read_report(page, path, fecha, dump_name=None, kind=None, date_iso=None
     out = []
     for cells in data["rows"]:
         out.append({headers[i]: cells[i] for i in range(min(len(headers), len(cells)))})
-    print(f"[sync-viajeros] {path}: {len(out)} filas · columnas: {', '.join(headers)}")
+    print(f"[sync-viajeros] {path}: {len(out)} filas · columnas: {', '.join(headers)}"
+          + ("" if fecha_ok else "  ⚠ FECHA NO VERIFICADA"))
+    _pgo_read_report.ultima_fecha_ok = fecha_ok
     return out
 
 
@@ -1734,9 +1785,16 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         # frente al conteo por presencia que hace la app; si divergen, algo se
         # perdio en el cruce. Que falle no debe tumbar el sync.
         try:
-            comedor = parse_comedor(_pgo_read_report(page, PGO_COMEDOR_PATH, fecha,
-                                                     "comedor" if dump else None))
-            print(f"[sync-viajeros] comedor: {len(comedor['grupos'])} grupos · {comedor['totales']}")
+            filas_com = _pgo_read_report(page, PGO_COMEDOR_PATH, fecha,
+                                         "comedor" if dump else None)
+            if not getattr(_pgo_read_report, "ultima_fecha_ok", True):
+                # Mejor sin comedor que con el comedor de MAÑANA: los cubiertos
+                # del día equivocado se verían perfectamente normales.
+                print("[sync-viajeros] comedor DESCARTADO: no se pudo confirmar la fecha.")
+                comedor = None
+            else:
+                comedor = parse_comedor(filas_com)
+                print(f"[sync-viajeros] comedor: {len(comedor['grupos'])} grupos · {comedor['totales']}")
         except Exception as e:
             print(f"[sync-viajeros] Aviso: sin reporte de comedor ({type(e).__name__}: {e})")
             comedor = None
