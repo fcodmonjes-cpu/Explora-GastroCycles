@@ -1740,6 +1740,82 @@ def pgo_probe_roster(page, date_str):
             print(f"[roster]   {c:26} {len(vals):>3} con dato · {[_mask_value(v)[:22] for v in vals[:3]]}")
 
 
+def pgo_cruce_roster(page, date_str, geos_rows):
+    """Cruza el roster de la API contra el del HTML, NOMBRE POR NOMBRE.
+
+    El volumen coincidiendo no alcanza: si el desglose por persona difiere, los
+    totales igual cuadran pero cada dieta se le asigna a otro. Por eso el
+    criterio de migración es que las dos listas de nombres sean idénticas.
+    """
+    # 1) ¿qué campos tiene el traveller anidado?
+    for tn in ("TravellerType",):
+        q = '{ __type(name: "%s") { fields { name type { name kind ofType { name kind } } } } }' % tn
+        try:
+            r = pgo_graphql(page, q)
+            campos = (((r.get("data") or {}).get("__type") or {}).get("fields") or [])
+        except Exception as e:
+            print(f"[cruce] no pude leer {tn}: {e}"); return
+        esc = []
+        for c in campos:
+            t = c["type"]; nom = t.get("name") or (t.get("ofType") or {}).get("name") or ""
+            k = (t.get("ofType") or {}).get("kind") or t.get("kind")
+            if k not in ("OBJECT", "LIST") and not nom.endswith("Type"):
+                esc.append(c["name"])
+        print(f"[cruce] {tn}: {len(campos)} campos · escalares: {esc}")
+    rx = re.compile(r"^(name|firstName|lastName|fullName|nombre|apellido|age|edad|birth|nationality|nacionalidad|country|gender|document)", re.I)
+    sel = [c for c in esc if rx.search(c)] or esc[:12]
+    print(f"[cruce] campos de persona elegidos: {sel}")
+
+    # 2) roster por API, bajando al traveller
+    q2 = """query ($hotelId: Int!, $date: Date!) {
+              travellersInhouse(hotelId: $hotelId, date: $date) {
+                room guestCount checkin checkout
+                traveller { %s }
+              }
+            }""" % " ".join(sel)
+    try:
+        r2 = pgo_graphql(page, q2, {"hotelId": PGO_HOTEL_ID, "date": date_str})
+    except Exception as e:
+        print(f"[cruce] la query anidada falló: {e}"); return
+    if r2.get("errors"):
+        print(f"[cruce] errores: {str(r2['errors'])[:400]}")
+    filas = (r2.get("data") or {}).get("travellersInhouse") or []
+    if not filas:
+        print("[cruce] sin filas: no se puede comparar."); return
+
+    # 3) armar la lista de personas de la API
+    def _nom(tr):
+        if not isinstance(tr, dict): return ""
+        for k in ("fullName", "name", "nombre"):
+            if tr.get(k): return str(tr[k])
+        a = " ".join(str(tr.get(k) or "") for k in ("firstName", "lastName") if tr.get(k))
+        return a.strip()
+    api = []
+    for f in filas:
+        t = f.get("traveller")
+        for tr in (t if isinstance(t, list) else [t]):
+            n = _nom(tr)
+            if n:
+                api.append((norm_key(fix_mojibake(n)), re.sub(r"\D", "", str(f.get("room") or "")).zfill(2)))
+    html = []
+    for r in (_remap(x, PGO_GEOS_COLS) for x in geos_rows):
+        n = (r.get("nombre") or "").strip()
+        if n:
+            html.append((norm_key(n), re.sub(r"\D", "", str(r.get("hab") or "")).zfill(2)))
+
+    sa, sh = {x[0] for x in api}, {x[0] for x in html}
+    print(f"[cruce] ══ API {len(api)} personas · HTML {len(html)} personas ══")
+    print(f"[cruce] sólo en API : {len(sa - sh)}")
+    print(f"[cruce] sólo en HTML: {len(sh - sa)}")
+    for n in sorted(sa - sh)[:6]: print(f"[cruce]    +API  {_mask_value(n)}")
+    for n in sorted(sh - sa)[:6]: print(f"[cruce]    +HTML {_mask_value(n)}")
+    da, dh = dict(api), dict(html)
+    dif_hab = [n for n in (sa & sh) if da.get(n) != dh.get(n)]
+    print(f"[cruce] misma persona, HABITACIÓN distinta: {len(dif_hab)}")
+    for n in dif_hab[:5]: print(f"[cruce]    {_mask_value(n)}: API={da[n]} HTML={dh[n]}")
+    print(f"[cruce] VEREDICTO: {'IDÉNTICOS — se puede migrar' if not (sa ^ sh) and not dif_hab else 'DIFIEREN — no migrar aún'}")
+
+
 def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
     """Abre sesión en PGO y perfila los reportes indicados. NO escribe nada."""
     _pgo_require()
@@ -1809,6 +1885,12 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
             print(f"[explore] formato de las marcas: {muestras}")
             pgo_probe_arrival(page, date_str or datetime.date.today().isoformat())
             pgo_probe_roster(page, date_str or datetime.date.today().isoformat())
+            try:
+                _f = datetime.date.fromisoformat(date_str).strftime(PGO_DATE_FMT) if date_str else None
+                _geos = _pgo_read_report(page, PGO_GEOS_PATH, _f)
+                pgo_cruce_roster(page, date_str or datetime.date.today().isoformat(), _geos)
+            except Exception as e:
+                print(f"[cruce] no pude comparar contra el HTML: {type(e).__name__}: {e}")
 
         for nombre, path in paths.items():
             if nombre == "inout":
