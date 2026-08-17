@@ -261,7 +261,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Sin ráfaga preocupante el dato no se pinta: sólo se enciende cuando importa. */
 .wx-gust.is-watch { color: var(--gold); }
 .wx-gust.is-alert { color: var(--coral); }
-.wx-when { color: var(--text-tertiary); }
+.wx-when { color: var(--text-tertiary); font-size: 11px; }
 
 /* ── Comandera module ────────────────────────────────────────────────────── */
 .cmd-root {
@@ -1498,7 +1498,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* (2026-08-09) Halo retirado: PGO dejó de ser novedad, así que el banner deja
    de anunciarse y pasa a ser mobiliario — fila mono con una regla inferior, sin
    caja ni animación. Vuelve a mandar la ops-strip, que es lo que corresponde. */
-.pgo-banner { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 16px; margin:0 0 1.3rem; padding:0.5rem 0 0.7rem; border-bottom:0.5px solid var(--border); font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
+.pgo-banner { display:flex; align-items:baseline; flex-wrap:nowrap; gap:4px 13px; overflow:hidden; margin:0 0 1.3rem; padding:0.5rem 0 0.7rem; border-bottom:0.5px solid var(--border); font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
 .pgo-banner[hidden] { display:none; }
 /* Qué servicio está midiendo el número. Sin él, '31 viajeros' es ambiguo:
    no se sabe si es ahora, hoy o el almuerzo. Discreto — es una etiqueta. */
@@ -1869,6 +1869,20 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 /* Discrepancia con el conteo de PGO: una nota al margen, no una alarma. */
 /* Cumpleaños en el banner: mismo lenguaje que los demás contadores, sólo que
    el "número" es la torta. Aparece únicamente cuando hay uno. */
+.pgo-cumple-line { display:flex; justify-content:center; margin:0 0 0.55rem; }
+.pgo-cumple-line[hidden] { display:none; }
+.pgo-cumple-btn { display:inline-flex; align-items:center; gap:7px; padding:5px 14px;
+  border-radius:999px; border:0.5px solid rgba(186,117,23,0.5); background:var(--gold-light);
+  color:var(--gold); font-family:'Courier Prime','Courier New',monospace; font-size:11px;
+  letter-spacing:0.14em; text-transform:uppercase; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; animation:cumpleGlow 3.2s ease-in-out infinite; }
+/* Respiración muy lenta del halo: se nota por el rabillo del ojo sin pedir la
+   pantalla. Nada de parpadeos — esto convive con una hora de servicio. */
+@keyframes cumpleGlow {
+  0%,100% { box-shadow:0 0 0 0 rgba(186,117,23,0.00); }
+  50%     { box-shadow:0 0 14px 1px rgba(186,117,23,0.22); }
+}
+@media (prefers-reduced-motion: reduce){ .pgo-cumple-btn { animation:none; } }
 .pgo-b-cumple { display:inline-flex; align-items:center; gap:5px; }
 .pgo-b-cake { width:14px; height:14px; color:var(--gold); flex-shrink:0; }
 .pgo-b-cumple .pgo-b-label { color:var(--gold); }
@@ -2136,6 +2150,10 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
        tarjetas de la tab. Tap = abre PGO. Lo puebla pgoBannerRender() desde
        VIAJEROS_DATA (ya se baja en el boot, no agrega un fetch). Cada contador
        es un botón: abre PGO ya filtrado por eso mismo. -->
+  <!-- Cumpleaños del día: línea propia sobre las estadísticas. Aparece pocos
+       días al mes, así que cuando aparece se le da aire en vez de comprimirla
+       entre contadores que están siempre. -->
+  <div class="pgo-cumple-line" id="pgo-cumple-line" hidden></div>
   <div class="pgo-banner" id="pgo-banner" hidden></div>
 
   <div class="main-tabs">
@@ -3677,7 +3695,7 @@ const WX_LAT = -22.9087, WX_LON = -68.2;      // San Pedro de Atacama
 const WX_ALT_M = 2450;                        // altitud del lodge (API da 2444 para la celda)
 const WX_GUST_WATCH = 30;                     // km/h — "ojo"
 const WX_GUST_ALERT = 45;                     // km/h — vuelan servilletas
-const WX_LUNCH_FROM = 12, WX_LUNCH_TO = 16;   // ventana de servicio en terraza
+const WX_LUNCH_FROM = 12, WX_LUNCH_TO = 15;   // almuerzo en terraza: 12:30–15:00
 const WX_REFRESH_MS   = 8 * 60 * 1000;        // el viento cambia rápido en la terraza
 const WX_CACHE_KEY    = 'ata_wx_v1';
 const WX_CACHE_TTL_MS = 8 * 60 * 1000;        // cache local: sobrevive recargas y cortes cortos
@@ -3875,6 +3893,7 @@ const UI = {
     vjHab:'Hab', vjYears:'años', vjNino:'menor', vjNinoPl:'menores',
     vjSaleHoy:'sale hoy', vjSaleManana:'sale mañana', vjLlegaHoy:'llegó hoy',
     vjVerSalientes:'ver salientes', vjOcultarSalientes:'ocultar salientes',
+    vjStatRestric:'restricciones',
     vjRevisar:'revisar observación',
     vjSinRestriccion:'Sin restricciones',
     vjNoResults:'Sin resultados para este filtro',
@@ -4070,6 +4089,7 @@ const UI = {
     vjHab:'Room', vjYears:'yrs', vjNino:'minor', vjNinoPl:'minors',
     vjSaleHoy:'leaves today', vjSaleManana:'leaves tomorrow', vjLlegaHoy:'arrived today',
     vjVerSalientes:'show departures', vjOcultarSalientes:'hide departures',
+    vjStatRestric:'restrictions',
     vjRevisar:'check note',
     vjSinRestriccion:'No restrictions',
     vjNoResults:'No matches for this filter',
@@ -4265,6 +4285,7 @@ const UI = {
     vjHab:'Quarto', vjYears:'anos', vjNino:'menor', vjNinoPl:'menores',
     vjSaleHoy:'sai hoje', vjSaleManana:'sai amanhã', vjLlegaHoy:'chegou hoje',
     vjVerSalientes:'ver saídas', vjOcultarSalientes:'ocultar saídas',
+    vjStatRestric:'restrições',
     vjRevisar:'verificar observação',
     vjSinRestriccion:'Sem restrições',
     vjNoResults:'Sem resultados para este filtro',
@@ -4919,9 +4940,18 @@ function menuRenderChrome(searching){
     }
   }
 
-  // La lente no aplica a la carta de tragos: los cocteles no tienen matriz.
+  // LATENTE lente de restricciones — retirada de pantalla el 2026-08-17. El
+  // owner reporta que en servicio real prácticamente nadie la usaba, y ocupaba
+  // una fila entera de la vista más cargada del programa.
+  // El MOTOR sigue entero y funcionando: dietVerdict, menuFails, menuHasMatrix
+  // y el atenuado por eje siguen ahí, sólo que MENU_DIET_LENS queda siempre
+  // vacío y por lo tanto no filtra nada. Los ✓* y el borde punteado de "sin
+  // dato" NO dependen de la lente y se siguen viendo.
+  // Para reactivar: descomentar estas dos líneas. menuLensHtml() está intacta.
+  // const host = document.getElementById('mn-lens');
+  // if (host) host.innerHTML = (isBar && MENU_BAR_VIEW === 'tragos') ? '' : menuLensHtml();
   const host = document.getElementById('mn-lens');
-  if (host) host.innerHTML = (isBar && MENU_BAR_VIEW === 'tragos') ? '' : menuLensHtml();
+  if (host) host.innerHTML = '';
 }
 
 function menuLensHtml(){
@@ -7088,19 +7118,28 @@ function wxRender(){
   let html = '<span class="wx-temp">' + Math.round(d.tempC) + '°</span>' + sep
            + t('wxWind') + ' ' + Math.round(d.windKmh);
   const gAhora = Math.round(d.gustKmh || 0);
+  const hayPico = !!(cls && d.peak && Math.round(d.peak.gustKmh) > gAhora);
   if (gAhora >= WX_GUST_WATCH){
     const cNow = gAhora >= WX_GUST_ALERT ? 'is-alert' : 'is-watch';
+    // Con pico a la vista se omite el "km/h": son tres cifras en la misma
+    // línea y la unidad se entiende por contexto. Es lo que hacía desbordar
+    // en 375 px, y truncar un dato de viento es peor que asumir la unidad.
     html += '<span class="wx-sep">·</span><span class="wx-gust ' + cNow + '">'
-          + t('wxGusts') + ' ' + gAhora + ' km/h</span>';
+          + t('wxGusts') + ' ' + gAhora + (hayPico ? '' : ' km/h') + '</span>';
   } else {
     html += ' km/h';
   }
   // Y sólo después, lo que VIENE — con "hasta" para que no se lea como ahora.
-  if (cls){
+  // El pico que viene sólo se anuncia si SUPERA lo que sopla ahora. "ráfagas 48
+  // hasta 41" se lee como que va a subir a 41 cuando ya está en 48: es ruido, y
+  // encima era lo que desbordaba la línea en pantallas angostas.
+  if (hayPico){
     const when = String(d.peak.hour).padStart(2, '0') + ':00';
-    html += ' <span class="wx-when">' + t('wxUpTo') + ' '
-          + Math.round(d.peak.gustKmh) + ' '
-          + (d.peak.tomorrow ? t('wxTomorrow') + ' ' : '') + when + '</span>';
+    // '↑' en vez de 'hasta': dice lo mismo en un carácter y es lo que hacía
+    // desbordar la línea en 375 px. El día siguiente se marca con '+1', que es
+    // convención horaria y no depende del idioma.
+    html += ' <span class="wx-when">↑' + Math.round(d.peak.gustKmh)
+          + ' ' + when + (d.peak.tomorrow ? ' +1' : '') + '</span>';
   }
   elN.innerHTML = html;
 }
@@ -7168,7 +7207,7 @@ function pgoBannerCounts(){
     ? (() => { const [a,b] = vjVentana(srv); return all.filter(tr => vjPresenteEntre(tr, a, b)); })()
     : all.filter(tr => vjPresenteAhora(tr));
   return { viajeros: dentro.length, menores: dentro.filter(vjIsNino).length,
-           dietas: dentro.filter(vjHasDieta).length, alergias: dentro.filter(vjHasAlergia).length,
+           dietas: dentro.filter(vjHasRestriccion).length, alergias: dentro.filter(vjHasAlergia).length,
            cumples: dentro.filter(tr => vjCumpleEn(tr) === 0).length,
            srv, enCurso: !!(act && act.enCurso) };
 }
@@ -7185,12 +7224,21 @@ function pgoBannerRender(){
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen(null)">
       <span class="pgo-b-num">${c.viajeros}</span><span class="pgo-b-label">${t('vjStatViajeros')}</span></button>
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('ninos')">
-      <span class="pgo-b-num ninos">${c.menores}</span><span class="pgo-b-label">${t('vjStatNinos')}</span><span class="pgo-b-tag">-18</span></button>
+      <span class="pgo-b-num ninos">${c.menores}</span><span class="pgo-b-label">${t('vjStatNinos')}</span></button>
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('dietas')">
-      <span class="pgo-b-num dietas">${c.dietas}</span><span class="pgo-b-label">${t('vjStatDietas')}</span></button>
-    ${c.cumples ? `<button type="button" class="pgo-b-item pgo-b-cumple" onclick="pgoBannerOpen('cumplehoy')">
-      ${vjCakeSvg()}<span class="pgo-b-label">${c.cumples > 1 ? c.cumples + ' ' : ''}${t('vjCumpleHoy')}</span></button>` : ''}
+      <span class="pgo-b-num dietas">${c.dietas}</span><span class="pgo-b-label">${t('vjStatRestric')}</span></button>
 `;
+  // El cumpleaños va en su PROPIA línea, centrada y sobre las estadísticas: no
+  // compite con los contadores porque no es del mismo orden — aparece pocos
+  // días al mes y cuando aparece hay que hacer algo esa noche.
+  const cum = document.getElementById('pgo-cumple-line');
+  if (cum){
+    cum.hidden = !c.cumples;
+    if (c.cumples) cum.innerHTML =
+      `<button type="button" class="pgo-cumple-btn" onclick="pgoBannerOpen('cumplehoy')">
+         ${vjCakeSvg()}<span>${c.cumples > 1 ? c.cumples + ' ' : ''}${t('vjCumpleHoy')}</span>
+       </button>`;
+  }
 }
 // Cada contador entra a PGO ya filtrado por lo que muestra — el número deja de
 // ser un dato y pasa a ser la puerta a los nombres detrás de él.
@@ -7392,6 +7440,11 @@ function vjOutToggleLine(ocultos){
   return `<button class="vj-out-toggle" onclick="vjToggleShowOut(event)">${txt}</button>`;
 }
 function vjHasAlergia(tr){ return (tr.tags || []).some(x => x.indexOf('alergia-') === 0); }
+// Cualquier cosa que condicione lo que se le puede servir: alergia, dieta,
+// condición, o una observación que quedó por revisar. El banner decía "3
+// dietas" mientras la pantalla mostraba 8 restricciones distintas, porque sólo
+// contaba los tags dieta-*.
+function vjHasRestriccion(tr){ return !!(tr.revisar || (tr.tags || []).length); }
 function vjHasDieta(tr){ return (tr.tags || []).some(x => x.indexOf('dieta-') === 0); }
 function vjTagCls(tag){ return (VJ_TAGS[tag] && VJ_TAGS[tag].cls) || tag.split('-')[0]; }
 function vjTagLabel(tag){
