@@ -131,7 +131,7 @@ un `innerHTML`— es el patrón **park/place** de §5.
 
 | Tab | Propósito | Datos | PIN |
 |---|---|---|---|
-| **Menú** | Servicio del día (Almuerzo · Cena · Bar) con lente de restricciones | Estático en el JS (`DISHES`, `BAR_DISHES`) | — |
+| **Menú** | Servicio del día (Almuerzo · Cena · Bar) con matriz de restricciones por plato | Estático en el JS (`DISHES`, `BAR_DISHES`) | — |
 | **Vinos** | Ficha por vino + sub-vista "Maridajes generales" | Estático (`WINES`, `GUIONES`) | — |
 | **Café** | Manual de bebidas + modo servicio (mesero / barista) | Estático (`COFFEE_DATA`) + Firebase `/orders` | 555 (mesero) · 999 (barista) |
 | **E-Check** | Comandera por mesa · **mapa espacial de asientos** | Firebase `/comandas/{date}/{id}` | 666 |
@@ -157,7 +157,6 @@ y recién después se lee:
 │ ALMUERZO │  CENA  │   BAR    │  ← autodetecta por hora
 └──────────────────────────────┘
     (sólo en BAR)  [COMIDA][TRAGOS]
-PARA QUIÉN  ▸ lente de restricciones
 BUFFET ──────────── 6 bandejas
   ┌ HOJAS ─┐ ┌ VEG.FIRMES ─┐   ← slots FIJOS: la bandeja no cambia,
   └────────┘ └─────────────┘      cambia el plato que la ocupa
@@ -179,13 +178,26 @@ en vez de como lista: el garzón aprende una vez dónde está cada bandeja y eso
 queda cierto para siempre. Es el mismo movimiento que el mapa de asientos del
 E-Check — espacializar en vez de listar.
 
-*La matriz invertida.* El PDF del asesor dice "buscá tu plato y leé su fila de
-✓/✗". La app dice "decime la restricción y la línea se apaga sola". El garzón
-prende ejes en la lente —o toca **"desde una hab"** y `VJ_TAG_TO_AXIS` traduce
-los tags reales del viajero (`/viajeros/current`) a ejes— y los platos que no
-sirven se **atenúan sin desaparecer**: saber qué NO servir importa tanto como
-saber qué sí. El `✓*` deja de ser una nota al pie y pasa a ser lo más útil de
-la pantalla, porque es una acción ejecutable ("sirve el pollo aparte").
+*La matriz invertida — y por qué su control se retiró.* El PDF del asesor dice
+"buscá tu plato y leé su fila de ✓/✗". La app respondía "decime la restricción
+y la línea se apaga sola": el garzón prendía ejes en una lente —o tocaba
+**"desde una hab"**, y `VJ_TAG_TO_AXIS` traducía los tags reales del viajero
+a ejes— y los platos que no servían se atenuaban sin desaparecer.
+
+**Esa lente se retiró de pantalla el 2026-08-17.** El owner reportó que en
+servicio real prácticamente nadie la usaba, y ocupaba una fila entera de la
+vista más cargada del programa. Quedó **latente** igual que Postres/86:
+`menuLensHtml()` está intacta y reactivar son dos líneas descomentadas en
+`menuRenderChrome`; `MENU_DIET_LENS` simplemente nunca se llena.
+
+**Lo que NO se fue con ella, y es la mayor parte del valor:** la matriz sigue
+leyéndose en cada plato. El `✓*` y el borde punteado de "sin dato" no dependían
+de la lente — se pintan siempre. El `✓*` sigue siendo lo más útil de la
+pantalla porque es una acción ejecutable ("sirve el pollo aparte"). Lo que se
+perdió es el filtrado *interactivo*, no la información.
+
+La lección vale más que el feature: la lente era una buena idea de diseño que
+la operación no adoptó. Se mide en taps a hora pico (§11), no en elegancia.
 
 **La regla de oro de la matriz** (vive entera en `dietVerdict` + `menuHasMatrix`):
 `1` apto · `0` no apto · `'*'` apto con condición (obliga a tener su texto en
@@ -824,9 +836,10 @@ está en exploración** — y cada una tiene su URL de Vercel distinta.
 7. **Delta de Y bajo el dedo.** Para cualquier control que despliegue contenido
    variable, medir en el navegador que los elementos vecinos NO se mueven:
    `getBoundingClientRect().top + scrollY` antes y después de cada toggle. En la
-   lente de restricciones se verificó que prender/apagar ejes deja los chips, la
-   fila de acciones y la grilla exactamente donde estaban, y que el riel del
-   selector de día mide 33 px tanto en almuerzo como en bar.
+   lente de restricciones (hoy latente, §3.1) se verificó en su momento que
+   prender/apagar ejes dejaba los chips, la fila de acciones y la grilla
+   exactamente donde estaban, y que el riel del selector de día mide 33 px
+   tanto en almuerzo como en bar.
    **El caso más traicionero no es un toggle sino un dato que llega por red**,
    porque nadie lo está mirando cuando ocurre: el clima (§3.2) pinta después del
    primer paint y, sin alto reservado, empujaba `.main-tabs` 23 px hacia abajo —
