@@ -1341,6 +1341,51 @@ def _iso_dt(v):
     return ""
 
 
+def pgo_probe_arrival(page, date_str):
+    """¿Qué campo marca la llegada AL LODGE y no la salida del vuelo?
+
+    'arrivalTransportDatetime' puede ser la hora en que el transporte recoge en
+    Calama — y de Calama a San Pedro hay más de una hora. Contar a alguien que
+    todavía va en la ruta infla el almuerzo. Esta sonda lista todos los campos
+    de hora del tipo y muestra sus valores para poder compararlos entre sí.
+    Sólo horas, nunca ligadas a un nombre.
+    """
+    q = """{ __type(name: "TypeTravellerIn") { fields { name type { name kind ofType { name } } } } }"""
+    try:
+        res = pgo_graphql(page, q)
+        campos = [f["name"] for f in
+                  (((res.get("data") or {}).get("__type") or {}).get("fields") or [])]
+    except Exception as e:
+        print(f"[probe] no pude introspeccionar TypeTravellerIn: {e}")
+        return
+    rx = re.compile(r"arriv|checkin|check_in|transport|flight|hour|hora|time|datetime|llegad|ingres", re.I)
+    cand = [c for c in campos if rx.search(c)]
+    print(f"[probe] TypeTravellerIn: {len(campos)} campos · {len(cand)} candidatos de llegada/hora")
+    print(f"[probe] candidatos: {cand}")
+    if not cand:
+        return
+    # Pedirlos todos juntos: si uno no es escalar, GraphQL lo dice y se descarta.
+    sel = " ".join(cand)
+    q2 = """query ($hotelId: ID!, $date: Date!) {
+              reportInOut(hotelId: $hotelId, date: $date) { travellerIn { room %s } }
+            }""" % sel
+    try:
+        res2 = pgo_graphql(page, q2, {"hotelId": str(PGO_HOTEL_ID), "date": date_str})
+    except Exception as e:
+        print(f"[probe] la query ampliada falló: {e}")
+        return
+    if res2.get("errors"):
+        print(f"[probe] errores (campos no escalares se descartan): {str(res2['errors'])[:400]}")
+    filas = (((res2.get("data") or {}).get("reportInOut") or {}).get("travellerIn") or [])
+    print(f"[probe] {len(filas)} llegadas hoy. Valores por campo (sin habitación):")
+    for c in cand:
+        vals = [str(r.get(c)) for r in filas if r.get(c) not in (None, "", "None")]
+        if vals:
+            print(f"[probe]   {c:34} {len(vals):>2} con dato · {vals[:4]}")
+        else:
+            print(f"[probe]   {c:34}  0 con dato")
+
+
 def pgo_fetch_inout(page, date_str):
     """reportInOut del día → {hab: {inAt, outAt, ...}} con HORAS reales.
 
@@ -1455,6 +1500,7 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
             # Sólo el FORMATO de las horas, sin ligarlas a ninguna habitación.
             muestras = sorted({v[k] for v in horas.values() for k in ("inAt", "outAt") if v.get(k)})[:6]
             print(f"[explore] formato de las marcas: {muestras}")
+            pgo_probe_arrival(page, date_str or datetime.date.today().isoformat())
 
         for nombre, path in paths.items():
             if nombre == "inout":
