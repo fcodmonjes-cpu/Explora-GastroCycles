@@ -307,11 +307,8 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
         (auto-close >12h sin actividad, auto-purge >30 días)
 ```
 
-**Reglas de Firebase actuales.** Abiertas (`{".read":true,".write":true}`).
-Apropiado para un prototipo interno; el día que esto suba a producción
-real con múltiples hoteles, se cierran con autenticación. La estructura
-ya está particionada por fecha/mes para facilitar reglas granulares
-después.
+**Reglas de Firebase.** Cerradas desde el 2026-08-17: los 13 paths exigen
+`auth != null` para leer y escribir. Ver §4.3.
 
 **Auto-purga.** Todo módulo que escribe datos temporales tiene su propia
 auto-purga client-side: cuando un cliente entra a la vista, revisa
@@ -485,6 +482,58 @@ python scripts/sync_viajeros.py --explore comedor        # perfilar un reporte H
 
 Todo `--explore` es de sólo lectura: perfila columnas y formatos, enmascara los
 nombres propios y **nunca escribe Firebase**.
+
+---
+
+### 4.3 Acceso: sesión anónima y reglas
+
+**Cómo funciona.** Al cargar, el navegador pide a Firebase un token anónimo
+(`signInAnonymously`): una credencial que se genera sola, sin usuario ni clave.
+Cada llamada REST lo lleva como `?auth=<token>` y el SDK compat lo usa para sus
+WebSockets. Las reglas exigen `auth != null`, así que la base responde sólo a
+quien lo trae. **El equipo no escribe nada ni ve login alguno** — el token vence
+cada hora y el SDK lo renueva solo (`onIdTokenChanged`, no `onAuthStateChanged`).
+
+**Qué bloquea y qué no.** Bloquea a cualquiera que tenga la URL de la base y la
+consulte por fuera: un navegador, `curl`, un script. **NO** impide que alguien
+con la URL de la *app* entre y vea los datos, porque su navegador también
+obtiene token. Es la puerta de atrás, no la de adelante (ver §9).
+
+**El orden de despliegue no es negociable:**
+
+1. publicar la app con auth — sigue funcionando con reglas abiertas, porque sin
+   token la URL sale igual que antes;
+2. recién entonces cerrar las reglas en la consola.
+
+Al revés, la app deja de leer en pleno servicio.
+
+**Las tres trampas, todas encontradas ANTES de cerrar y por revisar qué se
+rompería:**
+
+| Trampa | Por qué muerde |
+|---|---|
+| `initializeApp` duplicado | `cfInitFirebase()` creaba una **segunda** app sin la sesión. Con reglas abiertas era inofensivo; con reglas cerradas, café y comandas se quedaban sin permiso para escribir en pleno servicio. Ahora reusa `firebase.app()`. |
+| Carrera del token | `fbAuthInit` corta a los 8 s para no bloquear el arranque en redes lentas. Si el token llega después, los fetch ya salieron sin auth → 401 y **pantalla vacía**, sin nada que reintente. Se resuelve reintentando desde `onIdTokenChanged`. |
+| Reglas escritas de memoria | Una propuesta que no listaba `checklist_templates/_runs/_summaries/_structure`, `roster` ni `meta` habría dejado esos seis paths en la denegación por defecto: **Checklist muerto**. Las reglas se escriben SOBRE las vigentes, copiadas de la consola, nunca de memoria. |
+
+**Y una lección de método:** durante el diagnóstico se dio por cerrada la
+escritura porque un `PUT` de prueba devolvía 401 — pero el path probado no
+existía en las reglas, y por eso caía a la denegación por defecto. Los paths
+reales sí tenían `.write: true`. **Probar contra un path inventado no prueba
+nada**; hay que probar contra los que están en las reglas.
+
+Comprobación desde afuera, sin credencial (los 13 deben dar 401):
+
+```bash
+DB=https://explora-cafe-orders-default-rtdb.firebaseio.com
+for p in viajeros staffing comandas orders orders_history desserts eightysix          roster meta checklist_runs checklist_templates checklist_structure          checklist_summaries; do
+  printf "%-22s %s
+" "$p" "$(curl -s -o /dev/null -w '%{http_code}' "$DB/$p.json?shallow=true")"
+done
+```
+
+Los `sync_*.py` no se ven afectados: escriben con **service account**, que pasa
+por encima de las reglas.
 
 ---
 
@@ -808,10 +857,11 @@ hecha: falta que sobreviva a un reload.
 
 Hay decisiones conscientes de prototipo. Listarlas explícitas:
 
-- **Reglas Firebase abiertas.** Cualquiera con la URL puede escribir.
-  Bien para un prototipo de un solo hotel; mal para producción
-  multi-tenant. Sustituir por auth (anónima o por email) cuando se
-  abra al equipo completo.
+- **La app no pide credencial.** Las reglas ya exigen sesión (§4.3), pero
+  esa sesión la obtiene cualquier navegador que abra la app: cierra la
+  puerta de atrás, no la de adelante. Poner una clave del salón —una vez
+  por dispositivo, no en cada uso— quedó pendiente de conversarlo con
+  jefaturas. La fricción de loguear seguido mataría la practicidad.
 - **No hay sistema de usuarios.** PINs son strings hardcoded
   (555/666/999). Sin trazabilidad de quién hizo qué. La data tiene
   espacio para `waiter` pero no se llena.
