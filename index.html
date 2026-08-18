@@ -6461,7 +6461,21 @@ function fbAuthInit(){
       // lo renueva solo. Este hook entrega el nuevo sin que haya que pedirlo.
       auth.onIdTokenChanged(u => {
         if (!u) return;
-        u.getIdToken().then(tk => { FB_AUTH_TOKEN = tk; fin(tk); }).catch(() => fin(null));
+        u.getIdToken().then(tk => {
+          const primero = !FB_AUTH_TOKEN;
+          FB_AUTH_TOKEN = tk;
+          fin(tk);
+          // RED DE SEGURIDAD contra la carrera del arranque: si la red estuvo
+          // lenta, el timeout de abajo resolvió sin token y los fetch salieron
+          // sin auth — con las reglas cerradas eso es un 401 y la app queda
+          // vacía en hora de servicio, sin nada que lo reintente. Cuando el
+          // token llega tarde, se vuelve a pedir lo que no alcanzó a cargar.
+          if (primero && !(VIAJEROS_DATA && VIAJEROS_DATA.habs)){
+            console.info('[auth] token tardío: reintentando la carga');
+            try { viajerosFetch(); } catch(e){}
+            try { staffingFetch(); } catch(e){}
+          }
+        }).catch(() => fin(null));
       });
       auth.signInAnonymously().catch(e => {
         // Si el proveedor anónimo no está habilitado en la consola, la app
