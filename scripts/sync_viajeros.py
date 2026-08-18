@@ -189,7 +189,16 @@ SEED_ROWS = [
 # bajo el paraguas "mariscos" para que el filtro responda la pregunta real
 # del salón ("¿alérgicos a mariscos?"); el detalle específico queda en obs.
 FOOD_TOPICS = [
-    (r"MARISC|CAMARON|OSTRA|ERIZO|FRUTOS? DEL? MAR|F\. ?DEL? MAR|SEAFOOD|SHELLFISH", "mariscos"),
+    # Cefalópodos, moluscos y crustáceos entran todos al paraguas "mariscos":
+    # la pregunta del salón es del grupo, el detalle exacto queda en obs.
+    # "ALÉRGICA AL PULPO Y CALAMAR" quedaba sólo marcada para revisar, sin
+    # chip de alergia — lo detectó el owner mirando una ficha en servicio.
+    (r"MARISC|SEAFOOD|SHELLFISH|FRUTOS? DEL? MAR|F\. ?DEL? MAR|"
+     r"PULPO|OCTOPUS|CALAMAR|CALAMARI|SQUID|JIBIA|SEPIA|CUTTLEFISH|\bLULAS?\b|"
+     r"CAMARON|GAMBAS?|LANGOSTIN|SHRIMP|PRAWN|"
+     r"LANGOSTA|LOBSTER|CANGREJO|JAIBA|CENTOLLA|\bCRABS?\b|"
+     r"OSTRA|OSTION|VIEIRA|SCALLOP|ALMEJA|\bCLAMS?\b|MEJILLON|CHORITO|MUSSEL|"
+     r"MACHAS?\b|\bLOCOS?\b|ABALONE|ERIZOS?|\bURCHIN\b|CARACOL|\bSNAILS?\b", "mariscos"),
     (r"GLUTEN|CELIAC",                       "gluten"),
     (r"LACTOS|LACTO\b|LACTEOS?|DAIRY",       "lactosa"),
     (r"SESAM",                               "sesamo"),
