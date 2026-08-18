@@ -7477,7 +7477,15 @@ function vjPaintUpdated(){
   // Un reporte de OTRO DÍA no es "un poco viejo": es el día equivocado, y en un
   // tablet que reabre la PWA suspendida era justo lo que se veía sin aviso.
   // Manda sobre el cálculo de minutos y se dice con palabras, no sólo con color.
-  const otroDia = VIAJEROS_DATA.date && VIAJEROS_DATA.date !== vjTodayIso();
+  // Tolerancia de UN día: el sync corre con la fecha de Chile y quien mira
+  // puede estar en otro huso, así que una diferencia de 1 día es normal y no
+  // significa que el dato esté viejo. Se avisa recién a partir de 2 días, que
+  // ya no se explica por zona horaria. La frescura real la sigue diciendo el
+  // "hace X" de al lado, que se calcula sobre updatedAt.
+  const difDias = VIAJEROS_DATA.date
+    ? Math.abs(Math.round((new Date(VIAJEROS_DATA.date + 'T12:00') - new Date(vjTodayIso() + 'T12:00')) / 86400000))
+    : 0;
+  const otroDia = difDias >= 2;
   const cls   = otroDia ? 'is-down' : (f ? f.cls : '');
   const punto = `<span class="vj-dot ${cls}" title="${vjEsc(otroDia ? t('vjSyncOtherDay') : (f ? f.estado : ''))}"></span>`;
   const hace  = otroDia ? ` · ${vjEsc(t('vjSyncOtherDay'))}` : (f ? ` · ${vjEsc(f.texto)}` : '');
@@ -7527,7 +7535,7 @@ function vjFirstName(nombre){ return String(nombre || '').trim().split(/\s+/)[0]
 // Devuelve 0 si es hoy, N si faltan N días (hasta 3), o null.
 function vjCumpleEn(tr){
   if (!tr.cumple) return null;
-  const hoy = vjTodayIso();
+  const hoy = vjDiaOperativo();
   for (let d = 0; d <= 3; d++){
     const f = new Date(hoy + 'T12:00');
     f.setDate(f.getDate() + d);
@@ -7571,11 +7579,25 @@ function vjPresenteAhora(tr, ahora){
 }
 function vjAhoraIso(){
   const d = new Date();
-  return vjIsoLocal(d) + 'T' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  const hhmm = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  // La HORA es la del dispositivo (el garzón mira su reloj), pero el DÍA es el
+  // del reporte: si no, "ahora" cae fuera del rango de toda la data.
+  return vjDiaOperativo() + 'T' + hhmm;
+}
+// EL DÍA OPERATIVO LO DEFINE EL REPORTE, no el reloj del dispositivo. El sync
+// corre con la fecha de Chile, que es donde está el hotel; quien mira puede
+// estar en otro huso —o simplemente cruzando la medianoche— y entonces su
+// navegador dice otro día.
+// Cuando no coincidían, las ventanas se armaban con el día del teléfono y las
+// horas de los viajeros venían del reporte: NADIE caía dentro de ninguna
+// ventana, todos pasaban por el camino de respaldo y los tres servicios daban
+// el mismo número. Se veía plausible, que es lo peligroso.
+function vjDiaOperativo(){
+  return (VIAJEROS_DATA && VIAJEROS_DATA.date) || vjTodayIso();
 }
 // Ventana de un servicio en una fecha dada → ['...T06:00', '...T09:30'].
 function vjVentana(srv, diaIso){
-  const d = diaIso || vjTodayIso();
+  const d = diaIso || vjDiaOperativo();
   return [d + 'T' + srv.from, d + 'T' + srv.to];
 }
 // El servicio en curso, o el próximo del día si estamos entre medio. Devuelve
