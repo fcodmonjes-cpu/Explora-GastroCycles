@@ -2022,6 +2022,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 </head>
 <body>
 <!-- Telón de intro: cubre el jank de carga del primer ~segundo (botones pintan
@@ -6432,6 +6433,51 @@ const CF_FIREBASE_CONFIG = {
   messagingSenderId:"898891226322",
   appId:"1:898891226322:web:6923459e61eca72ce5e10b"
 };
+
+// ── Sesión anónima de Firebase ───────────────────────────────────────────────
+// Hoy /viajeros, /staffing y /comandas se leen SIN credencial: cualquiera con
+// la URL de la base ve nombres, edades y restricciones alimentarias de los
+// huéspedes. Esto lo cierra sin pedirle nada a nadie: el navegador obtiene un
+// token anónimo solo, al cargar, y las reglas pasan a exigir auth != null.
+// Cero fricción — el garzón nunca se entera de que existe.
+//
+// DESPLIEGUE EN DOS PASOS, EN ESTE ORDEN:
+//   1. publicar esta versión (funciona igual con las reglas abiertas: si no
+//      hay token, la URL va sin él);
+//   2. recién entonces cerrar las reglas en la consola de Firebase.
+// Al revés, la app deja de leer en pleno servicio.
+let FB_AUTH_TOKEN = null;
+let _FB_AUTH_READY = null;
+
+function fbAuthInit(){
+  if (_FB_AUTH_READY) return _FB_AUTH_READY;
+  _FB_AUTH_READY = new Promise(resolve => {
+    let listo = false;
+    const fin = v => { if (!listo){ listo = true; resolve(v); } };
+    try {
+      if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(CF_FIREBASE_CONFIG);
+      const auth = firebase.auth();
+      // onIdTokenChanged, no onAuthStateChanged: el token vence en 1 h y el SDK
+      // lo renueva solo. Este hook entrega el nuevo sin que haya que pedirlo.
+      auth.onIdTokenChanged(u => {
+        if (!u) return;
+        u.getIdToken().then(tk => { FB_AUTH_TOKEN = tk; fin(tk); }).catch(() => fin(null));
+      });
+      auth.signInAnonymously().catch(e => {
+        // Si el proveedor anónimo no está habilitado en la consola, la app
+        // sigue funcionando contra las reglas actuales. No se rompe nada.
+        console.warn('[auth] sin sesión anónima:', e && e.code);
+        fin(null);
+      });
+      setTimeout(() => fin(null), 8000);   // red lenta: no bloquear el arranque
+    } catch(e){ console.warn('[auth] no disponible:', e); fin(null); }
+  });
+  return _FB_AUTH_READY;
+}
+// Sufijo para las URLs REST. Sin token devuelve '' y la llamada sale como antes.
+function fbQS(sep){ return FB_AUTH_TOKEN ? `${sep || '?'}auth=${encodeURIComponent(FB_AUTH_TOKEN)}` : ''; }
+fbAuthInit();
+
 const CF_WAITER_CODE = '555';
 const CF_BARISTA_CODE = '999';
 const CF_ORDERS_PATH  = 'orders';
@@ -6555,10 +6601,11 @@ function normalizeStaffingMonth(raw){
 }
 
 async function staffingFetch(){
+  await fbAuthInit();   // la URL lleva el token; sin sesión sale igual
   const monthKey = staffingMonthKey(new Date());
   STAFFING_MONTH_KEY = monthKey;
   try {
-    const url = `${CF_FIREBASE_CONFIG.databaseURL}/${STAFFING_PATH}/${monthKey}.json`;
+    const url = `${CF_FIREBASE_CONFIG.databaseURL}/${STAFFING_PATH}/${monthKey}.json${fbQS()}`;
     const resp = await fetch(url);
     const raw = await resp.json();
     STAFFING_DATA = raw ? normalizeStaffingMonth(raw) : {};
@@ -6647,9 +6694,10 @@ function dessertsIsStale(data){
 }
 
 async function dessertsFetch(){
+  await fbAuthInit();   // la URL lleva el token; sin sesión sale igual
   const key = dessertsDateKey(new Date());
   DESSERTS_DATE_KEY = key;
-  const url = `${CF_FIREBASE_CONFIG.databaseURL}/${DESSERTS_PATH}/${key}.json`;
+  const url = `${CF_FIREBASE_CONFIG.databaseURL}/${DESSERTS_PATH}/${key}.json${fbQS()}`;
   try {
     const resp = await fetch(url);
     const data = await resp.json();
@@ -6759,7 +6807,7 @@ async function dessertsSubmitForm(){
   // If the user clears everything, treat as a delete
   if (!helado && !sorbet && !ninos && !fruta.length){
     const key = dessertsDateKey(new Date());
-    const url = `${CF_FIREBASE_CONFIG.databaseURL}/${DESSERTS_PATH}/${key}.json`;
+    const url = `${CF_FIREBASE_CONFIG.databaseURL}/${DESSERTS_PATH}/${key}.json${fbQS()}`;
     fetch(url, { method:'DELETE' }).catch(()=>{});
     DESSERTS_DATA = null;
     dessertsCloseForm();
@@ -6771,7 +6819,7 @@ async function dessertsSubmitForm(){
   if (fruta.length)  payload.fruta  = fruta;
   if (ninos)         payload.ninos  = ninos;
   const key = dessertsDateKey(new Date());
-  const url = `${CF_FIREBASE_CONFIG.databaseURL}/${DESSERTS_PATH}/${key}.json`;
+  const url = `${CF_FIREBASE_CONFIG.databaseURL}/${DESSERTS_PATH}/${key}.json${fbQS()}`;
   // Disable the save button while writing
   const saveBtn = document.getElementById('d-save');
   if (saveBtn) saveBtn.disabled = true;
@@ -6818,9 +6866,10 @@ async function dessertsSubmitForm(){
 //     vacíe (a diferencia de postres, que se borran a las 4h)
 //   • Re-fetch suave cada 60s + al volver a la pestaña para sync entre devices
 // State (EIGHTYSIX_PATH, EIGHTYSIX_DATA, EIGHTYSIX_FORM_OPEN) vive en STATE TOP.
-function eightysixUrl(){ return `${CF_FIREBASE_CONFIG.databaseURL}/${EIGHTYSIX_PATH}.json`; }
+function eightysixUrl(){ return `${CF_FIREBASE_CONFIG.databaseURL}/${EIGHTYSIX_PATH}.json${fbQS()}`; }
 
 async function eightysixFetch(){
+  await fbAuthInit();   // la URL lleva el token; sin sesión sale igual
   try {
     const resp = await fetch(eightysixUrl());
     const data = await resp.json();
@@ -7168,9 +7217,10 @@ setInterval(() => wxFetch(true), WX_REFRESH_MS);
 // lectura. Siguen a un tap: el stat "salen hoy" los filtra, y cada tarjeta de
 // hab ofrece "ver salientes" (VIAJEROS_SHOW_OUT).
 
-function viajerosUrl(){ return `${CF_FIREBASE_CONFIG.databaseURL}/${VIAJEROS_PATH}.json`; }
+function viajerosUrl(){ return `${CF_FIREBASE_CONFIG.databaseURL}/${VIAJEROS_PATH}.json${fbQS()}`; }
 
 async function viajerosFetch(){
+  await fbAuthInit();   // la URL lleva el token; sin sesión sale igual
   try {
     // no-store: el doc de viajeros es dato vivo. Sin esto, un tablet que
     // reabre la app puede resolver el GET desde el cache del navegador.
@@ -8571,7 +8621,7 @@ function cfFetchHistoryForDate(dateKey){
   const stats = document.getElementById('cf-hist-stats');
   if (stats) stats.innerHTML = '';
 
-  const url = `${CF_FIREBASE_CONFIG.databaseURL}/${CF_HISTORY_PATH}/${dateKey}.json`;
+  const url = `${CF_FIREBASE_CONFIG.databaseURL}/${CF_HISTORY_PATH}/${dateKey}.json${fbQS()}`;
   fetch(url).then(r=>r.json()).then(data=>{
     // Guard against stale fetches landing after the user already moved on
     if (cf_historyDate !== dateKey || cf_baristaSubMode !== 'history') return;
