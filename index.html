@@ -1854,6 +1854,11 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 
 /* Stat-chips: contadores tappeables que a la vez son filtros. */
 .vj-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:0.9rem; }
+/* Rotula la fila entera: sin esto, 'almuerzo' acá y 'almuerzo' en Comedor
+   parecen el mismo dato con dos valores distintos. */
+.vj-stats-rotulo { grid-column:1 / -1; font-family:'Courier Prime','Courier New',monospace;
+  font-size:9px; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--text-tertiary); margin-bottom:1px; }
 /* Cubiertos por servicio. Tres celdas de 1/3 = entran siempre, sin el
    side-scroll que tenían las 5 tarjetas de estadísticas del día. */
 .vj-srv { position:relative; display:flex; flex-direction:column; align-items:center; gap:2px;
@@ -3976,6 +3981,7 @@ const UI = {
     cmdMontaje:'Montaje', cmdMesas:'mesas', cmdCubiertos:'cubiertos', cmdMesaDe:'mesa de',
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'grupo viene solo', cmdSolos:'grupos vienen solos',
     cmdSinDatos:'Sin datos de comedor para hoy',
+    vjEnLodge:'en el lodge', vjComen:'comen', vjComenTit:'Cubiertos asignados en PGO',
     vjStatRestric:'restricciones',
     vjRevisar:'revisar observación',
     vjSinRestriccion:'Sin restricciones',
@@ -4181,6 +4187,7 @@ const UI = {
     cmdMontaje:'Setup', cmdMesas:'tables', cmdCubiertos:'covers', cmdMesaDe:'table of',
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'party of one', cmdSolos:'parties of one',
     cmdSinDatos:'No dining room data for today',
+    vjEnLodge:'on property', vjComen:'dining', vjComenTit:'Covers assigned in PGO',
     vjStatRestric:'restrictions',
     vjRevisar:'check note',
     vjSinRestriccion:'No restrictions',
@@ -4386,6 +4393,7 @@ const UI = {
     cmdMontaje:'Montagem', cmdMesas:'mesas', cmdCubiertos:'talheres', cmdMesaDe:'mesa de',
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'grupo vem sozinho', cmdSolos:'grupos vêm sozinhos',
     cmdSinDatos:'Sem dados do salão para hoje',
+    vjEnLodge:'no lodge', vjComen:'comem', vjComenTit:'Talheres atribuídos no PGO',
     vjStatRestric:'restrições',
     vjRevisar:'verificar observação',
     vjSinRestriccion:'Sem restrições',
@@ -7935,7 +7943,13 @@ function vjRenderStats(){
   const com = (VIAJEROS_DATA && VIAJEROS_DATA.comedor && VIAJEROS_DATA.comedor.totales) || null;
   // Lo que PGO dice para el mismo servicio, como segunda opinión.
   const dePgo = { desayuno: com && com.desayunos, almuerzo: com && com.almuerzos, cena: com && com.cena };
-  el.innerHTML = VJ_SERVICIOS.map(s => {
+  // Estas celdas cuentan PRESENCIA EN EL LODGE, no cubiertos. La diferencia es
+  // real y no es un error: hoy 62 están durante el almuerzo pero sólo 57 tienen
+  // almuerzo asignado — 20 personas de 8 grupos salen de excursión con box
+  // lunch o comen fuera. Sin el rótulo, dos celdas con la etiqueta "almuerzo"
+  // y distinto número en la misma pantalla se leen como un bug.
+  // Los cubiertos, que son los que manda a cocina, viven en la vista Comedor.
+  el.innerHTML = `<div class="vj-stats-rotulo">${t('vjEnLodge')}</div>` + VJ_SERVICIOS.map(s => {
     const [a, b] = vjVentana(s);
     const n      = all.filter(tr => vjPresenteEntre(tr, a, b)).length;
     const ref    = dePgo[s.key];
@@ -7948,7 +7962,7 @@ function vjRenderStats(){
               onclick="vjSetFilter('srv:${s.key}')">
         <span class="vj-srv-num">${n}</span>
         <span class="vj-srv-label">${t('vjSrv' + s.key)}${activo && act.enCurso ? ' <span class="vj-srv-dot">●</span>' : ''}</span>
-        ${dif !== null ? `<span class="vj-srv-dif" title="PGO: ${dif}">≠${dif}</span>` : ''}
+        ${dif !== null ? `<span class="vj-srv-dif" title="${t('vjComenTit')}">${dif} ${t('vjComen')}</span>` : ''}
       </button>`;
   }).join('');
 }
