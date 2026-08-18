@@ -1896,6 +1896,72 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
    el mismo de las alertas de ráfaga — pide atención sin fingir un diagnóstico
    que no tenemos. Nunca se muestra junto a "sin restricciones". */
 .vj-tag.revisar { color:var(--coral); border-color:rgba(216,90,48,0.5); background:var(--coral-light); }
+/* Selector de vista dentro de PGO: dos pestanas de texto, mismo lenguaje que
+   los segmentos del Menu. No suma una tab a la fila principal, que ya se corta. */
+.vj-vistas { display:flex; gap:18px; margin:0 0 0.9rem; }
+.vj-vista { background:none; border:none; padding:0 0 5px; cursor:pointer;
+  font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--text-tertiary); border-bottom:1.5px solid transparent;
+  -webkit-tap-highlight-color:transparent; }
+.vj-vista.on { color:var(--gold); border-bottom-color:var(--gold); }
+.cmd-srv-t { display:block; font-family:'Courier Prime',monospace; font-size:8px;
+  letter-spacing:0.08em; color:var(--coral); margin-top:2px; }
+.cmd-cap { border:0.5px solid var(--border); border-radius:var(--radius-md);
+  padding:0.9rem 1rem; margin:0 0 1.1rem; }
+.cmd-cap.is-watch { border-color:rgba(186,117,23,0.5); }
+.cmd-cap.is-alert { border-color:rgba(216,90,48,0.6); background:var(--coral-light); }
+.cmd-cap-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+.cmd-cap-n { font-family:'Cormorant Garamond',serif; font-size:30px; color:var(--text); }
+.cmd-cap.is-alert .cmd-cap-n { color:var(--coral); }
+.cmd-cap-de { font-size:16px; color:var(--text-tertiary); }
+.cmd-cap-lbl { font-family:'Courier Prime',monospace; font-size:9.5px; letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--text-tertiary); }
+.cmd-cap-bar { height:8px; background:rgba(255,255,255,0.05); border-radius:99px;
+  overflow:hidden; margin:0.6rem 0 0.5rem; }
+.cmd-cap-bar i { display:block; height:100%; background:var(--gold); opacity:0.6; border-radius:99px; }
+.cmd-cap.is-alert .cmd-cap-bar i { background:var(--coral); opacity:0.75; }
+.cmd-cap-msg { font-family:'Courier Prime',monospace; font-size:10.5px; color:var(--text-secondary); }
+.cmd-cap.is-alert .cmd-cap-msg { color:var(--coral); }
+.cmd-turno { margin-bottom:1.2rem; }
+.cmd-turno-head { display:flex; align-items:baseline; gap:9px; margin-bottom:0.5rem;
+  font-family:'Courier Prime',monospace; font-size:10px; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--gold); }
+.cmd-turno-h { color:var(--text); letter-spacing:0.06em; }
+.cmd-turno-n { margin-left:auto; color:var(--text-tertiary); letter-spacing:0.06em; text-transform:none; }
+.cmd-srvs { display:flex; gap:8px; margin:0 0 1rem; }
+.cmd-srv { flex:1; background:var(--bg-secondary); border:0.5px solid var(--border);
+  border-radius:var(--radius-md); padding:9px 4px; cursor:pointer; text-align:center;
+  -webkit-tap-highlight-color:transparent; }
+.cmd-srv.on { border-color:var(--gold); background:var(--gold-light); }
+.cmd-srv-n { display:block; font-family:'Cormorant Garamond',serif; font-size:21px; color:var(--text); }
+.cmd-srv.on .cmd-srv-n { color:var(--gold); }
+.cmd-srv-l { display:block; font-family:'Courier Prime',monospace; font-size:9px;
+  letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-top:2px; }
+.cmd-montaje { border:0.5px solid var(--border); border-radius:var(--radius-md);
+  padding:0.9rem 1rem; margin:0 0 1.2rem; }
+.cmd-head { font-family:'Courier Prime',monospace; font-size:10px; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--gold); margin-bottom:0.7rem; }
+.cmd-head-sub { color:var(--text-tertiary); margin-left:8px; letter-spacing:0.08em; }
+.cmd-row { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.cmd-row-lbl { font-family:'Courier Prime',monospace; font-size:11px; color:var(--text-secondary);
+  width:82px; flex-shrink:0; }
+.cmd-row-bar { flex:1; height:7px; background:rgba(255,255,255,0.05); border-radius:99px; overflow:hidden; }
+.cmd-row-bar i { display:block; height:100%; background:var(--gold); opacity:0.55; border-radius:99px; }
+.cmd-row-n { font-family:'Courier Prime',monospace; font-size:11px; color:var(--text);
+  width:30px; text-align:right; flex-shrink:0; }
+.cmd-nota { font-family:'Courier Prime',monospace; font-size:10px; color:var(--text-tertiary);
+  margin-top:0.6rem; }
+.cmd-grp { display:flex; align-items:center; gap:11px; padding:10px 12px; margin-bottom:7px;
+  background:var(--bg-secondary); border:0.5px solid var(--border); border-radius:var(--radius-md); }
+/* El numero es el TAMANO DE MESA, que es lo que el montajista necesita ver. */
+.cmd-grp-mesa { width:29px; height:29px; flex-shrink:0; border-radius:7px;
+  border:0.5px solid rgba(186,117,23,0.45); color:var(--gold); display:flex;
+  align-items:center; justify-content:center; font-family:'Courier Prime',monospace; font-size:12px; }
+.cmd-grp-main { flex:1; min-width:0; }
+.cmd-grp-name { font-family:'Cormorant Garamond',serif; font-size:16px; color:var(--text); }
+.cmd-grp-pax { font-family:'Courier Prime',monospace; font-size:10px; color:var(--text-tertiary); margin-left:7px; }
+.cmd-grp-habs { font-family:'Courier Prime',monospace; font-size:10px; color:var(--text-tertiary); margin-top:2px; }
+.cmd-grp-mov { color:var(--gold); margin-left:8px; }
 .vj-cumple { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px;
              letter-spacing:0.06em; padding:2px 7px; border-radius:999px; margin-right:5px;
              color:var(--gold); border:0.5px solid rgba(186,117,23,0.45); }
@@ -1920,6 +1986,9 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
    todos en la misma vertical y los conteos quedan a la derecha, como el
    índice de una carta. auto-fill: 2 columnas en teléfono, más en pantallas
    anchas, sin media queries. */
+/* [hidden] explícito: el display:grid de abajo le gana al atributo, y en la
+   vista Comedor los chips quedaban visibles pese a estar marcados. */
+.vj-chips[hidden], .vj-stats[hidden], .vj-search-bar[hidden] { display:none !important; }
 .vj-chips { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; margin:0.8rem 0 1rem; }
 .vj-chip { display:flex; justify-content:space-between; align-items:baseline; gap:8px; text-align:left; font-size:11px; letter-spacing:0.03em; padding:5px 10px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:transparent; color:var(--text-secondary); cursor:pointer; transition:all .15s; -webkit-user-select:none; user-select:none; }
 .vj-chip .vj-chip-n { font-family:'Courier Prime','Courier New',monospace; font-size:10px; opacity:0.75; }
@@ -3675,7 +3744,8 @@ let VIAJEROS_FILTER        = null;   // null | 'ninos'|'alergias'|'dietas'|'sale
 let VIAJEROS_SEARCH        = '';
 let VIAJEROS_HAB_OPEN      = null;   // hab abierta en el modal de detalle
 let VIAJEROS_NUMPAD_OPEN   = false;  // teclado numérico incorporado plegado/desplegado
-let VIAJEROS_SHOW_OUT      = false;  // salientes del día ocultos por defecto en las vistas por hab
+let VIAJEROS_SHOW_OUT      = false;
+let VIAJEROS_VISTA         = 'viajeros';   // 'viajeros' | 'comedor'   // salientes del día ocultos por defecto en las vistas por hab
 
 // ── Ventanas de servicio (para el conteo por hora) ──────────────────────────
 // Un viajero cuenta para un servicio si ESTABA EN EL LODGE mientras el servicio
@@ -3898,6 +3968,14 @@ const UI = {
     vjSaleHoy:'sale hoy', vjSaleManana:'sale mañana', vjLlegaHoy:'llegó hoy',
     vjVerSalientes:'ver salientes', vjOcultarSalientes:'ocultar salientes',
     vjSyncOtherDay:'NO ES DE HOY · actualizando',
+    vjVista_viajeros:'viajeros', vjVista_comedor:'comedor',
+    cmdOcupacion:'ocupación', cmdTurno:'Turno', cmdTurnos:'turnos',
+    cmdEntraUno:'Entra en un solo montaje · quedan {n} lugares',
+    cmdRemonte:'No entra de una vez · {n} montajes',
+    cmdNoEntra:'⚠ Hacen falta {n} montajes y la ventana da para {v}',
+    cmdMontaje:'Montaje', cmdMesas:'mesas', cmdCubiertos:'cubiertos', cmdMesaDe:'mesa de',
+    cmdPax:'pax', cmdPax1:'pax', cmdSolo:'grupo viene solo', cmdSolos:'grupos vienen solos',
+    cmdSinDatos:'Sin datos de comedor para hoy',
     vjStatRestric:'restricciones',
     vjRevisar:'revisar observación',
     vjSinRestriccion:'Sin restricciones',
@@ -4095,6 +4173,14 @@ const UI = {
     vjSaleHoy:'leaves today', vjSaleManana:'leaves tomorrow', vjLlegaHoy:'arrived today',
     vjVerSalientes:'show departures', vjOcultarSalientes:'hide departures',
     vjSyncOtherDay:'NOT TODAY’S · refreshing',
+    vjVista_viajeros:'guests', vjVista_comedor:'dining room',
+    cmdOcupacion:'occupancy', cmdTurno:'Seating', cmdTurnos:'seatings',
+    cmdEntraUno:'Fits in one seating · {n} seats left',
+    cmdRemonte:'Needs {n} seatings',
+    cmdNoEntra:'⚠ Needs {n} seatings, window allows {v}',
+    cmdMontaje:'Setup', cmdMesas:'tables', cmdCubiertos:'covers', cmdMesaDe:'table of',
+    cmdPax:'pax', cmdPax1:'pax', cmdSolo:'party of one', cmdSolos:'parties of one',
+    cmdSinDatos:'No dining room data for today',
     vjStatRestric:'restrictions',
     vjRevisar:'check note',
     vjSinRestriccion:'No restrictions',
@@ -4292,6 +4378,14 @@ const UI = {
     vjSaleHoy:'sai hoje', vjSaleManana:'sai amanhã', vjLlegaHoy:'chegou hoje',
     vjVerSalientes:'ver saídas', vjOcultarSalientes:'ocultar saídas',
     vjSyncOtherDay:'NÃO É DE HOJE · atualizando',
+    vjVista_viajeros:'viajantes', vjVista_comedor:'salão',
+    cmdOcupacion:'ocupação', cmdTurno:'Turno', cmdTurnos:'turnos',
+    cmdEntraUno:'Cabe em uma montagem · restam {n} lugares',
+    cmdRemonte:'Precisa de {n} montagens',
+    cmdNoEntra:'⚠ Precisa de {n} montagens e a janela permite {v}',
+    cmdMontaje:'Montagem', cmdMesas:'mesas', cmdCubiertos:'talheres', cmdMesaDe:'mesa de',
+    cmdPax:'pax', cmdPax1:'pax', cmdSolo:'grupo vem sozinho', cmdSolos:'grupos vêm sozinhos',
+    cmdSinDatos:'Sem dados do salão para hoje',
     vjStatRestric:'restrições',
     vjRevisar:'verificar observação',
     vjSinRestriccion:'Sem restrições',
@@ -7606,6 +7700,147 @@ function vjCloseHab(){ VIAJEROS_HAB_OPEN = null; vjRenderBody(); }
 // Shell estático (subtítulo + stats + búsqueda + chips) construido una vez;
 // vjRenderBody() reescribe solo la grilla/lista. Mismo patrón que el search
 // del Menú/Checklist: el input nunca se re-crea mientras se tipea.
+// ── Comedor: capacidad y remontes ────────────────────────────────────────────
+// La pregunta que resuelve esta vista NO es "qué mesa le toca a cada grupo",
+// sino "¿entran todos, y si no, cómo los reparto en el tiempo". El salón tiene
+// un tope físico y cada servicio una ventana; cuando los cubiertos superan el
+// tope hay que REMONTAR, y eso se planifica antes, no a las 20:00.
+// Parámetros del owner (2026-08-17): tope 80 sentados, rotación ~1 h.
+const CMD_CAPACIDAD = 80;
+const CMD_ROTACION_MIN = 60;
+const CMD_TAMANOS = [2, 4, 6, 8, 10];
+
+function comedorMesaPara(n){
+  return CMD_TAMANOS.find(t => t >= n) || CMD_TAMANOS[CMD_TAMANOS.length - 1];
+}
+function comedorCubiertos(g, srv){
+  if (srv === 'desayuno') return (g.dt || 0) + (g.dr || 0);
+  if (srv === 'almuerzo') return g.almuerzos || 0;
+  if (srv === 'cena')     return g.cena || 0;
+  return g.n || 0;
+}
+// Cuántos turnos entran en la ventana del servicio, dada la rotación.
+function comedorTurnosPosibles(srv){
+  const v = VJ_SERVICIOS.find(x => x.key === srv);
+  if (!v) return 1;
+  const min = (h => { const [a,b] = h.split(':').map(Number); return a*60 + b; });
+  return Math.max(1, Math.floor((min(v.to) - min(v.from)) / CMD_ROTACION_MIN));
+}
+// Reparto en turnos: first-fit con los GRUPOS GRANDES PRIMERO (criterio del
+// owner). Son los que más condicionan el montaje, así que ubicarlos antes deja
+// los chicos de relleno — y un grupo nunca se parte entre dos turnos.
+function comedorReparto(grupos, cap){
+  const turnos = [];
+  [...grupos].sort((a, b) => b.cubiertos - a.cubiertos).forEach(g => {
+    let t = turnos.find(x => x.total + g.cubiertos <= cap);
+    if (!t){ t = { grupos: [], total: 0 }; turnos.push(t); }
+    t.grupos.push(g); t.total += g.cubiertos;
+  });
+  return turnos;
+}
+function comedorMontaje(srv){
+  const grupos = ((VIAJEROS_DATA && VIAJEROS_DATA.comedor && VIAJEROS_DATA.comedor.grupos) || [])
+    .map(g => ({ ...g, cubiertos: comedorCubiertos(g, srv) }))
+    .filter(g => g.cubiertos > 0);
+  const cubiertos = grupos.reduce((a, g) => a + g.cubiertos, 0);
+  const mesas = {};
+  grupos.forEach(g => { const m = comedorMesaPara(g.cubiertos); mesas[m] = (mesas[m] || 0) + 1; });
+  const turnos = comedorReparto(grupos, CMD_CAPACIDAD);
+  return {
+    grupos: grupos.sort((a, b) => b.cubiertos - a.cubiertos),
+    mesas, cubiertos,
+    totalMesas: grupos.length,
+    ocupacion: Math.round(cubiertos / CMD_CAPACIDAD * 100),
+    turnos,
+    posibles: comedorTurnosPosibles(srv),
+    // No alcanza la ventana para los turnos que harían falta: eso ya no se
+    // resuelve remontando y hay que decirlo, no esconderlo tras un número.
+    excede: turnos.length > comedorTurnosPosibles(srv)
+  };
+}
+function comedorHoraTurno(srv, i){
+  const v = VJ_SERVICIOS.find(x => x.key === srv);
+  if (!v) return '';
+  const [h, m] = v.from.split(':').map(Number);
+  const t = h * 60 + m + i * CMD_ROTACION_MIN;
+  return String(Math.floor(t / 60) % 24).padStart(2,'0') + ':' + String(t % 60).padStart(2,'0');
+}
+
+function vjSetVista(v){ VIAJEROS_VISTA = v; viajerosRender(); }
+
+function vjRenderComedor(){
+  const c = VIAJEROS_DATA && VIAJEROS_DATA.comedor;
+  if (!c || !(c.grupos || []).length) return `<div class="vj-empty">${t('cmdSinDatos')}</div>`;
+  const act = vjServicioActual();
+  const srv = VIAJEROS_FILTER && VIAJEROS_FILTER.indexOf('srv:') === 0
+              ? VIAJEROS_FILTER.slice(4) : (act ? act.srv.key : 'cena');
+  const m = comedorMontaje(srv);
+  const unSolo = m.turnos.length <= 1;
+  const cls = m.excede ? 'is-alert' : (m.ocupacion > 90 ? 'is-watch' : '');
+
+  const tabs = ['desayuno','almuerzo','cena'].map(k => {
+    const x = comedorMontaje(k);
+    return `<button type="button" class="cmd-srv${k === srv ? ' on' : ''}"
+      onclick="VIAJEROS_FILTER='srv:${k}'; viajerosRender();">
+      <span class="cmd-srv-n">${x.cubiertos}</span>
+      <span class="cmd-srv-l">${t('vjSrv' + k)}</span>
+      ${x.turnos.length > 1 ? `<span class="cmd-srv-t">${x.turnos.length} ${t('cmdTurnos')}</span>` : ''}
+      </button>`;
+  }).join('');
+
+  // Barra de ocupación: el dato que decide si hay que remontar.
+  const cabecera = `
+    <div class="cmd-cap ${cls}">
+      <div class="cmd-cap-top">
+        <span class="cmd-cap-n">${m.cubiertos}<span class="cmd-cap-de">/${CMD_CAPACIDAD}</span></span>
+        <span class="cmd-cap-lbl">${t('cmdOcupacion')} · ${m.ocupacion}%</span>
+      </div>
+      <div class="cmd-cap-bar"><i style="width:${Math.min(100, m.ocupacion)}%"></i></div>
+      <div class="cmd-cap-msg">${
+        m.excede ? t('cmdNoEntra').replace('{n}', m.turnos.length).replace('{v}', m.posibles)
+        : unSolo ? t('cmdEntraUno').replace('{n}', CMD_CAPACIDAD - m.cubiertos)
+        : t('cmdRemonte').replace('{n}', m.turnos.length)}</div>
+    </div>`;
+
+  const filas = CMD_TAMANOS.filter(tam => m.mesas[tam]).map(tam => `
+    <div class="cmd-row">
+      <span class="cmd-row-lbl">${t('cmdMesaDe')} ${tam}</span>
+      <span class="cmd-row-bar"><i style="width:${Math.round(m.mesas[tam] / Math.max(...Object.values(m.mesas)) * 100)}%"></i></span>
+      <span class="cmd-row-n">×${m.mesas[tam]}</span>
+    </div>`).join('');
+
+  const grupoHtml = g => `
+    <div class="cmd-grp">
+      <span class="cmd-grp-mesa">${comedorMesaPara(g.cubiertos)}</span>
+      <div class="cmd-grp-main">
+        <div class="cmd-grp-name">${vjEsc(g.grupo || '—')}
+          <span class="cmd-grp-pax">${g.cubiertos} ${t('cmdPax')}</span></div>
+        <div class="cmd-grp-habs">${t('vjHab')} ${(g.habs || []).join(' · ') || '—'}${
+          g.mov ? `<span class="cmd-grp-mov">${vjEsc(g.mov)}</span>` : ''}</div>
+      </div>
+    </div>`;
+
+  // Con un solo turno la lista va plana; con remonte se agrupa POR TURNO, que
+  // es como se va a leer al montar.
+  const cuerpo = unSolo
+    ? `<div class="cmd-grupos">${m.grupos.map(grupoHtml).join('')}</div>`
+    : m.turnos.map((tn, i) => `
+        <div class="cmd-turno">
+          <div class="cmd-turno-head">${t('cmdTurno')} ${i + 1}
+            <span class="cmd-turno-h">${comedorHoraTurno(srv, i)}</span>
+            <span class="cmd-turno-n">${tn.total} ${t('cmdCubiertos')} · ${tn.grupos.length} ${t('cmdMesas')}</span>
+          </div>
+          ${tn.grupos.map(grupoHtml).join('')}
+        </div>`).join('');
+
+  return `<div class="cmd-srvs">${tabs}</div>${cabecera}
+    <div class="cmd-montaje">
+      <div class="cmd-head">${t('cmdMontaje')}
+        <span class="cmd-head-sub">${m.totalMesas} ${t('cmdMesas')}</span></div>
+      ${filas}
+    </div>${cuerpo}`;
+}
+
 function viajerosRender(){
   const root = document.getElementById('vj-root');
   if (!root) return;
@@ -7618,6 +7853,10 @@ function viajerosRender(){
       <div class="vj-head">
         <div class="vj-title-row">
           <span class="vj-updated" id="vj-updated"></span>
+        </div>
+        <div class="vj-vistas">
+          <button type="button" class="vj-vista" id="vj-vista-viajeros" onclick="vjSetVista('viajeros')"></button>
+          <button type="button" class="vj-vista" id="vj-vista-comedor"  onclick="vjSetVista('comedor')"></button>
         </div>
         <div class="vj-stats" id="vj-stats"></div>
         <div class="search-bar vj-search-bar">
@@ -7638,7 +7877,28 @@ function viajerosRender(){
   vjPaintUpdated();
   document.getElementById('vj-search').placeholder   = t('vjSearchPh');
   vjSyncNumpad();
-  vjRenderStats(); vjRenderChips(); vjRenderBody();
+  const esCom = VIAJEROS_VISTA === 'comedor';
+  // Buscador, numpad y chips son del corcho de viajeros: en Comedor no aplican
+  // y se ocultan en vez de quedar inertes ocupando pantalla.
+  const barra = document.querySelector('.vj-search-bar');
+  if (barra) barra.hidden = esCom;
+  document.getElementById('vj-numpad').hidden = esCom || !VIAJEROS_NUMPAD_OPEN;
+  document.getElementById('vj-chips').hidden  = esCom;
+  // Las celdas de servicio de Viajeros y las del Comedor son la MISMA idea con
+  // números distintos (presencia real vs cubiertos de PGO). Mostrarlas juntas
+  // daba dos filas casi iguales en la misma pantalla, que es justo lo que
+  // veníamos corrigiendo. En Comedor manda la del Comedor.
+  document.getElementById('vj-stats').hidden = esCom;
+  ['viajeros','comedor'].forEach(v => {
+    const b = document.getElementById('vj-vista-' + v);
+    if (b){ b.textContent = t('vjVista_' + v); b.classList.toggle('on', VIAJEROS_VISTA === v); }
+  });
+  vjRenderStats();
+  if (esCom){
+    document.getElementById('vj-body').innerHTML = vjRenderComedor();
+  } else {
+    vjRenderChips(); vjRenderBody();
+  }
 }
 
 // Cubiertos por servicio, no totales del día. El total ya está en el banner de
