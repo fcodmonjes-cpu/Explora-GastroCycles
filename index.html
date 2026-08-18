@@ -6515,7 +6515,13 @@ let cf_historyData    = [];                 // entries loaded for cf_historyDate
 
 function cfInitFirebase(){
   if (cf_fbApp) return cf_fbDb;
-  cf_fbApp = firebase.initializeApp(CF_FIREBASE_CONFIG);
+  // REUSAR la app que ya creó fbAuthInit() en vez de crear otra. initializeApp
+  // dos veces sobre el mismo nombre tira 'app/duplicate-app', y además el
+  // WebSocket del café necesita LA MISMA sesión anónima: con las reglas
+  // cerradas, una app sin auth se queda sin permisos para /orders y /comandas.
+  cf_fbApp = (firebase.apps && firebase.apps.length)
+             ? firebase.app()
+             : firebase.initializeApp(CF_FIREBASE_CONFIG);
   cf_fbDb  = firebase.database();
   return cf_fbDb;
 }
