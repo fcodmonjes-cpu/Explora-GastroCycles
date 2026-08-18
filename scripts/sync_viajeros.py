@@ -2236,6 +2236,76 @@ def _pgo_inout(val, year):
     return "", ""
 
 
+# ── Observaciones por persona del reporte de comedor ─────────────────────────
+# El comedor trae, por grupo, un texto con las restricciones de CADA integrante:
+#   "(Elana) - Observaciones: NO CERDO (Ari Caleb) - ALERGIA a maní, no cerdo."
+# Hasta el 2026-08-17 ese texto se guardaba entero en el grupo y NUNCA pasaba
+# por obs_to_tags: la alergia al maní de Ari Caleb no generaba chip en ninguna
+# parte. Es una tercera fuente de restricciones, además de Dietas y del
+# comentario del Geos, y perderla es exactamente lo que no puede pasar.
+_OBS_PERSONA = re.compile(r"\(([^)]{2,60})\)\s*[-–:]?\s*")
+
+
+def parse_obs_comedor(texto):
+    """'(A) - obs (B) - obs' → [(nombre, observación), …].
+
+    Se parte por los paréntesis, que es lo único estable del formato: el resto
+    del texto varía entre 'Observaciones:', 'Restricciones almientarias:' (sic,
+    con la errata de PGO) y texto suelto.
+    """
+    t = fix_mojibake(texto or "").strip()
+    if not t:
+        return []
+    partes = _OBS_PERSONA.split(t)
+    # split con un grupo de captura deja [previo, nombre1, obs1, nombre2, obs2…]
+    out = []
+    for i in range(1, len(partes) - 1, 2):
+        nombre = partes[i].strip()
+        obs = (partes[i + 1] or "").strip(" -–:;.")
+        if nombre and obs:
+            out.append((nombre, obs))
+    return out
+
+
+def _nombre_calza(corto, completo):
+    """¿'Ari Caleb' identifica a 'Ari Caleb Rosenberg'? Todas las palabras del
+    nombre corto tienen que estar en el completo. Evita que 'Ana' matchee con
+    cualquiera que tenga esa sílaba suelta."""
+    a = set(norm_key(corto).split())
+    b = set(norm_key(completo).split())
+    return bool(a) and a.issubset(b)
+
+
+def cruzar_obs_comedor(rows, comedor):
+    """Suma al `obs` de cada viajero lo que el comedor dice de él.
+
+    El cruce va POR HABITACIÓN primero y por nombre después: el comedor sólo da
+    el nombre de pila, y buscarlo contra los 70 del roster invita a un falso
+    positivo. Acotado a las habs del grupo, el riesgo desaparece.
+    UNIÓN, nunca reemplazo: lo del comedor se agrega a lo que ya había.
+    """
+    if not comedor or not comedor.get("grupos"):
+        return rows, 0
+    sumadas = 0
+    idx = {}
+    for i, r in enumerate(rows):
+        idx.setdefault(str(r[0]), []).append(i)
+    rows = [list(r) for r in rows]
+    for g in comedor["grupos"]:
+        for nombre, obs in parse_obs_comedor(g.get("obs")):
+            # candidatos: sólo los viajeros de las habitaciones de ESE grupo
+            cand = [i for h in (g.get("habs") or []) for i in idx.get(str(h), [])]
+            for i in cand:
+                if not _nombre_calza(nombre, rows[i][1]):
+                    continue
+                actual = rows[i][7] or ""
+                if norm_key(obs) and norm_key(obs) not in norm_key(actual):
+                    rows[i][7] = f"{actual} · {obs}".strip(" ·")
+                    sumadas += 1
+                break
+    return [tuple(r) for r in rows], sumadas
+
+
 def parse_roster_con_dietas(roster_rows, dietas_rows):
     """Roster de la API + observaciones del reporte de Dietas, cruzadas por nombre.
 
@@ -2387,6 +2457,11 @@ def main():
             rows = parse_roster_con_dietas(roster_api, dietas)
         else:
             rows = parse_pgo(geos, dietas, date_str)
+        # TERCERA fuente de restricciones: el texto por persona del comedor.
+        # Se suma a lo que ya haya, nunca lo reemplaza.
+        rows, n_com = cruzar_obs_comedor(rows, comedor)
+        if n_com:
+            print(f"[sync-viajeros] comedor → obs: {n_com} observaciones por persona sumadas")
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
         doc = build_doc(rows, date_str, "pgo", horas, totales, comedor, cumples)
     else:
