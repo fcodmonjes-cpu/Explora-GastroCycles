@@ -2867,14 +2867,25 @@ const BAR_DISHES = [
    lunchTwin:'po2-granos'}
 ];
 
-// --- Retiro de los 12 postres anteriores ------------------------------------
-// Los postres nuevos los reemplazan en almuerzo Y cena. No se borran del
-// archivo: se extraen del catálogo activo y quedan acá completos (con sus
-// maridajes y sus traducciones EN/PT en DISH_TRANS, que siguen intactas).
-// Para revertir la baja basta con: DISHES.push(...DISHES_LEGACY_POSTRES).
-// Mismo criterio que el módulo Postres/86 latente.
+// --- Los 12 postres anteriores pasan a ser los de la CENA -------------------
+// (2026-08-15) Los postres nuevos vienen del documento de ALMUERZO; la cena
+// todavía no tiene el suyo. Al entrar el menú nuevo se cargaron como
+// 'Almuerzo y Cena' y estos 12 se dieron de baja, así que la cena quedó
+// mostrando postres que no le corresponden y sin los propios. Se separa:
+// los nuevos sirven sólo el almuerzo y estos vuelven al catálogo como cena.
+//
+// Se reasigna el servicio a 'Cena' a propósito: su valor original era
+// 'Almuerzo y Cena', que los duplicaría en el almuerzo junto a los nuevos.
+// El resto del objeto queda intacto — conservan sus maridajes y sus
+// traducciones EN/PT en DISH_TRANS, y su `day` ya está en la numeración de la
+// app (nunca pasaron por menuToDish, así que MENU_CYCLE_OFFSET no les aplica).
+// Como no traen `slot`, el render los dibuja como ficha sin rótulo; los nuevos,
+// que sí lo traen, se agrupan por familia. Eso ya está resuelto en
+// menuRenderAlmuerzo() y menuRenderCena().
+// Cuando llegue el documento de cena, estos salen y entran los suyos.
 const DISHES_LEGACY_POSTRES = DISHES.filter(d => d.course === 'Postre');
 DISHES_LEGACY_POSTRES.forEach(d => { const i = DISHES.indexOf(d); if (i > -1) DISHES.splice(i, 1); });
+DISHES_LEGACY_POSTRES.forEach(d => { d.service = 'Cena'; });
 
 // --- Ingreso al catálogo único ---------------------------------------------
 // Todo lo nuevo entra a DISHES con la forma que el resto de la app espera
@@ -2891,7 +2902,10 @@ function menuToDish(d, service, course){
 DISHES.push(
   ...MENU_BUFFET .map(d => menuToDish(d, 'Almuerzo',         'Buffet')),
   ...MENU_SOPAS  .map(d => menuToDish(d, 'Almuerzo',         'Sopa')),
-  ...MENU_POSTRES.map(d => menuToDish(d, 'Almuerzo y Cena',  'Postre'))
+  // Los postres nuevos son del documento de ALMUERZO: no van a la cena. La
+  // cena la cubren los 12 anteriores, restituidos arriba como 'Cena'.
+  ...MENU_POSTRES.map(d => menuToDish(d, 'Almuerzo',          'Postre')),
+  ...DISHES_LEGACY_POSTRES
 );
 
 const WINES = [
@@ -7464,12 +7478,17 @@ function vjFreshness(updatedAt){
   if (!ts || !isFinite(ts)) return null;
   const diff = Date.now() - ts;
   if (diff < 0) return null;                     // futuro: reloj desalineado
+  // La granularidad del texto va por su cuenta, NO atada a los umbrales de
+  // color: minutos bajo la hora, horas bajo el día, días después. Estuvo atada
+  // a VJ_SYNC_FRESH_MS y funcionaba sólo porque ese umbral valía 1 h; al subirlo
+  // a 2,5 h para acompañar el cron de cada 2 h, el chip pasó a decir cosas como
+  // "hace 120 min" en vez de "hace 2 h".
   let texto;
   const min = Math.floor(diff / 60000);
-  if (min < 1)          texto = t('vjSyncAgoNow');
-  else if (diff < VJ_SYNC_FRESH_MS) texto = t('vjSyncAgoMin').replace('{n}', min);
-  else if (diff < 86400000)         texto = t('vjSyncAgoHours').replace('{n}', Math.floor(diff / 3600000));
-  else                              texto = t('vjSyncAgoDays').replace('{n}', Math.floor(diff / 86400000));
+  if (min < 1)              texto = t('vjSyncAgoNow');
+  else if (diff < 3600000)  texto = t('vjSyncAgoMin').replace('{n}', min);
+  else if (diff < 86400000) texto = t('vjSyncAgoHours').replace('{n}', Math.floor(diff / 3600000));
+  else                      texto = t('vjSyncAgoDays').replace('{n}', Math.floor(diff / 86400000));
   const cls   = diff < VJ_SYNC_FRESH_MS ? 'is-fresh' : diff < VJ_SYNC_STALE_MS ? 'is-stale' : 'is-down';
   const estado = cls === 'is-fresh' ? t('vjSyncFresh') : cls === 'is-stale' ? t('vjSyncStale') : t('vjSyncDown');
   return { cls, texto, estado };
