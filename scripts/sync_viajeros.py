@@ -2425,6 +2425,41 @@ def print_summary(doc):
     print(f"  salen el {doc['date']:14s} {len(salen):2d}  {', '.join(salen)}")
 
 
+def print_comedor(doc):
+    """Quién NO tiene cubierto, por servicio y por grupo.
+
+    La pregunta se repite cada vez que las dos cifras se separan: si hay 79 en
+    el lodge y sólo 46 cenan, ¿dónde están los otros 33? El reporte de PGO ya
+    trae la respuesta por grupo (cubiertos asignados vs pax del grupo); esto
+    solo la pone en el log en vez de obligar a abrir PGO a mano.
+
+    Nombres de grupo y horas de movimiento, nunca las observaciones — ahí
+    viajan las restricciones por persona.
+    """
+    com = doc.get("comedor") or {}
+    grupos = com.get("grupos") or []
+    if not grupos:
+        return
+    tot = com.get("totales") or {}
+    print(f"[sync-viajeros] comedor · {len(grupos)} grupos · n={tot.get('n')} "
+          f"desayunos={tot.get('desayunos')} almuerzos={tot.get('almuerzos')} cena={tot.get('cena')}")
+    for etiqueta, campo in (("desayuno", None), ("almuerzo", "almuerzos"), ("cena", "cena")):
+        faltan = []
+        for g in grupos:
+            cub = (g.get("dt", 0) + g.get("dr", 0)) if campo is None else g.get(campo, 0)
+            hueco = g.get("n", 0) - cub
+            if hueco > 0:
+                faltan.append((g, hueco))
+        if not faltan:
+            continue
+        print(f"  {etiqueta}: {sum(h for _, h in faltan)} sin cubierto "
+              f"en {len(faltan)} de {len(grupos)} grupos")
+        for g, hueco in sorted(faltan, key=lambda x: -x[1]):
+            habs = ",".join(g.get("habs") or []) or "—"
+            print(f"    -{hueco:2d}  {(g.get('grupo') or '')[:26]:26s} hab {habs:14s} "
+                  f"n={g.get('n')} {g.get('mov', '')}")
+
+
 def _arg_value(flag):
     """Valor que sigue a un flag en argv, o None (p.ej. --date 2026-07-26)."""
     if flag in sys.argv:
@@ -2484,6 +2519,7 @@ def main():
         return
 
     print_summary(doc)
+    print_comedor(doc)
 
     if "--debug" in sys.argv:
         print("[sync-viajeros] Modo debug — Firebase no modificado.")
