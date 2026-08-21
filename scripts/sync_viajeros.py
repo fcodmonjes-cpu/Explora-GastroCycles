@@ -2248,7 +2248,12 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
                 comedor = parse_comedor(filas_com)
                 # El detalle por grupo es de MAÑANA. Los cubiertos de HOY viven
                 # en la tabla del pie; sin ella no hay número de hoy que mostrar.
-                hoy_tot, man_tot = parse_comedor_resumen(page.evaluate(_PGO_COMEDOR_RESUMEN_JS))
+                filas_res = page.evaluate(_PGO_COMEDOR_RESUMEN_JS)
+                # La tabla del pie son 7 filas de etiqueta + números: se vuelca
+                # entera al log. Sin esto, elegir la columna equivocada se ve
+                # exactamente igual que elegir la correcta.
+                print(f"[sync-viajeros] tabla Hoy/Mañana cruda: {filas_res}")
+                hoy_tot, man_tot = parse_comedor_resumen(filas_res)
                 comedor["totalesManana"] = comedor.pop("totales")
                 comedor["diaGrupos"] = "manana"
                 if hoy_tot:
