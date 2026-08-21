@@ -2372,17 +2372,25 @@ def _nombre_calza(corto, completo):
     return bool(a) and a.issubset(b)
 
 
-def cruzar_obs_comedor(rows, comedor):
+def cruzar_obs_comedor(rows, comedor, date_str=None):
     """Suma al `obs` de cada viajero lo que el comedor dice de él.
 
     El cruce va POR HABITACIÓN primero y por nombre después: el comedor sólo da
     el nombre de pila, y buscarlo contra los 70 del roster invita a un falso
     positivo. Acotado a las habs del grupo, el riesgo desaparece.
     UNIÓN, nunca reemplazo: lo del comedor se agrega a lo que ya había.
+
+    OJO CON EL DÍA: el detalle por grupo del comedor describe MAÑANA, y sus
+    habitaciones son las de mañana. Una restricción es de la persona y no del
+    día, así que sigue sirviendo — pero SÓLO para quien también está mañana.
+    A quien se va hoy ese reporte no lo describe, y su habitación puede
+    amanecer ocupada por otro: como el comedor sólo da el nombre de pila, ahí
+    es exactamente donde nacería el falso positivo que pega una alergia ajena
+    en el plato equivocado. Por eso los salientes de hoy quedan fuera.
     """
     if not comedor or not comedor.get("grupos"):
         return rows, 0
-    sumadas = 0
+    sumadas, saltadas = 0, 0
     idx = {}
     for i, r in enumerate(rows):
         idx.setdefault(str(r[0]), []).append(i)
@@ -2392,6 +2400,10 @@ def cruzar_obs_comedor(rows, comedor):
             # candidatos: sólo los viajeros de las habitaciones de ESE grupo
             cand = [i for h in (g.get("habs") or []) for i in idx.get(str(h), [])]
             for i in cand:
+                if date_str and rows[i][6] == date_str:
+                    # Se va hoy: mañana esa hab puede ser de otra persona.
+                    saltadas += 1
+                    continue
                 if not _nombre_calza(nombre, rows[i][1]):
                     continue
                 actual = rows[i][7] or ""
@@ -2399,6 +2411,9 @@ def cruzar_obs_comedor(rows, comedor):
                     rows[i][7] = f"{actual} · {obs}".strip(" ·")
                     sumadas += 1
                 break
+    if saltadas:
+        print(f"[sync-viajeros] comedor → obs: {saltadas} candidatos salteados "
+              "(se van hoy; el detalle del comedor es de mañana)")
     return [tuple(r) for r in rows], sumadas
 
 
@@ -2597,7 +2612,7 @@ def main():
             rows = parse_pgo(geos, dietas, date_str)
         # TERCERA fuente de restricciones: el texto por persona del comedor.
         # Se suma a lo que ya haya, nunca lo reemplaza.
-        rows, n_com = cruzar_obs_comedor(rows, comedor)
+        rows, n_com = cruzar_obs_comedor(rows, comedor, date_str)
         if n_com:
             print(f"[sync-viajeros] comedor → obs: {n_com} observaciones por persona sumadas")
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
