@@ -1537,8 +1537,79 @@ def parse_birthday(rows):
     return out
 
 
+# Al pie del reporte de comedor hay una tabla chica "Comida | Hoy | Mañana".
+# Es la ÚNICA fuente de los cubiertos de HOY: el detalle por grupo de arriba
+# describe MAÑANA. Verificado el 2026-08-21 contra el propio PGO — la suma de
+# las columnas por grupo daba exacto la columna Mañana (dt 9 · dr 70 · alm 54 ·
+# cena 46) mientras Hoy decía 0 · 67 · 61 · 79. Por eso "79 en el lodge" y
+# "46 comen" convivían en la misma pantalla: eran dos días distintos.
+_PGO_COMEDOR_RESUMEN_JS = """
+  () => {
+    const norm = s => (s||'').replace(/\\s+/g,' ').trim();
+    const low  = s => norm(s).toLowerCase();
+    for (const t of document.querySelectorAll('table')) {
+      const txt = low(t.textContent);
+      if (!txt.includes('cena') || !txt.includes('desayuno')) continue;
+      if (!txt.includes('hoy')) continue;
+      if (!txt.includes('mañana') && !txt.includes('manana')) continue;
+      return [...t.querySelectorAll('tr')]
+        .map(tr => [...tr.children].map(c => norm(c.textContent)))
+        .filter(f => f.length >= 2);
+    }
+    return null;
+  }
+"""
+
+# Etiqueta del reporte → campo interno. "desayuno temprano" se resuelve antes
+# que "desayuno" porque el match es exacto sobre la etiqueta normalizada.
+_COMEDOR_RESUMEN_FILAS = {
+    "desayuno temprano":   "dt",
+    "desayuno":            "dr",
+    "almuerzo hotel":      "almuerzos",
+    "full":                "full",
+    "almuerzo en terreno": "terreno",
+    "almuerzo terreno":    "terreno",
+    "cena":                "cena",
+}
+
+
+def parse_comedor_resumen(filas):
+    """Tabla del pie → (totales_hoy, totales_manana). (None, None) si no está.
+
+    `almuerzos` es sólo "Almuerzo Hotel": los cubiertos que se sirven en el
+    comedor. "Full" y "Almuerzo en Terreno" van aparte — esa gente come, pero
+    no en el salón, y sumarlos inflaría lo que se manda a cocina.
+    """
+    if not filas:
+        return None, None
+    i_hoy = i_man = None
+    dias = {"hoy": {}, "manana": {}}
+    for fila in filas:
+        cols = [norm_key(c) for c in fila]
+        if i_hoy is None and "hoy" in cols:            # fila de encabezado
+            i_hoy = cols.index("hoy")
+            i_man = next((i for i, c in enumerate(cols) if c.startswith("manana")), None)
+            continue
+        campo = _COMEDOR_RESUMEN_FILAS.get(cols[0])
+        if not campo or i_hoy is None or i_hoy >= len(fila):
+            continue
+        dias["hoy"][campo] = _to_int(fila[i_hoy])
+        if i_man is not None and i_man < len(fila):
+            dias["manana"][campo] = _to_int(fila[i_man])
+    if not dias["hoy"]:
+        return None, None
+    for d in dias.values():
+        if d:
+            d["desayunos"] = d.get("dt", 0) + d.get("dr", 0)
+    return dias["hoy"], (dias["manana"] or None)
+
+
 def parse_comedor(rows):
-    """Filas del reporte → grupos + totales por servicio."""
+    """Filas del reporte → grupos + totales por servicio.
+
+    OJO: el detalle por grupo es el de MAÑANA (ver _PGO_COMEDOR_RESUMEN_JS).
+    Los totales de HOY salen de parse_comedor_resumen().
+    """
     grupos, tot = [], {"dt": 0, "dr": 0, "almuerzos": 0, "cena": 0, "n": 0}
     for raw in rows:
         r = _remap(raw, PGO_COMEDOR_COLS)
@@ -2175,7 +2246,23 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
                 comedor = None
             else:
                 comedor = parse_comedor(filas_com)
-                print(f"[sync-viajeros] comedor: {len(comedor['grupos'])} grupos · {comedor['totales']}")
+                # El detalle por grupo es de MAÑANA. Los cubiertos de HOY viven
+                # en la tabla del pie; sin ella no hay número de hoy que mostrar.
+                hoy_tot, man_tot = parse_comedor_resumen(page.evaluate(_PGO_COMEDOR_RESUMEN_JS))
+                comedor["totalesManana"] = comedor.pop("totales")
+                comedor["diaGrupos"] = "manana"
+                if hoy_tot:
+                    comedor["totales"] = hoy_tot
+                    print(f"[sync-viajeros] comedor HOY: {hoy_tot}")
+                    if man_tot:
+                        print(f"[sync-viajeros] comedor MAÑANA (tabla del pie): {man_tot}")
+                else:
+                    # Sin cubiertos es mejor que con los del día equivocado:
+                    # la app no dibuja el chip "comen" si no hay totales.
+                    print("[sync-viajeros] Aviso: no encontré la tabla Hoy/Mañana — "
+                          "sin cubiertos de hoy (el detalle por grupo es de mañana).")
+                print(f"[sync-viajeros] comedor: {len(comedor['grupos'])} grupos (mañana) · "
+                      f"{comedor['totalesManana']}")
         except Exception as e:
             print(f"[sync-viajeros] Aviso: sin reporte de comedor ({type(e).__name__}: {e})")
             comedor = None
@@ -2440,8 +2527,15 @@ def print_comedor(doc):
     grupos = com.get("grupos") or []
     if not grupos:
         return
-    tot = com.get("totales") or {}
-    print(f"[sync-viajeros] comedor · {len(grupos)} grupos · n={tot.get('n')} "
+    hoy = com.get("totales") or {}
+    if hoy:
+        print(f"[sync-viajeros] cubiertos HOY · desayunos={hoy.get('desayunos')} "
+              f"almuerzo salón={hoy.get('almuerzos')} full={hoy.get('full')} "
+              f"terreno={hoy.get('terreno')} cena={hoy.get('cena')}")
+    # El desglose de abajo es de MAÑANA: el detalle por grupo de PGO describe
+    # el día siguiente, no hoy.
+    tot = com.get("totalesManana") or {}
+    print(f"[sync-viajeros] comedor MAÑANA · {len(grupos)} grupos · n={tot.get('n')} "
           f"desayunos={tot.get('desayunos')} almuerzos={tot.get('almuerzos')} cena={tot.get('cena')}")
     for etiqueta, campo in (("desayuno", None), ("almuerzo", "almuerzos"), ("cena", "cena")):
         faltan = []
