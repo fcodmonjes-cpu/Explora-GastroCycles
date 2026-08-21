@@ -1602,6 +1602,54 @@ def _pgo_comedor_resumen(page):
         return None
 
 
+def _pgo_forzar_fecha(page, fecha):
+    """Fija la fecha como lo haría un dedo: abriendo el calendario y tocando el día.
+
+    Tipear + Enter deja el input con el texto correcto pero no siempre dispara
+    el evento que Vue escucha, así que el componente nunca se entera y la
+    grilla no se recarga. Dos mecanismos distintos al de _pgo_set_date:
+    1) el setter nativo del input + eventos input/change (lo que espera Vue);
+    2) el click sobre la celda del día en el calendario de Element UI.
+    """
+    try:
+        dia = int(str(fecha).split("-")[0])
+    except (ValueError, IndexError):
+        return False
+    try:
+        page.locator("input[data-pgo-date='1']").first.click(timeout=5000)
+        page.wait_for_timeout(500)
+    except Exception:
+        pass
+    try:
+        return bool(page.evaluate("""
+          ([fecha, dia]) => {
+            const el = document.querySelector("input[data-pgo-date='1']");
+            if (el) {
+              const setter = Object.getOwnPropertyDescriptor(
+                window.HTMLInputElement.prototype, 'value').set;
+              setter.call(el, fecha);
+              el.dispatchEvent(new Event('input',  {bubbles: true}));
+              el.dispatchEvent(new Event('change', {bubbles: true}));
+            }
+            // Celda del día en el calendario abierto: se excluyen los días de
+            // los meses vecinos, que muestran el mismo número.
+            const vis = n => n && n.offsetParent !== null;
+            for (const td of document.querySelectorAll('td')) {
+              if (!vis(td)) continue;
+              const cls = td.className || '';
+              if (!/available|current/.test(cls)) continue;
+              if (/prev-month|next-month|disabled/.test(cls)) continue;
+              if ((td.innerText || '').trim() !== String(dia)) continue;
+              (td.querySelector('span,div') || td).click();
+              return true;
+            }
+            return !!el;
+          }
+        """, [fecha, dia]))
+    except Exception:
+        return False
+
+
 def _pgo_refrescar_js(page):
     """Click a REFRESCAR despachado desde el DOM, sobre el ancestro clickeable.
 
@@ -2308,15 +2356,18 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
                 # Segundo intento: click despachado desde el DOM, que sí llega
                 # al elemento clickeable y no a un <span> interior.
                 print("[sync-viajeros] comedor: la tabla no cambió al fijar la fecha; "
-                      "reintento el REFRESCAR desde el DOM.")
-                if _pgo_refrescar_js(page):
-                    page.wait_for_load_state("networkidle", timeout=60000)
-                    page.wait_for_timeout(1500)
-                    filas_res = _pgo_comedor_resumen(page)
-                    fecha_contenido_ok = filas_res != res_defecto
-                    if fecha_contenido_ok:
-                        filas_com = _pgo_extraer_tabla(page)
-                        print(f"[sync-viajeros] comedor: recargado, {len(filas_com)} filas.")
+                      "reintento con el calendario y el REFRESCAR desde el DOM.")
+                _pgo_forzar_fecha(page, fecha)      # calendario + eventos de Vue
+                page.wait_for_timeout(800)
+                _pgo_refrescar_js(page)             # click sobre el ancestro clickeable
+                page.wait_for_load_state("networkidle", timeout=60000)
+                page.wait_for_timeout(1500)
+                filas_res = _pgo_comedor_resumen(page)
+                fecha_contenido_ok = filas_res != res_defecto
+                if fecha_contenido_ok:
+                    filas_com = _pgo_extraer_tabla(page)
+                    print(f"[sync-viajeros] comedor: recargado, {len(filas_com)} filas.")
+                    print(f"[sync-viajeros] tabla Hoy/Mañana tras el reintento: {filas_res}")
             if not fecha_contenido_ok:
                 # La grilla sigue en el día por defecto: mejor sin comedor que
                 # con los cubiertos del día equivocado.
