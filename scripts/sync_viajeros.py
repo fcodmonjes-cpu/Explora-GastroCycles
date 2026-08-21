@@ -851,6 +851,27 @@ def _pgo_structure_report(page):
               f"clase='{r['cls']}' 1er_hijo='{r['muestra']}'")
 
 
+def _pgo_extraer_tabla(page):
+    """La grilla que se esté mostrando → [{encabezado_normalizado: valor}].
+
+    Es la segunda mitad de _pgo_read_report, separada para poder releer la
+    tabla después de forzar un refresco sin volver a navegar ni re-fijar la
+    fecha (si se navega, PGO vuelve a su fecha por defecto).
+    """
+    data = None
+    for _ in range(30):                           # hasta ~30 s
+        data = page.evaluate(_PGO_TABLE_JS, PGO_TABLE_SEL or None)
+        if data and data.get("rows"):
+            break
+        page.wait_for_timeout(1000)
+    if not data or not data.get("rows"):
+        return []
+    headers = [norm_key(h) for h in data["headers"]]
+    return [{headers[i]: fix_mojibake(cells[i])
+             for i in range(min(len(headers), len(cells)))}
+            for cells in data["rows"]]
+
+
 def _pgo_read_report(page, path, fecha, dump_name=None, kind=None, date_iso=None):
     """Abre un reporte, fija la fecha y devuelve [{encabezado_normalizado: valor}].
 
@@ -1573,6 +1594,42 @@ _COMEDOR_RESUMEN_FILAS = {
 }
 
 
+def _pgo_comedor_resumen(page):
+    """La tabla del pie tal cual, o None."""
+    try:
+        return page.evaluate(_PGO_COMEDOR_RESUMEN_JS)
+    except Exception:
+        return None
+
+
+def _pgo_refrescar_js(page):
+    """Click a REFRESCAR despachado desde el DOM, sobre el ancestro clickeable.
+
+    Playwright reporta "clickeado" aunque el click caiga en un <span> interior
+    que no dispara nada: en /comedor eso dejaba la grilla en la fecha por
+    defecto con el input ya mostrando la pedida — el input decía 21, la tabla
+    era del 22, y la post-condición (que sólo mira el input) daba OK.
+    """
+    try:
+        return bool(page.evaluate("""
+          (texto) => {
+            const rx = new RegExp(texto, 'i');
+            const vis = el => el && el.offsetParent !== null;
+            for (const el of document.querySelectorAll('button,a,span,div,input[type=button],input[type=submit]')) {
+              if (!vis(el)) continue;
+              const t = (el.innerText || el.value || '').trim();
+              if (!rx.test(t) || t.length > 40) continue;
+              const target = el.closest('button,a,[role=button]') || el;
+              target.click();
+              return true;
+            }
+            return false;
+          }
+        """, PGO_SEL_REFRESH))
+    except Exception:
+        return False
+
+
 def parse_comedor_resumen(filas):
     """Tabla del pie → (totales_hoy, totales_manana). (None, None) si no está.
 
@@ -2237,37 +2294,66 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         # frente al conteo por presencia que hace la app; si divergen, algo se
         # perdio en el cruce. Que falle no debe tumbar el sync.
         try:
+            # Foto de la tabla del pie ANTES de tocar la fecha: el reporte abre
+            # en la fecha por defecto de PGO (mañana). Sirve de testigo — si
+            # después de fijar la fecha la tabla es idéntica, el REFRESCAR no
+            # surtió efecto y se estaría leyendo el día por defecto.
+            page.goto(PGO_BASE_URL + PGO_COMEDOR_PATH, wait_until="networkidle", timeout=60000)
+            res_defecto = _pgo_comedor_resumen(page)
             filas_com = _pgo_read_report(page, PGO_COMEDOR_PATH, fecha,
                                          "comedor" if dump else None)
-            if not getattr(_pgo_read_report, "ultima_fecha_ok", True):
+            filas_res = _pgo_comedor_resumen(page)
+            fecha_contenido_ok = not (fecha and res_defecto and filas_res == res_defecto)
+            if not fecha_contenido_ok:
+                # Segundo intento: click despachado desde el DOM, que sí llega
+                # al elemento clickeable y no a un <span> interior.
+                print("[sync-viajeros] comedor: la tabla no cambió al fijar la fecha; "
+                      "reintento el REFRESCAR desde el DOM.")
+                if _pgo_refrescar_js(page):
+                    page.wait_for_load_state("networkidle", timeout=60000)
+                    page.wait_for_timeout(1500)
+                    filas_res = _pgo_comedor_resumen(page)
+                    fecha_contenido_ok = filas_res != res_defecto
+                    if fecha_contenido_ok:
+                        filas_com = _pgo_extraer_tabla(page)
+                        print(f"[sync-viajeros] comedor: recargado, {len(filas_com)} filas.")
+            if not fecha_contenido_ok:
+                # La grilla sigue en el día por defecto: mejor sin comedor que
+                # con los cubiertos del día equivocado.
+                print("[sync-viajeros] comedor DESCARTADO: la grilla quedó en la fecha "
+                      "por defecto de PGO pese a fijar la fecha.")
+                comedor = None
+            elif not getattr(_pgo_read_report, "ultima_fecha_ok", True):
                 # Mejor sin comedor que con el comedor de MAÑANA: los cubiertos
                 # del día equivocado se verían perfectamente normales.
                 print("[sync-viajeros] comedor DESCARTADO: no se pudo confirmar la fecha.")
                 comedor = None
             else:
                 comedor = parse_comedor(filas_com)
-                # El detalle por grupo es de MAÑANA. Los cubiertos de HOY viven
-                # en la tabla del pie; sin ella no hay número de hoy que mostrar.
-                filas_res = page.evaluate(_PGO_COMEDOR_RESUMEN_JS)
                 # La tabla del pie son 7 filas de etiqueta + números: se vuelca
-                # entera al log. Sin esto, elegir la columna equivocada se ve
-                # exactamente igual que elegir la correcta.
+                # entera al log. Sin esto, leer la columna equivocada se ve
+                # exactamente igual que leer la correcta.
                 print(f"[sync-viajeros] tabla Hoy/Mañana cruda: {filas_res}")
                 hoy_tot, man_tot = parse_comedor_resumen(filas_res)
-                comedor["totalesManana"] = comedor.pop("totales")
-                comedor["diaGrupos"] = "manana"
+                sumas = comedor.pop("totales")          # suma del detalle por grupo
+                comedor["diaGrupos"] = "hoy"
                 if hoy_tot:
                     comedor["totales"] = hoy_tot
+                    comedor["totalesManana"] = man_tot
                     print(f"[sync-viajeros] comedor HOY: {hoy_tot}")
-                    if man_tot:
-                        print(f"[sync-viajeros] comedor MAÑANA (tabla del pie): {man_tot}")
+                    # El detalle por grupo y la columna Hoy describen el MISMO
+                    # día: si no cuadran, uno de los dos no es el día pedido.
+                    if any(sumas.get(k) != hoy_tot.get(k) for k in ("almuerzos", "cena")):
+                        comedor["diaGrupos"] = "?"
+                        print(f"[sync-viajeros] ⚠ el detalle por grupo ({sumas}) no cuadra "
+                              f"con la columna Hoy: el detalle puede ser de otro día.")
                 else:
                     # Sin cubiertos es mejor que con los del día equivocado:
                     # la app no dibuja el chip "comen" si no hay totales.
-                    print("[sync-viajeros] Aviso: no encontré la tabla Hoy/Mañana — "
-                          "sin cubiertos de hoy (el detalle por grupo es de mañana).")
-                print(f"[sync-viajeros] comedor: {len(comedor['grupos'])} grupos (mañana) · "
-                      f"{comedor['totalesManana']}")
+                    comedor["totalesManana"] = sumas
+                    print("[sync-viajeros] Aviso: no encontré la tabla Hoy/Mañana — sin cubiertos.")
+                print(f"[sync-viajeros] comedor: {len(comedor['grupos'])} grupos · "
+                      f"detalle={comedor['diaGrupos']} · suma del detalle {sumas}")
         except Exception as e:
             print(f"[sync-viajeros] Aviso: sin reporte de comedor ({type(e).__name__}: {e})")
             comedor = None
@@ -2617,7 +2703,12 @@ def main():
             rows = parse_pgo(geos, dietas, date_str)
         # TERCERA fuente de restricciones: el texto por persona del comedor.
         # Se suma a lo que ya haya, nunca lo reemplaza.
-        rows, n_com = cruzar_obs_comedor(rows, comedor, date_str)
+        # El filtro de salientes sólo corresponde si el detalle del comedor NO
+        # es de hoy: con el detalle del día correcto, excluirlos borraría las
+        # restricciones reales de quienes justamente se están atendiendo hoy.
+        dia_grupos = (comedor or {}).get("diaGrupos")
+        rows, n_com = cruzar_obs_comedor(
+            rows, comedor, None if dia_grupos == "hoy" else date_str)
         if n_com:
             print(f"[sync-viajeros] comedor → obs: {n_com} observaciones por persona sumadas")
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
