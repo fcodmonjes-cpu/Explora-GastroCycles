@@ -2141,6 +2141,13 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-nota-add { background:none; border:0; padding:2px 0; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; color:var(--text-tertiary); cursor:pointer; }
 .vj-nota-add:active { color:var(--gold); }
 .vj-nota-editor { margin-top:5px; }
+/* La firma va ARRIBA del editor: se escribe una vez y queda, así que en el
+   uso diario es un recordatorio de con qué nombre estás anotando, no un
+   paso más. Nunca bloquea: se puede guardar sin firmar. */
+.vj-nota-firma { display:flex; align-items:center; gap:6px; margin-bottom:5px; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); }
+.vj-nota-firma-input { flex:0 1 130px; background:none; border:0; border-bottom:0.5px solid var(--border-md); color:var(--text-secondary); font-family:'Courier Prime','Courier New',monospace; font-size:12px; letter-spacing:0; text-transform:none; padding:1px 2px; outline:none; }
+.vj-nota-firma-input:focus { border-bottom-color:var(--gold); }
+.vj-nota-firma-tag { color:var(--text-tertiary); margin-left:5px; font-size:10px; }
 .vj-nota-chips { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:5px; }
 .vj-nota-chip { background:none; border:0.5px solid var(--border-md); border-radius:999px; padding:3px 9px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; color:var(--text-secondary); cursor:pointer; }
 .vj-nota-chip:active { border-color:var(--gold); color:var(--gold); }
@@ -3832,6 +3839,11 @@ let VIAJEROS_VISTA         = 'viajeros';   // 'viajeros' | 'comedor'   // salien
 let VJ_NOTAS               = {};     // { pid: { notaId: {txt, ts, chip} } }
 let VJ_NOTA_OPEN           = null;   // pid con el editor abierto (uno a la vez)
 let VJ_NOTA_BUF            = '';     // lo tipeado, para que un re-render no lo pierda
+// Firma de quien escribe. Vive en el DISPOSITIVO, no en la base: se escribe una
+// vez y queda. No es control de acceso —la sesión es anónima y nadie verifica
+// nada— sino saber a quién preguntarle por una nota. Texto libre a propósito:
+// una lista pre-armada hay que mantenerla cada vez que entra alguien nuevo.
+let VJ_FIRMA               = '';
 
 // ── Ventanas de servicio (para el conteo por hora) ──────────────────────────
 // Un viajero cuenta para un servicio si ESTABA EN EL LODGE mientras el servicio
@@ -4067,6 +4079,7 @@ const UI = {
     vjNotaGuardar:'guardar', vjNotaCancelar:'cancelar', vjNotaBorrar:'borrar nota',
     vjNotaSinGuardar:'La nota NO se guardó — revisá la conexión',
     vjNotaOjo:'Se borra sola un par de días después del check-out. Las alergias van en PGO, no acá.',
+    vjNotaFirma:'firma', vjNotaFirmaPh:'tu nombre',
     vjNotaChips:['agua con gas','agua sin gas','special request'],
     vjEnLodge:'en el lodge', vjComen:'comen', vjComenTit:'Cubiertos asignados en PGO',
     vjStatRestric:'restricciones',
@@ -4279,6 +4292,7 @@ const UI = {
     vjNotaGuardar:'save', vjNotaCancelar:'cancel', vjNotaBorrar:'delete note',
     vjNotaSinGuardar:'The note was NOT saved — check the connection',
     vjNotaOjo:'Clears itself a couple of days after check-out. Allergies belong in PGO, not here.',
+    vjNotaFirma:'signed', vjNotaFirmaPh:'your name',
     vjNotaChips:['sparkling water','still water','special request'],
     vjEnLodge:'on property', vjComen:'dining', vjComenTit:'Covers assigned in PGO',
     vjStatRestric:'restrictions',
@@ -4491,6 +4505,7 @@ const UI = {
     vjNotaGuardar:'salvar', vjNotaCancelar:'cancelar', vjNotaBorrar:'apagar nota',
     vjNotaSinGuardar:'A nota NÃO foi salva — verifique a conexão',
     vjNotaOjo:'Some sozinha alguns dias após o check-out. Alergias vão no PGO, não aqui.',
+    vjNotaFirma:'assinatura', vjNotaFirmaPh:'seu nome',
     vjNotaChips:['água com gás','água sem gás','special request'],
     vjEnLodge:'no lodge', vjComen:'comem', vjComenTit:'Talheres atribuídos no PGO',
     vjStatRestric:'restrições',
@@ -8146,6 +8161,16 @@ function vjTagChips(tr){
 // Vive en /viajeros_notas/{pid} y se mezcla con la ficha al dibujar. Nunca se
 // escribe dentro de /viajeros/current: ese doc lo pisa el sync entero cada
 // media hora.
+// localStorage puede tirar excepción (Safari privado, sitio con datos
+// bloqueados): la firma es una comodidad, nunca puede tumbar el módulo.
+function vjFirmaLeer(){
+  try { VJ_FIRMA = localStorage.getItem('ata-firma') || ''; } catch(e){ VJ_FIRMA = ''; }
+  return VJ_FIRMA;
+}
+function vjFirmaSet(v){
+  VJ_FIRMA = String(v || '').trim().slice(0, 24);   // 24 = el tope de las reglas
+  try { localStorage.setItem('ata-firma', VJ_FIRMA); } catch(e){}
+}
 function vjNotasUrl(sufijo){
   return `${CF_FIREBASE_CONFIG.databaseURL}/${VJ_NOTAS_PATH}${sufijo || ''}.json${fbQS()}`;
 }
@@ -8175,6 +8200,7 @@ async function vjNotaAgregar(pid, txt, chip){
   if (!pid || !txt) return;
   const nota = { txt, ts: Date.now() };
   if (chip) nota.chip = chip;
+  if (VJ_FIRMA) nota.autor = VJ_FIRMA;
   try {
     const resp = await fetch(vjNotasUrl('/' + pid), {
       method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(nota)
@@ -8229,7 +8255,7 @@ function vjNotasBloque(tr){
   const pid = vjEsc(tr.pid);
   const lista = notas.map(n => `
     <div class="vj-nota">
-      <span class="vj-nota-txt">${vjEsc(n.txt)}</span>
+      <span class="vj-nota-txt">${vjEsc(n.txt)}${n.autor ? `<span class="vj-nota-firma-tag">· ${vjEsc(n.autor)}</span>` : ''}</span>
       <button type="button" class="vj-nota-x" aria-label="${t('vjNotaBorrar')}"
               onclick="event.stopPropagation();vjNotaBorrar('${pid}','${vjEsc(n.id)}')">×</button>
     </div>`).join('');
@@ -8238,6 +8264,11 @@ function vjNotasBloque(tr){
             onclick="event.stopPropagation();vjNotaChip('${pid}',${JSON.stringify(c).replace(/"/g,'&quot;')})">${vjEsc(c)}</button>`).join('');
   const editor = abierto ? `
     <div class="vj-nota-editor" onclick="event.stopPropagation()">
+      <div class="vj-nota-firma">
+        <span>${t('vjNotaFirma')}</span>
+        <input type="text" class="vj-nota-firma-input" maxlength="24" value="${vjEsc(vjFirmaLeer())}"
+               placeholder="${t('vjNotaFirmaPh')}" oninput="vjFirmaSet(this.value)">
+      </div>
       <div class="vj-nota-chips">${chips}</div>
       <input type="text" class="vj-nota-input" maxlength="280" value="${vjEsc(VJ_NOTA_BUF)}"
              placeholder="${t('vjNotaPh')}" oninput="vjNotaInput(this.value)"
