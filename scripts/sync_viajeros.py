@@ -58,7 +58,7 @@ Modos:
    --date YYYY-MM-DD elige la fecha del reporte, por defecto hoy)
 """
 
-import json, os, re, sys, datetime, unicodedata
+import json, os, re, sys, time, datetime, unicodedata
 
 DB_URL = "https://explora-cafe-orders-default-rtdb.firebaseio.com"
 
@@ -334,15 +334,53 @@ def fb_key(valor, fallback="SIN HAB"):
     return k or fallback
 
 
+# ── Identidad del viajero para las notas ─────────────────────────────────────
+# `id` (h{hab}-{i}) NO sirve como ancla: el índice se corre cada vez que alguien
+# se va, y la hab cambia si al huésped lo mudan. Anclar por HABITACIÓN es peor
+# todavía — es el error que ya nos mordió con las observaciones del comedor: el
+# que llega hereda las notas del que se fue.
+#
+# `pid` es la persona: nombre sin tildes, en minúscula, con guiones. Estable
+# ante mudanzas y ante cambios de orden, y cuando llega un huésped nuevo su pid
+# simplemente no existe — la "limpieza al cambiar de ocupante" sale gratis, sin
+# tener que detectar el recambio.
+#
+# Se calcula ACÁ y viaja dentro del doc. La app lo lee, no lo recalcula: dos
+# implementaciones del mismo slug (uña en Python, otra en JS) divergen tarde o
+# temprano y las notas se despegarían del huésped sin que nadie lo note.
+def pid_de(nombre):
+    base = norm_key(nombre)                      # sin tildes, minúscula
+    base = re.sub(r"[^a-z0-9]+", "-", base).strip("-")
+    if base:
+        return base
+    # Nombre en alfabeto no latino (cirílico, chino, …): el slug queda vacío y
+    # TODOS caerían en la misma clave, compartiendo notas entre desconocidos.
+    # El hash del nombre original es único y estable. Hoy PGO entrega los
+    # nombres transliterados, así que esto casi nunca corre — pero "casi" no
+    # alcanza cuando lo que se comparte puede ser una restricción.
+    import hashlib
+    return "h" + hashlib.sha1(str(nombre or "").encode("utf-8")).hexdigest()[:12]
+
+
 def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None, cumples=None):
     habs = {}
+    # Homónimos simultáneos comparten notas. En un lodge de 90 personas es casi
+    # imposible, pero "casi" no alcanza si alguien escribe una restricción: se
+    # avisa para que se resuelva a mano en vez de fallar en silencio.
+    vistos = {}
     for i, (hab, nombre, edad, nac, grupo, in_d, out_d, obs) in enumerate(rows):
         hab_ok = fb_key(hab)
         if hab_ok != str(hab or "").strip():
             print(f"[sync-viajeros] Aviso: hab '{hab}' no sirve como clave → '{hab_ok}'.")
         hab = hab_ok
+        pid = pid_de(nombre)
+        if pid in vistos and vistos[pid] != nombre:
+            print(f"[sync-viajeros] ⚠ pid repetido '{pid}': «{vistos[pid]}» y «{nombre}» "
+                  "compartirían notas.")
+        vistos[pid] = nombre
         traveler = {
             "id":     f"h{hab}-{i}",
+            "pid":    pid,
             "nombre": nombre,
             "edad":   edad,
             "nac":    nac,
@@ -2635,6 +2673,74 @@ def get_token():
     return creds.token
 
 
+# ── Notas del equipo (dato flexible) ─────────────────────────────────────────
+# Viven en /viajeros_notas/{pid}, FUERA de /viajeros/current — que se sobreescribe
+# entero cada media hora y se las llevaría puestas.
+NOTAS_PATH   = "viajeros_notas"
+NOTAS_GRACIA = 2 * 24 * 3600 * 1000      # ms: se borran un par de días post check-out
+
+
+def fb_get(token, path, params=None):
+    import requests
+    r = requests.get(f"{DB_URL}/{path}.json",
+                     headers={"Authorization": f"Bearer {token}"},
+                     params=params or {}, timeout=20)
+    if not r.ok:
+        raise RuntimeError(f"{r.status_code}: {r.text[:200]}")
+    return r.json()
+
+
+def fb_delete(token, path):
+    import requests
+    r = requests.delete(f"{DB_URL}/{path}.json",
+                        headers={"Authorization": f"Bearer {token}"}, timeout=20)
+    if not r.ok:
+        raise RuntimeError(f"{r.status_code}: {r.text[:200]}")
+
+
+def purgar_notas(token, doc):
+    """Marca vivas las notas de quien está en casa y borra las que ya vencieron.
+
+    LA REGLA QUE NO SE NEGOCIA: si el roster viene vacío, NO se purga nada. Un
+    solo sync fallido —pasó con el comedor el 21-08— borraría las notas de todo
+    el lodge, y no hay de dónde recuperarlas.
+
+    Sólo se tocan los pid que YA tienen notas (lectura shallow), así que el
+    costo no crece con la ocupación: hoy son un puñado, no 90.
+    """
+    activos = {t.get("pid") for hab in (doc.get("habs") or {}).values() for t in hab if t.get("pid")}
+    if not activos:
+        print("[sync-viajeros] notas: roster vacío — NO se purga nada.")
+        return
+    try:
+        con_notas = fb_get(token, NOTAS_PATH, {"shallow": "true"}) or {}
+    except Exception as e:
+        print(f"[sync-viajeros] notas: no pude leer el índice ({e}); no se purga.")
+        return
+    ahora, refrescados, borrados = int(time.time() * 1000), 0, 0
+    for pid in list(con_notas):
+        try:
+            if pid in activos:
+                # Sigue en casa: se corre el reloj del vencimiento.
+                fb_put(token, f"{NOTAS_PATH}/{pid}/_visto", ahora)
+                refrescados += 1
+                continue
+            visto = fb_get(token, f"{NOTAS_PATH}/{pid}/_visto")
+            if not isinstance(visto, (int, float)):
+                # Sin marca (notas viejas o escritas fuera de este flujo): se le
+                # pone una ahora y se decide en la próxima corrida. Nunca borrar
+                # por falta de dato.
+                fb_put(token, f"{NOTAS_PATH}/{pid}/_visto", ahora)
+                continue
+            if ahora - visto > NOTAS_GRACIA:
+                fb_delete(token, f"{NOTAS_PATH}/{pid}")
+                borrados += 1
+        except Exception as e:
+            print(f"[sync-viajeros] notas: problema con '{pid}' ({e}); se deja como está.")
+    print(f"[sync-viajeros] notas: {len(con_notas)} con contenido · "
+          f"{refrescados} en casa · {borrados} purgadas (gracia {NOTAS_GRACIA // 86400000} días)")
+
+
 def fb_put(token, path, data):
     """El token va en la cabecera, no en la query.
 
@@ -2789,6 +2895,9 @@ def main():
     token = get_token()
     fb_put(token, "viajeros/current", doc)
     print("[sync-viajeros] OK /viajeros/current")
+    # Después de escribir, no antes: si el PUT falla, el roster de este doc no
+    # se publicó y no corresponde tomar decisiones de borrado con él.
+    purgar_notas(token, doc)
     print("[sync-viajeros] Listo.")
 
 
