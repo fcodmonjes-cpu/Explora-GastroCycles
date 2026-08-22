@@ -2120,6 +2120,32 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-detail-tags { margin-top:5px; }
 .vj-detail-obs { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-secondary); margin-top:5px; line-height:1.4; }
 
+/* NOTAS DEL EQUIPO — el dato flexible. La distinción tipográfica no es adorno:
+   lo que viene de PGO va en Cormorant itálica (.vj-detail-obs, voz del reporte)
+   y lo que escribimos nosotros va en Courier (voz operativa, "tecleado"). De un
+   vistazo se sabe qué es dato duro y qué es opinión de un colega — que es
+   exactamente lo que hay que poder distinguir antes de actuar sobre una ficha.
+   Sin paleta nueva: todo sale de los tokens existentes. */
+.vj-notas { margin-top:7px; padding-left:9px; border-left:1.5px solid var(--border-md); }
+.vj-notas.vacio { border-left-color:transparent; padding-left:0; }
+.vj-notas-tit { font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:3px; }
+.vj-nota { display:flex; align-items:flex-start; gap:6px; margin:2px 0; }
+.vj-nota-txt { flex:1 1 auto; font-family:'Courier Prime','Courier New',monospace; font-size:12px; line-height:1.4; color:var(--text-secondary); word-break:break-word; }
+.vj-nota-x { flex:0 0 auto; background:none; border:0; padding:0 3px; color:var(--text-tertiary); font-size:14px; line-height:1.2; cursor:pointer; }
+.vj-nota-x:active { color:var(--coral); }
+.vj-nota-add { background:none; border:0; padding:2px 0; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; color:var(--text-tertiary); cursor:pointer; }
+.vj-nota-add:active { color:var(--gold); }
+.vj-nota-editor { margin-top:5px; }
+.vj-nota-chips { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:5px; }
+.vj-nota-chip { background:none; border:0.5px solid var(--border-md); border-radius:999px; padding:3px 9px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; color:var(--text-secondary); cursor:pointer; }
+.vj-nota-chip:active { border-color:var(--gold); color:var(--gold); }
+/* 16px: por debajo de eso iOS hace zoom al enfocar y descuadra la pantalla. */
+.vj-nota-input { width:100%; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--text); font-size:16px; padding:6px 10px; outline:none; font-family:'Courier Prime','Courier New',monospace; }
+.vj-nota-acciones { display:flex; align-items:center; gap:8px; margin-top:5px; }
+.vj-nota-ojo { flex:1 1 auto; font-family:'Courier Prime','Courier New',monospace; font-size:9px; line-height:1.35; color:var(--text-tertiary); }
+.vj-nota-btn { background:none; border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:4px 11px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:var(--text-secondary); cursor:pointer; }
+.vj-nota-btn.on { border-color:var(--gold); color:var(--gold); }
+
 .vj-empty { font-family:'Courier Prime','Courier New',monospace; font-size:12px; color:var(--text-tertiary); text-align:center; padding:2.5rem 1rem; line-height:1.8; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -3734,6 +3760,11 @@ let _CHK_META_WRITE_QUEUE   = {};       // { 'section/phase': meta patch }
 // scripts/sync_viajeros.py (seed hoy, Excel Dietas+Geos en fase 2).
 // Sin PIN (decisión 2026-07-17, misma lógica de fricción que Rol/E-Check).
 const VIAJEROS_PATH        = 'viajeros/current';
+// Notas del equipo (dato FLEXIBLE). Path aparte a propósito: /viajeros/current
+// se sobreescribe entero cada media hora y se las llevaría puestas. Se anclan
+// al `pid` que calcula el script — la persona, no la habitación — así que
+// sobreviven a una mudanza y el huésped nuevo nunca hereda las del anterior.
+const VJ_NOTAS_PATH        = 'viajeros_notas';
 const VIAJEROS_NINO_MAX    = 17;             // edad ≤ 17 cuenta como "menor" (menor de edad)
 const VIAJEROS_STALE_MS    = 5 * 60 * 1000;  // re-fetch al abrir la tab si la data es más vieja
 // Taxonomía canónica de tags — mismos slugs que emite el script Python.
@@ -3793,6 +3824,9 @@ let VIAJEROS_HAB_OPEN      = null;   // hab abierta en el modal de detalle
 let VIAJEROS_NUMPAD_OPEN   = false;  // teclado numérico incorporado plegado/desplegado
 let VIAJEROS_SHOW_OUT      = false;
 let VIAJEROS_VISTA         = 'viajeros';   // 'viajeros' | 'comedor'   // salientes del día ocultos por defecto en las vistas por hab
+let VJ_NOTAS               = {};     // { pid: { notaId: {txt, ts, chip} } }
+let VJ_NOTA_OPEN           = null;   // pid con el editor abierto (uno a la vez)
+let VJ_NOTA_BUF            = '';     // lo tipeado, para que un re-render no lo pierda
 
 // ── Ventanas de servicio (para el conteo por hora) ──────────────────────────
 // Un viajero cuenta para un servicio si ESTABA EN EL LODGE mientras el servicio
@@ -4024,6 +4058,11 @@ const UI = {
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'grupo viene solo', cmdSolos:'grupos vienen solos',
     cmdSinDatos:'Sin datos de comedor para hoy',
     cmdSinGuardar:'Sin conexión con la base — el pedido NO se guardó',
+    vjNotas:'notas del equipo', vjNotaAdd:'agregar nota', vjNotaPh:'preferencia, pedido, dato útil…',
+    vjNotaGuardar:'guardar', vjNotaCancelar:'cancelar', vjNotaBorrar:'borrar nota',
+    vjNotaSinGuardar:'La nota NO se guardó — revisá la conexión',
+    vjNotaOjo:'Se borra sola un par de días después del check-out. Las alergias van en PGO, no acá.',
+    vjNotaChips:['agua con gas','agua sin gas','sin hielo','café descafeinado','special request','cumpleaños'],
     vjEnLodge:'en el lodge', vjComen:'comen', vjComenTit:'Cubiertos asignados en PGO',
     vjStatRestric:'restricciones',
     vjRevisar:'revisar observación',
@@ -4231,6 +4270,11 @@ const UI = {
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'party of one', cmdSolos:'parties of one',
     cmdSinDatos:'No dining room data for today',
     cmdSinGuardar:'No connection to the database — the order was NOT saved',
+    vjNotas:'team notes', vjNotaAdd:'add note', vjNotaPh:'preference, request, useful detail…',
+    vjNotaGuardar:'save', vjNotaCancelar:'cancel', vjNotaBorrar:'delete note',
+    vjNotaSinGuardar:'The note was NOT saved — check the connection',
+    vjNotaOjo:'Clears itself a couple of days after check-out. Allergies belong in PGO, not here.',
+    vjNotaChips:['sparkling water','still water','no ice','decaf coffee','special request','birthday'],
     vjEnLodge:'on property', vjComen:'dining', vjComenTit:'Covers assigned in PGO',
     vjStatRestric:'restrictions',
     vjRevisar:'check note',
@@ -4438,6 +4482,11 @@ const UI = {
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'grupo vem sozinho', cmdSolos:'grupos vêm sozinhos',
     cmdSinDatos:'Sem dados do salão para hoje',
     cmdSinGuardar:'Sem conexão com a base — o pedido NÃO foi salvo',
+    vjNotas:'notas da equipe', vjNotaAdd:'adicionar nota', vjNotaPh:'preferência, pedido, dado útil…',
+    vjNotaGuardar:'salvar', vjNotaCancelar:'cancelar', vjNotaBorrar:'apagar nota',
+    vjNotaSinGuardar:'A nota NÃO foi salva — verifique a conexão',
+    vjNotaOjo:'Some sozinha alguns dias após o check-out. Alergias vão no PGO, não aqui.',
+    vjNotaChips:['água com gás','água sem gás','sem gelo','café descafeinado','special request','aniversário'],
     vjEnLodge:'no lodge', vjComen:'comem', vjComenTit:'Talheres atribuídos no PGO',
     vjStatRestric:'restrições',
     vjRevisar:'verificar observação',
@@ -7399,6 +7448,7 @@ async function viajerosFetch(){
     VIAJEROS_LOAD_ERROR = true;
   }
   VIAJEROS_FETCHED_AT = Date.now();
+  await vjNotasFetch();   // el dato flexible, en su propio path
   viajerosRender();
   pgoBannerRender();
 }
@@ -8076,6 +8126,127 @@ function vjTagChips(tr){
 // Ficha completa de un viajero (avatar + nombre + meta + chips + obs). Fuente
 // única: la usa el modal por hab de Viajeros y también el panel de dietas del
 // Comande, para que la tarjeta se vea idéntica en ambas tabs.
+// ── Notas del equipo ───────────────────────────────────────────────────────
+// El dato FLEXIBLE: lo que escribe el equipo para complementar lo que trae PGO.
+// Vive en /viajeros_notas/{pid} y se mezcla con la ficha al dibujar. Nunca se
+// escribe dentro de /viajeros/current: ese doc lo pisa el sync entero cada
+// media hora.
+function vjNotasUrl(sufijo){
+  return `${CF_FIREBASE_CONFIG.databaseURL}/${VJ_NOTAS_PATH}${sufijo || ''}.json${fbQS()}`;
+}
+async function vjNotasFetch(){
+  try {
+    const resp = await fetch(vjNotasUrl());
+    const data = await resp.json();
+    if (!resp.ok || (data && data.error)) return;   // rechazo: se conserva lo que había
+    const limpio = {};
+    Object.entries(data || {}).forEach(([pid, notas]) => {
+      // `_visto` es la marca del script para la purga, no una nota.
+      const soloNotas = {};
+      Object.entries(notas || {}).forEach(([id, n]) => {
+        if (id.charAt(0) !== '_' && n && n.txt) soloNotas[id] = n;
+      });
+      if (Object.keys(soloNotas).length) limpio[pid] = soloNotas;
+    });
+    VJ_NOTAS = limpio;
+  } catch(e){ /* sin red: se sigue con lo que haya en memoria */ }
+}
+function vjNotasDe(tr){
+  const n = (tr && tr.pid && VJ_NOTAS[tr.pid]) || {};
+  return Object.entries(n).map(([id, v]) => ({ id, ...v })).sort((a,b) => (a.ts||0) - (b.ts||0));
+}
+async function vjNotaAgregar(pid, txt, chip){
+  txt = String(txt || '').trim().slice(0, 280);
+  if (!pid || !txt) return;
+  const nota = { txt, ts: Date.now() };
+  if (chip) nota.chip = chip;
+  try {
+    const resp = await fetch(vjNotasUrl('/' + pid), {
+      method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(nota)
+    });
+    const out = await resp.json();
+    // Un 401 resuelve sin lanzar: sin este chequeo la nota se veía guardada y no estaba.
+    if (!resp.ok || !out || !out.name){ comandaAvisoSinGuardar('vjNotaSinGuardar'); return; }
+    VJ_NOTAS[pid] = Object.assign({}, VJ_NOTAS[pid], { [out.name]: nota });
+    VJ_NOTA_BUF = '';
+    vjNotasRepintar();
+  } catch(e){ comandaAvisoSinGuardar('vjNotaSinGuardar'); }
+}
+async function vjNotaBorrar(pid, id){
+  const previo = VJ_NOTAS[pid] && VJ_NOTAS[pid][id];
+  if (!previo) return;
+  try {
+    const resp = await fetch(vjNotasUrl('/' + pid + '/' + id), { method: 'DELETE' });
+    if (!resp.ok){ comandaAvisoSinGuardar('vjNotaSinGuardar'); return; }
+    delete VJ_NOTAS[pid][id];
+    vjNotasRepintar();
+  } catch(e){ comandaAvisoSinGuardar('vjNotaSinGuardar'); }
+}
+// Un solo editor abierto a la vez: dos teclados compitiendo en una pantalla de
+// teléfono no ayudan a nadie.
+function vjNotaAbrir(pid){ VJ_NOTA_OPEN = pid; VJ_NOTA_BUF = ''; vjNotasRepintar(); }
+function vjNotaCerrar(){ VJ_NOTA_OPEN = null; VJ_NOTA_BUF = ''; vjNotasRepintar(); }
+function vjNotaInput(v){ VJ_NOTA_BUF = v; }
+function vjNotaChip(pid, txt){ vjNotaAgregar(pid, txt, txt); }
+function vjNotaGuardar(pid){ vjNotaAgregar(pid, VJ_NOTA_BUF); }
+// Repinta donde sea que esté la ficha: PGO o el panel de habs del Comande.
+function vjNotasRepintar(){
+  // El guardia de vjRenderBody frena el repintado si el input tiene el foco —
+  // justo lo que pasa al guardar con Enter. Se suelta el foco a propósito,
+  // se repinta, y se devuelve el foco si el editor sigue abierto: así se
+  // pueden encadenar varias notas sin que el teclado se vaya.
+  const foco = document.activeElement;
+  if (foco && foco.classList && foco.classList.contains('vj-nota-input')) foco.blur();
+  if (typeof currentTab !== 'undefined' && currentTab === 'comandera'){
+    if (typeof comandaRender === 'function') comandaRender();
+  } else if (typeof vjRenderBody === 'function' && document.getElementById('vj-body')){
+    vjRenderBody();
+  }
+  if (VJ_NOTA_OPEN){
+    const inp = document.querySelector('.vj-nota-input');
+    if (inp) inp.focus();
+  }
+}
+function vjNotasBloque(tr){
+  if (!tr || !tr.pid) return '';
+  const notas = vjNotasDe(tr);
+  const abierto = VJ_NOTA_OPEN === tr.pid;
+  const pid = vjEsc(tr.pid);
+  const lista = notas.map(n => `
+    <div class="vj-nota">
+      <span class="vj-nota-txt">${vjEsc(n.txt)}</span>
+      <button type="button" class="vj-nota-x" aria-label="${t('vjNotaBorrar')}"
+              onclick="event.stopPropagation();vjNotaBorrar('${pid}','${vjEsc(n.id)}')">×</button>
+    </div>`).join('');
+  const chips = (t('vjNotaChips') || []).map(c => `
+    <button type="button" class="vj-nota-chip"
+            onclick="event.stopPropagation();vjNotaChip('${pid}',${JSON.stringify(c).replace(/"/g,'&quot;')})">${vjEsc(c)}</button>`).join('');
+  const editor = abierto ? `
+    <div class="vj-nota-editor" onclick="event.stopPropagation()">
+      <div class="vj-nota-chips">${chips}</div>
+      <input type="text" class="vj-nota-input" maxlength="280" value="${vjEsc(VJ_NOTA_BUF)}"
+             placeholder="${t('vjNotaPh')}" oninput="vjNotaInput(this.value)"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();vjNotaGuardar('${pid}');}">
+      <div class="vj-nota-acciones">
+        <span class="vj-nota-ojo">${t('vjNotaOjo')}</span>
+        <button type="button" class="vj-nota-btn" onclick="vjNotaCerrar()">${t('vjNotaCancelar')}</button>
+        <button type="button" class="vj-nota-btn on" onclick="vjNotaGuardar('${pid}')">${t('vjNotaGuardar')}</button>
+      </div>
+    </div>` : `
+    <button type="button" class="vj-nota-add"
+            onclick="event.stopPropagation();vjNotaAbrir('${pid}')">+ ${t('vjNotaAdd')}</button>`;
+  if (!notas.length && !abierto){
+    // Sin notas: sólo el acceso, sin encabezado. El dato duro manda la ficha.
+    return `<div class="vj-notas vacio">${editor}</div>`;
+  }
+  return `
+    <div class="vj-notas">
+      <div class="vj-notas-tit">${t('vjNotas')}</div>
+      ${lista}
+      ${editor}
+    </div>`;
+}
+
 function vjTravelerRow(tr, today){
   today = today || vjTodayIso();
   const outCls  = tr.out === today ? 'vj-meta-out-today' : '';
@@ -8088,6 +8259,7 @@ function vjTravelerRow(tr, today){
         <div class="vj-detail-meta">${tr.edad ?? '—'} ${t('vjYears')} · ${vjFlag(tr.nac) ? vjFlag(tr.nac) + ' ' : ''}${vjEsc(tr.nac || '')} · IN ${vjShortDate(tr.in)} → <span class="${outCls}">OUT ${vjShortDate(tr.out)}${tr.out === today ? ` · ${t('vjSaleHoy')}` : ''}</span>${inToday}</div>
         <div class="vj-detail-tags">${vjTagChips(tr)}</div>
         ${(tr.obs || '').trim() ? `<div class="vj-detail-obs">${vjEsc(tr.obs)}</div>` : ''}
+        ${vjNotasBloque(tr)}
       </div>
     </div>`;
 }
@@ -8095,6 +8267,12 @@ function vjTravelerRow(tr, today){
 function vjRenderBody(){
   const el = document.getElementById('vj-body');
   if (!el) return;
+  // Nunca reconstruir mientras alguien tipea una nota: el input desaparece, el
+  // teclado se cierra y lo escrito se pierde. Es el mismo cuidado que ya tiene
+  // la comandera con comandaHasActiveInput(); acá faltaba porque hasta hoy
+  // nada era editable.
+  const foco = document.activeElement;
+  if (foco && foco.classList && foco.classList.contains('vj-nota-input')) return;
   const filtered = VIAJEROS_FILTER || VIAJEROS_SEARCH.trim();
   let html = filtered ? vjRenderPersonas() : vjRenderHabs();
   if (VIAJEROS_HAB_OPEN) html += vjRenderHabModal();
@@ -9700,7 +9878,7 @@ function comandaDatoOk(resp, data){
 // enviado y que no esté es el peor de los dos mundos. Se muestra una sola vez
 // cada 15 s para no tapar la pantalla si fallan varias escrituras seguidas.
 let _CMD_AVISO_TS = 0;
-function comandaAvisoSinGuardar(){
+function comandaAvisoSinGuardar(clave){
   if (Date.now() - _CMD_AVISO_TS < 15000) return;
   _CMD_AVISO_TS = Date.now();
   let el = document.getElementById('cmd-aviso');
@@ -9710,7 +9888,7 @@ function comandaAvisoSinGuardar(){
     el.className = 'cmd-aviso';
     document.body.appendChild(el);
   }
-  el.textContent = t('cmdSinGuardar');
+  el.textContent = t(clave || 'cmdSinGuardar');
   el.classList.add('on');
   setTimeout(() => { const n = document.getElementById('cmd-aviso'); if (n) n.classList.remove('on'); }, 6000);
 }
