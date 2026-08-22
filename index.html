@@ -2054,6 +2054,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-flag.cond    { color:var(--wine-red-dark); }
 .vj-flag.nino    { color:var(--teal); }
 .vj-flag.out     { color:var(--text-secondary); }
+.vj-flag.nota    { color:var(--text-tertiary); }
 
 /* Roster de la tarjeta: primer nombre + banderita de nacionalidad, en vez de
    las esferas de iniciales (leían crípticas). La cuenta se lee sola por líneas. */
@@ -2084,6 +2085,10 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-age { font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-tertiary); margin-left:6px; }
 .vj-nino-badge { font-size:8px; letter-spacing:0.1em; text-transform:uppercase; color:var(--teal); border:0.5px solid rgba(29,158,117,0.45); border-radius:4px; padding:1px 5px; margin-left:6px; vertical-align:1px; }
 .vj-person-tags { margin-top:2px; }
+/* La nota que hizo calzar la búsqueda, bajo el nombre: sin esto la persona
+   aparece en los resultados sin motivo visible. Courier, como todo lo que
+   escribe el equipo. */
+.vj-person-nota { margin-top:3px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; line-height:1.35; color:var(--text-tertiary); }
 .vj-person-hab { font-family:'Courier Prime','Courier New',monospace; font-size:13px; color:var(--text-secondary); flex:0 0 auto; }
 
 /* Tags (chips no interactivos dentro de tarjetas y detalle). */
@@ -7791,7 +7796,17 @@ function vjMatchesFilter(tr){
 function vjMatchesSearch(tr){
   const q = vjFold(VIAJEROS_SEARCH.trim());
   if (!q) return true;
-  return vjFold(tr.nombre).indexOf(q) >= 0 || vjFold(tr.grupo).indexOf(q) >= 0 || String(tr.hab).indexOf(q) >= 0;
+  return vjFold(tr.nombre).indexOf(q) >= 0 || vjFold(tr.grupo).indexOf(q) >= 0 ||
+         String(tr.hab).indexOf(q) >= 0 || !!vjNotaQueCalza(tr, q);
+}
+// Las notas también se buscan: sin esto, escribir "syrah" no encuentra a quien
+// toma syrah, y guardar el dato pierde la mitad de la gracia. Devuelve la nota
+// que calzó para poder MOSTRARLA en el resultado — un match invisible se lee
+// como un resultado arbitrario.
+function vjNotaQueCalza(tr, q){
+  if (!q) return null;
+  const n = vjNotasDe(tr).find(x => vjFold(x.txt).indexOf(q) >= 0);
+  return n ? n.txt : null;
 }
 
 // ── Interacción ──
@@ -8303,6 +8318,10 @@ function vjRenderHabs(){
     if (nCo) flags.push(`<span class="vj-flag cond">● ${nCo}</span>`);
     if (nNi) flags.push(`<span class="vj-flag nino">${nNi} ${nNi > 1 ? t('vjNinoPl') : t('vjNino')}</span>`);
     if (nSale) flags.push(`<span class="vj-flag out">${nSale > 1 ? nSale + ' ' + t('vjStatSalenHoy') : t('vjSaleHoy')}</span>`);
+    // Marca de que la hab tiene notas del equipo. Sin esto habría que abrir
+    // habitación por habitación para descubrir que alguien dejó un dato.
+    const nNo = list.reduce((a, tr) => a + vjNotasDe(tr).length, 0);
+    if (nNo) flags.push(`<span class="vj-flag nota">✎ ${nNo}</span>`);
     return `
       <div class="vj-hab-card" onclick="vjOpenHab('${h}')">
         <div class="vj-hab-top"><span class="vj-hab-num">${vjEsc(h)}</span><span class="vj-hab-grupo">${vjEsc(grupo)}</span></div>
@@ -8326,6 +8345,12 @@ function vjRenderPersonas(){
       <div class="vj-person-main">
         <div class="vj-person-name">${vjEsc(tr.nombre)}<span class="vj-age">${tr.edad ?? ''}</span>${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
         <div class="vj-person-tags">${vjCumpleChip(tr)}${vjTagChips(tr)}${vjOutChip(tr)}</div>
+        ${(() => {
+          // Si el resultado salió por una nota y no por el nombre, se muestra
+          // cuál: si no, la persona aparece en la lista sin motivo visible.
+          const m = vjNotaQueCalza(tr, vjFold(VIAJEROS_SEARCH.trim()));
+          return m ? `<div class="vj-person-nota">${vjEsc(m)}</div>` : '';
+        })()}
       </div>
       <span class="vj-person-hab">${t('vjHab')} ${vjEsc(tr.hab)}</span>
     </div>`).join('');
