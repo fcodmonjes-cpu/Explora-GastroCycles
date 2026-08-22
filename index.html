@@ -597,6 +597,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-full-diner:last-of-type { border-bottom:none; }
 .cmd-full-diner-head { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#9ec9ff; margin-bottom:7px; }
 
+/* Aviso de escritura rechazada. Coral del sistema, fijo abajo: no compite con
+   el catálogo pero es imposible no verlo. Sin paleta nueva. */
+.cmd-aviso { position:fixed; left:50%; bottom:18px; transform:translate(-50%,14px);
+  z-index:9999; max-width:88vw; padding:9px 16px; border-radius:var(--radius-md);
+  border:0.5px solid var(--coral); background:var(--surface); color:var(--coral);
+  font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.04em;
+  text-align:center; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; }
+.cmd-aviso.on { opacity:1; transform:translate(-50%,0); }
+
 /* Habitaciones ↔ dietas (integración Viajeros) — reutiliza tokens y las
    clases .vj-detail-* globales para el contenido de la ficha. Sin paleta nueva. */
 .cmd-rooms-panel { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:10px 12px; margin-bottom:12px; animation:panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
@@ -3995,6 +4004,7 @@ const UI = {
     cmdMontaje:'Montaje', cmdMesas:'mesas', cmdCubiertos:'cubiertos', cmdMesaDe:'mesa de',
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'grupo viene solo', cmdSolos:'grupos vienen solos',
     cmdSinDatos:'Sin datos de comedor para hoy',
+    cmdSinGuardar:'Sin conexión con la base — el pedido NO se guardó',
     vjEnLodge:'en el lodge', vjComen:'comen', vjComenTit:'Cubiertos asignados en PGO',
     vjStatRestric:'restricciones',
     vjRevisar:'revisar observación',
@@ -4201,6 +4211,7 @@ const UI = {
     cmdMontaje:'Setup', cmdMesas:'tables', cmdCubiertos:'covers', cmdMesaDe:'table of',
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'party of one', cmdSolos:'parties of one',
     cmdSinDatos:'No dining room data for today',
+    cmdSinGuardar:'No connection to the database — the order was NOT saved',
     vjEnLodge:'on property', vjComen:'dining', vjComenTit:'Covers assigned in PGO',
     vjStatRestric:'restrictions',
     vjRevisar:'check note',
@@ -4407,6 +4418,7 @@ const UI = {
     cmdMontaje:'Montagem', cmdMesas:'mesas', cmdCubiertos:'talheres', cmdMesaDe:'mesa de',
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'grupo vem sozinho', cmdSolos:'grupos vêm sozinhos',
     cmdSinDatos:'Sem dados do salão para hoje',
+    cmdSinGuardar:'Sem conexão com a base — o pedido NÃO foi salvo',
     vjEnLodge:'no lodge', vjComen:'comem', vjComenTit:'Talheres atribuídos no PGO',
     vjStatRestric:'restrições',
     vjRevisar:'verificar observação',
@@ -8695,13 +8707,16 @@ function cfRenderBaristaView(){
   // during a concurrent write. The WebSocket listener is the single source
   // of truth for removals and state changes.
   if (cf_pollInterval) clearInterval(cf_pollInterval);
-  const CF_REST_URL = CF_FIREBASE_CONFIG.databaseURL + '/' + CF_ORDERS_PATH + '.json';
+  // La URL se arma DENTRO del intervalo: el token vence cada hora, y una
+  // constante calculada una vez se quedaría con el vencido.
+  const cfRestUrl = () => CF_FIREBASE_CONFIG.databaseURL + '/' + CF_ORDERS_PATH + '.json' + fbQS();
   cf_pollInterval = setInterval(async ()=>{
     if (cf_mode !== 'barista'){ clearInterval(cf_pollInterval); cf_pollInterval=null; return; }
     try {
-      const resp = await fetch(CF_REST_URL);
+      const resp = await fetch(cfRestUrl());
       const data = await resp.json();
       if (cf_mode !== 'barista') return;
+      if (!resp.ok || (data && data.error)) return;   // rechazo: manda el WebSocket
       const all = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
       all.sort((a,b)=>(a.timestamp||0)-(b.timestamp||0));
       cfAddNewOrdersFromPoll(all.filter(o=>o.status==='pending'));
@@ -9649,7 +9664,36 @@ function comandaSubmitPin(){
 
 // --- Firebase REST helpers -------------------------------------------------
 function comandaFireUrl(suffix){
-  return CF_FIREBASE_CONFIG.databaseURL + '/' + COMANDA_PATH + (suffix ? '/' + suffix : '') + '.json';
+  // fbQS() SIEMPRE: con las reglas cerradas (auth != null) una URL sin token
+  // devuelve 401 con cuerpo {"error":"Permission denied"} — un objeto que pasa
+  // como dato válido y deja la mesa en blanco. Es una función y no una
+  // constante a propósito: el token se renueva cada hora.
+  return CF_FIREBASE_CONFIG.databaseURL + '/' + COMANDA_PATH +
+         (suffix ? '/' + suffix : '') + '.json' + fbQS();
+}
+// Una respuesta de Firebase sólo es dato si vino OK y no trae `error`. Sin
+// este filtro, un 401 se renderiza como una mesa vacía.
+function comandaDatoOk(resp, data){
+  return !!(resp && resp.ok && data && !data.error);
+}
+// Aviso de escritura rechazada. El pedido sigue en pantalla —no se pierde lo
+// tipeado— pero el garzón tiene que saber que NO llegó a la base: creerlo
+// enviado y que no esté es el peor de los dos mundos. Se muestra una sola vez
+// cada 15 s para no tapar la pantalla si fallan varias escrituras seguidas.
+let _CMD_AVISO_TS = 0;
+function comandaAvisoSinGuardar(){
+  if (Date.now() - _CMD_AVISO_TS < 15000) return;
+  _CMD_AVISO_TS = Date.now();
+  let el = document.getElementById('cmd-aviso');
+  if (!el){
+    el = document.createElement('div');
+    el.id = 'cmd-aviso';
+    el.className = 'cmd-aviso';
+    document.body.appendChild(el);
+  }
+  el.textContent = t('cmdSinGuardar');
+  el.classList.add('on');
+  setTimeout(() => { const n = document.getElementById('cmd-aviso'); if (n) n.classList.remove('on'); }, 6000);
 }
 
 // --- Home view (list of open mesas) ---------------------------------------
@@ -9661,9 +9705,12 @@ async function comandaFetchOpenMesas(){
     const url = comandaFireUrl(comandaDateKey());
     const resp = await fetch(url);
     const data = await resp.json();
+    // Si la base rechazó, se conserva la lista que ya estaba: mejor mesas de
+    // hace un minuto que una pantalla vacía a hora de servicio.
+    if (resp && !resp.ok) { if (COMANDA_VIEW === 'home') comandaRender(); return; }
     const open = [];
     const closed = [];
-    if (data){
+    if (data && !data.error){
       Object.entries(data).forEach(([id, c]) => {
         if (!c) return;
         if (c.closedAt) closed.push({ id, ...c });
@@ -10490,12 +10537,18 @@ async function _comandaPersistDrain(){
     const toSend = _CMD_WRITE_PENDING;
     _CMD_WRITE_PENDING = null;
     try {
-      await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID), {
+      const resp = await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID), {
         method: 'PATCH',
         headers: { 'Content-Type':'application/json' },
         body: JSON.stringify(toSend)
       });
-    } catch(e){ console.error('[comanda persist]', e); }
+      // Un 401/403 resuelve el fetch sin lanzar: sin este chequeo la escritura
+      // fallaba en silencio y el garzón creía haber mandado el pedido.
+      if (!resp.ok){
+        console.error('[comanda persist] la base rechazó la escritura:', resp.status);
+        comandaAvisoSinGuardar();
+      }
+    } catch(e){ console.error('[comanda persist]', e); comandaAvisoSinGuardar(); }
   }
   _CMD_WRITE_INFLIGHT = false;
 }
@@ -10716,7 +10769,10 @@ function comandaStartPolling(){
     try {
       const resp = await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID));
       const data = await resp.json();
-      if (!data) return;
+      // Un rechazo NUNCA debe pisar lo que el garzón tiene en pantalla: si la
+      // respuesta no es dato, se deja la mesa como está y se reintenta al
+      // próximo tick.
+      if (!comandaDatoOk(resp, data)) return;
       // Only re-render if something actually changed in remoto. Sin esto, cada
       // tick de sync reconstruía #cmd-root y reseteaba el scroll del catálogo
       // al tope mientras el usuario solo estaba mirando la lista (bug visible).
@@ -10745,8 +10801,10 @@ async function comandaFetchRecibidorMesas(){
     const url = comandaFireUrl(comandaDateKey());
     const resp = await fetch(url);
     const data = await resp.json();
+    // Rechazo de la base: se deja la vista como está en vez de vaciarla.
+    if (resp && !resp.ok) return;
     const list = [];
-    if (data){
+    if (data && !data.error){
       Object.entries(data).forEach(([id, c]) => {
         if (!c || c.closedAt) return;            // only open mesas
         const items = c.items || [];
@@ -12041,9 +12099,9 @@ async function rolEnsureMonth(key){
     try {
       const base = CF_FIREBASE_CONFIG.databaseURL;
       const [rosterResp, staffingResp, metaResp] = await Promise.all([
-        fetch(`${base}/${ROL_ROSTER_PATH}/${key}.json`),
-        fetch(`${base}/${ROL_STAFFING_PATH}/${key}.json`),
-        fetch(`${base}/${ROL_META_PATH}.json`)
+        fetch(`${base}/${ROL_ROSTER_PATH}/${key}.json${fbQS()}`),
+        fetch(`${base}/${ROL_STAFFING_PATH}/${key}.json${fbQS()}`),
+        fetch(`${base}/${ROL_META_PATH}.json${fbQS()}`)
       ]);
       const rosterData   = await rosterResp.json();
       const staffingData = await staffingResp.json();
@@ -12624,7 +12682,8 @@ document.addEventListener('click', e => {
 // ──────────────────────────────────────────────────────────────────────────
 
 // --- URL & date helpers --------------------------------------------------
-function chkUrl(suffix){ return CF_FIREBASE_CONFIG.databaseURL + '/' + suffix + '.json'; }
+// fbQS() en la función y no en una constante: el token se renueva cada hora.
+function chkUrl(suffix){ return CF_FIREBASE_CONFIG.databaseURL + '/' + suffix + '.json' + fbQS(); }
 function chkPad(n){ return String(n).padStart(2,'0'); }
 function chkDateKey(d){ return d.getFullYear()+'-'+chkPad(d.getMonth()+1)+'-'+chkPad(d.getDate()); }
 function chkTimeStr(ts){
