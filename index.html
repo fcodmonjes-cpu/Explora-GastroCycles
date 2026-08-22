@@ -56,10 +56,18 @@
    contenedor scrolleable ni admite paneo táctil, así que el desborde se recorta
    y la página no se mueve. Se deja overflow-x:hidden ANTES como fallback para
    navegadores sin soporte de clip (orden = la última gana donde clip existe).
-   overscroll-behavior-x:none mata el rubber-band lateral. El scroll-x propio de
-   .main-tabs se preserva: vive en su propio contenedor (overflow-x:auto), que
-   clip en html/body no afecta. (No se usa touch-action acá: por la regla de
-   intersección del spec, un pan-y en un ancestro anularía el pan-x de las tabs). */
+   overscroll-behavior-x:none mata el rubber-band lateral.
+   (No se usa touch-action acá: por la regla de intersección del spec, un pan-y
+   en un ancestro anularía el pan-x de cualquier scroller hijo legítimo.)
+
+   2026-08-22 — POR QUÉ EL SIDE-SCROLL SEGUÍA VOLVIENDO pese a todo esto: no era
+   la página. Medido con el escáner de abajo (?overflow), el documento NUNCA
+   desborda — scrollWidth == clientWidth en 320/360/390/768/800px. Lo que se
+   movía era .main-tabs, que hasta hoy era un scroller horizontal propio y por
+   eso clip en html/body no lo tocaba. Ahora hace wrap y ya no scrollea, así que
+   el programa se quedó SIN scrollers horizontales de página. Si alguna vez
+   reaparece, correr ?overflow antes de agregar otro overflow-x: el culpable es
+   un elemento concreto y el escáner lo nombra. */
 html { overflow-x: hidden; overflow-x: clip; overscroll-behavior-x: none; max-width: 100%; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.6; overflow-x: hidden; overflow-x: clip; overscroll-behavior-x: none; max-width: 100%; position: relative; }
 /* (2026-06-09) .app ya no usa will-change:transform — el gesto side-scroll de
@@ -931,15 +939,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    quitarle el PIN gate (menos fricción, ver módulo Rol). El scroll horizontal
    de este strip aborta el gesto global de idioma (ver touchstart) para no
    cambiar idioma al arrastrar las tabs. */
-.main-tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; border-bottom: 0.5px solid var(--border); }
-.main-tabs::-webkit-scrollbar { display: none; }
+/* WRAP, NO SCROLL (2026-08-22). Esta tira era el ÚNICO scroller horizontal del
+   programa, y por eso era el side-scroll que volvía una y otra vez: una banda
+   de 35px de alto cruzando la pantalla justo donde cae el pulgar. Cualquier
+   swipe con algo de componente lateral la deslizaba.
+   Medido: 6 tabs suman 357px y el contenedor da 358 — desbordaba por los 20px
+   de gap. Bastan 18px para que aparezca, así que cada etiqueta más larga (otro
+   idioma, una tab nueva, un badge) lo resucitaba. Con flex-wrap el desborde es
+   IMPOSIBLE: si no entra, baja a una segunda fila — visible e inofensivo, en
+   vez de invisible y molesto. El gap y el padding se ajustaron para que en los
+   tres idiomas entre en una sola fila hasta 360px. */
+.main-tabs { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 1.5rem; border-bottom: 0.5px solid var(--border); }
 /* .tab base (look "card") la siguen usando los filtros de vino (.wine-filter-tabs);
    por eso NO se toca acá — los overrides van scopeados a .main-tabs más abajo. */
 .tab { padding: 8px 6px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; text-align: center; }
 .tab:hover { background: var(--bg-secondary); }
 .tab.active { background: var(--wine-red); color: white; border-color: var(--wine-red); font-weight: 500; }
 /* Override scopeado: las tabs principales son editoriales (underline), no tarjetas. */
-.main-tabs .tab { flex: 0 0 auto; background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 11px 13px 9px; font-family: 'Courier Prime','Courier New',monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-secondary); white-space: nowrap; }
+.main-tabs .tab { flex: 0 0 auto; background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0; /* 13px->10px de padding lateral: con 13 la tira medía 377px contra 358 de
+     ancho y se volvía scroller. Con 10 entra en UNA fila en los tres idiomas
+     hasta 390px, y el wrap cubre lo que venga. */ padding: 11px 10px 9px; font-family: 'Courier Prime','Courier New',monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-secondary); white-space: nowrap; }
 .main-tabs .tab:hover { background: none; color: #c07d2a; }
 .main-tabs .tab.active { background: none; border-color: transparent; border-bottom-color: #c07d2a; color: #c07d2a; font-weight: 400; box-shadow: none; }
 /* (2026-06-09) Las clases .tab-pairings / .tab-premium quedaron sin uso al
@@ -14632,6 +14651,59 @@ const CHK_SEED = {
     ]
   }
 };
+</script>
+
+<!-- ESCÁNER DE DESBORDE LATERAL — se activa SOLO con ?overflow en la URL.
+     Existe porque este bug volvió tantas veces que merecía una herramienta en
+     vez de otra ronda de suposiciones: dice QUÉ elemento se sale y QUÉ
+     contenedor puede robar el swipe, en el teléfono donde pasa. Cero costo
+     cuando no está el parámetro: ni se registra el listener. -->
+<script>
+if (location.search.indexOf('overflow') >= 0) {
+  window.addEventListener('load', () => {
+    const nombre = el => {
+      const c = (el.className && el.className.baseVal !== undefined ? el.className.baseVal : el.className) || '';
+      return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') +
+             (typeof c === 'string' && c ? '.' + c.trim().split(/\s+/).slice(0, 2).join('.') : '');
+    };
+    const escanear = () => {
+      const W = document.documentElement.clientWidth;
+      const fuera = [], scrollers = [];
+      document.querySelectorAll('*').forEach(el => {
+        const cs = getComputedStyle(el);
+        if (cs.display === 'none' || cs.visibility === 'hidden') return;
+        const r = el.getBoundingClientRect();
+        if (!r.width) return;
+        if (r.right > W + 1 || r.left < -1) {
+          fuera.push(nombre(el) + ' → ' + Math.round(r.right - W) + 'px');
+          el.style.outline = '1px dashed #d9634a';
+        }
+        if (el.scrollWidth > el.clientWidth + 1 && /auto|scroll/.test(cs.overflowX)) {
+          scrollers.push(nombre(el) + ' ' + el.clientWidth + '→' + el.scrollWidth + 'px');
+          el.style.outline = '1px dashed #cfa14a';
+        }
+      });
+      const doc = document.documentElement;
+      return [
+        'viewport ' + W + 'px · documento ' + doc.scrollWidth +
+          (doc.scrollWidth > W + 1 ? '  ⚠ LA PÁGINA DESBORDA' : '  ✓ página sin desborde'),
+        '',
+        'se salen (' + fuera.length + '):', ...(fuera.length ? fuera : ['  ninguno']),
+        '',
+        'scrollers horizontales (' + scrollers.length + '):', ...(scrollers.length ? scrollers : ['  ninguno'])
+      ].join('\n');
+    };
+    const panel = document.createElement('pre');
+    panel.style.cssText = 'position:fixed;left:6px;right:6px;bottom:6px;z-index:99999;margin:0;' +
+      'max-height:46vh;overflow:auto;padding:10px;border:0.5px solid #cfa14a;border-radius:8px;' +
+      'background:rgba(15,15,16,0.96);color:#cfa14a;font:11px/1.45 "Courier Prime",monospace;' +
+      'white-space:pre-wrap;-webkit-overflow-scrolling:touch';
+    panel.textContent = escanear();
+    panel.title = 'tocar para re-escanear';
+    panel.addEventListener('click', () => { panel.textContent = escanear(); });
+    document.body.appendChild(panel);
+  });
+}
 </script>
 
 <!-- PWA — registro del service worker. Va al final y detrás de 'load' para no
