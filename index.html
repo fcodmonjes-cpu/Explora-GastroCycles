@@ -1048,6 +1048,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    el default display:none del user-agent). Sin esto, los dos hijos del riel
    se dibujan a la vez. */
 .mn-daybar > [hidden] { display:none !important; }
+/* Pie del riel: dice EN QUÉ numeración están los botones de arriba. Almuerzo y
+   cena corren desfasados, así que el mismo día real se llama distinto en cada
+   servicio; sin esta línea, ver "D3" en almuerzo y "D1" en cena el mismo día
+   parece un error de la app. Alto SIEMPRE reservado (aunque el texto vaya
+   vacío, como en Bar): la grilla de abajo no se mueve al cambiar de servicio.
+   Sin color ni tipografía nuevos — es el mismo tratamiento del rótulo de carta
+   fija, sin el borde. */
+.mn-daynote { height:15px; margin-top:5px; display:flex; align-items:center; justify-content:center; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.11em; text-transform:uppercase; color:var(--text-tertiary); }
 
 /* --- La lente de restricciones ------------------------------------------- */
 /* Arranca colapsada en una línea. Al abrirse, la fila de acciones existe
@@ -2336,6 +2344,9 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
         <button class="day-btn" onclick="setDay('4',this)">D4</button>
       </div>
       <div class="mn-fixed-note" id="mn-fixed-note" hidden></div>
+      <!-- Pie del riel: en qué numeración están los botones. Lo llena el JS
+           (menuRenderChrome) porque depende del servicio y del idioma. -->
+      <div class="mn-daynote" id="mn-daynote"></div>
     </div>
     <div class="mn-svc" id="mn-svc"></div>
     <!-- Segundo nivel, sólo dentro de BAR: la carta de bar tiene comida y
@@ -2594,6 +2605,15 @@ const MENU_CYCLE_OFFSET = 2;
 function menuDocDayToApp(docDay){
   return String(((Number(docDay) - 1 + MENU_CYCLE_OFFSET) % 4 + 4) % 4 + 1);
 }
+// La vuelta: de la numeración de la app a la del documento de almuerzo. Se usa
+// SÓLO para rotular los botones de día — el modelo nunca sale de la numeración
+// de la app. Con offset = 2 la función es su propia inversa (2 es su inverso
+// mod 4), así que por dentro es la misma cuenta; existe con nombre propio para
+// que el lugar donde se usa se lea, y para que siga siendo correcta si algún
+// día el offset cambia.
+function menuAppDayToDoc(appDay){
+  return String(((Number(appDay) - 1 - MENU_CYCLE_OFFSET) % 4 + 4) % 4 + 1);
+}
 
 // --- Buffet: 6 bandejas × 4 días -------------------------------------------
 const MENU_BUFFET = [
@@ -2768,6 +2788,117 @@ const MENU_SOPAS = [
    extended:'La base de la sopa es una crema completamente vegetal de papa y puerro. El charqui de pescado —pescado deshidratado y desmenuzado—, junto con papas fritas, ajo frito y cebolla frita, se sirven todos en cuencos aparte para que cada viajero arme su sopa a gusto. La base, sin agregar el charqui, es apta para veganos y vegetarianos.'}
 ];
 
+// --- Las 4 posiciones de plato principal ------------------------------------
+// Mismo rol que BUFFET_SLOTS y POSTRE_SLOTS: la posición es fija y lo que rota
+// es el plato que la ocupa. El documento entrega los cuatro principales siempre
+// en este orden, así que la vista los dibuja como slots rotulados y no como
+// lista — el garzón aprende una vez dónde está cada cosa.
+const PRINCIPAL_SLOTS = [
+  { key:'vegana',   uiKey:'slotVegana'   },
+  { key:'mar',      uiKey:'slotMar'      },
+  { key:'avecerdo', uiKey:'slotAveCerdo' },
+  { key:'res',      uiKey:'slotRes'      }
+];
+
+// --- Principales nuevos de almuerzo: 4 por día ------------------------------
+// Reemplazan a los 16 anteriores SOLO en almuerzo. Los 16 de cena no se tocan:
+// la cena sigue siendo el master del ciclo hasta que llegue su documento.
+// Los antiguos quedan en DISHES_LEGACY_PRINCIPALES_ALMUERZO, reactivables en
+// una línea, con sus maridajes y sus traducciones EN/PT intactas.
+//
+// `brief` y `extended` salen textuales del Guion de Explicación de
+// Preparaciones · Almuerzo. La matriz `diet` de 9 ejes sale textual de la
+// tabla de Restricciones Alimenticias del asesor (verificada plato por plato:
+// 0 discrepancias). Los documentos no traen maridaje: no se inventa ninguno.
+const MENU_PRINCIPALES = [
+  // ── Día 1 ──────────────────────────────────────────────────────────
+  {id:'pr1-vegana',day:'1',slot:'vegana',recipeDay:'1',
+   name:'Coliflor Frita en Salsa de Sésamo y Cacho de Cabra',short:'Coliflor frita',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:0, gs:1, halal:1},
+   brief:'Coliflor frita hasta quedar dorada, bañada en una salsa de sésamo con un toque picante de cacho de cabra y supremas de pomelo.',
+   extended:'La coliflor se blanquea, se pasa por almidón y se fríe hasta lograr una textura similar al pollo frito, apilada de la misma forma. La salsa combina tahini (sésamo), un aceite picante infusionado con especias y una base de soya dulce. Se termina con supremas de pomelo quemadas al soplete, que aportan un contraste ácido y ahumado. Es un plato 100% vegano.',
+   barTwin:'bar-coliflor'},
+  {id:'pr1-mar',day:'1',slot:'mar',recipeDay:'4',
+   name:'Curry Rojo de Pescado con Quinoa al Vapor',short:'Curry rojo',
+   diet:{veg:0, vgt:0, pesc:1, mar:0, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Pescado en un curry rojo tailandés hecho en casa, con leche de coco y verduras, acompañado de quinoa al vapor aparte.',
+   extended:'La pasta de curry se prepara desde cero con especias, cacho de cabra y hierbas como el lemongrass, y se cocina con leche de coco hasta lograr una salsa aromática y balanceada entre picante, dulce y salado. El pescado se sirve bañado en esta salsa, acompañado de zapallo y papa nativa fritos, y espinaca salteada. La quinoa se sirve en un cuenco aparte. No es apto para quienes evitan mariscos, ya que la pasta de curry lleva un toque de camarón.'},
+  {id:'pr1-avecerdo',day:'1',slot:'avecerdo',recipeDay:'2',
+   name:'Milanesa de Cerdo con Salsa de Chañar y Quinoa',short:'Milanesa de cerdo',
+   diet:{veg:0, vgt:0, pesc:0, mar:0, fs:1, lac:0, ge:0, gs:0, halal:0},
+   brief:'Cerdo empanizado y frito, con chucrut, repollo asado y encurtido, una salsa agridulce de chañar, y quinoa al vapor con sésamo.',
+   extended:'El cerdo se empaniza con panko y se fríe hasta dorar. Se acompaña de un chucrut de repollo (fermentado, sin picante), repollo asado y encurtido, y una salsa que combina salsa de ostra, soya y arrope de chañar, un fruto del desierto. La quinoa con sésamo se sirve aparte. No es apto para viajeros que no consumen cerdo.',
+   barTwin:'bar-tonkatsu'},
+  {id:'pr1-res',day:'1',slot:'res',recipeDay:'1',
+   name:'Sahofan con Hongos y Entraña',short:'Sahofan de entraña',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:0, ge:0, gs:1, halal:0},
+   brief:'Fideos de arroz salteados con hongos y láminas de entraña a la parrilla, terminado con parmesano.',
+   extended:'El sahofan es una preparación de fideos de arroz salteados a fuego muy alto, típica de la cocina cantonesa, que aquí llevamos a la entraña chilena. Los hongos se saltean con una salsa que combina soya, miso y un toque de panela. La entraña se cocina a la parrilla y se sirve en láminas sobre los fideos. No es apto para vegetarianos ni para quienes evitan el gluten.'},
+  // ── Día 2 ──────────────────────────────────────────────────────────
+  {id:'pr2-vegana',day:'2',slot:'vegana',recipeDay:'2',
+   name:'Ñoquis de Papa y Brócoli con hierbas aromáticas',short:'Ñoquis',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:0, gs:0, halal:1},
+   brief:'Ñoquis caseros de papa, salteados y servidos con brócoli salteado y bañados en una emulsión de brócoli.',
+   extended:'La masa de los ñoquis lleva papa horneada (no hervida, para que quede más seca), ligada con harina de trigo y un poco de linaza en vez de huevo, lo que la hace apta para veganos. El brócoli no va incorporado en la masa: se saltea aparte y se sirve junto a los ñoquis, con la misma emulsión de brócoli que usamos en el buffet, terminados con hierbas frescas. No es apto para quienes evitan el gluten, por la harina de trigo de la masa.'},
+  {id:'pr2-mar',day:'2',slot:'mar',recipeDay:'1',
+   name:'Pescado al Vapor, Habas y Rúcula a la Brasa, Salsa de Habas',short:'Pescado al vapor',
+   diet:{veg:0, vgt:0, pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Pescado cocido al vapor sobre una emulsión de habas, con rúcula quemada a la brasa y habas salteadas.',
+   extended:'El pescado se cocina al vapor de forma muy suave para mantenerlo delicado. La base es una emulsión de habas con cilantro y jengibre, y se acompaña de rúcula que pasamos brevemente por la brasa para darle un sabor ahumado, más habas salteadas y un sofrito aromático de cebollín. Es un plato pescetariano; no apto para vegetarianos ni veganos.'},
+  {id:'pr2-avecerdo',day:'2',slot:'avecerdo',recipeDay:'4',
+   name:'Cerdo Salteado con Pimientos, Cebolla y Hierbas Aromáticas',short:'Cerdo salteado',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:1, ge:0, gs:1, halal:0},
+   brief:'Tiras de cerdo salteadas a fuego alto con pimientos, cebolla y hierbas frescas, en una salsa de cacho de cabra y chañar.',
+   extended:'El cerdo se marina brevemente al estilo chino (una técnica llamada velveting) antes de saltearse muy rápido a fuego alto junto a los vegetales, lo que mantiene todo crocante y jugoso. Se termina con una salsa de cacho de cabra y arrope de chañar, y hierbas frescas como cilantro, albahaca y menta. Se sirve con arroz con sésamo aparte. No es apto para quienes no consumen cerdo.'},
+  {id:'pr2-res',day:'2',slot:'res',recipeDay:'2',
+   name:'Flat Iron a la Brasa con Papas al Ajillo',short:'Flat iron',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:1, ge:0, gs:1, halal:0},
+   brief:'Corte de vacuno a la brasa con chimichurri de cebollín, papas doradas al ajillo, repollo salteado y una mayonesa cítrica de ajo aparte.',
+   extended:'El flat iron es un corte jugoso de vacuno que pasa por una breve salmuera antes de ir a la brasa. Se acompaña de un chimichurri de cebollín, papas cocidas y luego fritas dos veces para quedar crocantes, y repollo (kale) salteado con una salsa ponzu. La mayonesa de ajo se sirve aparte, en un recipiente individual. No es apto para vegetarianos ni veganos.'},
+  // ── Día 3 ──────────────────────────────────────────────────────────
+  {id:'pr3-vegana',day:'3',slot:'vegana',recipeDay:'4',
+   name:'Sahofan con Berenjena, Miso y Cebollita Encurtida',short:'Sahofan de berenjena',
+   diet:{veg:0, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Fideos de arroz salteados con una salsa de berenjena ahumada y miso, con cebollitas encurtidas asadas.',
+   extended:'La berenjena se asa entera a la brasa hasta quemar la piel, y se convierte en una salsa untuosa con miso blanco. Los fideos de arroz se saltean en esa salsa hasta espesar, se decoran con trozos de berenjena, una reducción de miso con balsámico, y cebollitas perla encurtidas y asadas. Es vegetariano, pero no apto para veganos por la miel de la reducción.'},
+  {id:'pr3-mar',day:'3',slot:'mar',recipeDay:'3',
+   name:'Pescado al Pil Pil con Papas a la Importancia',short:'Pescado al pil pil',
+   diet:{veg:0, vgt:0, pesc:1, mar:0, fs:1, lac:1, ge:0, gs:0, halal:1},
+   brief:'Pescado a la plancha con una espuma de pil pil, sobre papas a la importancia (empanizadas y fritas), con espinaca salteada.',
+   extended:'La espuma de pil pil se hace a partir de un caldo concentrado de espinas de pescado, emulsionado con aceites hasta lograr una textura aireada tipo mayonesa. El pescado se cocina a la plancha. Las papas se cortan en rodajas, se empanizan y se fríen antes de terminar de cocinarse en caldo de pescado. Es un plato pescetariano; no apto para vegetarianos, veganos, ni para quienes evitan el gluten.'},
+  {id:'pr3-avecerdo',day:'3',slot:'avecerdo',recipeDay:'3',
+   name:'Pasta con Pollo, Mantequilla y Queso de Cabra',short:'Pasta con pollo',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:0, ge:0, gs:0, halal:0},
+   brief:'Pasta con pollo salteado en una salsa cremosa de mantequilla y queso de cabra añejado.',
+   extended:'El pollo se sella en sartén y se termina junto a la pasta con una salsa que combina mantequilla de hierbas y dos tipos de queso de cabra —uno fresco y otro añejado—, terminada con pimienta negra recién molida. No es apto para vegetarianos, veganos, ni para quienes evitan el gluten (por la pasta) o los lácteos.'},
+  {id:'pr3-res',day:'3',slot:'res',recipeDay:'3',
+   name:'Plateada de Cocción Larga con Puré de Pallares y Pebre',short:'Plateada',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:0, ge:0, gs:1, halal:0},
+   brief:'Vacuno de cocción muy larga y lenta, laqueado en salsa de sus propios jugos y chañar, sobre un puré de pallares con pebre chileno aparte.',
+   extended:'La plateada se cocina al vacío durante 36 horas a baja temperatura, lo que la deja extremadamente tierna, y se laquea al momento de servir con una salsa hecha con sus propios jugos de cocción, miso y arrope de chañar. El puré de pallares —una legumbre chilena— se hace con mantequilla y leche, mucho más suelto que un puré de papa tradicional. El pebre se sirve aparte. No es apto para vegetarianos ni veganos.'},
+  // ── Día 4 ──────────────────────────────────────────────────────────
+  {id:'pr4-vegana',day:'4',slot:'vegana',recipeDay:'3',
+   name:'Arroz Salteado de Hongos',short:'Arroz de hongos',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:0, gs:1, halal:1},
+   brief:'Arroz salteado a fuego muy alto con hongos, dientes de dragón y una salsa asiática de soya y miso.',
+   extended:'El arroz se cocina el día anterior y se seca en frío, un paso clave para conseguir el "wok hei" —ese sabor ahumado típico del salteado a fuego muy alto—. Se combina con un picadillo de hongos, hongos salteados en una salsa de soya y miso, y dientes de dragón (un vegetal de hoja) frescos. Es vegano; no apto para quienes evitan el gluten estricto, por la salsa de soya.'},
+  {id:'pr4-mar',day:'4',slot:'mar',recipeDay:'2',
+   name:'Pasta con Crustáceos al Limón',short:'Pasta de crustáceos',
+   diet:{veg:0, vgt:0, pesc:1, mar:0, fs:1, lac:0, ge:0, gs:0, halal:1},
+   brief:'Pasta con centolla y camarón en una salsa cremosa de limón y mantequilla con parmesano.',
+   extended:'La salsa se hace con un caldo concentrado de carcasas de camarón, emulsionado con mantequilla de hierbas y parmesano, y un toque de limón. Se saltea con centolla, camarón y tomates cherry asados. No es apto para vegetarianos, veganos, ni para quienes evitan mariscos, lácteos o gluten.'},
+  {id:'pr4-avecerdo',day:'4',slot:'avecerdo',recipeDay:'1',
+   name:'Pollo Escabechado con Repollo y Zanahoria',short:'Pollo escabechado',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:0, ge:0, gs:0, halal:0},
+   brief:'Pechuga de pollo cocida al vacío y dorada, bañada en una salsa escabechada, sobre una ensalada tibia de repollo y zanahoria.',
+   extended:'El pollo se cocina primero al vacío para mantenerlo jugoso y se dora al momento de servir. La salsa escabechada combina vinagre, vino blanco y aceite de oliva, dándole un perfil ácido característico del escabeche. Se sirve sobre una ensalada tibia de repollo y zanahoria salteados, con pan gratato y orégano por encima. No es apto para vegetarianos, veganos, ni para quienes evitan el gluten o los lácteos.'},
+  {id:'pr4-res',day:'4',slot:'res',recipeDay:'4',
+   name:'Tomaticán de Filete con Tomates Asados y Choclo Salteado',short:'Tomaticán',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:1, ge:0, gs:1, halal:0},
+   brief:'Filete de vacuno salteado en tiras con una salsa casera de tomate, choclo, patasca y arroz aparte.',
+   extended:'El filete se marina brevemente al estilo asiático antes de saltearse, y se combina con una salsa tomaticán — una salsa chilena de tomate rallado, cocinada lentamente hasta concentrar sabor—. Se acompaña de choclo americano, patasca y tomates asados en cuartos, con arroz blanco aparte. No es apto para vegetarianos ni veganos.'}
+];
+
 // --- Postres nuevos: 3 por día ----------------------------------------------
 // Reemplazan a los 12 anteriores en almuerzo Y cena (decisión del owner).
 // Los antiguos no se borran: quedan en DISHES_LEGACY_POSTRES, reactivables en
@@ -2886,7 +3017,8 @@ const BAR_DISHES = [
    name:'Sándwich de Cerdo Frito (Tonkatsusando)',short:'Tonkatsusando',
    diet:{veg:0,vgt:0,pesc:0,ge:0,gs:0,halal:0},
    brief:'Milanesa de cerdo en formato sándwich, con repollo asado, chucrut y salsa de chañar.',
-   extended:'Es la versión sándwich de nuestra Milanesa de Cerdo de almuerzo: el mismo cerdo empanizado y frito, acompañado de repollo asado, chucrut (repollo fermentado) y la salsa agridulce de chañar, un fruto del desierto. No es apto para viajeros que no consumen cerdo, ni para quienes evitan el gluten.'},
+   extended:'Es la versión sándwich de nuestra Milanesa de Cerdo de almuerzo: el mismo cerdo empanizado y frito, acompañado de repollo asado, chucrut (repollo fermentado) y la salsa agridulce de chañar, un fruto del desierto. No es apto para viajeros que no consumen cerdo, ni para quienes evitan el gluten.',
+   lunchTwin:'pr1-avecerdo'},
   {id:'bar-poke',cat:'Salado',
    name:'Poke Andino',short:'Poke',
    diet:{veg:'*',vgt:'*',pesc:'*',halal:'*'},
@@ -2897,7 +3029,8 @@ const BAR_DISHES = [
    name:'Coliflor Frita en Salsa de Sésamo y Cacho de Cabra',short:'Coliflor frita',
    diet:{veg:1,vgt:1,pesc:1,mar:1,lac:1,halal:1},
    brief:'Bastones de coliflor frita, bañados en salsa de sésamo y cacho de cabra, con pomelo fresco y cebollín.',
-   extended:'Es la versión bar de la Coliflor Frita que también se sirve en almuerzo, aquí en formato de bastones para picotear. Se fríe hasta quedar dorada y se baña en una salsa de tahini (sésamo) con un toque picante de cacho de cabra, terminada con pomelo fresco y cebollín — a diferencia de la versión de almuerzo, que lleva supremas de pomelo quemadas al soplete. Es un plato 100% vegano.'},
+   extended:'Es la versión bar de la Coliflor Frita que también se sirve en almuerzo, aquí en formato de bastones para picotear. Se fríe hasta quedar dorada y se baña en una salsa de tahini (sésamo) con un toque picante de cacho de cabra, terminada con pomelo fresco y cebollín — a diferencia de la versión de almuerzo, que lleva supremas de pomelo quemadas al soplete. Es un plato 100% vegano.',
+   lunchTwin:'pr1-vegana'},
   {id:'bar-cesar',cat:'Salado',
    name:'Ensalada César',short:'César',
    diet:{veg:0,vgt:'*'},
@@ -2953,6 +3086,21 @@ const DISHES_LEGACY_POSTRES = DISHES.filter(d => d.course === 'Postre');
 DISHES_LEGACY_POSTRES.forEach(d => { const i = DISHES.indexOf(d); if (i > -1) DISHES.splice(i, 1); });
 DISHES_LEGACY_POSTRES.forEach(d => { d.service = 'Cena'; });
 
+// --- Retiro de los 16 principales de almuerzo anteriores --------------------
+// Mismo criterio que los postres: no se borran del archivo, se extraen del
+// catálogo activo. Quedan acá completos, con sus maridajes (`wines`) y sus
+// traducciones EN/PT en DISH_TRANS, que siguen intactas.
+// Para revertir la baja basta con: DISHES.push(...DISHES_LEGACY_PRINCIPALES_ALMUERZO).
+//
+// El filtro es por service === 'Almuerzo' a propósito: los 16 principales de
+// CENA quedan donde están. La cena sigue siendo el master del ciclo hasta que
+// llegue su propio documento.
+const DISHES_LEGACY_PRINCIPALES_ALMUERZO =
+  DISHES.filter(d => d.course === 'Plato principal' && d.service === 'Almuerzo');
+DISHES_LEGACY_PRINCIPALES_ALMUERZO.forEach(d => {
+  const i = DISHES.indexOf(d); if (i > -1) DISHES.splice(i, 1);
+});
+
 // --- Ingreso al catálogo único ---------------------------------------------
 // Todo lo nuevo entra a DISHES con la forma que el resto de la app espera
 // (day/service/course/name/desc/allergens/wines). `desc` se rellena con el
@@ -2968,6 +3116,7 @@ function menuToDish(d, service, course){
 DISHES.push(
   ...MENU_BUFFET .map(d => menuToDish(d, 'Almuerzo',         'Buffet')),
   ...MENU_SOPAS  .map(d => menuToDish(d, 'Almuerzo',         'Sopa')),
+  ...MENU_PRINCIPALES.map(d => menuToDish(d, 'Almuerzo',     'Plato principal')),
   // Los postres nuevos son del documento de ALMUERZO: no van a la cena. La
   // cena la cubren los 12 anteriores, restituidos arriba como 'Cena'.
   ...MENU_POSTRES.map(d => menuToDish(d, 'Almuerzo',          'Postre')),
@@ -3898,6 +4047,10 @@ const UI = {
     slotHojas:'Hojas', slotFirmes:'Vegetales firmes', slotGranos:'Granos',
     slotCocidos:'Vegetales cocidos', slotProFria:'Proteína fría', slotProCoc:'Proteína cocida',
     slotFruta:'Fruta', slotGranos2:'Granos y chocolate', slotSinAzucar:'Sin azúcar',
+    slotVegana:'Vegana', slotMar:'De mar', slotAveCerdo:'Ave / cerdo', slotRes:'Carne de res',
+    // EN/PT de estas dos PENDIENTES DE REVISIÓN del owner.
+    dayNumLunch:'Numeración del almuerzo · la cena corre su propio día',
+    dayNumDinner:'Numeración de la cena · el almuerzo corre su propio día',
     dietVeg:'Vegano', dietVgt:'Vegetariano', dietPesc:'Pescetariano',
     dietMar:'Sin mariscos', dietFs:'Sin frutos secos', dietLac:'Sin lactosa',
     dietGe:'Sin gluten estricto', dietGs:'Sin gluten superficial', dietHalal:'Sin cerdo / Halal',
@@ -4114,6 +4267,9 @@ const UI = {
     slotHojas:'Leaves', slotFirmes:'Firm vegetables', slotGranos:'Grains',
     slotCocidos:'Cooked vegetables', slotProFria:'Cold protein', slotProCoc:'Cooked protein',
     slotFruta:'Fruit', slotGranos2:'Grains & chocolate', slotSinAzucar:'No added sugar',
+    slotVegana:'Vegan', slotMar:'From the sea', slotAveCerdo:'Poultry / pork', slotRes:'Beef',
+    dayNumLunch:'Lunch day numbering · dinner runs its own',
+    dayNumDinner:'Dinner day numbering · lunch runs its own',
     dietVeg:'Vegan', dietVgt:'Vegetarian', dietPesc:'Pescatarian',
     dietMar:'No shellfish', dietFs:'No nuts', dietLac:'No lactose',
     dietGe:'Strict gluten-free', dietGs:'Light gluten-free', dietHalal:'No pork / Halal',
@@ -4327,6 +4483,9 @@ const UI = {
     slotHojas:'Folhas', slotFirmes:'Legumes firmes', slotGranos:'Grãos',
     slotCocidos:'Legumes cozidos', slotProFria:'Proteína fria', slotProCoc:'Proteína cozida',
     slotFruta:'Fruta', slotGranos2:'Grãos e chocolate', slotSinAzucar:'Sem açúcar',
+    slotVegana:'Vegana', slotMar:'Do mar', slotAveCerdo:'Ave / porco', slotRes:'Carne bovina',
+    dayNumLunch:'Numeração do almoço · o jantar tem a sua',
+    dayNumDinner:'Numeração do jantar · o almoço tem a sua',
     dietVeg:'Vegano', dietVgt:'Vegetariano', dietPesc:'Pescetariano',
     dietMar:'Sem frutos do mar', dietFs:'Sem frutos secos', dietLac:'Sem lactose',
     dietGe:'Sem glúten estrito', dietGs:'Sem glúten superficial', dietHalal:'Sem porco / Halal',
@@ -5061,6 +5220,15 @@ function menuRenderAlmuerzo(){
     return menuTile(d, t(s.uiKey), false);
   }).join('');
 
+  // Los principales nuevos van por POSICIÓN FIJA, igual que las bandejas: la
+  // categoría (vegana · de mar · ave-cerdo · res) no cambia nunca, sólo rota el
+  // plato que la ocupa.
+  const mainTiles = PRINCIPAL_SLOTS.map(s => {
+    const d = mains.find(x => x.slot === s.key);
+    if (!d || (MENU_ONLY_FIT && MENU_DIET_LENS.length && menuFails(d))) return '';
+    return menuTile(d, t(s.uiKey), false);
+  }).join('');
+
   const postreTiles = POSTRE_SLOTS.map(s => {
     const d = postres.find(x => x.slot === s.key);
     if (!d || (MENU_ONLY_FIT && MENU_DIET_LENS.length && menuFails(d))) return '';
@@ -5071,7 +5239,9 @@ function menuRenderAlmuerzo(){
   if (buffet.length)  html += menuSection('secBuffet', buffetTiles, 1, t('trayCount'));
   if (sopa.length)    html += menuSection('secSoup',  menuVisible(sopa).map(d => menuTile(d, '', true)).join(''), 0);
   html += winetipsSlot();      // bajo la sopa, antes de los principales
-  if (mains.length)   html += menuSection('secMains', menuVisible(mains).map(d => menuTile(d, '', false)).join(''), mains.length);
+  // Sin `slot` (principal antiguo, o si se restituyen los legacy) la ficha va
+  // sin rótulo y en lista plana — el mismo patrón que ya usan los postres.
+  if (mains.length)   html += menuSection('secMains', mains.some(m => m.slot) ? mainTiles : menuVisible(mains).map(d => menuTile(d, '', false)).join(''), mains.length);
   // Los postres viejos traen sus 3 líneas de postre por día; los nuevos, sus
   // familias. Si no hay slot (postre antiguo), la ficha va sin rótulo.
   if (postres.length) html += menuSection('secDesserts', postres.some(p => p.slot) ? postreTiles : menuVisible(postres).map(d => menuTile(d, '', false)).join(''), postres.length);
@@ -5152,6 +5322,26 @@ function menuRenderChrome(searching){
   const isBar  = MENU_SERVICE === 'bar' && !searching;
   if (daySel) daySel.hidden = isBar;
   if (note){ note.hidden = !isBar; note.textContent = t('barFixed'); }
+
+  // Numeración por servicio: almuerzo y cena corren desfasados, así que el
+  // MISMO día real se llama distinto en cada uno. Los botones muestran el
+  // número que usa el servicio que se está mirando; el almuerzo, el de su
+  // documento (el que habla cocina).
+  //
+  // OJO: acá cambia SÓLO la etiqueta. El onclick, setDay(), currentDay, el
+  // ancla de fecha, el halo de hoy (day-btn-today) y menuJumpTwin() siguen
+  // todos en numeración de app, que es la única que circula por el modelo.
+  // El halo queda sobre el mismo botón real: en almuerzo ese botón dirá el día
+  // que hoy corresponde en cocina.
+  const enAlmuerzo = MENU_SERVICE === 'almuerzo';
+  document.querySelectorAll('#mn-day-selector .day-btn').forEach((b, i) => {
+    const appDay = String(i + 1);
+    b.textContent = 'D' + (enAlmuerzo ? menuAppDayToDoc(appDay) : appDay);
+  });
+  // Pie del riel: dice en qué numeración están esos botones. En Bar va vacío
+  // pero el alto queda reservado — la grilla no salta al cambiar de servicio.
+  const dayNote = document.getElementById('mn-daynote');
+  if (dayNote) dayNote.textContent = isBar ? '' : t(enAlmuerzo ? 'dayNumLunch' : 'dayNumDinner');
 
   // Sub-control comida / tragos: existe sólo dentro de BAR.
   const barTabs = document.getElementById('mn-bar-tabs');
