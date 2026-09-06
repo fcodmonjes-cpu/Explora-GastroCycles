@@ -585,13 +585,31 @@ pidiendo cuatro dígitos. Teclado propio de doce teclas, no un `<input>` — en
 iOS un input dispara zoom y el teclado del sistema tapa media pantalla.
 Auto-submit al cuarto dígito: no hay botón "Entrar" que buscar.
 
-**Las tres puertas de escape, para no encerrar al lodge en hora de servicio:**
+**La trampa de la migración: los teléfonos que ya venían usando el handbook.**
+Todos tienen una **sesión anónima persistida**, así que `onIdTokenChanged` les
+entrega un usuario y el gate —que sólo se dibuja cuando *no hay* usuario— no
+llegaba a aparecerles nunca. Habrían seguido con su token anónimo hasta el
+momento de cerrar las reglas por uid, y ahí se habrían quedado con **la
+pantalla vacía en pleno servicio, sin nada que les pidiera la clave**: justo el
+desastre que el orden de despliegue existe para evitar. Ahora, si el usuario es
+anónimo, se lo desloguea y se le pide la clave una vez, como a cualquier aparato
+nuevo. El `signOut` vuelve a disparar el hook con `null`, que es lo que abre el
+gate. La bandera `_GATE_DEGRADADO` distingue este anónimo *heredado* del
+anónimo *deliberado* de la válvula de abajo — sin esa distinción, la válvula se
+expulsaría a sí misma en bucle.
+
+**Las cuatro puertas de escape, para no encerrar al lodge en hora de servicio:**
 
 | Situación | Qué hace | Por qué |
 |---|---|---|
 | Firebase no contesta en 8 s | Si el aparato ya entró antes, pasa igual y trabaja con lo que el SW tenga cacheado. Si es nuevo, se queda en la puerta. | Un teléfono conocido sin red no es un intruso. Uno nuevo sin red no tiene con qué verificarse. |
 | El SDK no cargó (CDN caído) | Mismo criterio. El submit responde "sin conexión", no "clave incorrecta". | Encontrado en el render de prueba: sin este brazo el gate no se dibujaba y **la app abría entera**. |
+| WebCrypto no disponible | El submit responde "sin conexión" y deja un `console.error` que dice exactamente qué pasa. | `crypto.subtle` sólo existe en contexto seguro. En producción siempre lo hay; en QA local **no**, si se abre el `index.html` con `file://` o se entra por IP de la LAN desde el teléfono. Sin este brazo el gate contestaba "clave incorrecta" a un PIN correcto — la pista más cara de seguir. |
 | Proveedor Email/Password apagado | Degrada a sesión anónima y deja entrar, con un `console.error` explícito. | Es el paso 1 del despliegue sin hacer. Volver al estado de ayer es malo; dejar al salón afuera a las 20:30 es peor. |
+
+**QA local:** servir con `py -m http.server 3000` y entrar por
+**`http://localhost:3000`**. Por `file://` o por IP de la LAN, WebCrypto no
+existe y el gate no puede verificar nada.
 
 **Orden de despliegue, no negociable** (misma lección que la capa de reglas):
 
@@ -605,6 +623,15 @@ Auto-submit al cuarto dígito: no hay botón "Entrar" que buscar.
 Saltarse el paso 1 antes del 3 deja al lodge afuera en pleno servicio. La
 constante `GATE_ON` en `index.html` es la válvula de emergencia: en `false` la
 app se comporta exactamente como antes del gate.
+
+**El paso 4 en concreto.** El uid del usuario está en la consola, en
+Authentication. En las reglas vigentes —copiadas de la consola, nunca escritas
+de memoria (la lección de §4.3)— cada `"auth != null"` pasa a
+`"auth.uid === '<uid>'"`. Los `sync_*.py` no se ven afectados: escriben con
+service account, que pasa por encima de las reglas. Y **antes de cerrar, que
+los teléfonos del turno hayan entrado al menos una vez con la clave** — el
+deslogueo del anónimo heredado los manda al gate solos, pero conviene que eso
+pase con la app en la mano y no a mitad de un servicio.
 
 **Para operar:** `ataPinPassword('1234')` en la consola del navegador devuelve
 la contraseña que hay que pegar en Firebase — el modo de cambiar el PIN.

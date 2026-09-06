@@ -6939,6 +6939,12 @@ window.ataPinPassword = ataPinPassword;
 let FB_AUTH_TOKEN = null;
 let _FB_AUTH_READY = null;
 let _GATE_SEEN_AUTH = false;   // ¿Firebase ya dijo algo sobre la sesión?
+// Distingue el anónimo DELIBERADO (la válvula de escape de abajo, cuando el
+// proveedor Email/Password no está configurado) del anónimo HEREDADO que
+// quedó en los teléfonos de antes del gate. Al primero se lo deja pasar; al
+// segundo hay que pedirle la clave, o se queda sin datos el día que las
+// reglas cierren por uid.
+let _GATE_DEGRADADO = false;
 
 // ── El gate ─────────────────────────────────────────────────────────────────
 // Hereda el telón de intro (mismo fondo, misma marca) y vive por encima de él:
@@ -7019,6 +7025,15 @@ const GATE = {
       // Sin el SDK no hay contra qué verificar: decir "clave incorrecta" sería
       // mentirle a alguien que tecleó bien. Es un problema de red.
       if (typeof firebase === 'undefined' || !firebase.auth) throw { code:'auth/network-request-failed' };
+      // WebCrypto sólo existe en contexto seguro. En producción siempre lo hay
+      // (Vercel es HTTPS) y en local también si se sirve desde localhost —
+      // pero abriendo el index con file://, o entrando por IP de la LAN desde
+      // el teléfono, no. Sin este brazo el gate respondía "clave incorrecta" a
+      // un PIN correcto, que es la pista más cara de seguir en un QA.
+      if (!(window.crypto && crypto.subtle)){
+        console.error('[gate] WebCrypto no disponible: hay que servir por HTTPS o por http://localhost, no por file:// ni por IP de la LAN.');
+        throw { code:'auth/network-request-failed' };
+      }
       const pw = await ataPinPassword(this.buf);
       await firebase.auth().signInWithEmailAndPassword(GATE_EMAIL, pw);
       // Éxito: onIdTokenChanged cierra el gate y relanza los fetches que se
@@ -7031,7 +7046,8 @@ const GATE = {
         // (el paso 1 del despliegue que no se hizo). Dejar al lodge afuera en
         // hora de servicio es peor que volver al estado de ayer: se degrada a
         // sesión anónima, que es exactamente cómo funcionaba antes del gate.
-        console.error('[gate] proveedor Email/Password no habilitado — degradando a sesión anónima. Ver §4.3 del ARCHITECTURE.');
+        console.error('[gate] proveedor Email/Password no habilitado — degradando a sesión anónima. Ver §4.4 del ARCHITECTURE.');
+        _GATE_DEGRADADO = true;
         try { await firebase.auth().signInAnonymously(); } catch(e2){}
         this.close();
         return;
@@ -7088,6 +7104,19 @@ function fbAuthInit(){
           } else {
             auth.signInAnonymously().catch(e => { console.warn('[auth] sin sesión anónima:', e && e.code); fin(null); });
           }
+          return;
+        }
+        // EL TELÉFONO QUE YA VENÍA USANDO EL HANDBOOK. Su sesión anónima
+        // persistida hace que este hook reciba un usuario, así que el gate no
+        // se dibujaba y nadie le pedía la clave — hasta que las reglas
+        // cierran por uid y se queda con la pantalla vacía en hora de
+        // servicio. Se lo desloguea y se le pide la clave una vez, como a
+        // cualquier aparato nuevo. El signOut vuelve a disparar este hook con
+        // null, que es lo que abre el gate.
+        if (u.isAnonymous && GATE_ON && !_GATE_DEGRADADO){
+          console.info('[gate] sesión anónima heredada: se pide la clave una vez');
+          try { localStorage.removeItem(GATE_FLAG); } catch(e){}
+          auth.signOut().catch(() => GATE.open());
           return;
         }
         GATE.close();
