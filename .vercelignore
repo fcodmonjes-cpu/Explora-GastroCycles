@@ -1,0 +1,39 @@
+# Qué NO viaja al deployment de Vercel.
+#
+# Por qué existe este archivo: Vercel copia el árbol completo del repo en CADA
+# deployment (main, staging y cada preview de feature/*), y el plan Hobby tiene
+# 10 GB de Deployment Storage acumulado. En 2026-09 la cuota se llenó al 100 %
+# porque había 278 MB de audios .m4a trackeados desde antes de que .gitignore
+# los cubriera: ~285 MB por deploy × 35 deploys = 10 GB. Ningún archivo de esos
+# lo servía la app — eran material de trabajo.
+#
+# .gitignore es la primera barrera; ésta es la segunda. Si mañana alguien
+# commitea un audio o un Excel sin querer, el repo lo cargará pero el
+# deployment no, y la cuota no se mueve.
+#
+# Regla: acá abajo va material de TRABAJO (fuentes, grabaciones, planillas).
+# Nada que la app pida por URL. Al agregar un asset que el sitio sí sirve,
+# comprobar que no caiga en estos patrones.
+
+# Audio y video — lo más pesado de lejos
+*.m4a
+*.mp3
+*.wav
+*.mp4
+*.mov
+
+# Planillas y material de referencia de la raíz
+*.xlsx
+*.xls
+*.pptx
+*.docx
+/*.pdf
+
+# Semillas y volcados de datos
+*.seed.json
+
+# Repo y utilería que no sirve al navegador
+.git
+scripts/
+__pycache__/
+*.pyc
