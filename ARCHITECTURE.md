@@ -47,7 +47,7 @@ que es operacional (turnos, postres, pedidos, comandas).
 |---|---|---|
 | Renderizado | HTML + CSS + JS vanilla | Cero build step. Editar = desplegar. Cualquier persona puede leer el código. |
 | Datos en vivo | Firebase Realtime Database (compat SDK 10.12) | WebSocket para tiempo real + REST para fetches puntuales. Reglas abiertas en prototipo, fáciles de lockear con auth para producción. |
-| Hosting | Vercel (auto-deploy por branch) | `main` → `gastrocycles.vercel.app` (producción). `staging` → URL fija para QA desde iPhone. `feature/*` y `fix/*` → preview por commit. Ver sección 12. |
+| Hosting | Vercel (auto-deploy por branch) | `main` → `gastrocycles.vercel.app` (producción). `staging` → URL fija para QA desde iPhone. `feature/*` y `fix/*` → preview por commit. Ver sección 12. **Cada deployment copia el árbol entero del repo y todos suman contra los 10 GB del plan Hobby** — por eso existe `.vercelignore` (§12). |
 | Tipografía | Cormorant Garamond (italic 500/700) + Courier Prime monospace | Cargadas vía Google Fonts. Family declarada en CSS desde el inicio; sólo recientemente se cargó la real. |
 | Instalable | PWA: `manifest.webmanifest` + `sw.js` (service worker propio, ~50 líneas) | Se agrega al home screen y abre sin chrome del browser. Network-first: el cache es red de emergencia, no fuente de verdad. Ver §2.1. |
 | Clima | Open-Meteo (REST, sin API key) | **Único tercero fuera de Firebase.** Gratis, CORS abierto y sin registro — en una app sin build step, una API key quedaría visible en el HTML. Si cae, el módulo se apaga solo. Ver §3.2. |
@@ -485,19 +485,25 @@ nombres propios y **nunca escribe Firebase**.
 
 ---
 
-### 4.3 Acceso: sesión anónima y reglas
+### 4.3 Acceso: la puerta de atrás (reglas) y la de adelante (el gate)
 
-**Cómo funciona.** Al cargar, el navegador pide a Firebase un token anónimo
-(`signInAnonymously`): una credencial que se genera sola, sin usuario ni clave.
-Cada llamada REST lo lleva como `?auth=<token>` y el SDK compat lo usa para sus
-WebSockets. Las reglas exigen `auth != null`, así que la base responde sólo a
-quien lo trae. **El equipo no escribe nada ni ve login alguno** — el token vence
-cada hora y el SDK lo renueva solo (`onIdTokenChanged`, no `onAuthStateChanged`).
+**Historia en dos capas.** Primero se cerró la puerta de atrás: una sesión
+anónima que el navegador obtenía solo, para que las reglas pudieran exigir
+`auth != null` y la base dejara de responderle a `curl`. Eso dejaba la puerta de
+adelante abierta — cualquiera con la URL de la app entraba, porque su navegador
+también obtenía token. Desde 2026-09 esa segunda puerta tiene llave: **el gate
+de cuatro dígitos** (§4.4). Lo que sigue describe la capa de reglas; el gate se
+documenta aparte porque resuelven cosas distintas.
+
+**Cómo funciona la capa de reglas.** Cada llamada REST lleva el token como
+`?auth=<token>` y el SDK compat lo usa para sus WebSockets. Las reglas exigen
+`auth != null`, así que la base responde sólo a quien lo trae. El token vence
+cada hora y el SDK lo renueva solo (`onIdTokenChanged`, no
+`onAuthStateChanged`).
 
 **Qué bloquea y qué no.** Bloquea a cualquiera que tenga la URL de la base y la
-consulte por fuera: un navegador, `curl`, un script. **NO** impide que alguien
-con la URL de la *app* entre y vea los datos, porque su navegador también
-obtiene token. Es la puerta de atrás, no la de adelante (ver §9).
+consulte por fuera: un navegador, `curl`, un script. Lo que NO bloquea por sí
+sola es la entrada por la app — de eso se ocupa el gate.
 
 **El orden de despliegue no es negociable:**
 
@@ -536,6 +542,74 @@ Los `sync_*.py` no se ven afectados: escriben con **service account**, que pasa
 por encima de las reglas.
 
 ---
+
+### 4.4 El gate de entrada: cuatro dígitos, una sola vez
+
+**Qué resuelve.** La puerta de adelante que §9 tenía pendiente desde el inicio:
+"poner una clave del salón —una vez por dispositivo, no en cada uso—".
+
+**Cómo funciona.** El PIN no se compara con nada en el cliente: **se canjea por
+una credencial real de Firebase**. Los cuatro dígitos pasan por PBKDF2-SHA256
+(200.000 iteraciones, salt `ata-handbook/salon/2026`) y el hexadecimal que sale
+*es* la contraseña del usuario `salon@ata-handbook.local`. Si el PIN está mal,
+no hay sesión; sin sesión las reglas no devuelven nada — ni desde la app ni
+desde la consola del navegador. **El PIN no está escrito en el HTML**: lo único
+que viaja es el algoritmo para derivarlo.
+
+**Por qué canjear y no comparar.** Un gate que compara un hash contra
+`localStorage` es decorado: se saltea escribiendo una línea en la consola,
+porque los datos ya estaban al alcance. Acá el gate no *decide* si te deja
+pasar — es que sin la clave correcta Firebase no emite token y no hay nada que
+leer. La diferencia entre un portero y un candado.
+
+**Lo que esto es y lo que no.** Hay 10.000 PINs de cuatro dígitos y el atacante
+puede derivarlos todos: el PBKDF2 encarece esa tabla, no la impide. La defensa
+real es que **Firebase corta por IP tras un puñado de intentos fallidos**, y que
+para siquiera empezar hay que conocer la URL y leer el fuente. Es la clave del
+salón con el rate-limiter de Google detrás. No es un banco y no pretende serlo
+— pero contra el estado anterior (abrir la URL y entrar) la diferencia es
+categórica.
+
+**La "una sola vez" es de Firebase, no nuestra.** `Persistence.LOCAL` guarda el
+refresh token en IndexedDB y no vence. No hay lógica propia que lo imite: el
+garzón teclea cuatro dígitos el primer día y al reabrir la sesión ya está
+resuelta antes de que el gate llegue a dibujarse. La bandera `ata.gate.v1` en
+`localStorage` **no** autoriza nada — sólo recuerda que este aparato entró
+alguna vez, para decidir qué hacer cuando Firebase no contesta.
+
+**Dónde vive.** Por encima del telón de intro (`z-index` 9995 contra 9990),
+porque el telón se levanta solo a los 2,2 s pase lo que pase y no puede
+destapar la app a alguien que todavía no entró. Hereda su fondo, su marca y su
+regla dorada: no se siente como un login que apareció, sino como el telón
+pidiendo cuatro dígitos. Teclado propio de doce teclas, no un `<input>` — en
+iOS un input dispara zoom y el teclado del sistema tapa media pantalla.
+Auto-submit al cuarto dígito: no hay botón "Entrar" que buscar.
+
+**Las tres puertas de escape, para no encerrar al lodge en hora de servicio:**
+
+| Situación | Qué hace | Por qué |
+|---|---|---|
+| Firebase no contesta en 8 s | Si el aparato ya entró antes, pasa igual y trabaja con lo que el SW tenga cacheado. Si es nuevo, se queda en la puerta. | Un teléfono conocido sin red no es un intruso. Uno nuevo sin red no tiene con qué verificarse. |
+| El SDK no cargó (CDN caído) | Mismo criterio. El submit responde "sin conexión", no "clave incorrecta". | Encontrado en el render de prueba: sin este brazo el gate no se dibujaba y **la app abría entera**. |
+| Proveedor Email/Password apagado | Degrada a sesión anónima y deja entrar, con un `console.error` explícito. | Es el paso 1 del despliegue sin hacer. Volver al estado de ayer es malo; dejar al salón afuera a las 20:30 es peor. |
+
+**Orden de despliegue, no negociable** (misma lección que la capa de reglas):
+
+1. En la consola de Firebase: habilitar **Email/Password** y crear el usuario
+   `salon@ata-handbook.local` con la contraseña derivada del PIN.
+2. QA en `staging` desde el iPhone — que un teléfono real entre y **quede**
+   dentro tras cerrar y reabrir.
+3. Recién entonces mergear a `main`.
+4. Y sólo después cerrar las reglas por uid y apagar el proveedor anónimo.
+
+Saltarse el paso 1 antes del 3 deja al lodge afuera en pleno servicio. La
+constante `GATE_ON` en `index.html` es la válvula de emergencia: en `false` la
+app se comporta exactamente como antes del gate.
+
+**Para operar:** `ataPinPassword('1234')` en la consola del navegador devuelve
+la contraseña que hay que pegar en Firebase — el modo de cambiar el PIN.
+`ataGateReset()` olvida el dispositivo y vuelve a pedir la clave, para QA.
+Ninguna de las dos filtra nada: quien tiene el fuente ya podía calcularlas.
 
 ---
 
@@ -857,11 +931,11 @@ hecha: falta que sobreviva a un reload.
 
 Hay decisiones conscientes de prototipo. Listarlas explícitas:
 
-- **La app no pide credencial.** Las reglas ya exigen sesión (§4.3), pero
-  esa sesión la obtiene cualquier navegador que abra la app: cierra la
-  puerta de atrás, no la de adelante. Poner una clave del salón —una vez
-  por dispositivo, no en cada uso— quedó pendiente de conversarlo con
-  jefaturas. La fricción de loguear seguido mataría la practicidad.
+- ~~**La app no pide credencial.**~~ **Saldado en 2026-09**: el gate de
+  cuatro dígitos (§4.4) es la clave del salón que esta deuda pedía, una vez
+  por dispositivo y sin fricción recurrente. Queda la deuda menor de que un
+  PIN de cuatro dígitos es fuerza-brutable en teoría: la contención real es
+  el rate-limiting de Firebase, no la longitud de la clave.
 - **No hay sistema de usuarios.** PINs son strings hardcoded
   (555/666/999). Sin trazabilidad de quién hizo qué. La data tiene
   espacio para `waiter` pero no se llena.
@@ -1053,6 +1127,36 @@ Cuando el owner pida "retomemos lo de X":
 - **Paleta y tipografías:** Cormorant Garamond + Courier Prime, dark amber. No introducir colores nuevos sin avisar.
 - **Convención de PINs:** 555 (mesero), 999 (barista), 9876 (supervisor Checklist). Gates desactivados el 2026-06-09 para reducir fricción: **Rol** (tenía 2098 — ahora entra directo; quedó "oculto" al final del strip scrollable y esa obscuridad reemplaza la clave) y **E-Check/comandera** (tenía 666 waiter / 777 recibidor — ahora entra directo como waiter; reimaginada como herramienta personal + intercom entre meseros). El código de ambos gates queda latente para reactivar en una línea (`ROL_PIN_CODE`/`rolRenderGate`/… y `COMANDA_PIN_CODE`/`COMANDA_RECIBIDOR_PIN`/`comandaRenderGate`/…). El módulo **Viajeros** (2026-07-17) nació sin gate por la misma lógica. Nuevos PINs deben ir aquí cuando se agreguen.
 
+### El peso del repo es el peso de cada deployment
+
+**La lección de 2026-09, que costó la cuota entera.** Vercel avisó 100 % de los
+10 GB de Deployment Storage del plan Hobby. No era tráfico: **cada deployment
+—main, staging y cada preview por commit— copia el árbol completo del repo, y
+todos se acumulan contra el mismo total.** Había 278 MB de audios `.m4a` (las
+grabaciones de las catas de menú) trackeados desde antes de que `.gitignore` los
+cubriera. ~285 MB por deploy × ~35 deploys = 10 GB. Ninguno de esos archivos lo
+servía la app.
+
+La cuenta que conviene tener presente: **peso del árbol × deployments retenidos**.
+Con el árbol en 2,7 MB, la misma cuota aguanta miles de deploys en vez de 35.
+
+Dos barreras, no una:
+
+- **`.gitignore`** — que no entre al repo.
+- **`.vercelignore`** — que no entre al *deployment* aunque haya entrado al
+  repo. Si mañana se cuela un audio o un Excel en un commit, la cuota no se
+  mueve. Deja fuera también `scripts/` y `.git`, que el navegador nunca pide.
+
+Cuando la cuota se llena, sacar los archivos sólo arregla los deploys futuros:
+los viejos ya escritos siguen ocupando. Hay que borrarlos —
+`npx vercel remove <proyecto> --safe` respeta los que tienen alias, así que
+producción y la URL fija de staging quedan protegidas — y fijar
+**Deployment Retention** de previews en el mínimo.
+
+Material de trabajo (grabaciones, Excel, dossiers) **no va al repo**. Si hace
+falta versionarlo, va a otro lado. Los archivos que se sacaron siguen en el
+historial: `git show <commit>:"<archivo>"` los recupera.
+
 ### Lo que NO se hace
 
 - No commitear a `main` sin aprobación.
@@ -1061,6 +1165,7 @@ Cuando el owner pida "retomemos lo de X":
 - No traducir automáticamente — preguntar si falta un idioma.
 - No borrar contenido del ATA Handbook sin confirmar.
 - No commitear secretos (tokens, credenciales) ni dejarlos en plain text en `.git/config`. Si se necesita autenticar, usar Windows Credential Manager.
+- No commitear material de trabajo pesado (audios, Excel, PDFs de referencia): cada deployment de Vercel lo copia entero y suma contra la cuota.
 
 ### Excepciones válidas
 

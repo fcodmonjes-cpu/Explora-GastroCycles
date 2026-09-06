@@ -1854,7 +1854,40 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
   .intro-rule { animation:none; width:96px; }
   #intro-curtain { transition:opacity .45s ease; }
   #intro-curtain.intro-lift { transform:translateY(0); opacity:0; }
+  #gate-curtain .gate-dot, #gate-curtain .gate-key { transition:none; }
 }
+
+/* ── Gate de entrada (clave del salón) ────────────────────────────────────
+   La puerta de ADELANTE (§4.3/§9): cuatro dígitos, una sola vez por
+   dispositivo. Vive por ENCIMA del telón de intro (9990) porque el telón se
+   levanta solo a los 2,2 s pase lo que pase y no puede destapar la app a
+   alguien que todavía no entró.
+
+   Hereda el telón entero — mismo fondo, misma marca, misma regla dorada — en
+   vez de inventar una pantalla nueva: quien abre el handbook no siente que
+   apareció un login, siente que el telón le pidió cuatro dígitos. Cero color
+   nuevo; todo sale de la paleta (sienna #c75c2a, gold #c07d2a). */
+#gate-curtain { position:fixed; inset:0; z-index:9995; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:13px; padding:1rem; }
+.gate-sub { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); margin-top:2px; }
+.gate-dots { display:flex; justify-content:center; gap:14px; margin:6px 0 2px; }
+.gate-dot { width:11px; height:11px; border-radius:50%; border:1px solid rgba(192,125,42,0.55); transition:background .18s ease, border-color .18s ease, transform .18s ease; }
+.gate-dot.filled { background:#c07d2a; border-color:#c07d2a; transform:scale(1.12); }
+/* Sacudida del "clave incorrecta": el error se siente antes de leerse. */
+@keyframes gateShake { 10%,90%{transform:translateX(-2px);} 30%,70%{transform:translateX(4px);} 50%{transform:translateX(-4px);} }
+.gate-dots.wrong { animation:gateShake 0.4s ease both; }
+.gate-dots.wrong .gate-dot { border-color:rgba(217,83,79,0.7); background:none; transform:none; }
+/* Teclado propio, no <input>: en iOS un input dispara zoom y el teclado del
+   sistema entra y sale tapando media pantalla. Doce teclas grandes no fallan
+   con el pulgar a hora pico. */
+.gate-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; width:100%; max-width:252px; margin-top:4px; }
+.gate-key { padding:15px 0; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:9px; font-family:'Courier Prime','Courier New',monospace; font-size:17px; color:var(--text-primary); cursor:pointer; transition:background .15s, border-color .15s; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+.gate-key:active { background:rgba(192,125,42,0.14); border-color:rgba(192,125,42,0.5); }
+.gate-key.ghost { background:none; border-color:transparent; cursor:default; }
+.gate-key.act { color:var(--text-tertiary); font-size:13px; }
+.gate-msg { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.05em; min-height:15px; text-align:center; color:#d9534f; }
+.gate-msg.calm { color:var(--text-tertiary); }
+.gate-hint { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:13px; color:var(--text-tertiary); text-align:center; margin-top:2px; }
+#gate-curtain.busy .gate-pad { opacity:0.45; pointer-events:none; }
 .chk-pin-overlay { position:fixed; inset:0; background:rgba(15,15,16,0.85); backdrop-filter:blur(4px); z-index:9000; display:flex; align-items:center; justify-content:center; padding:1rem; }
 .chk-pin-modal { background:var(--bg); border:0.5px solid var(--border); border-radius:14px; padding:1.5rem 1.25rem; max-width:300px; width:100%; animation:chkPinPop 0.42s cubic-bezier(0.34,1.56,0.64,1) both; }
 .chk-pin-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:24px; color:#c07d2a; margin-bottom:6px; text-align:center; }
@@ -4204,6 +4237,11 @@ const UI = {
     chkEditDeleteConfirm:'¿Eliminar esta tarea?',
     chkEditSave:'Guardar cambios', chkEditCancel:'Descartar',
     chkPinTitle:'Modo edición', chkPinSub:'Introduce el código del supervisor',
+    // Gate de entrada — EN/PT propuestos por el asistente, PENDIENTES de revisión.
+    gateSub:'Clave del salón', gateHint:'Una sola vez en este dispositivo.',
+    gateWrong:'Clave incorrecta', gateChecking:'Abriendo…',
+    gateBusy:'Demasiados intentos. Espera un minuto.',
+    gateNet:'Sin conexión. Revisa el wifi del lodge.',
     chkPinError:'Código incorrecto', chkPinClose:'Cerrar',
     // Viajeros module
     tabViajeros:'PGO',
@@ -4421,6 +4459,10 @@ const UI = {
     chkEditDeleteConfirm:'Delete this task?',
     chkEditSave:'Save changes', chkEditCancel:'Discard',
     chkPinTitle:'Edit mode', chkPinSub:'Enter the supervisor code',
+    gateSub:'Floor code', gateHint:'Just once on this device.',
+    gateWrong:'Wrong code', gateChecking:'Opening…',
+    gateBusy:'Too many attempts. Wait a minute.',
+    gateNet:'No connection. Check the lodge wifi.',
     chkPinError:'Wrong code', chkPinClose:'Close',
     // Viajeros module
     tabViajeros:'PGO',
@@ -4637,6 +4679,10 @@ const UI = {
     chkEditDeleteConfirm:'Excluir esta tarefa?',
     chkEditSave:'Salvar alterações', chkEditCancel:'Descartar',
     chkPinTitle:'Modo edição', chkPinSub:'Insira o código do supervisor',
+    gateSub:'Código do salão', gateHint:'Uma só vez neste aparelho.',
+    gateWrong:'Código incorreto', gateChecking:'Abrindo…',
+    gateBusy:'Tentativas demais. Aguarde um minuto.',
+    gateNet:'Sem conexão. Verifique o wifi do lodge.',
     chkPinError:'Código incorreto', chkPinClose:'Fechar',
     // Viajeros module
     tabViajeros:'PGO',
@@ -6840,20 +6886,182 @@ const CF_FIREBASE_CONFIG = {
   appId:"1:898891226322:web:6923459e61eca72ce5e10b"
 };
 
-// ── Sesión anónima de Firebase ───────────────────────────────────────────────
-// Hoy /viajeros, /staffing y /comandas se leen SIN credencial: cualquiera con
-// la URL de la base ve nombres, edades y restricciones alimentarias de los
-// huéspedes. Esto lo cierra sin pedirle nada a nadie: el navegador obtiene un
-// token anónimo solo, al cargar, y las reglas pasan a exigir auth != null.
-// Cero fricción — el garzón nunca se entera de que existe.
+// ── Sesión de Firebase + gate de entrada ─────────────────────────────────────
+// ANTES: la app pedía un token anónimo al cargar. Eso cerró la puerta de ATRÁS
+// (nadie lee /viajeros con curl) pero dejó la de ADELANTE abierta: cualquiera
+// con la URL entraba, porque su navegador también obtenía token (§4.3, §9).
 //
-// DESPLIEGUE EN DOS PASOS, EN ESTE ORDEN:
-//   1. publicar esta versión (funciona igual con las reglas abiertas: si no
-//      hay token, la URL va sin él);
-//   2. recién entonces cerrar las reglas en la consola de Firebase.
-// Al revés, la app deja de leer en pleno servicio.
+// AHORA: cuatro dígitos canjean una credencial REAL de Firebase. Sin la clave
+// no hay sesión, y sin sesión las reglas no devuelven nada — ni desde la app ni
+// desde la consola del navegador. El PIN no está escrito en ninguna parte del
+// HTML: lo que viaja es su derivación PBKDF2, y la contraseña del usuario de
+// Firebase es esa derivación. Leer el fuente no da la clave.
+//
+// SINCERIDAD SOBRE LO QUE ESTO ES: hay 10.000 PINs de cuatro dígitos y el
+// atacante puede derivarlos todos. La defensa real no es el hash — es que
+// Firebase corta por IP tras un puñado de intentos fallidos, y que hay que
+// conocer la URL y leer el fuente para siquiera empezar. Es la clave del salón,
+// con el rate-limiter de Google detrás. No es un banco, y no pretende serlo.
+//
+// UNA VEZ POR DISPOSITIVO: la persistencia LOCAL guarda el refresh token en
+// IndexedDB y no vence. El garzón teclea cuatro dígitos el primer día y no
+// vuelve a verlos nunca. Al reabrir, Firebase resuelve la sesión sola y el gate
+// no llega a dibujarse.
+//
+// ORDEN DE DESPLIEGUE, NO NEGOCIABLE (misma lección que §4.3):
+//   1. en la consola de Firebase: habilitar el proveedor Email/Password y crear
+//      el usuario GATE_EMAIL con la contraseña derivada del PIN;
+//   2. QA en staging desde el iPhone — que un teléfono real entre y quede dentro;
+//   3. recién entonces mergear a main;
+//   4. y sólo después cerrar las reglas por uid y apagar el proveedor anónimo.
+// Saltarse el paso 1 deja al lodge afuera en hora de servicio.
+const GATE_ON    = true;                        // válvula: false = como antes (anónimo)
+const GATE_EMAIL = 'salon@ata-handbook.local';  // usuario único; no es un buzón real
+const GATE_SALT  = 'ata-handbook/salon/2026';   // liga la derivación a este proyecto
+const GATE_ITER  = 200000;                      // ~0,3 s en un iPhone; una sola vez
+const GATE_FLAG  = 'ata.gate.v1';               // "este aparato ya entró alguna vez"
+
+// PIN → contraseña del usuario de Firebase. Determinista: el mismo PIN da
+// siempre el mismo hexadecimal, que es lo que se pega en la consola al crear
+// el usuario. Queda en window a propósito: si algún día cambia el PIN, se
+// abre la consola del navegador, se escribe ataPinPassword('1234') y el
+// resultado es la contraseña nueva. No filtra nada — quien tiene el fuente
+// ya podía calcularlo.
+async function ataPinPassword(pin){
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(String(pin)), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name:'PBKDF2', salt:enc.encode(GATE_SALT), iterations:GATE_ITER, hash:'SHA-256' }, key, 256);
+  return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+window.ataPinPassword = ataPinPassword;
+
 let FB_AUTH_TOKEN = null;
 let _FB_AUTH_READY = null;
+let _GATE_SEEN_AUTH = false;   // ¿Firebase ya dijo algo sobre la sesión?
+
+// ── El gate ─────────────────────────────────────────────────────────────────
+// Hereda el telón de intro (mismo fondo, misma marca) y vive por encima de él:
+// el telón se levanta solo a los 2,2 s pase lo que pase, y no puede destapar la
+// app a alguien que todavía no entró.
+const GATE = {
+  el:null, buf:'', busy:false,
+
+  open(){
+    if (this.el) return;
+    const d = document.createElement('div');
+    d.id = 'gate-curtain';
+    d.setAttribute('role','dialog');
+    d.setAttribute('aria-modal','true');
+    d.innerHTML =
+      '<div class="intro-mark">The <span class="ata">ATA</span> Handbook</div>' +
+      '<div class="intro-rule"></div>' +
+      '<div class="gate-sub">' + t('gateSub') + '</div>' +
+      '<div class="gate-dots" id="gate-dots"></div>' +
+      '<div class="gate-msg" id="gate-msg"></div>' +
+      '<div class="gate-pad" id="gate-pad"></div>' +
+      '<div class="gate-hint">' + t('gateHint') + '</div>';
+    document.body.appendChild(d);
+    this.el = d;
+
+    const pad = d.querySelector('#gate-pad');
+    // 1-9, luego hueco · 0 · borrar. El hueco mantiene el 0 centrado, como
+    // cualquier teclado de teléfono: el pulgar ya sabe dónde cae.
+    const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+    keys.forEach(k => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      if (k === ''){ b.className = 'gate-key ghost'; b.disabled = true; }
+      else if (k === '⌫'){ b.className = 'gate-key act'; b.textContent = k; b.setAttribute('aria-label','borrar'); b.onclick = () => GATE.back(); }
+      else { b.className = 'gate-key'; b.textContent = k; b.onclick = () => GATE.push(k); }
+      pad.appendChild(b);
+    });
+    // Teclado físico: gratis para QA desde el escritorio, invisible en iPhone.
+    this._onKey = e => {
+      if (e.key >= '0' && e.key <= '9') GATE.push(e.key);
+      else if (e.key === 'Backspace') GATE.back();
+    };
+    document.addEventListener('keydown', this._onKey);
+    this.paint();
+  },
+
+  paint(wrong){
+    const dots = this.el && this.el.querySelector('#gate-dots');
+    if (!dots) return;
+    dots.className = 'gate-dots' + (wrong ? ' wrong' : '');
+    dots.innerHTML = '';
+    for (let i = 0; i < 4; i++){
+      const s = document.createElement('span');
+      s.className = 'gate-dot' + (i < this.buf.length ? ' filled' : '');
+      dots.appendChild(s);
+    }
+  },
+
+  msg(text, calm){
+    const m = this.el && this.el.querySelector('#gate-msg');
+    if (m){ m.textContent = text || ''; m.className = 'gate-msg' + (calm ? ' calm' : ''); }
+  },
+
+  push(d){
+    if (this.busy || this.buf.length >= 4) return;
+    this.buf += d; this.msg(''); this.paint();
+    // Auto-submit al cuarto dígito: no hay botón "Entrar" que buscar.
+    if (this.buf.length === 4) this.submit();
+  },
+
+  back(){ if (this.busy || !this.buf) return; this.buf = this.buf.slice(0,-1); this.msg(''); this.paint(); },
+
+  async submit(){
+    this.busy = true;
+    if (this.el) this.el.classList.add('busy');
+    this.msg(t('gateChecking'), true);
+    try {
+      // Sin el SDK no hay contra qué verificar: decir "clave incorrecta" sería
+      // mentirle a alguien que tecleó bien. Es un problema de red.
+      if (typeof firebase === 'undefined' || !firebase.auth) throw { code:'auth/network-request-failed' };
+      const pw = await ataPinPassword(this.buf);
+      await firebase.auth().signInWithEmailAndPassword(GATE_EMAIL, pw);
+      // Éxito: onIdTokenChanged cierra el gate y relanza los fetches que se
+      // hayan perdido mientras la puerta estaba cerrada.
+      try { localStorage.setItem(GATE_FLAG,'1'); } catch(e){}
+    } catch(e){
+      const code = (e && e.code) || '';
+      if (code === 'auth/operation-not-allowed' || code === 'auth/configuration-not-found'){
+        // VÁLVULA DE ESCAPE: esto no es un PIN malo, es Firebase sin configurar
+        // (el paso 1 del despliegue que no se hizo). Dejar al lodge afuera en
+        // hora de servicio es peor que volver al estado de ayer: se degrada a
+        // sesión anónima, que es exactamente cómo funcionaba antes del gate.
+        console.error('[gate] proveedor Email/Password no habilitado — degradando a sesión anónima. Ver §4.3 del ARCHITECTURE.');
+        try { await firebase.auth().signInAnonymously(); } catch(e2){}
+        this.close();
+        return;
+      }
+      this.buf = '';
+      this.busy = false;
+      if (this.el) this.el.classList.remove('busy');
+      this.paint(true);
+      if (code === 'auth/too-many-requests')        this.msg(t('gateBusy'));
+      else if (code === 'auth/network-request-failed') this.msg(t('gateNet'));
+      else                                          this.msg(t('gateWrong'));
+      if (navigator.vibrate) { try { navigator.vibrate(60); } catch(e){} }
+    }
+  },
+
+  close(){
+    if (!this.el) return;
+    document.removeEventListener('keydown', this._onKey);
+    const d = this.el; this.el = null; this.buf = ''; this.busy = false;
+    d.style.transition = 'opacity .4s ease';
+    d.style.opacity = '0';
+    setTimeout(() => { if (d.parentNode) d.parentNode.removeChild(d); }, 420);
+  }
+};
+
+// Para QA: ataGateReset() olvida el dispositivo y vuelve a pedir la clave.
+window.ataGateReset = function(){
+  try { localStorage.removeItem(GATE_FLAG); } catch(e){}
+  firebase.auth().signOut().then(() => location.reload());
+};
 
 function fbAuthInit(){
   if (_FB_AUTH_READY) return _FB_AUTH_READY;
@@ -6863,19 +7071,36 @@ function fbAuthInit(){
     try {
       if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(CF_FIREBASE_CONFIG);
       const auth = firebase.auth();
+      // LOCAL, no SESSION: el refresh token queda en IndexedDB y sobrevive a
+      // cerrar la app, apagar el teléfono y actualizar la página. Esto ES el
+      // "una sola vez por dispositivo" — no hay lógica propia que lo imite.
+      try { auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch(e){}
       // onIdTokenChanged, no onAuthStateChanged: el token vence en 1 h y el SDK
       // lo renueva solo. Este hook entrega el nuevo sin que haya que pedirlo.
       auth.onIdTokenChanged(u => {
-        if (!u) return;
+        _GATE_SEEN_AUTH = true;
+        if (!u){
+          // Firebase resolvió la persistencia y no hay nadie. Si la bandera
+          // decía lo contrario, mentía (datos del sitio borrados): se limpia.
+          if (GATE_ON){
+            try { localStorage.removeItem(GATE_FLAG); } catch(e){}
+            GATE.open();
+          } else {
+            auth.signInAnonymously().catch(e => { console.warn('[auth] sin sesión anónima:', e && e.code); fin(null); });
+          }
+          return;
+        }
+        GATE.close();
         u.getIdToken().then(tk => {
           const primero = !FB_AUTH_TOKEN;
           FB_AUTH_TOKEN = tk;
           fin(tk);
           // RED DE SEGURIDAD contra la carrera del arranque: si la red estuvo
-          // lenta, el timeout de abajo resolvió sin token y los fetch salieron
-          // sin auth — con las reglas cerradas eso es un 401 y la app queda
-          // vacía en hora de servicio, sin nada que lo reintente. Cuando el
-          // token llega tarde, se vuelve a pedir lo que no alcanzó a cargar.
+          // lenta —o si el gate estuvo abierto un minuto mientras alguien
+          // buscaba la clave— los fetch ya salieron sin auth, y con las reglas
+          // cerradas eso es un 401 y la app queda vacía en hora de servicio,
+          // sin nada que lo reintente. Cuando el token llega tarde, se vuelve a
+          // pedir lo que no alcanzó a cargar.
           if (primero && !(VIAJEROS_DATA && VIAJEROS_DATA.habs)){
             console.info('[auth] token tardío: reintentando la carga');
             try { viajerosFetch(); } catch(e){}
@@ -6883,14 +7108,30 @@ function fbAuthInit(){
           }
         }).catch(() => fin(null));
       });
-      auth.signInAnonymously().catch(e => {
-        // Si el proveedor anónimo no está habilitado en la consola, la app
-        // sigue funcionando contra las reglas actuales. No se rompe nada.
-        console.warn('[auth] sin sesión anónima:', e && e.code);
+      // Red lenta: no bloquear el arranque. Y no encerrar a nadie — si Firebase
+      // no contestó pero este aparato ya entró antes, se sigue de largo y la
+      // app trabaja con lo que el service worker tenga cacheado.
+      setTimeout(() => {
+        if (!_GATE_SEEN_AUTH){
+          let visto = false;
+          try { visto = localStorage.getItem(GATE_FLAG) === '1'; } catch(e){}
+          if (visto) GATE.close(); else if (GATE_ON) GATE.open();
+        }
         fin(null);
-      });
-      setTimeout(() => fin(null), 8000);   // red lenta: no bloquear el arranque
-    } catch(e){ console.warn('[auth] no disponible:', e); fin(null); }
+      }, 8000);
+    } catch(e){
+      // Firebase no cargó: CDN caído, o el primer arranque sin red. Sin este
+      // brazo el gate no llegaba a dibujarse nunca y la app abría entera —
+      // una puerta abierta por accidente, encontrada en el render de prueba.
+      // Un aparato que ya entró antes sigue de largo con lo cacheado; uno
+      // nuevo se queda en la puerta, que es lo correcto: no hay con qué
+      // verificar la clave.
+      console.warn('[auth] no disponible:', e);
+      let visto = false;
+      try { visto = localStorage.getItem(GATE_FLAG) === '1'; } catch(e2){}
+      if (GATE_ON && !visto) GATE.open();
+      fin(null);
+    }
   });
   return _FB_AUTH_READY;
 }
