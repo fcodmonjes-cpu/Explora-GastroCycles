@@ -2653,10 +2653,15 @@ const MENU_BUFFET = [
   // ── Día 1 ──────────────────────────────────────────────────────────────
   {id:'bf1-hojas',day:'1',slot:'hojas',recipeDay:'1',
    name:'César de Lechuga Costina, Pollo Ahumado y Pan Gratato',short:'César',
-   diet:{veg:0,vgt:'*',pesc:1,mar:1,fs:1,lac:0,ge:0,gs:'*',halal:1},
-   dietNotes:{vgt:'Sin el pollo ni el pan gratato. El dressing no lleva anchoa.',gs:'Sin el pan gratato — se sirve aparte.'},
-   brief:'Nuestra versión de ensalada César: lechuga costina, pollo ahumado en casa y un pan crocante tostado en mantequilla, con un aderezo cremoso de yema y parmesano.',
-   extended:'Es una relectura de la César clásica. El pollo lo ahumamos nosotros mismos, así que tiene un sabor más profundo que el pollo a la plancha habitual. El "pan gratato" es pan rallado tostado en mantequilla y ajo hasta quedar dorado y crocante, y reemplaza al crutón tradicional dándole otra textura. El aderezo se hace con yema y parmesano. Si el viajero es vegetariano, podemos servir la base sin el pollo ni el pan, con el aderezo (que no lleva anchoa).',
+   // Corregido el 2026-09-07 contra la Información Complementaria del asesor, que
+   // por primera vez desglosa dos preparaciones: el pan gratato es panko + MANÍ +
+   // ajo + jengibre + aceite vegetal (no mantequilla), y el aderezo lleva ANCHOAS.
+   // Por eso vgt pasa de '*' a 0 —la nota anterior afirmaba justo lo contrario— y
+   // fs de 1 a '*', que es separable porque el gratato puede ir aparte.
+   diet:{veg:0,vgt:0,pesc:1,mar:1,fs:'*',lac:0,ge:0,gs:'*',halal:1},
+   dietNotes:{fs:'El pan gratato lleva maní. Pedirlo sin gratato, o que se sirva aparte.',gs:'Sin el pan gratato — se sirve aparte.'},
+   brief:'Nuestra versión de ensalada César: lechuga costina, pollo ahumado en casa y un pan gratato crocante que lleva maní, con un aderezo cremoso de yema, parmesano y anchoa.',
+   extended:'Es una relectura de la César clásica. El pollo lo ahumamos nosotros mismos, así que tiene un sabor más profundo que el pollo a la plancha habitual. El "pan gratato" es panko tostado en aceite vegetal con ajo y jengibre hasta quedar dorado y crocante, y reemplaza al crutón tradicional dándole otra textura: lleva maní, así que hay que avisarlo a quien evite frutos secos. El aderezo se hace con yema, parmesano y anchoa, más mostaza Dijon y salsa inglesa — por la anchoa la ensalada no es apta para vegetarianos, ni siquiera sin el pollo.',
    barTwin:'bar-cesar'},
   {id:'bf1-firmes',day:'1',slot:'firmes',recipeDay:'1',
    name:'Ensalada de Papas Doradas con Mostaza',short:'Papas doradas',
@@ -2670,9 +2675,10 @@ const MENU_BUFFET = [
    extended:'Buscamos un arroz que no fuera plano: el coco rallado se tuesta para intensificar su sabor, y la cebolla y el ajo fritos aportan un crocante que contrasta con el arroz suave. Se termina con un sofrito de cebollín, ajo y pieles de cítricos que le da frescura y aroma. Es un plato vegano por completo.'},
   {id:'bf1-cocidos',day:'1',slot:'cocidos',recipeDay:'1',
    name:'Brócoli Salteado, Hierbas Aromáticas y Emulsión de Brócoli',short:'Brócoli salteado',
-   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
-   brief:'Brócoli salteado con menta, huacatay y albahaca frescas, acompañado de una emulsión hecha con el mismo brócoli.',
-   extended:'La emulsión es una salsa liviana hecha licuando brócoli con cilantro, ajo y jengibre, texturizada con un poco de garbanzo — así logramos una salsa cremosa sin usar lácteos. El brócoli salteado se sirve con abundante menta, huacatay y albahaca frescas por encima. El pan gratato que a veces lo acompaña se sirve siempre aparte, así que la base es apta para quienes evitan gluten o lácteos.'},
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:'*',lac:1,ge:1,gs:1,halal:1},
+   dietNotes:{fs:'El pan gratato que lo acompaña lleva maní, pero va siempre aparte: la bandeja en sí no lleva frutos secos.'},
+   brief:'Brócoli salteado con menta, huacatay, perejil y albahaca frescas, acompañado de una emulsión hecha con el mismo brócoli.',
+   extended:'La emulsión es una salsa liviana hecha licuando brócoli con cilantro, ajo y jengibre, texturizada con garbanzo y huevo cocido — así logramos una salsa cremosa sin usar lácteos; el huevo es lo que la deja fuera de una dieta vegana. El brócoli salteado se sirve con abundante menta, huacatay, perejil y albahaca frescas por encima. El pan gratato que a veces lo acompaña lleva maní y se sirve siempre aparte, así que la base es apta para quienes evitan gluten, lácteos o frutos secos.'},
   {id:'bf1-profria',day:'1',slot:'profria',recipeDay:'1',
    name:'Ceviche de Pescado, Salsa Verde, Pepino y Quinoa',short:'Ceviche verde',
    diet:{veg:0,vgt:0,pesc:1,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
@@ -2707,16 +2713,18 @@ const MENU_BUFFET = [
    // láctea aunque no de lactosa. El '*' pasa la lente igual que un apto y
    // además obliga a mostrar la nota, que es lo que el garzón necesita para
    // responderle al huésped sin ir a cocina. (Determinado el 12-08-2026.)
-   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:'*',ge:1,gs:1,halal:1},
-   dietNotes:{lac:'Apto: la mantequilla es de origen identificado y naturalmente sin lactosa. Si el huésped evita el lácteo por alergia a la proteína, consultar en cocina.'},
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:'*',lac:'*',ge:1,gs:1,halal:1},
+   dietNotes:{lac:'Apto: la mantequilla es de origen identificado y naturalmente sin lactosa. Si el huésped evita el lácteo por alergia a la proteína, consultar en cocina.',fs:'El pan gratato que lo acompaña lleva maní, pero va siempre aparte: la bandeja en sí no lleva frutos secos.'},
    brief:'Repollo salteado con cebollas asadas, bañado en una salsa suave de mantequilla y limón.',
    extended:'El repollo se saltea hasta dorar ligeramente y se combina con cebollas asadas enteras. La salsa lleva mantequilla, miso blanco y un toque de limón, dándole una textura sedosa. El pan gratato que a veces acompaña este tipo de plato se sirve siempre aparte. No es apto para veganos por la mantequilla de la salsa; sí lo es para quienes evitan la lactosa, porque la mantequilla que usamos es de origen identificado y naturalmente sin lactosa.'},
   {id:'bf2-profria',day:'2',slot:'profria',recipeDay:'2',
    name:'Tartar de Vacuno con Alcaparras, Mostaza y Salsa de Yema',short:'Tartar de vacuno',
-   diet:{veg:0,vgt:0,pesc:0,mar:1,fs:1,lac:0,ge:0,gs:0,halal:1},
-   dietNotes:{ge:'El pan gratato va mezclado en el plato, no aparte.',gs:'El pan gratato va mezclado en el plato, no aparte.',lac:'El pan gratato va mezclado en el plato, no aparte.'},
-   brief:'Vacuno crudo picado a cuchillo con alcaparras fritas y una salsa cremosa de yema, mostaza y miso.',
-   extended:'El vacuno se pica finamente a mano y se sazona con cebolla, rabanito y hierbas frescas. La salsa combina yema de huevo, mostaza Dijon y miso blanco, dándole un perfil más complejo que un tartar clásico. Se termina con alcaparras fritas y pan gratato por encima. No es apto para vegetarianos ni veganos, y por el pan gratato integrado, tampoco para quienes evitan el gluten o los lácteos.'},
+   // fs pasa a 0 (no a '*') porque acá el pan gratato —que lleva maní— va
+   // mezclado en el plato: no hay versión sin él. Ver bf1-hojas.
+   diet:{veg:0,vgt:0,pesc:0,mar:1,fs:0,lac:0,ge:0,gs:0,halal:1},
+   dietNotes:{ge:'El pan gratato va mezclado en el plato, no aparte.',gs:'El pan gratato va mezclado en el plato, no aparte.',lac:'El pan gratato va mezclado en el plato, no aparte.',fs:'El pan gratato lleva maní y va mezclado en el plato, no aparte.'},
+   brief:'Vacuno crudo picado a cuchillo con alcaparras fritas y una salsa cremosa de yema, mostaza y sésamo.',
+   extended:'El vacuno se pica finamente a mano y se sazona con cebolla morada, perejil y ciboulette. La salsa combina yema de huevo con vinagre de arroz, aceite de sésamo y mostaza, dándole un perfil más complejo que un tartar clásico. Se termina con alcaparras fritas y pan gratato por encima. No es apto para vegetarianos ni veganos, y por el pan gratato integrado —que lleva panko y maní— tampoco para quienes evitan el gluten, los lácteos o los frutos secos.'},
   {id:'bf2-prococ',day:'2',slot:'prococ',recipeDay:'2',
    name:'Pechuga de Pollo',short:'Pechuga de pollo',
    diet:{veg:0,vgt:0,pesc:0,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
@@ -2922,9 +2930,14 @@ const MENU_PRINCIPALES = [
    extended:'La salsa se hace con un caldo concentrado de carcasas de camarón, emulsionado con mantequilla de hierbas y parmesano, y un toque de limón. Se saltea con centolla, camarón y tomates cherry asados. No es apto para vegetarianos, veganos, ni para quienes evitan mariscos, lácteos o gluten.'},
   {id:'pr4-avecerdo',day:'4',slot:'avecerdo',recipeDay:'1',
    name:'Pollo Escabechado con Repollo y Zanahoria',short:'Pollo escabechado',
-   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:0, ge:0, gs:0, halal:0},
+   // ⚠ fs corregido de 1 a 0 el 2026-09-07: la tabla de restricciones del asesor
+   // decía 1, pero su Información Complementaria define el pan gratato —que este
+   // plato lleva por encima— con MANÍ. Dos documentos del mismo asesor en
+   // conflicto; se toma el lado restrictivo hasta que cocina lo confirme.
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:0, lac:0, ge:0, gs:0, halal:0},
+   dietNotes:{fs:'El pan gratato lleva maní y va por encima del plato.'},
    brief:'Pechuga de pollo cocida al vacío y dorada, bañada en una salsa escabechada, sobre una ensalada tibia de repollo y zanahoria.',
-   extended:'El pollo se cocina primero al vacío para mantenerlo jugoso y se dora al momento de servir. La salsa escabechada combina vinagre, vino blanco y aceite de oliva, dándole un perfil ácido característico del escabeche. Se sirve sobre una ensalada tibia de repollo y zanahoria salteados, con pan gratato y orégano por encima. No es apto para vegetarianos, veganos, ni para quienes evitan el gluten o los lácteos.'},
+   extended:'El pollo se cocina primero al vacío para mantenerlo jugoso y se dora al momento de servir. La salsa escabechada combina vinagre, vino blanco y aceite de oliva, dándole un perfil ácido característico del escabeche. Se sirve sobre una ensalada tibia de repollo y zanahoria salteados, con pan gratato y orégano por encima. No es apto para vegetarianos, veganos, ni para quienes evitan el gluten, los lácteos o los frutos secos (el pan gratato lleva maní).'},
   {id:'pr4-res',day:'4',slot:'res',recipeDay:'4',
    name:'Tomaticán de Filete con Tomates Asados y Choclo Salteado',short:'Tomaticán',
    diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:1, ge:0, gs:1, halal:0},
@@ -2958,9 +2971,12 @@ const MENU_POSTRES = [
   // ── Día 2 ──
   {id:'po2-fruta',day:'2',slot:'fruta',recipeDay:'2',
    name:'Duraznos a la Brasa con Leche de Cabra',short:'Duraznos a la brasa',
-   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
-   brief:'Duraznos asados directamente al fuego, con helado de leche de cabra y una granola de quinoa y chañar.',
-   extended:'Los duraznos se asan a la brasa para intensificar su dulzor natural, y se sirven con un gel y una compota del mismo fruto. El helado se hace con leche de cabra, dándole un perfil más complejo que un helado de leche de vaca tradicional, y se termina con una granola crocante de quinoa suflada y chañar con miel de ulmo. No es apto para veganos, por los lácteos del helado.'},
+   // fs 1 → 0 el 2026-09-07: la granola es un mix de cereales, cacao, miel y
+   // FRUTOS SECOS (sin maní, según el asesor). Va mezclada en el montaje.
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:0,lac:0,ge:1,gs:1,halal:1},
+   dietNotes:{fs:'La granola lleva frutos secos (no maní).'},
+   brief:'Duraznos asados directamente al fuego, con helado de leche de cabra y una granola de cereales, cacao y frutos secos.',
+   extended:'Los duraznos se asan a la brasa para intensificar su dulzor natural, y se sirven con un gel y una compota del mismo fruto —esa compota lleva albahaca y menta fresca—. El helado se hace con leche de cabra, dándole un perfil más complejo que un helado de leche de vaca tradicional, y sí contiene lactosa. Se termina con una granola crocante que es un mix de cereales, cacao, miel y frutos secos: no lleva maní, pero sí otros frutos secos. Se monta en bowl. No es apto para veganos, por los lácteos del helado.'},
   {id:'po2-granos',day:'2',slot:'granos',recipeDay:'2',
    name:'Almendrado',short:'Almendrado',
    diet:{veg:0,vgt:0,pesc:0,mar:1,fs:0,lac:0,ge:1,gs:1,halal:0},
@@ -2983,9 +2999,13 @@ const MENU_POSTRES = [
    extended:'Las peras se cocinan lentamente en vino tinto con canela, clavo y anís estrella hasta absorber su color y sabor. Se acompañan de un praliné y un garrapiñado de pistacho, y un sorbete hecho con la pulpa de la misma pera. No es apto para veganos ni para quienes evitan frutos secos.'},
   {id:'po3-granos',day:'3',slot:'granos',recipeDay:'3',
    name:'Coulant de Chocolate con Helado de Chocolate',short:'Coulant de chocolate',
-   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:0,gs:0,halal:1},
-   brief:'Coulant de chocolate sin harina, de centro líquido, con un crumble crocante y helado de chocolate.',
-   extended:'El coulant no lleva harina, y se hornea justo antes de servir para que el centro quede líquido al cortarlo. Se acompaña de un crumble de chocolate y cacao —que puede prepararse sin gluten— y un helado cremoso del mismo sabor. No es apto para veganos, y por los lácteos del crumble y el helado, tampoco para quienes evitan lácteos.'},
+   // fs 1 → 0 el 2026-09-07: el coulant se hace con HARINA DE ALMENDRAS. Es el
+   // hallazgo más silencioso del documento — nadie espera almendra en un postre
+   // de chocolate.
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:0,lac:0,ge:0,gs:0,halal:1},
+   dietNotes:{fs:'El coulant se hace con harina de almendras.'},
+   brief:'Coulant de chocolate de centro líquido, hecho con harina de almendras, con crumble crocante y helado de chocolate al 70%. Avisar: 10 a 15 minutos de espera.',
+   extended:'El coulant no lleva harina de trigo: se hace con harina de almendras, así que no es apto para quienes evitan frutos secos. Se hornea a pedido para que el centro quede líquido al cortarlo, y por eso hay que avisarle al viajero al tomar la comanda que tomará entre 10 y 15 minutos. Se acompaña de un crumble de chocolate y cacao —que puede prepararse sin gluten— y un helado cremoso del mismo sabor, con 70% de cacao. Se monta en plato, no en bowl. No es apto para veganos ni para quienes evitan lácteos.'},
   {id:'po3-sinazucar',day:'3',slot:'sinazucar',recipeDay:'3',
    name:'Piña Asada, Jengibre y Mote Suflado',short:'Piña asada',
    diet:{veg:'*',vgt:1,pesc:1,mar:1,fs:1,lac:'*',ge:0,gs:0,halal:1},
@@ -3066,10 +3086,13 @@ const BAR_DISHES = [
    lunchTwin:'pr1-vegana'},
   {id:'bar-cesar',cat:'Salado',
    name:'Ensalada César',short:'César',
-   diet:{veg:0,vgt:'*'},
-   dietNotes:{vgt:'La base sin extras es vegetariana. El pollo ahumado y la milanesa de cerdo van como extra opcional.'},
-   brief:'Lechuga costina, pan gratato y un aderezo de queso parmesano y yema de huevo; con pechuga de pollo ahumada o milanesa de cerdo como extra opcional.',
-   extended:'Es la versión bar de nuestra César de almuerzo, pensada para compartir: lechuga costina, pan gratato (pan rallado tostado en mantequilla y ajo) y el mismo aderezo cremoso de parmesano y yema. A diferencia de almuerzo, aquí la proteína no viene incluida — el viajero puede agregar pechuga de pollo ahumada o milanesa de cerdo como extra opcional. La base sin extras es vegetariana.',
+   // vgt 2026-09-07: cae de '*' a 0 por la anchoa del aderezo (ver bf1-hojas).
+   // fs entra como 0 porque el pan gratato lleva maní: es un dato que el asesor
+   // sí afirma, aunque la matriz del bar siga incompleta en el resto de los ejes.
+   diet:{veg:0,vgt:0,fs:0},
+   dietNotes:{fs:'El pan gratato lleva maní.'},
+   brief:'Lechuga costina, pan gratato con maní y un aderezo de parmesano, yema de huevo y anchoa; con pechuga de pollo ahumada o milanesa de cerdo como extra opcional.',
+   extended:'Es la versión bar de nuestra César de almuerzo, pensada para compartir: lechuga costina, pan gratato (panko tostado en aceite vegetal con ajo, jengibre y maní) y el mismo aderezo cremoso de parmesano, yema y anchoa. A diferencia de almuerzo, aquí la proteína no viene incluida — el viajero puede agregar pechuga de pollo ahumada o milanesa de cerdo como extra opcional. Por la anchoa del aderezo no es apta para vegetarianos, y por el gratato tampoco para quienes evitan frutos secos.',
    lunchTwin:'bf1-hojas'},
   {id:'bar-planchadito',cat:'Salado',
    name:'Planchadito Jamón-Queso',short:'Planchadito',
