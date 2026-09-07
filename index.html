@@ -2772,9 +2772,14 @@ const MENU_BUFFET = [
    extended:'Es la ensalada más simple y fresca del ciclo: lechuga, tomates asados en el horno, aceitunas y rabanitos encurtidos, con un aderezo que combina orégano, pepino y ajo. Es apta para prácticamente todas las restricciones alimentarias — vegana, vegetariana y sin alérgenos relevantes.'},
   {id:'bf4-firmes',day:'4',slot:'firmes',recipeDay:'4',
    name:'Pepino, Kiwi, Yogurt y Cebollín',short:'Pepino y kiwi',
-   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
-   brief:'Pepino y kiwi frescos con una salsa verde de yogurt y un sofrito de cebollín, ajo y pieles de cítricos.',
-   extended:'El pepino y el kiwi se combinan crudos para dar frescura, bañados en una salsa que mezcla puré de kiwi y pepino con yogurt natural, y se aromatizan con un sofrito de cebollín, ajo y pieles de cítricos. No es apta para veganos, por el yogurt de la salsa.'},
+   // lac 0 → '*' el 2026-09-07: el asesor confirma que el yogurt de la salsa es
+   // SIN LACTOSA. Se codifica igual que el repollo del día 2 (bf2-cocidos): '*'
+   // en vez de 1, para que la nota aparezca y el garzón pueda distinguir entre
+   // lactosa y alergia a la proteína láctea sin ir a cocina.
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:'*',ge:1,gs:1,halal:1},
+   dietNotes:{lac:'Apto: el yogurt de la salsa es sin lactosa. Si el huésped evita el lácteo por alergia a la proteína, consultar en cocina.'},
+   brief:'Pepino y kiwi frescos con una salsa verde de yogurt sin lactosa y un aceite infusionado de especias.',
+   extended:'El pepino y el kiwi se combinan crudos para dar frescura, bañados en una salsa verde que mezcla jalapeño encurtido, cebollín, pepino y jugo de kiwi con yogurt —un yogurt sin lactosa—, y se aromatizan con un aceite infusionado de jengibre, ajo, cilantro, laurel, hinojo, comino, anís estrella, clavo, pimienta y canela china. No es apta para veganos, por el yogurt de la salsa; sí lo es para quienes evitan la lactosa.'},
   {id:'bf4-granos',day:'4',slot:'granos',recipeDay:'4',
    name:'Porotos Cocidos, Aceituna, Cebolla, Perejil y Charqui de Vacuno',short:'Porotos y charqui',
    diet:{veg:'*',vgt:'*',pesc:'*',mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
@@ -2954,7 +2959,11 @@ const MENU_POSTRES = [
   // ── Día 1 ──
   {id:'po1-fruta',day:'1',slot:'fruta',recipeDay:'1',
    name:'Leche con Plátano, Pimienta Molle y Rosa del Año',short:'Leche con plátano',
+   // El asesor lo subraya en mayúsculas: NO puede ser lactose free y NO es
+   // modificable — la base es crema inglesa con leche entera. La nota existe
+   // para cortar la negociación en mesa, no para abrir una condición.
    diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
+   dietNotes:{lac:'No modificable: la base es una crema inglesa de leche entera. No existe versión sin lactosa.'},
    brief:'Crema inglesa de plátano con pimienta molle y rosa del año, plátano caramelizado y helado de plátano.',
    extended:'Es nuestra versión de un postre de leche clásico, pero con plátano como protagonista: hay una crema inglesa de plátano, un helado del mismo sabor y plátanos caramelizados. La pimienta molle y la rosa del año —ambas de tradición andina— aportan un aroma floral y ligeramente picante que se equilibra con el dulzor del plátano. Lleva lácteos y huevo, no es apto para veganos.'},
   {id:'po1-granos',day:'1',slot:'granos',recipeDay:'1',
@@ -2980,15 +2989,15 @@ const MENU_POSTRES = [
   {id:'po2-granos',day:'2',slot:'granos',recipeDay:'2',
    name:'Almendrado',short:'Almendrado',
    diet:{veg:0,vgt:0,pesc:0,mar:1,fs:0,lac:0,ge:1,gs:1,halal:0},
-   dietNotes:{vgt:'El semifrío se estabiliza con gelatina animal (colapez).',halal:'La gelatina (colapez) no está certificada Halal.'},
+   dietNotes:{vgt:'El semifrío se estabiliza con gelatina animal (colapez).',halal:'La gelatina (colapez) no está certificada Halal. El asesor la descarta también para Kosher.'},
    brief:'Una torta helada de almendra trabajada en distintas texturas: financier, praliné crocante y un semifrío de leche de almendra.',
    extended:'Es un postre que trabaja la almendra en distintas texturas, como una torta helada: un financier horneado (un bizcocho denso, sin harina de trigo), un praliné crocante, un semifrío cremoso hecho con leche de almendra, y almendras garrapiñadas. No es apto para veganos, vegetarianos ni para quienes evitan frutos secos — y como el semifrío se estabiliza con gelatina de origen animal, tampoco es apto para Halal.',
    barTwin:'bar-almendra'},
   {id:'po2-sinazucar',day:'2',slot:'sinazucar',recipeDay:'4',
    name:'Membrillos Asados con Sésamo',short:'Membrillos asados',
    diet:{veg:'*',vgt:1,pesc:1,mar:1,fs:1,lac:'*',ge:1,gs:1,halal:1},
-   dietNotes:{veg:'Lleva mantequilla para asar la fruta. Cocina prepara la versión sin mantequilla avisando con anticipación.',lac:'Lleva mantequilla para asar la fruta. Cocina prepara la versión sin mantequilla avisando con anticipación.'},
-   brief:'Membrillos asados con un jarabe de vino dulce, acompañados de un praliné de sésamo y sorbete del mismo membrillo.',
+   dietNotes:{veg:'Lleva mantequilla para asar la fruta. Cocina prepara la versión sin mantequilla avisando con anticipación.',lac:'Apto: la mantequilla con la que se asa la fruta es sin lactosa — el asesor lo declara lactose free. Si el huésped evita el lácteo por alergia a la proteína, consultar en cocina.'},
+   brief:'Membrillos asados con un jarabe de vino dulce (Late Harvest), acompañados de un praliné de sésamo y sorbete del mismo membrillo.',
    extended:'El membrillo se cocina primero y luego se asa con mantequilla y miel hasta caramelizar. Se acompaña de un praliné de tahini con vino dulce reducido, y un sorbete hecho con la pulpa de la misma fruta. Es parte de nuestra carta de postres sin azúcar añadida. Con aviso previo, cocina puede preparar la versión sin mantequilla para viajeros veganos.'},
 
   // ── Día 3 ──
@@ -3016,9 +3025,15 @@ const MENU_POSTRES = [
   // ── Día 4 ──
   {id:'po4-fruta',day:'4',slot:'fruta',recipeDay:'4',
    name:'Mil Hojas de Manzana con Vainilla',short:'Mil hojas de manzana',
-   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:0,lac:0,ge:0,gs:0,halal:1},
-   brief:'Milhojas de manzana caramelizada sobre una base de masa sablé, con helado de vainilla.',
-   extended:'La manzana se cocina en un syrup de vainilla, y se dispone sobre una base de masa sablé de almendra horneada. Se acompaña de un helado de vainilla clásico. No es apto para veganos, quienes evitan gluten, lácteos, ni quienes evitan frutos secos (por la harina de almendra de la masa).'},
+   // 2026-09-07: el asesor abre dos salidas explícitas — "apto para intolerancia
+   // a la lactosa si le quitamos el helado" y "apto para intolerancia al gluten
+   // si le quitamos la masa sablé". lac y gs pasan a '*'. ge (celiaquía) se
+   // queda en 0: quitar la sablé saca el gluten de la receta, pero nadie
+   // confirmó que no haya contaminación cruzada en el pase. Preguntar en cocina.
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:0,lac:'*',ge:0,gs:'*',halal:1},
+   dietNotes:{lac:'Sin el helado de vainilla — el resto del postre no lleva lácteos.',gs:'Sin la masa sablé. Para celíacos (GE) sigue sin confirmarse la contaminación cruzada: consultar en cocina.'},
+   brief:'Milhojas de manzana roja caramelizada sobre una base de masa sablé, con helado de vainilla. Se monta en plato, no en bowl.',
+   extended:'La manzana es roja, se cocina en un syrup de jugo de limón y vainilla, y se dispone sobre una base de masa sablé de almendra horneada. Se acompaña de un helado de vainilla clásico y se monta en plato, no en bowl. No es apto para veganos ni para quienes evitan frutos secos (por la harina de almendra de la masa). Sí se puede servir sin el helado para quien evita la lactosa, o sin la masa sablé para quien evita el gluten.'},
   {id:'po4-granos',day:'4',slot:'granos',recipeDay:'4',
    name:'Arroz con Leche, Pera Asada y Canela',short:'Arroz con leche',
    diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
@@ -3026,7 +3041,10 @@ const MENU_POSTRES = [
    extended:'El arroz se cocina lentamente en leche y horchata de arroz hasta lograr una textura cremosa, con un helado del mismo sabor. La pera se asa hasta caramelizar. No es apto para veganos, por el uso extenso de lácteos.'},
   {id:'po4-sinazucar',day:'4',slot:'sinazucar',recipeDay:'2',
    name:'Pomelo, Miel y Quinoa',short:'Pomelo y quinoa',
-   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:0,ge:1,gs:1,halal:1},
+   // lac 0 → '*' el 2026-09-07: "apto para intolerancia a la lactosa si le
+   // quitamos el helado" (el curd lleva mantequilla, no leche).
+   diet:{veg:0,vgt:1,pesc:1,mar:1,fs:1,lac:'*',ge:1,gs:1,halal:1},
+   dietNotes:{lac:'Sin el helado de pomelo — el helado es el único elemento con leche y crema.'},
    brief:'Postre cítrico de pomelo con curd, mermelada y helado del mismo fruto, con quinoa suflada crocante.',
    extended:'El pomelo se trabaja en varias texturas: un curd cremoso con mantequilla y huevo, una mermelada, y un helado hecho con su jugo y leche. La quinoa suflada aporta la textura crocante final. No es apto para veganos, por la mantequilla y el huevo del curd.'}
 ];
