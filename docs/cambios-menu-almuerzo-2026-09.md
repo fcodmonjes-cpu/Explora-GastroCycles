@@ -3,9 +3,11 @@
 > Insumo: `INFORMACION_COMPLEMENTARIA_DOSSIER_MENU__DE_4_CICLOS_RESTAURANT.docx`
 > (asesor, sin fecha en el archivo). Cotejado el 2026-09-07 contra
 > `MENU_BUFFET` / `MENU_SOPAS` / `MENU_POSTRES` / `MENU_PRINCIPALES` de `index.html`.
-> Estado: **plan, nada aplicado todavía.** Las decisiones marcadas ⚠ necesitan
-> confirmación de cocina antes de tocar la matriz (regla dura de §7 Receta 1b:
-> se transcribe, no se infiere).
+> Estado: **aplicado en tres commits** (ver §4). Se materializó todo lo que el
+> documento afirma de forma explícita; lo que el documento calla o sólo insinúa
+> quedó como información complementaria en el guion, sin tocar la matriz. Las
+> decisiones marcadas ⚠ siguen abiertas y necesitan confirmación de cocina
+> (regla dura de §7 Receta 1b: se transcribe, no se infiere).
 
 ---
 
@@ -227,36 +229,41 @@ no justifican un commit propio.
 
 ---
 
-## 4. Plan de implementación
+## 4. Qué se aplicó
 
-Todo vive en `index.html` (bloque de datos, líneas 2652-3115). No hay i18n que
-tocar: los platos nuevos son sólo español (`DISH_TRANS` cubre únicamente los
-`d1..d60` legacy).
+Todo vive en `index.html` (bloque de datos). No hubo i18n que tocar: los platos
+nuevos son sólo español (`DISH_TRANS` cubre únicamente los `d1..d60` legacy).
 
-**Orden sugerido — tres commits, en una rama `fix/menu-almuerzo-complementario`:**
+| Commit | Qué |
+|---|---|
+| `fix: alérgenos no declarados…` | §1.1 maní del pan gratato (César, Brócoli, Repollo, Tartar, Pollo escabechado, César del bar) · §1.2 anchoa del aderezo César (`vgt` → 0 en almuerzo y bar) · §1.3 almendra del coulant y frutos secos de la granola (`fs` → 0) |
+| `feat: aperturas de matriz…` | §1.4 completo: yogurt sin lactosa (`lac` → `'*'`), mil hojas sin helado y sin sablé (`lac`/`gs` → `'*'`), pomelo sin helado, membrillos lactose free · nota de "no modificable" en la leche con plátano · Kosher en el colapez del almendrado |
+| `docs: guion… al día` | §2 completo, 25 fichas: las seis correcciones donde el documento contradice lo publicado, los detalles de servicio, el claim de "sin azúcar añadida", y el enriquecimiento complementario |
 
-1. **`fix: alérgenos del menú de almuerzo (maní, almendra, anchoa)`** — sólo
-   §1.1, §1.2 y §1.3. Es lo que no puede esperar al briefing salvo el conflicto
-   ⚠ del pollo escabechado. Toca `diet`, `dietNotes` y el `extended` de:
-   `bf1-hojas`, `bf2-profria`, `pr4-avecerdo`, `po3-granos`, `po2-fruta`,
-   `bar-cesar` (+ mención de maní en `bf1-cocidos` y `bf2-cocidos`).
-2. **`feat: aperturas de matriz confirmadas`** — §1.4 (yogurt sin lactosa,
-   "sin el helado", "sin la masa sablé", membrillos lactose free). Cada `'*'`
-   nuevo **obliga** a su entrada en `dietNotes` (regla dura §7 Receta 1b).
-3. **`docs: correcciones de guion del menú de almuerzo`** — §2, después del
-   briefing, con las respuestas de cocina ya en mano.
+**Criterio aplicado en los bordes:**
 
-**Lo que NO se toca hasta el briefing:** §1.5 completo (sopa de quinoa,
-pantrucas, almendrado), el eje `ge` de las mil hojas, el `veg:'*'` de membrillos
-y piña, el pimentón de garbanzos y alcachofas, las aceitunas del pepino/kiwi, y
-el claim "sin azúcar añadida".
+- Donde el pan gratato va **aparte** (César, Brócoli, Repollo) quedó `fs:'*'` con
+  su nota; donde va **mezclado** (Tartar, Pollo escabechado) quedó `fs:0`.
+- El `vgt` del César bajó a **0**, no a `'*'`: nadie confirmó que exista un
+  aderezo sin anchoa. Si cocina dice que sí, vuelve a `'*'` con su nota.
+- `ge` de las mil hojas se quedó en **0** aunque el doc diga "apto sin la masa
+  sablé": eso resuelve la receta, no la contaminación cruzada del pase.
+- **Nada se movió por silencio.** La sopa de quinoa mantiene `veg:0/lac:0`
+  aunque el documento describa la receta entera con aquafaba y sin nombrar
+  lácteos; las pantrucas mantienen `mar:0`. El silencio de un documento no es
+  una confirmación, y ambos casos quedan comentados en el código.
+- Las **aceitunas negras** que el documento mete en la ficha del pepino/kiwi no
+  se agregaron: el bullet está duplicado en la ficha siguiente (porotos), que sí
+  lleva aceitunas por nombre. Se pregunta antes de sumar un ingrediente.
 
-**Validación antes de decir "listo"** (§12): paridad de backticks = 0 · sin
-bytes NUL · `node --check` sobre los `<script>` inline · screenshot headless de
-la vista Almuerzo en los 4 días · revisar a máquina que ningún `'*'` quede sin
-su `dietNotes`.
+**Validación corrida** (§12): paridad de backticks 0 · cero bytes NUL ·
+`node --check` sobre los `<script>` inline · evaluación del bloque de datos en
+Node (24 buffet + 4 sopas + 16 principales + 12 postres, ningún `'*'` sin su
+`dietNotes`) · render headless de la vista Almuerzo en D3, donde el César ya
+aparece con `✗ Vgt` y `✓* FS`.
 
----
+**Falta el QA del owner desde iPhone**, que es la prueba que ninguna de estas
+herramientas reemplaza.
 
 ## 5. Checklist para el briefing con cocina
 
