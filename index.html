@@ -1124,7 +1124,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    alta. Por eso se lee como cita y no como texto de ficha. */
 .mn-quote { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:17px; line-height:1.5; color:var(--text); padding-left:12px; border-left:1.5px solid rgba(192,125,42,0.5); }
 .mn-ext { margin-top:10px; padding-left:12px; border-left:0.5px solid var(--border); font-size:12.5px; line-height:1.6; color:var(--text-secondary); animation:panelIn 0.2s ease both; }
-.mn-more { margin-top:9px; background:none; border:none; padding:6px 0; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+/* El botón de la explicación extendida. Era texto pelado de 10px y en servicio
+   real casi nadie lo tocaba: el garzón leía la cita y daba por hecho que eso
+   era todo el plato. Ahora es una barra de ancho completo con fondo ámbar y un
+   chevrón que gira al abrir — la forma dice "esto se despliega". Es barra y no
+   píldora justamente para no confundirse con `.mn-twin`, que sí es píldora.
+   El pulso corre DOS veces y se detiene: la ficha se redibuja cada vez que el
+   plato se abre, así que llama la atención una vez por apertura y después se
+   queda quieto. Nada parpadeando a hora pico. */
+.mn-more { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; margin-top:11px; padding:9px 12px; border-radius:9px; background:linear-gradient(90deg, rgba(192,125,42,0.17), rgba(192,125,42,0.05)); border:0.5px solid rgba(192,125,42,0.45); font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.12em; text-transform:uppercase; color:#cfa14a; cursor:pointer; text-align:left; touch-action:manipulation; -webkit-tap-highlight-color:transparent; transition:background .14s, border-color .14s, transform .07s; }
+.mn-more:active { transform:scale(0.985); }
+@media (hover:hover){ .mn-more:hover { background:linear-gradient(90deg, rgba(192,125,42,0.24), rgba(192,125,42,0.09)); border-color:rgba(192,125,42,0.7); } }
+.mn-more-ch { font-size:13px; line-height:1; transition:transform .2s ease; opacity:0.9; }
+.mn-more.open .mn-more-ch { transform:rotate(180deg); }
+.mn-more.open { background:rgba(192,125,42,0.07); }
+@keyframes mnMoreCall {
+  0%, 100% { box-shadow:0 0 0 0 rgba(192,125,42,0); }
+  50%      { box-shadow:0 0 0 3.5px rgba(192,125,42,0.15); }
+}
+.mn-more:not(.open) { animation:mnMoreCall 1.7s ease-in-out 0.35s 2 both; }
+@media (prefers-reduced-motion: reduce){ .mn-more:not(.open) { animation:none; } }
 .mn-meta { margin-top:11px; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
 
 /* Veredictos de restricción. Coral = no apto · dorado = apto con condición
@@ -4147,7 +4166,7 @@ const UI = {
     lensNoFit:'Ningún plato de esta sección cumple el filtro. Consulta a cocina.',
     dietNotFit:'No apto', dietWithNote:'Con nota', dietNoData:'Sin dato · consultar cocina', dietNoDataShort:'sin dato',
     dietNoMatrix:'Este plato todavía no tiene la tabla de restricciones del asesor. Confirma con cocina antes de ofrecerlo.',
-    guionMore:'Más', guionLess:'Menos',
+    guionMore:'Explicación completa', guionLess:'Cerrar explicación',
     barTwin:'También en el Bar', lunchTwin:'También en almuerzo',
     svcBar:'Bar', barFixed:'Carta fija · todos los días',
     barFood:'Comida', barDrinks:'Tragos', barSalado:'Salado', barDulce:'Dulce',
@@ -4371,7 +4390,7 @@ const UI = {
     lensNoFit:'No dish in this section matches the filter. Check with the kitchen.',
     dietNotFit:'Not suitable', dietWithNote:'With a note', dietNoData:'No data · check with kitchen', dietNoDataShort:'no data',
     dietNoMatrix:'This dish has no restriction table from the consultant yet. Confirm with the kitchen before offering it.',
-    guionMore:'More', guionLess:'Less',
+    guionMore:'Full explanation', guionLess:'Close explanation',
     barTwin:'Also on the Bar menu', lunchTwin:'Also at lunch',
     svcBar:'Bar', barFixed:'Fixed menu · every day',
     barFood:'Food', barDrinks:'Drinks', barSalado:'Savoury', barDulce:'Sweet',
@@ -4591,7 +4610,7 @@ const UI = {
     lensNoFit:'Nenhum prato desta seção atende ao filtro. Consulte a cozinha.',
     dietNotFit:'Não apto', dietWithNote:'Com nota', dietNoData:'Sem dado · consultar a cozinha', dietNoDataShort:'sem dado',
     dietNoMatrix:'Este prato ainda não tem a tabela de restrições do consultor. Confirme com a cozinha antes de oferecer.',
-    guionMore:'Mais', guionLess:'Menos',
+    guionMore:'Explicação completa', guionLess:'Fechar explicação',
     barTwin:'Também na Carta de Bar', lunchTwin:'Também no almoço',
     svcBar:'Bar', barFixed:'Carta fixa · todos os dias',
     barFood:'Comida', barDrinks:'Drinks', barSalado:'Salgado', barDulce:'Doce',
@@ -5238,7 +5257,7 @@ function menuTile(d, slotLabel, wide){
     body = `<div class="mn-open">
       ${d.photo ? `<img class="mn-photo" src="${d.photo}" alt="" loading="lazy" decoding="async">` : ''}
       ${d.brief ? `<div class="mn-quote">${vjEsc(tr.brief || d.brief)}</div>` : `<div class="mn-quote">${tr.desc || ''}</div>`}
-      ${d.extended ? `<button class="mn-more" onclick="event.stopPropagation();menuToggleGuion('${d.id}')">${extOpen ? t('guionLess') : t('guionMore')}</button>` : ''}
+      ${d.extended ? `<button class="mn-more${extOpen ? ' open' : ''}" onclick="event.stopPropagation();menuToggleGuion('${d.id}')"><span>${extOpen ? t('guionLess') : t('guionMore')}</span><span class="mn-more-ch">▾</span></button>` : ''}
       ${extOpen && d.extended ? `<div class="mn-ext">${vjEsc(tr.extended || d.extended)}</div>` : ''}
       ${menuVerdicts(d)}
       ${d.draft ? `<div class="mn-draft">${t('barDraft')}</div>` : ''}
