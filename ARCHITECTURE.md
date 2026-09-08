@@ -863,10 +863,13 @@ Reglas duras al cargar la matriz:
    volvería ilegible a hora pico, y como sólo algunos platos tienen foto,
    quedaría además despareja. Un plato sin `photo` se dibuja exactamente igual
    que antes. Las imágenes van a `assets/menu/<id>.jpg`, **4:3, 880 px de ancho,
-   JPEG q≈0.68, ~80-120 KB cada una**. El `<img>` va con `loading="lazy"`, así
+   JPEG q≈0.68, ~40-120 KB cada una**. El `<img>` va con `loading="lazy"`, así
    que no se descarga hasta que alguien abre esa ficha. Pesan contra la cuota de
-   Vercel como todo el árbol (§12): cuatro fotos son ~388 KB, un 13 % del repo.
-   Antes de sumar un ciclo entero de fotos, hacer la cuenta.
+   Vercel como todo el árbol (§12): las siete del día 1 (cuatro principales +
+   tres postres) son ~563 KB, y llevaron el repo de 2,9 a 3,4 MB. Un ciclo
+   completo con foto en todo —60 platos— serían unos 5 MB, casi el triple del
+   repo: si se va para allá, decidir antes si las fotos siguen en el repo o
+   pasan a un CDN.
    Sin ImageMagick ni Pillow en el entorno, el redimensionado se hace con el
    Chrome headless que ya se usa para los screenshots: un canvas con recorte
    "cover" + punto focal por foto y `toDataURL('image/jpeg', q)`. Es el mismo
