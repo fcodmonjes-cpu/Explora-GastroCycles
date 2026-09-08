@@ -842,6 +842,7 @@ final del bloque de datos, más `BAR_DISHES` para la carta fija del bar.
   dietNotes:{ vgt:'Sin el pollo ni el pan gratato...' },   // obligatorio si hay '*'
   brief:'…',                 // explicación breve — se dice en voz alta
   extended:'…',              // explicación extendida — se lee si preguntan
+  photo:'assets/menu/x.jpg', // OPCIONAL: foto del montaje (ver abajo)
   barTwin:'bar-cesar'        // 💡 hermana en la otra carta (o lunchTwin)
 }
 ```
@@ -857,6 +858,19 @@ Reglas duras al cargar la matriz:
 3. **`COURSE_ORDER` tiene una copia** en `COMANDA_SERVICE_ORDER`. Si agregás un
    curso, tocá las dos. `'Buffet'` está excluido del catálogo del Comande a
    propósito: es autoservicio, nunca entra en una comanda.
+4. **La foto (`photo`) es opcional y vive sólo en la ficha ABIERTA.** El grid
+   cerrado es la pantalla más cargada del programa: una grilla de fotos la
+   volvería ilegible a hora pico, y como sólo algunos platos tienen foto,
+   quedaría además despareja. Un plato sin `photo` se dibuja exactamente igual
+   que antes. Las imágenes van a `assets/menu/<id>.jpg`, **4:3, 880 px de ancho,
+   JPEG q≈0.68, ~80-120 KB cada una**. El `<img>` va con `loading="lazy"`, así
+   que no se descarga hasta que alguien abre esa ficha. Pesan contra la cuota de
+   Vercel como todo el árbol (§12): cuatro fotos son ~388 KB, un 13 % del repo.
+   Antes de sumar un ciclo entero de fotos, hacer la cuenta.
+   Sin ImageMagick ni Pillow en el entorno, el redimensionado se hace con el
+   Chrome headless que ya se usa para los screenshots: un canvas con recorte
+   "cover" + punto focal por foto y `toDataURL('image/jpeg', q)`. Es el mismo
+   truco que el módulo Checklist usa en el teléfono del supervisor.
 4. **El cruce se valida a máquina, no a ojo.** Ver §12.
 
 ### Receta 2: Agregar una familia de productos al E-Check

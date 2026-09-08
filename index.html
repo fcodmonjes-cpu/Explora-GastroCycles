@@ -1114,6 +1114,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 /* --- Ficha abierta -------------------------------------------------------- */
 .mn-open { width:100%; margin-top:11px; padding-top:11px; border-top:0.5px solid var(--border); animation:panelIn 0.26s cubic-bezier(0.34,1.1,0.64,1) both; }
+/* Foto del plato. Sólo en la ficha ABIERTA: el grid cerrado es la vista más
+   cargada del programa y una grilla de fotos la volvería ilegible a hora pico.
+   El plato sin foto se ve exactamente como antes — `photo` es opcional y su
+   ausencia no deja hueco. Ratio fijo 4:3 para que la ficha no salte de alto
+   mientras la imagen carga. */
+.mn-photo { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:8px; border:0.5px solid var(--border); background:var(--surface); margin-bottom:11px; }
 /* La explicación breve es lo único de toda la app escrito para decirse en voz
    alta. Por eso se lee como cita y no como texto de ficha. */
 .mn-quote { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:17px; line-height:1.5; color:var(--text); padding-left:12px; border-left:1.5px solid rgba(192,125,42,0.5); }
@@ -2864,24 +2870,24 @@ const PRINCIPAL_SLOTS = [
 // 0 discrepancias). Los documentos no traen maridaje: no se inventa ninguno.
 const MENU_PRINCIPALES = [
   // ── Día 1 ──────────────────────────────────────────────────────────
-  {id:'pr1-vegana',day:'1',slot:'vegana',recipeDay:'1',
+  {id:'pr1-vegana',day:'1',slot:'vegana',recipeDay:'1',photo:'assets/menu/pr1-vegana.jpg',
    name:'Coliflor Frita en Salsa de Sésamo y Cacho de Cabra',short:'Coliflor frita',
    diet:{veg:1, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:0, gs:1, halal:1},
    brief:'Coliflor frita hasta quedar dorada, bañada en una salsa de sésamo con un toque picante de cacho de cabra y supremas de pomelo.',
    extended:'La coliflor se blanquea, se pasa por almidón y se fríe hasta lograr una textura similar al pollo frito, apilada de la misma forma. La salsa combina tahini (sésamo), un aceite picante infusionado con especias y una base de soya dulce. Se termina con supremas de pomelo quemadas al soplete, que aportan un contraste ácido y ahumado. Es un plato 100% vegano.',
    barTwin:'bar-coliflor'},
-  {id:'pr1-mar',day:'1',slot:'mar',recipeDay:'4',
+  {id:'pr1-mar',day:'1',slot:'mar',recipeDay:'4',photo:'assets/menu/pr1-mar.jpg',
    name:'Curry Rojo de Pescado con Quinoa al Vapor',short:'Curry rojo',
    diet:{veg:0, vgt:0, pesc:1, mar:0, fs:1, lac:1, ge:1, gs:1, halal:1},
    brief:'Pescado en un curry rojo tailandés hecho en casa, con leche de coco y verduras, acompañado de quinoa al vapor aparte.',
    extended:'La pasta de curry se prepara desde cero con especias, cacho de cabra y hierbas como el lemongrass, y se cocina con leche de coco hasta lograr una salsa aromática y balanceada entre picante, dulce y salado. El pescado se sirve bañado en esta salsa, acompañado de zapallo y papa nativa fritos, y espinaca salteada. La quinoa se sirve en un cuenco aparte. No es apto para quienes evitan mariscos, ya que la pasta de curry lleva un toque de camarón.'},
-  {id:'pr1-avecerdo',day:'1',slot:'avecerdo',recipeDay:'2',
+  {id:'pr1-avecerdo',day:'1',slot:'avecerdo',recipeDay:'2',photo:'assets/menu/pr1-avecerdo.jpg',
    name:'Milanesa de Cerdo con Salsa de Chañar y Quinoa',short:'Milanesa de cerdo',
    diet:{veg:0, vgt:0, pesc:0, mar:0, fs:1, lac:0, ge:0, gs:0, halal:0},
    brief:'Cerdo empanizado y frito, con chucrut, repollo asado y encurtido, una salsa agridulce de chañar, y quinoa al vapor con sésamo.',
    extended:'El cerdo se empaniza con panko y se fríe hasta dorar. Se acompaña de un chucrut de repollo (fermentado, sin picante), repollo asado y encurtido, y una salsa que combina salsa de ostra, soya y arrope de chañar, un fruto del desierto. La quinoa con sésamo se sirve aparte. No es apto para viajeros que no consumen cerdo.',
    barTwin:'bar-tonkatsu'},
-  {id:'pr1-res',day:'1',slot:'res',recipeDay:'1',
+  {id:'pr1-res',day:'1',slot:'res',recipeDay:'1',photo:'assets/menu/pr1-res.jpg',
    name:'Sahofan con Hongos y Entraña',short:'Sahofan de entraña',
    diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:0, ge:0, gs:1, halal:0},
    brief:'Fideos de arroz salteados con hongos y láminas de entraña a la parrilla, terminado con parmesano.',
@@ -5230,6 +5236,7 @@ function menuTile(d, slotLabel, wide){
       return `<div class="wine-chip ${typeChipClass(w)}" data-wid="${wid}" onclick="event.stopPropagation();openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${(tr.why||{})[wid]||''}</div></div>`;
     }).join('');
     body = `<div class="mn-open">
+      ${d.photo ? `<img class="mn-photo" src="${d.photo}" alt="" loading="lazy" decoding="async">` : ''}
       ${d.brief ? `<div class="mn-quote">${vjEsc(tr.brief || d.brief)}</div>` : `<div class="mn-quote">${tr.desc || ''}</div>`}
       ${d.extended ? `<button class="mn-more" onclick="event.stopPropagation();menuToggleGuion('${d.id}')">${extOpen ? t('guionLess') : t('guionMore')}</button>` : ''}
       ${extOpen && d.extended ? `<div class="mn-ext">${vjEsc(tr.extended || d.extended)}</div>` : ''}
