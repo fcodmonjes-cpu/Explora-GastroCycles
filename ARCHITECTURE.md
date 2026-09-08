@@ -858,13 +858,22 @@ Reglas duras al cargar la matriz:
 3. **`COURSE_ORDER` tiene una copia** en `COMANDA_SERVICE_ORDER`. Si agregás un
    curso, tocá las dos. `'Buffet'` está excluido del catálogo del Comande a
    propósito: es autoservicio, nunca entra en una comanda.
-4. **`menuToggleGuion` NO redibuja la grilla.** Es la única función del módulo
+4. **Las fotos del día se precargan solas.** `menuWarmPhotos()` corre al
+   principio de `renderDishes()`: mira el día del selector y el servicio
+   activo, y pide en segundo plano las fotos de esos platos —sólo esas—. Con
+   la imagen ya en el cache del browser, abrir la ficha es instantáneo. Es
+   deliberado que NO precargue el handbook entero: se paga el ancho de banda
+   del día que se está mirando y nada más. Corre en `requestIdleCallback`,
+   cada URL se pide una vez por sesión (`MENU_PHOTOS_WARMED`), y se apaga sola
+   con `saveData` o en redes 2g. Como pasa por el service worker, la precarga
+   además deja el día cacheado para cuando el wifi del lodge se caiga.
+5. **`menuToggleGuion` NO redibuja la grilla.** Es la única función del módulo
    que parchea el DOM en vez de reescribir el `innerHTML`, y tiene una razón:
    con la foto adentro, un `renderDishes()` destruía el `<img>` y lo volvía a
    crear en cada tap del botón, así que la foto parpadeaba. Toca sólo la
    etiqueta del botón y el bloque `.mn-ext`. Si algún día se agrega otro
    elemento pesado a la ficha abierta, este es el patrón a seguir.
-5. **La foto (`photo`) es opcional y vive sólo en la ficha ABIERTA.** El grid
+6. **La foto (`photo`) es opcional y vive sólo en la ficha ABIERTA.** El grid
    cerrado es la pantalla más cargada del programa: una grilla de fotos la
    volvería ilegible a hora pico, y como sólo algunos platos tienen foto,
    quedaría además despareja. Un plato sin `photo` se dibuja exactamente igual

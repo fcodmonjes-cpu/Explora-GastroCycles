@@ -5292,12 +5292,59 @@ function menuVisible(list){
   return (MENU_ONLY_FIT && MENU_DIET_LENS.length) ? list.filter(d => !menuFails(d)) : list;
 }
 
+// --- Precarga de las fotos del día ------------------------------------------
+// El selector de día ya sabe qué se sirve hoy, así que sirve también para
+// adelantar trabajo: apenas se dibuja el menú, las fotos de ESE día y ESE
+// servicio se piden en segundo plano. Cuando el garzón abre el plato la imagen
+// ya está en el cache del browser y aparece de una, sin el cuadro en blanco.
+//
+// Deliberadamente NO se precarga el handbook entero: son las fotos del día que
+// se está mirando y nada más. Al cambiar de día o de servicio se precargan las
+// de ese, y las ya pedidas no se vuelven a pedir.
+//
+// Tres cuidados, porque esto corre solo y nadie lo pidió:
+//  · En tiempo ocioso (requestIdleCallback), nunca compitiendo con el render.
+//  · Cada URL se pide UNA vez por sesión (MENU_PHOTOS_WARMED).
+//  · Con ahorro de datos activado o en una red 2g no se precarga nada. El plato
+//    abre igual; sólo pierde la ventaja. En el lodge el wifi es el cuello de
+//    botella, y gastarlo en fotos que quizá nadie abra sería exactamente al
+//    revés de lo que buscamos.
+const MENU_PHOTOS_WARMED = new Set();
+
+function menuPhotosForView(){
+  if (MENU_SERVICE === 'bar') return BAR_DISHES.filter(d => d.photo).map(d => d.photo);
+  const day   = (currentDay === 'all') ? menuTodayCycleDay() : currentDay;
+  const match = (d) => MENU_SERVICE === 'cena'
+    ? (d.service === 'Cena'     || d.service === 'Almuerzo y Cena')
+    : (d.service === 'Almuerzo' || d.service === 'Almuerzo y Cena');
+  return DISHES.filter(d => d.photo && d.day === day && match(d)).map(d => d.photo);
+}
+
+function menuWarmPhotos(){
+  const con = navigator.connection;
+  if (con && (con.saveData || /^(slow-)?2g$/.test(con.effectiveType || ''))) return;
+  const urls = menuPhotosForView().filter(u => !MENU_PHOTOS_WARMED.has(u));
+  if (!urls.length) return;
+  const run = () => urls.forEach(u => {
+    MENU_PHOTOS_WARMED.add(u);
+    const im = new Image();
+    im.decoding = 'async';
+    im.src = u;               // basta con pedirla: queda en el cache del browser
+  });
+  if (window.requestIdleCallback) window.requestIdleCallback(run, { timeout: 2000 });
+  else setTimeout(run, 300);
+}
+
 function renderDishes(){
   const input     = document.getElementById('dish-search');
   const q         = (input && input.value || '').trim().toLowerCase();
   const searching = q.length > 0;
   const grid      = document.getElementById('dish-grid');
   if (!grid) return;
+
+  // Se dispara con el día y el servicio ya resueltos, antes de cualquier rama
+  // de la vista: buscar, BAR o cena tampoco pierden la precarga del día.
+  menuWarmPhotos();
 
   // A resguardo ANTES de tocar innerHTML: el nodo de los tips tiene estado vivo
   // (timer, hilo, cross-fade) y reescribir el grid con él adentro lo destruye.
