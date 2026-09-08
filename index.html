@@ -2711,10 +2711,13 @@ const MENU_BUFFET = [
    brief:'Pescado en corte sashimi bañado en un agua chile verde de pepino y manzana, con pepino encurtido y quinoa crocante.',
    extended:'Vale la pena destacarlo: acá el pescado va en corte de sashimi, a diferencia de los ceviches de los otros ciclos, que van en cubo. Se sirve al natural, sin curar previamente — el líquido se agrega al momento y es más un agua chile que una leche de tigre tradicional: extracto verde de pepino, cilantro, manzana, cebolla blanca, ajo, jengibre y ají verde. El pepino va encurtido por ósmosis con sal, vinagre y ají verde. Se acompaña de una salsa verde chilena (cebolla blanca, cilantro y limón) con mayonesa alimonada, y quinoa frita para dar textura crocante. Es un plato pescetariano, no apto para vegetarianos ni veganos.'},
   {id:'bf1-prococ',day:'1',slot:'prococ',recipeDay:'1',
-   name:'Lomo de Cerdo',short:'Lomo de cerdo',
-   diet:{veg:0,vgt:0,pesc:0,mar:1,fs:1,lac:1,ge:1,gs:1,halal:0},
-   brief:'Lomo de cerdo cocido lentamente al vacío para mantenerlo jugoso, y sellado al final para dorar la superficie.',
-   extended:'Cocinamos el cerdo a baja temperatura durante un par de horas, lo que asegura que quede tierno incluso servido en el buffet. Antes pasa por una salmuera breve, una técnica que ayuda a que la carne retenga humedad. Al final se sella en sartén para conseguir un dorado en la superficie. No es apto para viajeros que no consumen cerdo.'},
+   name:'Pavo',short:'Pavo',
+   // 2026-09-08: la proteína caliente de esta bandeja pasó de lomo de cerdo a
+   // pavo. El eje halal deja de ser 0 en consecuencia — ya no hay cerdo en el
+   // plato, igual que el pollo del día 2 y el pato del día 4, que van en 1.
+   diet:{veg:0,vgt:0,pesc:0,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
+   brief:'Pavo cocido lentamente al vacío para mantenerlo jugoso, y sellado al final para dorar la superficie.',
+   extended:'Cocinamos el pavo a baja temperatura durante un par de horas, lo que asegura que quede tierno incluso servido en el buffet. Antes pasa por una salmuera breve, una técnica que ayuda a que la carne retenga humedad — clave en una carne magra como el pavo, que se seca con facilidad. Al final se sella en sartén para conseguir un dorado en la superficie. Como todas las proteínas del buffet, se termina con sal escamosa, pimienta y aceite de oliva. No es apto para vegetarianos ni veganos.'},
 
   // ── Día 2 ──────────────────────────────────────────────────────────────
   {id:'bf2-hojas',day:'2',slot:'hojas',recipeDay:'2',
@@ -2755,7 +2758,7 @@ const MENU_BUFFET = [
    name:'Pechuga de Pollo',short:'Pechuga de pollo',
    diet:{veg:0,vgt:0,pesc:0,mar:1,fs:1,lac:1,ge:1,gs:1,halal:1},
    brief:'Pechuga de pollo cocida al vacío para mantenerla jugosa, y sellada al final.',
-   extended:'Al igual que con el cerdo, el pollo pasa primero por una salmuera breve y luego se cocina a baja temperatura al vacío, lo que asegura una textura jugosa incluso servido frío en el buffet. Se sella al final para dorar la superficie. Como todas las proteínas del buffet, se termina con sal escamosa, pimienta y aceite de oliva. No es apto para vegetarianos, veganos ni pescetarianos estrictos.'},
+   extended:'Al igual que las demás proteínas del buffet, el pollo pasa primero por una salmuera breve y luego se cocina a baja temperatura al vacío, lo que asegura una textura jugosa incluso servido frío en el buffet. Se sella al final para dorar la superficie. Como todas las proteínas del buffet, se termina con sal escamosa, pimienta y aceite de oliva. No es apto para vegetarianos, veganos ni pescetarianos estrictos.'},
 
   // ── Día 3 ──────────────────────────────────────────────────────────────
   {id:'bf3-hojas',day:'3',slot:'hojas',recipeDay:'3',

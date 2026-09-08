@@ -27,9 +27,9 @@ vez, en `menuToDish`). El cotejo se hizo plato por plato, por nombre:
 **Resultado: 23/24 bandejas + 4 sopas + 12 postres coinciden 1:1. Ningún plato
 cambió de día ni de bandeja.** Todo lo que sigue son cambios *dentro* del plato.
 
-La única bandeja sin información nueva es la **proteína caliente del Día 1**
-(hoy "Lomo de Cerdo"): el documento no la menciona. → confirmar en briefing que
-sigue siendo lomo de cerdo.
+La única bandeja sin información nueva era la **proteína caliente del Día 1**:
+el documento no la menciona. El owner confirmó el 2026-09-08 que **cambió de
+lomo de cerdo a pavo**, y así quedó en la ficha.
 
 Recordatorio para el briefing: **doc Día 1 → D3 en la app**, doc 2 → D4,
 doc 3 → D1, doc 4 → D2 (`MENU_CYCLE_OFFSET = 2`).
@@ -277,5 +277,5 @@ herramientas reemplaza.
 8. **Mil hojas sin masa sablé**: ¿apto sólo para intolerancia, o también para celíaco (contaminación cruzada)?
 9. ¿Las **aceitunas negras** son del pepino/kiwi o del bullet de porotos?
 10. ¿Garbanzos y alcachofas siguen llevando **pimentón asado**?
-11. ¿La proteína caliente del **Día 1** sigue siendo lomo de cerdo?
+11. ~~¿La proteína caliente del **Día 1** sigue siendo lomo de cerdo?~~ **Respondido el 2026-09-08: cambió a pavo.** Aplicado; `halal` pasó de 0 a 1 porque el plato ya no lleva cerdo. Falta saber el corte (¿pechuga?) — hoy la ficha dice sólo "Pavo".
 12. ¿Qué significa exactamente la familia **"sin azúcar"** de postres?
