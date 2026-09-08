@@ -858,13 +858,21 @@ Reglas duras al cargar la matriz:
 3. **`COURSE_ORDER` tiene una copia** en `COMANDA_SERVICE_ORDER`. Si agregás un
    curso, tocá las dos. `'Buffet'` está excluido del catálogo del Comande a
    propósito: es autoservicio, nunca entra en una comanda.
-4. **La foto (`photo`) es opcional y vive sólo en la ficha ABIERTA.** El grid
+4. **`menuToggleGuion` NO redibuja la grilla.** Es la única función del módulo
+   que parchea el DOM en vez de reescribir el `innerHTML`, y tiene una razón:
+   con la foto adentro, un `renderDishes()` destruía el `<img>` y lo volvía a
+   crear en cada tap del botón, así que la foto parpadeaba. Toca sólo la
+   etiqueta del botón y el bloque `.mn-ext`. Si algún día se agrega otro
+   elemento pesado a la ficha abierta, este es el patrón a seguir.
+5. **La foto (`photo`) es opcional y vive sólo en la ficha ABIERTA.** El grid
    cerrado es la pantalla más cargada del programa: una grilla de fotos la
    volvería ilegible a hora pico, y como sólo algunos platos tienen foto,
    quedaría además despareja. Un plato sin `photo` se dibuja exactamente igual
    que antes. Las imágenes van a `assets/menu/<id>.jpg`, **4:3, 880 px de ancho,
-   JPEG q≈0.68, ~40-120 KB cada una**. El `<img>` va con `loading="lazy"`, así
-   que no se descarga hasta que alguien abre esa ficha. Pesan contra la cuota de
+   JPEG q≈0.68, ~40-120 KB cada una**. No se descargan hasta que alguien abre
+   esa ficha, pero no por `loading="lazy"` —que se quitó, porque sólo agregaba
+   un cuadro de demora— sino porque el `<img>` ni siquiera existe en el DOM
+   mientras la ficha está cerrada. Pesan contra la cuota de
    Vercel como todo el árbol (§12): las siete del día 1 (cuatro principales +
    tres postres) son ~563 KB, y llevaron el repo de 2,9 a 3,4 MB. Un ciclo
    completo con foto en todo —60 platos— serían unos 5 MB, casi el triple del

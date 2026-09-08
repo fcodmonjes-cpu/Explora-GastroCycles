@@ -1143,6 +1143,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   50%      { box-shadow:0 0 0 3.5px rgba(192,125,42,0.15); }
 }
 .mn-more:not(.open) { animation:mnMoreCall 1.7s ease-in-out 0.35s 2 both; }
+.mn-more.seen { animation:none; }
 @media (prefers-reduced-motion: reduce){ .mn-more:not(.open) { animation:none; } }
 .mn-meta { margin-top:11px; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
 
@@ -5255,7 +5256,7 @@ function menuTile(d, slotLabel, wide){
       return `<div class="wine-chip ${typeChipClass(w)}" data-wid="${wid}" onclick="event.stopPropagation();openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${(tr.why||{})[wid]||''}</div></div>`;
     }).join('');
     body = `<div class="mn-open">
-      ${d.photo ? `<img class="mn-photo" src="${d.photo}" alt="" loading="lazy" decoding="async">` : ''}
+      ${d.photo ? `<img class="mn-photo" src="${d.photo}" alt="" decoding="async">` : ''}
       ${d.brief ? `<div class="mn-quote">${vjEsc(tr.brief || d.brief)}</div>` : `<div class="mn-quote">${tr.desc || ''}</div>`}
       ${d.extended ? `<button class="mn-more${extOpen ? ' open' : ''}" onclick="event.stopPropagation();menuToggleGuion('${d.id}')"><span>${extOpen ? t('guionLess') : t('guionMore')}</span><span class="mn-more-ch">▾</span></button>` : ''}
       ${extOpen && d.extended ? `<div class="mn-ext">${vjEsc(tr.extended || d.extended)}</div>` : ''}
@@ -5558,9 +5559,38 @@ function menuClearLens(){
   MENU_ROOM_ACTIVE = ''; MENU_ROOM_INPUT = ''; MENU_ROOM_MSG = '';
   renderDishes();
 }
+// Abre/cierra el guion extendido SIN redibujar la grilla. Antes llamaba a
+// renderDishes(), que reescribe el innerHTML entero: el <img> del plato se
+// destruía y se volvía a crear en cada tap, y la foto parpadeaba. Acá se toca
+// sólo lo que cambia —la etiqueta del botón y el bloque de texto—, así que la
+// foto, la posición del scroll y el nodo vivo de los tips de vino se quedan
+// exactamente donde estaban. Si la ficha no está en pantalla (no debería
+// pasar: el botón vive dentro de ella), cae al camino de siempre.
 function menuToggleGuion(id){
-  MENU_GUION_OPEN = (MENU_GUION_OPEN === id) ? null : id;
-  renderDishes();
+  const opening = MENU_GUION_OPEN !== id;
+  MENU_GUION_OPEN = opening ? id : null;
+
+  const tile = document.querySelector(`.mn-tile.open[data-dish-id="${id}"]`);
+  const btn  = tile && tile.querySelector('.mn-more');
+  const d    = DISHES.find(x => x.id === id) || BAR_DISHES.find(x => x.id === id);
+  if (!tile || !btn || !d){ renderDishes(); return; }
+
+  const label = btn.querySelector('span');
+  if (label) label.textContent = opening ? t('guionLess') : t('guionMore');
+  btn.classList.toggle('open', opening);
+  // Una vez que el garzón lo tocó, el pulso ya cumplió: no vuelve a latir al
+  // cerrar. Vuelve a estar disponible la próxima vez que se abra la ficha.
+  btn.classList.add('seen');
+
+  const prev = tile.querySelector('.mn-ext');
+  if (prev) prev.remove();
+  if (opening){
+    const tr  = getDishTr(d);
+    const ext = document.createElement('div');
+    ext.className   = 'mn-ext';
+    ext.textContent = tr.extended || d.extended || '';
+    btn.insertAdjacentElement('afterend', ext);
+  }
 }
 // Salta a la ficha hermana (💡 del guion): cambia de carta si hace falta,
 // la abre y la trae a la vista — el mismo gesto "find & jump" del Checklist.
