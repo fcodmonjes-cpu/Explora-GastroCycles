@@ -923,8 +923,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Toggle de idioma sticky: fijo arriba-derecha del viewport, siempre visible.
    Al scrollear gana un fondo difuminado sutil (.lang-floating) para legibilidad
    sobre el contenido; al volver al head se funde con el header. Posible porque
-   .app ya no usa will-change:transform (ver arriba). */
-.lang-toggle { position: fixed; top: 13px; right: 14px; z-index: 50; display: flex; align-items: center; padding: 3px 5px; border-radius: 999px; border: 0.5px solid transparent; background: transparent; transition: background .3s ease, border-color .3s ease, box-shadow .3s ease; }
+   .app ya no usa will-change:transform (ver arriba).
+
+   2026-09-15 — POR QUÉ EL `top` LLEVA env(): al estar FUERA de .app, el toggle
+   no hereda su padding de safe-area, y `position:fixed` mide desde el borde
+   FÍSICO de la pantalla. Con viewport-fit=cover, instalada como PWA eso es
+   detrás de la barra de estado: 13px caían dentro del notch/isla y el toggle
+   quedaba tapado por la hora y la batería. En el navegador el inset vale 0, así
+   que ahí no cambia nada — el bug sólo se ve con la app instalada. */
+.lang-toggle { position: fixed; top: calc(13px + env(safe-area-inset-top)); right: 14px; z-index: 50; display: flex; align-items: center; padding: 3px 5px; border-radius: 999px; border: 0.5px solid transparent; background: transparent; transition: background .3s ease, border-color .3s ease, box-shadow .3s ease; }
 .lang-toggle.lang-floating { background: rgba(18,18,20,0.7); -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); border-color: rgba(255,255,255,0.08); box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
 .lang-btn { padding: 4px 7px; border: none; border-right: 0.5px solid rgba(255,255,255,0.1); font-family:'Courier Prime','Courier New',monospace; font-size: 9px; letter-spacing: 0.16em; font-weight: 400; cursor: pointer; background: transparent; color: var(--text-tertiary); text-transform: uppercase; transition: color 0.15s; line-height: 1; }
 .lang-btn:hover { color: var(--text-secondary); background: transparent; }
@@ -1560,7 +1567,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* (2026-08-09) Halo retirado: PGO dejó de ser novedad, así que el banner deja
    de anunciarse y pasa a ser mobiliario — fila mono con una regla inferior, sin
    caja ni animación. Vuelve a mandar la ops-strip, que es lo que corresponde. */
-.pgo-banner { display:flex; align-items:baseline; flex-wrap:nowrap; gap:4px 13px; overflow:hidden; margin:0 0 1.3rem; padding:0.5rem 0 0.7rem; border-bottom:0.5px solid var(--border); font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
+.pgo-banner { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 13px; overflow:hidden; margin:0 0 1.3rem; padding:0.5rem 0 0.7rem; border-bottom:0.5px solid var(--border); font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
 .pgo-banner[hidden] { display:none; }
 /* Qué servicio está midiendo el número. Sin él, '31 viajeros' es ambiguo:
    no se sabe si es ahora, hoy o el almuerzo. Discreto — es una etiqueta. */
@@ -1572,6 +1579,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .pgo-b-num.dietas { color:var(--gold); }
 .pgo-b-label { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); }
 .pgo-b-tag { font-size:8px; letter-spacing:0.08em; color:var(--teal); border:0.5px solid rgba(29,158,117,0.45); border-radius:3px; padding:0 3px; }
+/* Botón de refresco del banner (2026-09-15). Vive acá y no en la píldora de
+   idioma porque este banner ES el dato que falla: PGO es lo que no carga o se
+   queda en el servicio anterior.
+   POR QUÉ EL BANNER PASÓ DE nowrap A wrap: medido a 393px, los tres contadores
+   ya ocupaban los 346px exactos de la caja — ni el ícono solo entraba en la
+   línea. Recortar un contador no es opción (la cifra de restricciones es lo
+   último que se puede perder), así que el botón baja a una línea propia
+   alineada a la derecha cuando no cabe, y sube a la misma línea en cuanto hay
+   lugar. El row-gap:4px ya estaba puesto de antes para exactamente esto.
+   Sin colores nuevos: gris terciario en reposo, el gold de la paleta al girar. */
+.pgo-b-refresh { margin-left:auto; flex-shrink:0; }
+.pgo-b-icon { font-size:13px; line-height:1; color:var(--text-tertiary); display:inline-block; }
+.pgo-b-refresh.is-busy  .pgo-b-icon { color:var(--gold); animation:pgoSpin .9s linear infinite; }
+.pgo-b-refresh.is-nueva .pgo-b-icon,
+.pgo-b-refresh.is-nueva .pgo-b-label { color:var(--gold); }
+@keyframes pgoSpin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion: reduce){
+  .pgo-b-refresh.is-busy .pgo-b-icon { animation:none; opacity:0.55; }
+}
 /* Guardado tras hover:hover — en iOS el hover se queda pegado tras el tap. */
 
 .checklist-feature-btn {
@@ -4094,6 +4120,13 @@ let VIAJEROS_HAB_OPEN      = null;   // hab abierta en el modal de detalle
 let VIAJEROS_NUMPAD_OPEN   = false;  // teclado numérico incorporado plegado/desplegado
 let VIAJEROS_SHOW_OUT      = false;
 let VIAJEROS_VISTA         = 'viajeros';   // 'viajeros' | 'comedor'   // salientes del día ocultos por defecto en las vistas por hab
+
+// Botón de refresco del banner de PGO. VA EN STATE TOP, no al lado de su
+// módulo: pgoBannerRender() está registrado en onI18nChange, así que el
+// setLang() del boot lo ejecuta antes de que el cuerpo del script termine —
+// declararlo abajo lo dejaría en TDZ y haltearía el programa entero (§5).
+let PGO_REFRESH_BUSY  = false;   // hay una revalidación en curso
+let PGO_SW_NUEVA      = false;   // el service worker tiene una versión esperando
 let VJ_NOTAS               = {};     // { pid: { notaId: {txt, ts, chip} } }
 let VJ_NOTA_OPEN           = null;   // pid con el editor abierto (uno a la vez)
 let VJ_NOTA_BUF            = '';     // lo tipeado, para que un re-render no lo pierda
@@ -4326,6 +4359,10 @@ const UI = {
     vjSyncAgoNow:'recién', vjSyncAgoMin:'hace {n} min', vjSyncAgoHours:'hace {n} h', vjSyncAgoDays:'hace {n} d',
     vjSyncFresh:'Al día', vjSyncStale:'Atrasado', vjSyncDown:'Sin sincronizar',
     vjStatViajeros:'viajeros', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'salen hoy',
+    // Botón de refresco del banner de PGO. La palabra va visible, no sólo el
+    // ícono: el garzón tiene que saber qué hace sin probarlo.
+    pgoRefresh:'actualizar', pgoRefreshing:'actualizando', pgoRefreshNew:'versión nueva',
+    pgoRefreshTitle:'Volver a pedir los datos de PGO, rol y clima',
     vjSearchPh:'Buscar viajero, hab o grupo...',
     vjEmpty:'Aún no hay datos de viajeros. Corre "Seed Viajeros" desde GitHub Actions para poblar Firebase.',
     vjError:'No se pudieron cargar los viajeros. Se reintenta al volver a abrir la tab.',
@@ -4546,6 +4583,8 @@ const UI = {
     vjSyncAgoNow:'just now', vjSyncAgoMin:'{n} min ago', vjSyncAgoHours:'{n} h ago', vjSyncAgoDays:'{n} d ago',
     vjSyncFresh:'Up to date', vjSyncStale:'Behind', vjSyncDown:'Not syncing',
     vjStatViajeros:'guests', vjStatNinos:'minors', vjStatAlergias:'allergies', vjStatDietas:'diets', vjStatSalenHoy:'leave today',
+    pgoRefresh:'refresh', pgoRefreshing:'refreshing', pgoRefreshNew:'new version',
+    pgoRefreshTitle:'Fetch PGO, roster and weather again',
     vjSearchPh:'Search guest, room or group...',
     vjEmpty:'No guest data yet. Run "Seed Viajeros" from GitHub Actions to populate Firebase.',
     vjError:'Could not load guests. Will retry next time the tab opens.',
@@ -4766,6 +4805,8 @@ const UI = {
     vjSyncAgoNow:'agora', vjSyncAgoMin:'há {n} min', vjSyncAgoHours:'há {n} h', vjSyncAgoDays:'há {n} d',
     vjSyncFresh:'Em dia', vjSyncStale:'Atrasado', vjSyncDown:'Sem sincronizar',
     vjStatViajeros:'viajantes', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'saem hoje',
+    pgoRefresh:'atualizar', pgoRefreshing:'atualizando', pgoRefreshNew:'versão nova',
+    pgoRefreshTitle:'Pedir de novo os dados de PGO, escala e clima',
     vjSearchPh:'Buscar viajante, quarto ou grupo...',
     vjEmpty:'Ainda não há dados de viajantes. Rode "Seed Viajeros" no GitHub Actions para popular o Firebase.',
     vjError:'Não foi possível carregar os viajantes. Nova tentativa ao reabrir a aba.',
@@ -8282,6 +8323,9 @@ function pgoBannerRender(){
       <span class="pgo-b-num ninos">${c.menores}</span><span class="pgo-b-label">${t('vjStatNinos')}</span></button>
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('dietas')">
       <span class="pgo-b-num dietas">${c.dietas}</span><span class="pgo-b-label">${t('vjStatRestric')}</span></button>
+    <button type="button" class="pgo-b-item pgo-b-refresh${PGO_REFRESH_BUSY ? ' is-busy' : ''}${PGO_SW_NUEVA ? ' is-nueva' : ''}"
+            onclick="pgoRefrescar()" title="${vjEsc(t('pgoRefreshTitle'))}">
+      <span class="pgo-b-icon">&#8635;</span><span class="pgo-b-label">${vjEsc(PGO_SW_NUEVA ? t('pgoRefreshNew') : PGO_REFRESH_BUSY ? t('pgoRefreshing') : t('pgoRefresh'))}</span></button>
 `;
   // El cumpleaños va en su PROPIA línea, centrada y sobre las estadísticas: no
   // compite con los contadores porque no es del mismo orden — aparece pocos
@@ -8295,6 +8339,42 @@ function pgoBannerRender(){
        </button>`;
   }
 }
+// El refresco manual del banner. Resuelve los dos casos que el owner reporta:
+// PGO no cargó, o la app quedó con los datos del día/servicio anterior.
+//
+// NO recarga la página: pwaRevalidar() vuelve a pedir viajeros, staffing y
+// clima sin tirar el estado en memoria — una comanda a medio armar, la ficha
+// abierta, el scroll. La recarga completa se reserva para el único caso que la
+// necesita, que es un deploy nuevo esperando en el service worker.
+//
+// El tap saltea el margen de 60s de pwaRevalidar: ese margen existe para no
+// re-pedir en cada parpadeo de la app, pero un tap es una intención explícita y
+// un botón que a veces no hace nada se siente roto.
+function pgoRefrescar(){
+  if (PGO_SW_NUEVA){ location.reload(); return; }
+  if (PGO_REFRESH_BUSY) return;
+  PGO_REFRESH_BUSY = true;
+  pgoBannerRender();
+  // Piso de 600ms para el giro: si la red contesta al instante el ícono
+  // parpadearía sin que nadie lo vea, y el garzón vuelve a tocar creyendo que
+  // no pasó nada. El piso corre en paralelo, no suma latencia.
+  const minimo = new Promise(r => setTimeout(r, 600));
+  let trabajo;
+  try { trabajo = Promise.resolve(pwaRevalidar('botón', true)); }
+  catch(e){ console.warn('[pgo] refresco', e); trabajo = Promise.resolve(); }
+  Promise.all([trabajo.catch(() => {}), minimo]).then(() => {
+    PGO_REFRESH_BUSY = false;
+    pgoBannerRender();
+  });
+}
+// El service worker avisa que hay una versión instalada esperando. sw.js llama
+// skipWaiting() en su install, así que basta con recargar para tomarla.
+function pgoMarcarVersionNueva(){
+  if (PGO_SW_NUEVA) return;
+  PGO_SW_NUEVA = true;
+  pgoBannerRender();
+}
+
 // Cada contador entra a PGO ya filtrado por lo que muestra — el número deja de
 // ser un dato y pasa a ser la puerta a los nombres detrás de él.
 function pgoBannerOpen(filtro){
@@ -15719,21 +15799,28 @@ if (location.search.indexOf('overflow') >= 0) {
 const PWA_REVALIDA_MS = 60 * 1000;   // margen para no re-pedir en cada parpadeo
 let  _PWA_ULTIMA_REVALIDA = Date.now();
 
-function pwaRevalidar(motivo){
+// `forzar` lo usa el botón de refresco del banner de PGO: un tap es una
+// intención explícita y no debe caer en el margen anti-parpadeo. Devuelve una
+// promesa que resuelve cuando los fetches terminan, para que el botón pueda
+// girar mientras dura de verdad y no contra un timer inventado.
+function pwaRevalidar(motivo, forzar){
   const ahora = Date.now();
   // Si el doc que tenemos es de otro DÍA, se revalida sí o sí: es exactamente
   // el caso "abro el tablet a la mañana y veo el reporte de ayer".
   const otroDia = !!(VIAJEROS_DATA && VIAJEROS_DATA.date && VIAJEROS_DATA.date !== vjTodayIso());
-  if (!otroDia && ahora - _PWA_ULTIMA_REVALIDA < PWA_REVALIDA_MS) return;
+  if (!forzar && !otroDia && ahora - _PWA_ULTIMA_REVALIDA < PWA_REVALIDA_MS) return Promise.resolve(false);
   _PWA_ULTIMA_REVALIDA = ahora;
-  console.info('[pwa] revalidando (' + motivo + (otroDia ? ', doc de otro día' : '') + ')');
-  try { viajerosFetch(); } catch(e){}
-  try { staffingFetch(); } catch(e){}
-  try { wxFetch(true); }  catch(e){}
+  console.info('[pwa] revalidando (' + motivo + (otroDia ? ', doc de otro día' : '') + (forzar ? ', forzado' : '') + ')');
+  const tareas = [];
+  try { tareas.push(viajerosFetch()); } catch(e){}
+  try { tareas.push(staffingFetch()); } catch(e){}
+  try { tareas.push(wxFetch(true)); }  catch(e){}
   // Y de paso preguntar si hay una versión nueva del programa.
   if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistration){
     navigator.serviceWorker.getRegistration().then(r => { if (r) r.update(); }).catch(() => {});
   }
+  // allSettled: que un fetch caído no cancele la espera de los otros.
+  return Promise.allSettled(tareas).then(() => true);
 }
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') pwaRevalidar('visible');
@@ -15751,6 +15838,18 @@ if ('serviceWorker' in navigator) {
         // Chequeo periódico mientras la app está abierta: en una PWA que vive
         // días, el 'load' inicial es la única oportunidad que había de mirar.
         setInterval(() => { try { reg.update(); } catch(e){} }, 30 * 60 * 1000);
+        // Y cuando aparece una versión nueva, el botón del banner de PGO lo
+        // dice con palabras y pasa a recargar. `controller` distingue la
+        // actualización real de la PRIMERA instalación, que no es novedad.
+        const avisar = () => { try { pgoMarcarVersionNueva(); } catch(e){} };
+        if (reg.waiting && navigator.serviceWorker.controller) avisar();
+        reg.addEventListener('updatefound', () => {
+          const nuevo = reg.installing;
+          if (!nuevo) return;
+          nuevo.addEventListener('statechange', () => {
+            if (nuevo.state === 'installed' && navigator.serviceWorker.controller) avisar();
+          });
+        });
       })
       .catch(() => {});   // falla en silencio: la app funciona igual sin SW
   });
