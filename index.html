@@ -1582,14 +1582,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Botón de refresco del banner (2026-09-15). Vive acá y no en la píldora de
    idioma porque este banner ES el dato que falla: PGO es lo que no carga o se
    queda en el servicio anterior.
-   POR QUÉ EL BANNER PASÓ DE nowrap A wrap: medido a 393px, los tres contadores
-   ya ocupaban los 346px exactos de la caja — ni el ícono solo entraba en la
-   línea. Recortar un contador no es opción (la cifra de restricciones es lo
-   último que se puede perder), así que el botón baja a una línea propia
-   alineada a la derecha cuando no cabe, y sube a la misma línea en cuanto hay
-   lugar. El row-gap:4px ya estaba puesto de antes para exactamente esto.
+   POR QUÉ EL BANNER PASÓ DE nowrap A wrap, Y EL BOTÓN VA SIEMPRE EN SU PROPIA
+   LÍNEA: medido a 393px, los tres contadores ya ocupaban los 346px exactos de
+   la caja — ni el ícono solo entraba al lado. Recortar un contador no es opción
+   (la cifra de restricciones es lo último que se puede perder).
+   Se probó dejarlo envolver solo, con margin-left:auto, y el resultado se veía
+   desordenado: el botón se llevaba "restricciones" a la segunda línea y los
+   contadores quedaban partidos 2/1. Con flex-basis:100% el botón toma siempre
+   un renglón propio alineado a la derecha, así los tres contadores se leen
+   juntos arriba y el layout no cambia de forma según los números. Cuesta lo
+   mismo de alto (56px) que la versión que envolvía sola.
+   El wrap además cubre un caso que ya existía sin el botón: con números de tres
+   dígitos y el prefijo "almuerzo" los contadores miden 378px y no entran en una
+   línea igual. El row-gap:4px ya estaba puesto de antes para exactamente esto.
    Sin colores nuevos: gris terciario en reposo, el gold de la paleta al girar. */
-.pgo-b-refresh { margin-left:auto; flex-shrink:0; }
+.pgo-b-refresh { flex-basis:100%; justify-content:flex-end; flex-shrink:0; }
 .pgo-b-icon { font-size:13px; line-height:1; color:var(--text-tertiary); display:inline-block; }
 .pgo-b-refresh.is-busy  .pgo-b-icon { color:var(--gold); animation:pgoSpin .9s linear infinite; }
 .pgo-b-refresh.is-nueva .pgo-b-icon,
