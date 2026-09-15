@@ -1597,6 +1597,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    línea igual. El row-gap:4px ya estaba puesto de antes para exactamente esto.
    Sin colores nuevos: gris terciario en reposo, el gold de la paleta al girar. */
 .pgo-b-refresh { flex-basis:100%; justify-content:flex-end; flex-shrink:0; }
+/* Estado vacío: sin contadores que proteger, el aviso y el botón comparten la
+   línea — el botón vuelve a flex-basis:auto y se va a la derecha con el auto. */
+.pgo-banner.is-vacio .pgo-b-refresh { flex-basis:auto; margin-left:auto; }
+.pgo-b-vacio { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); }
 .pgo-b-icon { font-size:13px; line-height:1; color:var(--text-tertiary); display:inline-block; }
 .pgo-b-refresh.is-busy  .pgo-b-icon { color:var(--gold); animation:pgoSpin .9s linear infinite; }
 .pgo-b-refresh.is-nueva .pgo-b-icon,
@@ -4368,6 +4372,7 @@ const UI = {
     vjStatViajeros:'viajeros', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'salen hoy',
     // Botón de refresco del banner de PGO. La palabra va visible, no sólo el
     // ícono: el garzón tiene que saber qué hace sin probarlo.
+    pgoNoData:'sin datos de PGO',
     pgoRefresh:'actualizar', pgoRefreshing:'actualizando', pgoRefreshNew:'versión nueva',
     pgoRefreshTitle:'Volver a pedir los datos de PGO, rol y clima',
     vjSearchPh:'Buscar viajero, hab o grupo...',
@@ -4590,6 +4595,7 @@ const UI = {
     vjSyncAgoNow:'just now', vjSyncAgoMin:'{n} min ago', vjSyncAgoHours:'{n} h ago', vjSyncAgoDays:'{n} d ago',
     vjSyncFresh:'Up to date', vjSyncStale:'Behind', vjSyncDown:'Not syncing',
     vjStatViajeros:'guests', vjStatNinos:'minors', vjStatAlergias:'allergies', vjStatDietas:'diets', vjStatSalenHoy:'leave today',
+    pgoNoData:'PGO unavailable',
     pgoRefresh:'refresh', pgoRefreshing:'refreshing', pgoRefreshNew:'new version',
     pgoRefreshTitle:'Fetch PGO, roster and weather again',
     vjSearchPh:'Search guest, room or group...',
@@ -4812,6 +4818,7 @@ const UI = {
     vjSyncAgoNow:'agora', vjSyncAgoMin:'há {n} min', vjSyncAgoHours:'há {n} h', vjSyncAgoDays:'há {n} d',
     vjSyncFresh:'Em dia', vjSyncStale:'Atrasado', vjSyncDown:'Sem sincronizar',
     vjStatViajeros:'viajantes', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'saem hoje',
+    pgoNoData:'sem dados do PGO',
     pgoRefresh:'atualizar', pgoRefreshing:'atualizando', pgoRefreshNew:'versão nova',
     pgoRefreshTitle:'Pedir de novo os dados de PGO, escala e clima',
     vjSearchPh:'Buscar viajante, quarto ou grupo...',
@@ -8314,10 +8321,33 @@ function pgoBannerCounts(){
            cumples: dentro.filter(tr => vjCumpleEn(tr) === 0).length,
            srv, enCurso: !!(act && act.enCurso) };
 }
+// El botón, aparte del render principal: lo dibujan los DOS estados del banner.
+function pgoRefreshBtn(){
+  return `<button type="button" class="pgo-b-item pgo-b-refresh${PGO_REFRESH_BUSY ? ' is-busy' : ''}${PGO_SW_NUEVA ? ' is-nueva' : ''}"
+            onclick="pgoRefrescar()" title="${vjEsc(t('pgoRefreshTitle'))}">
+      <span class="pgo-b-icon">&#8635;</span><span class="pgo-b-label">${vjEsc(PGO_SW_NUEVA ? t('pgoRefreshNew') : PGO_REFRESH_BUSY ? t('pgoRefreshing') : t('pgoRefresh'))}</span></button>`;
+}
 function pgoBannerRender(){
   const el = document.getElementById('pgo-banner');
   if (!el) return;
-  if (!VIAJEROS_DATA){ el.hidden = true; return; }   // sin datos no se anuncia
+  // SIN DATOS EL BANNER YA NO SE ESCONDE (2026-09-15). Antes hacía
+  // `el.hidden = true` y se llevaba puesto el botón de refresco — es decir, el
+  // botón desaparecía exactamente en el caso para el que existe: "PGO no
+  // cargó". Ahora queda la línea con el aviso y el botón, que es lo único
+  // accionable que se puede ofrecer ahí.
+  if (!VIAJEROS_DATA){
+    el.hidden = false;
+    el.classList.add('is-vacio');
+    // Mientras no se haya pedido nunca esto es carga normal, no una falla: se
+    // usan los puntos suspensivos del módulo de clima en vez de un aviso que
+    // asuste. Recién con un fetch ya cumplido se dice que no hay datos.
+    const yaSePidio = VIAJEROS_FETCHED_AT > 0;
+    el.innerHTML = `<span class="pgo-b-vacio">${yaSePidio ? vjEsc(t('pgoNoData')) : '·  ·  ·'}</span>${pgoRefreshBtn()}`;
+    const cumVacio = document.getElementById('pgo-cumple-line');
+    if (cumVacio) cumVacio.hidden = true;
+    return;
+  }
+  el.classList.remove('is-vacio');
   const c = pgoBannerCounts();
   el.hidden = false;
   // El servicio abre la línea: es el CONTEXTO de los números que siguen, no una
@@ -8330,9 +8360,7 @@ function pgoBannerRender(){
       <span class="pgo-b-num ninos">${c.menores}</span><span class="pgo-b-label">${t('vjStatNinos')}</span></button>
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('dietas')">
       <span class="pgo-b-num dietas">${c.dietas}</span><span class="pgo-b-label">${t('vjStatRestric')}</span></button>
-    <button type="button" class="pgo-b-item pgo-b-refresh${PGO_REFRESH_BUSY ? ' is-busy' : ''}${PGO_SW_NUEVA ? ' is-nueva' : ''}"
-            onclick="pgoRefrescar()" title="${vjEsc(t('pgoRefreshTitle'))}">
-      <span class="pgo-b-icon">&#8635;</span><span class="pgo-b-label">${vjEsc(PGO_SW_NUEVA ? t('pgoRefreshNew') : PGO_REFRESH_BUSY ? t('pgoRefreshing') : t('pgoRefresh'))}</span></button>
+    ${pgoRefreshBtn()}
 `;
   // El cumpleaños va en su PROPIA línea, centrada y sobre las estadísticas: no
   // compite con los contadores porque no es del mismo orden — aparece pocos
