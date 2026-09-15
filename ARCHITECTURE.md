@@ -700,6 +700,38 @@ onI18nChange(comandaRender);
 __i18nHooks.forEach(fn => { try { fn(); } catch(e){ console.warn(...); } });
 ```
 
+**Traducción de contenido: overlay por id, no campos por idioma.** El
+diccionario `UI` cubre los rótulos; el *contenido* (platos, vinos, guiones)
+vive en overlays paralelos —`DISH_TRANS`, `WINE_TRANS`, `GUION_TRANS`—
+indexados por idioma y por id. `getDishTr(d)` mergea el overlay sobre el plato
+y devuelve un objeto con la misma forma:
+
+```js
+function getDishTr(d){
+  const tr = DISH_TRANS[currentLang]?.[d.id];
+  return tr ? {...d, ...tr, why:{...d.why, ...tr.why}} : d;
+}
+```
+
+Se eligió así, y no con campos `name_en`/`name_pt` dentro de cada plato, por
+dos razones: el array de datos se lee como la carta (una línea por plato, sin
+triplicar cada campo), y **un idioma que falta degrada al español en vez de
+romper** — el merge simplemente no encuentra overlay y devuelve el original.
+
+> **La trampa: el merge hay que consumirlo.** Un render que recibe `d` y lee
+> `d.dietNotes` o `d.short` se ve perfecto en español y se queda en español en
+> EN/PT, sin error ni síntoma visible. Pasó con las notas de `'*'` y con el
+> nombre del plato hermano (💡), que hasta 2026-09-15 salían siempre en
+> español. Regla: **dentro de un render, todo texto sale de `tr`, nunca de
+> `d`.** De `d` salen sólo los datos que no son texto — la matriz `diet`, el
+> `id`, la `photo`.
+
+**La búsqueda indexa los tres idiomas, no el activo.** `menuRenderSearch`
+mete en el índice el original y los overlays `en`/`pt` de cada plato. El caso
+que lo justifica es el de hora pico: el garzón tiene la app en español y el
+viajero dice "cauliflower". Buscar en el idioma del huésped tiene que caer en
+el plato igual; los resultados se muestran en el idioma activo.
+
 **Optimistic UI + write queue coalescente.** El usuario tapea, el render
 se actualiza al frame siguiente; la escritura a Firebase corre en
 background. Si tapeas 5 productos rápido, no se disparan 5 PATCHes en
@@ -1045,6 +1077,7 @@ Mapa de regiones aproximadas (los rangos cambian a medida que crece;
 | Diccionario `UI` | 1170-1610 | ES/EN/PT strings |
 | Data estática | 1610-2400 | DISHES, WINES, COCKTAILS, MOCKTAILS, MOMENTOS, GUIONES |
 | Cambio de menú 2026 | tras `DISHES` | `DIET_AXES`, `VJ_TAG_TO_AXIS`, `BUFFET_SLOTS`, `POSTRE_SLOTS`, `MENU_CYCLE_OFFSET`, `MENU_BUFFET`, `MENU_SOPAS`, `MENU_POSTRES`, `BAR_DISHES`, `DISHES_LEGACY_POSTRES` (los 12 postres anteriores, retirados pero reversibles con `DISHES.push(...)`) y el `DISHES.push` que unifica todo |
+| Traducciones de contenido | tras `UI`, antes de los helpers | `DISH_TRANS` (EN/PT, **los 127 platos**: los 60 del ciclo original más los 67 del menú 2026 — buffet, sopas, principales, postres y carta de bar), `WINE_TRANS`, `GUION_TRANS` y los helpers `getDishTr`/`getWineTr`/`getGuionesTr`. Overlay por id, no campos por idioma — ver §5 |
 | Vista Menú | tras `setTab` | `renderDishes` + `menuRender*` (almuerzo/cena/bar/búsqueda), `dietVerdict`, `menuHasMatrix`, `menuExclStrip`, `menuVerdicts`, `menuTile`, la lente (`menuToggleAxis`, `menuApplyRoom`) y `menuJumpTwin` |
 | Navegación | 2200-2400 | setTab, setLang, openWineFromGuion |
 | Render principal | 2400-2700 | renderDishes, renderWines, renderCocktails, etc. |
