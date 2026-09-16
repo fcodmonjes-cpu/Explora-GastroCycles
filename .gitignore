@@ -21,6 +21,10 @@ firebase-rules.json
 # Notas de versión (documento vivo): el PDF de docs/ sí se versiona.
 !docs/notas-de-version.pdf
 
+# Configuración local del asistente (worktrees, settings por máquina). No es
+# del proyecto y ensuciaba `git status` en cada sesión.
+.claude/
+
 # Python
 __pycache__/
 *.pyc

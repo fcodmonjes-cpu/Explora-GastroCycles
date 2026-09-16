@@ -74,8 +74,18 @@ cabecera de `sync_viajeros.py`.
 
 ## Roles
 
-- **Francisco** — desarrolla y conversa con el asistente.
-- **Bruno** — revisa desde iPhone y aprueba los merges a producción.
+**Francisco y Bruno son la misma persona**, con dos sombreros: "Francisco" es el
+nombre técnico (git user, "Developed by" del footer) y "Bruno" el operacional
+(Owner, "Guest Experience Artisan"). Un solo interlocutor y un solo aprobador.
+
+- **Desarrolla y conversa** con el asistente.
+- **Revisa desde iPhone** en la URL fija de staging y **aprueba los merges a
+  producción.** No hay un segundo revisor esperando: si él dice "mergea a main",
+  esa es la aprobación completa y definitiva.
+
+> Esta sección decía "Francisco desarrolla · Bruno aprueba" y se leía como dos
+> personas. El 2026-09-16 eso hizo frenar un merge ya aprobado para ir a
+> preguntar por una firma que no existe. Cuesta una ida y vuelta cada vez.
 
 ## Hand-off entre sesiones
 
