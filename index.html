@@ -427,6 +427,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-seat-badge { position:absolute; right:-4px; bottom:-4px; min-width:17px; height:17px; padding:0 3px; box-sizing:border-box; border-radius:9px; background:var(--gold); color:#15110d; font-family:'Courier Prime','Courier New',monospace; font-size:10px; font-weight:700; line-height:17px; text-align:center; pointer-events:none; }
 
 /* Cabecera del panel del asiento seleccionado (bajo el mapa) */
+/* ── FILA DE ASIENTOS — vista de ingreso (2026-09-16) ─────────────────────
+   Reemplaza al mapa espacial en esta vista. Los botones son los MISMOS
+   .cmd-seat del diagrama —misma clase, mismo data-seat, mismo badge— sólo que
+   en flujo en vez de posicionados en absoluto. Así comandaPatchSeatBadges los
+   alcanza sin saber en qué vista está, y el contador se parcha in-place. */
+.cmd-seatrow-wrap { margin:0 0 0.85rem; }
+.cmd-seatrow { display:flex; align-items:center; gap:7px; padding-top:7px; }
+.cmd-seatrow-nums { flex:1 1 auto; min-width:0; display:flex; gap:6px; overflow-x:auto;
+  padding:2px 2px 4px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.cmd-seatrow-nums::-webkit-scrollbar { display:none; }
+.cmd-seatrow .cmd-seat { position:relative; transform:none; flex:0 0 auto;
+  width:34px; height:34px; font-size:17px; }
+.cmd-seatrow .cmd-seat:active { transform:scale(0.94); }
+.cmd-seatrow .cmd-seat-crown { top:-7px; font-size:9px; }
+.cmd-seatrow .cmd-seat-badge { right:-3px; bottom:-3px; min-width:15px; height:15px;
+  line-height:15px; font-size:9px; }
+.cmd-seatrow-btn { flex:0 0 auto; width:32px; height:32px; border-radius:9px;
+  background:transparent; border:0.5px solid var(--border-md); color:var(--text-secondary);
+  font-size:17px; line-height:1; cursor:pointer; touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent; transition:border-color .15s, color .15s, opacity .15s; }
+.cmd-seatrow-btn:active, .cmd-seatrow-btn.active { border-color:var(--gold); color:var(--gold); }
+/* Deshabilitado y NO oculto: que el − esté apagado comunica "el último asiento
+   tiene pedidos" mejor que un botón que desaparece y reacomoda la fila. */
+.cmd-seatrow-btn:disabled { opacity:0.3; cursor:default; }
 .cmd-seat-panel-head { display:flex; align-items:baseline; gap:8px; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; }
 .cmd-seat-panel-head strong { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:normal; font-size:18px; letter-spacing:0; text-transform:none; color:#9ec9ff; font-weight:500; }
 
@@ -502,10 +526,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    del día entran en 2 columnas sin scroll, agrupados por tiempo. Como el menú
    tiene un arquetipo estable, las posiciones se repiten servicio a servicio:
    la separación la hace la estructura, no un color nuevo. */
-.cmd-tile-head { display:flex; align-items:center; gap:8px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); padding:12px 2px 7px; }
+.cmd-tile-head { display:flex; align-items:center; gap:8px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); padding:7px 2px 3px; }
 .cmd-tile-head::after { content:''; flex:1 1 auto; height:0.5px; background:var(--gold); opacity:0.3; }
-.cmd-tile-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
-.cmd-tile { position:relative; display:flex; align-items:center; justify-content:center; text-align:center; min-height:66px; padding:10px 11px; border-radius:11px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:18px; line-height:1.15; cursor:pointer; transition:background .12s, border-color .12s, transform .08s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cmd-tile-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+/* (2026-09-16) min-height 66 -> 46, padding y cuerpo acompañando. 66px era
+   casi el triple del alto que el texto necesita, y con 8-10 platos del día eso
+   era scroll garantizado en el único módulo que se mide en NO tener que
+   scrollear. Medido: el catálogo de un almuerzo pasa de 522px a ~330px. */
+.cmd-tile { position:relative; display:flex; align-items:center; justify-content:center; text-align:center; min-height:46px; padding:7px 9px; border-radius:10px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:15.5px; line-height:1.15; cursor:pointer; transition:background .12s, border-color .12s, transform .08s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
 @media (hover:hover){ .cmd-tile:hover { border-color:rgba(186,117,23,0.5); } }
 .cmd-tile:active { background:rgba(186,117,23,0.18); border-color:var(--gold); transform:scale(0.96); }
 .cmd-tile-name { min-width:0; overflow-wrap:anywhere; }
@@ -4548,7 +4576,7 @@ const UI = {
     cmdSeatShort:'asiento', cmdTrayOneItem:'1 ítem', cmdTrayNItems:'{n} ítems',
     cmdShapeRect:'Rectangular', cmdShapeRound:'Redonda', cmdShapeCouple:'Pareja',
     cmdTableShape:'Forma de mesa', cmdTableTotals:'Totales de la mesa', cmdBySeat:'Por asiento',
-    cmdAddSeat:'Agregar comensal', cmdTapSeat:'Tocá un asiento para tomar su pedido',
+    cmdAddSeat:'Agregar comensal', cmdRemoveSeat:'Quitar comensal', cmdTapSeat:'Tocá un asiento para tomar su pedido',
     cmdServiceUnit:'D', /* short for cycle day */
     // Checklist module
     tabChecklist:'Checklist & Protocolos',
@@ -4788,7 +4816,7 @@ const UI = {
     cmdSeatShort:'seat', cmdTrayOneItem:'1 item', cmdTrayNItems:'{n} items',
     cmdShapeRect:'Rectangular', cmdShapeRound:'Round', cmdShapeCouple:'Couple',
     cmdTableShape:'Table shape', cmdTableTotals:'Table totals', cmdBySeat:'By seat',
-    cmdAddSeat:'Add guest', cmdTapSeat:'Tap a seat to take its order',
+    cmdAddSeat:'Add guest', cmdRemoveSeat:'Remove guest', cmdTapSeat:'Tap a seat to take its order',
     cmdServiceUnit:'D',
     // Checklist module
     tabChecklist:'Checklist & Protocols',
@@ -5017,7 +5045,7 @@ const UI = {
     cmdSeatShort:'assento', cmdTrayOneItem:'1 item', cmdTrayNItems:'{n} itens',
     cmdShapeRect:'Retangular', cmdShapeRound:'Redonda', cmdShapeCouple:'Casal',
     cmdTableShape:'Forma da mesa', cmdTableTotals:'Totais da mesa', cmdBySeat:'Por assento',
-    cmdAddSeat:'Adicionar hóspede', cmdTapSeat:'Toque num assento para fazer o pedido',
+    cmdAddSeat:'Adicionar hóspede', cmdRemoveSeat:'Remover hóspede', cmdTapSeat:'Toque num assento para fazer o pedido',
     cmdServiceUnit:'D',
     // Checklist module
     tabChecklist:'Checklist & Protocolos',
@@ -10942,6 +10970,14 @@ const COMANDA_SOURCES = [
         // El buffet es autoservicio: el viajero se sirve solo y nunca entra
         // en una comanda. Se consulta en la tab Menú, no acá.
         if (d.course === 'Buffet') return false;
+        // (2026-09-16) La sopa tampoco. El comentario viejo decía "la sopa sí,
+        // porque la lleva el garzón" — eso era cierto ANTES del cambio de menú
+        // 2026, cuando el almuerzo se servía a la mesa. Con el buffet la sopa
+        // es autoservicio como las bandejas, y una sección entera con UNA sola
+        // opción costaba 108px de los ~440 que tiene el catálogo.
+        // Sólo afecta al almuerzo: MENU_SOPAS se mapea a 'Almuerzo' (ver
+        // menuToDish), y en cena ese lugar lo ocupa ENTRADA con 4 opciones.
+        if (d.course === 'Sopa') return false;
         const svc = d.service || '';
         if (isLunch)  return svc === 'Almuerzo' || svc === 'Almuerzo y Cena';
         if (isDinner) return svc === 'Cena'     || svc === 'Almuerzo y Cena';
@@ -11514,6 +11550,37 @@ function comandaAddDiner(){
   if (!COMANDA_ACTIVE_DATA) return;
   COMANDA_ACTIVE_DATA.diners = (COMANDA_ACTIVE_DATA.diners || 1) + 1;
   comandaPersist({ diners: COMANDA_ACTIVE_DATA.diners });
+  comandaRender();
+}
+// El par que le faltaba al ＋ desde siempre: una mesa que se sentó de menos no
+// tenía forma de achicarse y quedaban asientos fantasma en el diagrama.
+// Sólo se quita el ÚLTIMO asiento y sólo si está vacío. Borrar un comensal con
+// pedidos encima perdería ítems sin preguntar, y esto es un borrador de
+// servicio, no un formulario con papelera: la regla se hace cumplir en el
+// botón (disabled) y otra vez acá, porque el estado puede cambiar entre el
+// render y el tap.
+// Con muchos comensales la fila de asientos desborda y scrollea. Sin esto, el
+// asiento activo podía quedar cortado en el borde justo después de tocarlo —
+// que es exactamente cuando hay que verlo. 'nearest' en los dos ejes: si ya se
+// ve no mueve nada, y block:'nearest' evita que arrastre la página entera.
+function comandaScrollAsientoAVista(){
+  const fila = document.querySelector('.cmd-seatrow-nums');
+  if (!fila) return;
+  const act = fila.querySelector('.cmd-seat.active');
+  if (!act || typeof act.scrollIntoView !== 'function') return;
+  try { act.scrollIntoView({ inline:'nearest', block:'nearest' }); } catch(e){}
+}
+function comandaRemoveDiner(){
+  const c = COMANDA_ACTIVE_DATA;
+  if (!c) return;
+  const n = c.diners || 1;
+  if (n <= 1) return;
+  const ocupado = (c.items || []).some(it =>
+    it.dinerN === n && it.status !== 'cancelled' && !comandaIsSep(it));
+  if (ocupado) return;
+  c.diners = n - 1;
+  if (COMANDA_ACTIVE_DINER > c.diners) COMANDA_ACTIVE_DINER = c.diners;
+  comandaPersist({ diners: c.diners });
   comandaRender();
 }
 function comandaSetCategory(key){
@@ -12098,7 +12165,7 @@ function comandaPatchSeatBadges(items){
     if (it.status === 'cancelled' || comandaIsSep(it)) return;
     counts[it.dinerN] = (counts[it.dinerN] || 0) + (it.qty || 1);
   });
-  document.querySelectorAll('.cmd-table-map .cmd-seat[data-seat]').forEach(btn => {
+  document.querySelectorAll('.cmd-seat[data-seat]').forEach(btn => {
     const n = parseInt(btn.getAttribute('data-seat'), 10);
     const cnt = counts[n] || 0;
     let badge = btn.querySelector('.cmd-seat-badge');
@@ -12945,15 +13012,32 @@ function comandaRenderActive(root){
     if (it.status === 'cancelled' || comandaIsSep(it)) return;
     seatCount[it.dinerN] = (seatCount[it.dinerN] || 0) + (it.qty || 1);
   });
-  const seatsHtml = layout.map(s => {
-    const active = (s.n === COMANDA_ACTIVE_DINER) ? ' active' : '';
-    const head   = s.isHead ? ' head' : '';
-    const cnt    = seatCount[s.n] || 0;
+  // (2026-09-16) LA VISTA DE INGRESO NO LLEVA MAPA.
+  //
+  // El diagrama espacial sirve para BAJAR los platos al comensal correcto, no
+  // para ingresarlos. Acá costaba 291px medidos a 390px —más de un tercio del
+  // alto útil del iPhone— para resolver algo que una fila de números resuelve
+  // en 38. Con eso recuperado, el catálogo entero entra sin scroll, que es la
+  // única métrica que importa en este módulo. El mapa sigue vivo y completo en
+  // la comanda completa, que es donde se lee de pie frente a la mesa.
+  const headSet = {};
+  layout.forEach(sx => { if (sx.isHead) headSet[sx.n] = true; });
+  let seatsRowHtml = '';
+  for (let n = 1; n <= diners; n++){
+    const active = (n === COMANDA_ACTIVE_DINER) ? ' active' : '';
+    const head   = headSet[n] ? ' head' : '';
+    const cnt    = seatCount[n] || 0;
     const badge  = cnt ? `<span class="cmd-seat-badge">${cnt}</span>` : '';
-    const crown  = s.isHead ? `<span class="cmd-seat-crown">♛</span>` : '';
-    // data-seat: ancla estable para el patch-in-place del badge (comandaPatchSeatBadges).
-    return `<button class="cmd-seat${active}${head}" data-seat="${s.n}" style="left:${s.x}%;top:${s.y}%" onclick="comandaSetDiner(${s.n})" title="${t('cmdSeat')} ${s.n}">${crown}${s.n}${badge}</button>`;
-  }).join('');
+    const crown  = headSet[n] ? `<span class="cmd-seat-crown">♛</span>` : '';
+    // MISMA clase .cmd-seat y mismo data-seat que en el mapa, a propósito:
+    // comandaPatchSeatBadges los sigue alcanzando y el contador se parcha
+    // in-place en vez de re-renderizar la fila en cada tap.
+    seatsRowHtml += `<button class="cmd-seat${active}${head}" data-seat="${n}" onclick="comandaSetDiner(${n})" title="${t('cmdSeat')} ${n}">${crown}${n}${badge}</button>`;
+  }
+  // El − sólo quita el último asiento y sólo si está vacío (ver
+  // comandaRemoveDiner). Deshabilitado dice por qué mejor que un tap que no
+  // hace nada.
+  const puedeQuitar = diners > 1 && !(seatCount[diners] || 0);
   const shapeCtl = COMANDA_SHAPE_CTL_OPEN ? `
       <div class="cmd-shape-ctl">
         <button class="cmd-shape-opt ${seatCfg.shape==='rect'?'active':''}" onclick="comandaSetShape('rect')">▭ ${t('cmdShapeRect')}</button>
@@ -12962,22 +13046,14 @@ function comandaRenderActive(root){
         <button class="cmd-shape-opt ${seatCfg.hasHead?'active':''}" onclick="comandaToggleHead()">♛ ${t('cmdHead')}</button>
       </div>` : '';
   const tableMap = `
-    <div class="cmd-table-wrap">
-      <div class="cmd-table-toolbar">
-        <!-- El hint enseña la interacción; una vez que hay asiento elegido, o
-             con el teclado abierto, ya no aplica y compite con lo que sí. El
-             span queda (flex:1) para que los botones no se corran. -->
-        <span class="cmd-table-hint">${(!COMANDA_ACTIVE_DINER && !COMANDA_KBD_OPEN) ? t('cmdTapSeat') : ''}</span>
-        <div class="cmd-table-tools">
-          <button class="cmd-mini-btn" onclick="comandaAddDiner()" title="${t('cmdAddSeat')}">＋</button>
-          <button class="cmd-mini-btn ${COMANDA_SHAPE_CTL_OPEN?'active':''}" onclick="comandaToggleShapeCtl()" title="${t('cmdTableShape')}">⚙</button>
-        </div>
+    <div class="cmd-seatrow-wrap">
+      <div class="cmd-seatrow">
+        <button class="cmd-seatrow-btn" onclick="comandaRemoveDiner()"${puedeQuitar ? '' : ' disabled'} title="${t('cmdRemoveSeat')}">−</button>
+        <div class="cmd-seatrow-nums">${seatsRowHtml}</div>
+        <button class="cmd-seatrow-btn" onclick="comandaAddDiner()" title="${t('cmdAddSeat')}">＋</button>
+        <button class="cmd-seatrow-btn${COMANDA_SHAPE_CTL_OPEN ? ' active' : ''}" onclick="comandaToggleShapeCtl()" title="${t('cmdTableShape')}">⚙</button>
       </div>
       ${shapeCtl}
-      <div class="cmd-table-map">
-        <div class="cmd-table-surface shape-${seatCfg.shape}"><span class="cmd-table-name">${t('cmdMesaPrefix')} ${comandaMesaLabel(c)}<small>${diners} ${diners===1?t('cmdComensal'):t('cmdComensales')}</small></span></div>
-        ${seatsHtml}
-      </div>
     </div>`;
 
   // Category buttons
@@ -13082,6 +13158,8 @@ function comandaRenderActive(root){
     ${COMANDA_FULL_OPEN ? comandaRenderFullModal() : ''}
     ${COMANDA_CHANGE_MESA_OPEN ? comandaRenderChangeMesaModal() : ''}
     ${COMANDA_ROOM_ADD_OPEN ? comandaRenderRoomAddModal() : ''}`;
+  // Después de pintar, no antes: la fila recién existe en el DOM acá.
+  comandaScrollAsientoAVista();
 }
 
 // ── Bandeja del pedido + helpers de resumen ──────────────────────────────
