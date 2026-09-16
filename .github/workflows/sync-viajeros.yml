@@ -65,7 +65,7 @@ on:
         type: boolean
         default: false
       explore:
-        description: "Calibración: perfila los reportes NUEVOS sin escribir nada. Vacío = no explorar. 'all' o 'arrival,birthday,comedor'."
+        description: "Calibración: perfila los reportes NUEVOS sin escribir nada. Vacío = no explorar. 'all' o 'arrival,birthday,comedor,exploraciones'."
         required: false
         default: ""
 

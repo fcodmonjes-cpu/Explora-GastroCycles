@@ -25,7 +25,7 @@ Escribe UN solo doc (sobrescrito por cada sync, como staffing):
     date: "YYYY-MM-DD",            ← fecha del reporte
     updatedAt: <ms epoch>,
     source: "seed" | "excel",
-    habs: { "01": [ { id, nombre, edad, nac, grupo,
+    habs: { "01": [ { id, pid, nombre, edad, nac, nacName?, grupo,
                       in: "YYYY-MM-DD", out: "YYYY-MM-DD",
                       tags: ["alergia-mariscos", ...],   ← taxonomía canónica
                       obs: "texto original del reporte",
@@ -52,6 +52,7 @@ Modos:
   python scripts/sync_viajeros.py --explore --introspect         → lista las queries GraphQL del backend de PGO
   python scripts/sync_viajeros.py --explore                     → perfila los reportes NUEVOS (arrival/birthday/comedor) sin escribir nada
   python scripts/sync_viajeros.py --explore arrival             → sólo uno (o "arrival,comedor")
+  python scripts/sync_viajeros.py --explore exploraciones       → ¿por dónde salen las exploraciones del viajero? (sondeo, no escribe)
   python scripts/sync_viajeros.py --from-pgo --dump-html --debug → guarda el HTML de PGO para ajustar selectores
   python scripts/sync_viajeros.py --from-pgo --trace-net --debug → lista las llamadas XHR de la SPA (descubrir API)
   (combinables: --from-pgo --debug lee PGO y muestra el resumen sin tocar Firebase;
@@ -362,7 +363,8 @@ def pid_de(nombre):
     return "h" + hashlib.sha1(str(nombre or "").encode("utf-8")).hexdigest()[:12]
 
 
-def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None, cumples=None):
+def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None, cumples=None,
+              nacnames=None):
     habs = {}
     # Homónimos simultáneos comparten notas. En un lodge de 90 personas es casi
     # imposible, pero "casi" no alcanza si alguien escribe una restricción: se
@@ -420,6 +422,14 @@ def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None, cu
         cum = (cumples or {}).get(norm_key(nombre))
         if cum:
             traveler["cumple"] = cum      # 'DD-MM', sin año: la app compara el día
+        # Nombre del país. `nac` es un código de 4 letras (BRAZ, LUXE) y la app
+        # tiene cableadas 18 banderas: un código nuevo caía a texto crudo
+        # ("POLA" sobre la ficha de un huésped). La query YA pedía
+        # nationalityName y el script lo tiraba — guardarlo cuesta esto y le da
+        # a la app un respaldo legible sin arriesgar una bandera equivocada.
+        nn = (nacnames or {}).get(norm_key(nombre))
+        if nn and nn.upper() != str(nac or "").upper():
+            traveler["nacName"] = nn
         for k in ("inFlightAt", "inFlight", "outFlightAt", "outFlight"):
             if h.get(k):
                 traveler[k] = h[k]
@@ -487,6 +497,9 @@ PGO_BIRTHDAY_PATH = os.environ.get("PGO_BIRTHDAY_PATH") or "/birthday-report"
 PGO_COMEDOR_PATH  = os.environ.get("PGO_COMEDOR_PATH")  or "/comedor"
 PGO_EXPLORE_PATHS = {
     "inout":    "(GraphQL reportInOut)",
+    # No es una página: es el sondeo de por dónde salen las exploraciones del
+    # viajero (la del día y el histórico). Ver pgo_probe_exploraciones.
+    "exploraciones": "(GraphQL + Reporte Geos · sondeo)",
     "arrival":  PGO_ARRIVAL_PATH,
     "birthday": PGO_BIRTHDAY_PATH,
     "comedor":  PGO_COMEDOR_PATH,
@@ -1976,7 +1989,11 @@ PGO_ROSTER_QUERY = """query ($hotelId: Int!, $date: Date!) {
 
 
 def pgo_fetch_roster(page, date_str):
-    """Roster de in-house por GraphQL → filas en el formato de SEED_ROWS.
+    """Roster de in-house por GraphQL → (filas, nacnames).
+
+    Las filas van en el formato de SEED_ROWS. `nacnames` es
+    {nombre_normalizado: 'Brasil'} y viaja aparte para no tocar la tupla de 8
+    campos, que la comparten SEED_ROWS, parse_pgo y cruzar_obs_comedor.
 
     Reemplaza al scraping del Reporte Geos. Verificado contra el HTML nombre por
     nombre y habitación por habitación: 70/70 idénticos (§4.2).
@@ -1985,7 +2002,7 @@ def pgo_fetch_roster(page, date_str):
     if res.get("errors"):
         print(f"[roster] errores: {str(res['errors'])[:300]}")
     filas = (res.get("data") or {}).get("travellersInhouse") or []
-    out = []
+    out, nacnames = [], {}
     for f in filas:
         hab_raw = str(f.get("room") or "")
         digits = re.sub(r"\D", "", hab_raw)
@@ -2000,11 +2017,16 @@ def pgo_fetch_roster(page, date_str):
                               for k in ("firstName", "lastName")).strip()
             if not nombre:
                 continue
-            out.append((hab, fix_mojibake(nombre), _to_int(tr.get("age")),
+            nombre = fix_mojibake(nombre)
+            nn = fix_mojibake(tr.get("nationalityName")).strip()
+            if nn:
+                nacnames[norm_key(nombre)] = nn
+            out.append((hab, nombre, _to_int(tr.get("age")),
                         str(tr.get("nationality") or "").strip().upper(),
                         str(tr.get("group") or "").strip(), ind, outd, ""))
-    print(f"[sync-viajeros] roster (API): {len(out)} viajeros en {len({r[0] for r in out})} habitaciones")
-    return out
+    print(f"[sync-viajeros] roster (API): {len(out)} viajeros en {len({r[0] for r in out})} "
+          f"habitaciones · {len(nacnames)} con nombre de país")
+    return out, nacnames
 
 
 def pgo_compara_roster(api_rows, html_rows):
@@ -2074,6 +2096,98 @@ def pgo_probe_dietas(page, date_str, dietas_rows=None):
         con = sum(1 for tr in pers if tr.get("hasFoodReq") or tr.get("dietReq")
                   or tr.get("foodRestrictions") or tr.get("dietReqObs"))
         print(f"[dietas] la API marca con requerimiento alimentario: {con} personas")
+
+
+# Lo que puede llamarse una exploración en PGO. Amplio a propósito: la sonda
+# es de descubrimiento y un falso positivo sólo cuesta una línea de log, pero
+# un nombre que no se buscó cuesta otra corrida entera contra el portal.
+_RX_EXPLORACION = re.compile(
+    r"excursion|exploracion|exploration|activit|actividad|tour|program|"
+    r"itinerar|booking|reserva|servicio|service|guide|guia", re.I)
+
+
+def pgo_probe_exploraciones(page, date_str):
+    """¿Por dónde salen las exploraciones del viajero (hoy y su histórico)?
+
+    El handbook quiere dos cosas distintas: la exploración DE HOY (para saber
+    si vuelve tarde, si lleva box lunch, si desayuna temprano) y el HISTÓRICO
+    de la estadía (para conversar con el viajero sobre lo que hizo). Hoy no se
+    extrae ninguna de las dos.
+
+    Lo único conocido es la columna "excursión" del Reporte Geos, que se lee y
+    se descarta (PGO_GEOS_COLS no la mapea) y que desde el 2026-08-17 ni
+    siquiera se abre, porque el roster salió del HTML. Antes de volver ahí
+    conviene ver si la API la entrega estructurada: sería con fecha y turno en
+    vez de un texto por fila, y no se rompe cuando PGO cambia una clase.
+
+    Sólo lee y perfila. Enmascara los nombres propios y NUNCA escribe Firebase.
+    """
+    print("\n[explora] ══ Sondeo de exploraciones ══")
+
+    # 1) Queries del esquema que huelan a exploración.
+    q = """{ __schema { queryType { fields {
+              name
+              args { name type { name kind ofType { name kind } } }
+              type { name kind ofType { name kind } }
+            } } } }"""
+    tipos_cand = []
+    try:
+        res = pgo_graphql(page, q)
+        fields = (((res.get("data") or {}).get("__schema") or {}).get("queryType") or {}).get("fields") or []
+    except Exception as e:
+        print(f"[explora] no pude introspeccionar el esquema: {e}")
+        fields = []
+    cand = [f for f in fields if _RX_EXPLORACION.search(f["name"])]
+    print(f"[explora] {len(fields)} queries en el esquema · {len(cand)} candidatas:")
+    for f in cand:
+        args = ", ".join(f"{a['name']}: {_gql_tname(a['type'])}" for a in (f.get("args") or []))
+        tn = _gql_tname(f.get("type"))
+        print(f"[explora]   {f['name']}({args}) -> {tn}")
+        limpio = tn.strip("[]!")
+        if limpio and limpio not in tipos_cand:
+            tipos_cand.append(limpio)
+
+    # 2) Campos de esos tipos. Lo que se busca es una fecha + un turno (AM/PM)
+    #    + el nombre de la exploración, y algo que ate la fila a una persona.
+    rx_util = re.compile(r"date|fecha|hour|hora|time|am|pm|shift|turno|name|nombre|"
+                         r"title|titulo|descrip|room|hab|traveller|guest|pax|"
+                         r"status|estado|guide|guia", re.I)
+    for tn in tipos_cand[:6]:
+        q2 = """{ __type(name: "%s") { fields { name
+                  type { name kind ofType { name kind } } } } }""" % tn
+        try:
+            r2 = pgo_graphql(page, q2)
+            campos = (((r2.get("data") or {}).get("__type") or {}).get("fields") or [])
+        except Exception as e:
+            print(f"[explora] {tn}: no pude leerlo ({e})")
+            continue
+        if not campos:
+            continue
+        utiles = [f"{c['name']}:{_gql_tname(c['type'])}" for c in campos if rx_util.search(c["name"])]
+        print(f"[explora] ── {tn}: {len(campos)} campos · {len(utiles)} de interés")
+        print(f"[explora]    {utiles}")
+
+    # 3) La vía conocida: la columna del Reporte Geos. Se perfila enmascarada
+    #    para poder mapearla sin ver un solo nombre de huésped.
+    try:
+        fecha = datetime.date.fromisoformat(date_str).strftime(PGO_DATE_FMT) if date_str else None
+        filas = _pgo_read_report(page, PGO_GEOS_PATH, fecha)
+        cols = list(filas[0].keys()) if filas else []
+        exc = [c for c in cols if _RX_EXPLORACION.search(c)]
+        print(f"[explora] Reporte Geos: {len(filas)} filas · columnas {cols}")
+        print(f"[explora] columnas que parecen exploración: {exc or '(ninguna)'}")
+        for c in exc:
+            vals = [r.get(c, "") for r in filas if str(r.get(c, "")).strip()]
+            print(f"[explora]   {c!r}: {len(vals)} llenas · "
+                  f"{[_mask_value(v)[:40] for v in vals[:4]]}")
+            # ¿Trae turno y hora dentro del texto, o hay que pedirlos aparte?
+            con_hora  = sum(1 for v in vals if re.search(r"\d{1,2}:\d{2}", str(v)))
+            con_turno = sum(1 for v in vals if re.search(r"\b(AM|PM)\b", str(v), re.I))
+            print(f"[explora]   → con hora: {con_hora} · con AM/PM: {con_turno} de {len(vals)}")
+    except Exception as e:
+        print(f"[explora] no pude perfilar el Reporte Geos: {type(e).__name__}: {e}")
+
+    print("[explora] ══ fin del sondeo · Firebase NO fue tocado ══")
 
 
 def pgo_cruce_roster(page, date_str, geos_rows):
@@ -2228,13 +2342,18 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
                 _diet = _pgo_read_report(page, PGO_DIETAS_PATH, _f)
                 pgo_probe_dietas(page, date_str or datetime.date.today().isoformat(), _diet)
                 _iso = date_str or datetime.date.today().isoformat()
-                pgo_compara_roster(pgo_fetch_roster(page, _iso),
+                pgo_compara_roster(pgo_fetch_roster(page, _iso)[0],
                                    parse_pgo(_geos, _diet, _iso))
             except Exception as e:
                 print(f"[cruce] no pude comparar contra el HTML: {type(e).__name__}: {e}")
 
+        # Tampoco es una página: sondea el esquema y la columna del Geos para
+        # saber por dónde pedir las exploraciones antes de escribir el mapeo.
+        if "exploraciones" in paths:
+            pgo_probe_exploraciones(page, date_str or datetime.date.today().isoformat())
+
         for nombre, path in paths.items():
-            if nombre == "inout":
+            if nombre in ("inout", "exploraciones"):
                 continue
             print(f"\n[explore] ===== {nombre}  ({path}) =====")
             try:
@@ -2356,15 +2475,16 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         # así que conserva las dos vías.
         fecha_iso = date_str or _pgo_fecha_visible(page)
         geos = []
-        roster_api = None
+        roster_api, nacnames = None, {}
         try:
-            roster_api = pgo_fetch_roster(page, fecha_iso or datetime.date.today().isoformat())
+            roster_api, nacnames = pgo_fetch_roster(
+                page, fecha_iso or datetime.date.today().isoformat())
             if not roster_api:
                 raise ValueError("la API devolvió 0 viajeros")
         except Exception as e:
             print(f"[sync-viajeros] roster por API falló ({type(e).__name__}: {e}); "
                   "vuelvo al Reporte Geos por HTML.")
-            roster_api = None
+            roster_api, nacnames = None, {}
         if roster_api is None:
             geos = _pgo_read_report(page, PGO_GEOS_PATH, fecha, "geos" if dump else None)
         dietas = _pgo_read_report(page, PGO_DIETAS_PATH, fecha, "dietas" if dump else None)
@@ -2461,7 +2581,8 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         print("[sync-viajeros] Llamadas XHR/fetch detectadas (candidatas a API directa):")
         for c in dict.fromkeys(api_calls):
             print("   ", c)
-    return geos, dietas, (fecha_iso or datetime.date.today().isoformat()), horas, totales, comedor, cumples, roster_api
+    return (geos, dietas, (fecha_iso or datetime.date.today().isoformat()),
+            horas, totales, comedor, cumples, roster_api, nacnames)
 
 
 # Mapeo encabezado de PGO (ya normalizado) → campo interno. Varios alias por si
@@ -2847,7 +2968,7 @@ def main():
         date_str = _arg_value("--date")   # None = usar el día que PGO ya muestra
         print("[sync-viajeros] PGO — login y lectura de reportes "
               f"({date_str or 'fecha por defecto de PGO'})...")
-        geos, dietas, date_str, horas, totales, comedor, cumples, roster_api = pgo_fetch(
+        geos, dietas, date_str, horas, totales, comedor, cumples, roster_api, nacnames = pgo_fetch(
             date_str,
             dump="--dump-html" in sys.argv,
             trace_net="--trace-net" in sys.argv)
@@ -2869,7 +2990,7 @@ def main():
         if n_com:
             print(f"[sync-viajeros] comedor → obs: {n_com} observaciones por persona sumadas")
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
-        doc = build_doc(rows, date_str, "pgo", horas, totales, comedor, cumples)
+        doc = build_doc(rows, date_str, "pgo", horas, totales, comedor, cumples, nacnames)
     else:
         doc = build_doc(SEED_ROWS, REPORT_DATE, "seed")
 

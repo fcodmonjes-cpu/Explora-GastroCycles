@@ -2090,6 +2090,13 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
   width:30px; text-align:right; flex-shrink:0; }
 .cmd-nota { font-family:'Courier Prime',monospace; font-size:10px; color:var(--text-tertiary);
   margin-top:0.6rem; }
+/* El detalle por grupo de PGO no siempre describe HOY: el script lo compara
+   contra la columna Hoy del pie y escribe comedor.diaGrupos ('hoy' o '?').
+   Hasta ahora la app ignoraba esa marca y dibujaba los cubiertos igual, con
+   el mismo aspecto que un dato confirmado. Coral, como toda alerta de dato. */
+.cmd-dia-aviso { font-family:'Courier Prime',monospace; font-size:10px; line-height:1.4;
+  color:var(--coral); border:0.5px solid rgba(216,90,48,0.4); border-radius:var(--radius-md);
+  background:var(--coral-light); padding:7px 10px; margin:0 0 0.8rem; }
 .cmd-grp { display:flex; align-items:center; gap:11px; padding:10px 12px; margin-bottom:7px;
   background:var(--bg-secondary); border:0.5px solid var(--border); border-radius:var(--radius-md); }
 /* El numero es el TAMANO DE MESA, que es lo que el montajista necesita ver. */
@@ -2134,6 +2141,12 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-chip.alergia { color:#e08663; border-color:rgba(216,90,48,0.45); }
 .vj-chip.dieta   { color:#cfa14a; border-color:rgba(186,117,23,0.45); }
 .vj-chip.cond    { color:var(--wine-red-dark); border-color:rgba(127,119,221,0.45); }
+/* REVISAR como chip-filtro, no sólo como marca en la ficha. Es la red de
+   seguridad del módulo (obs que dice algo y ningún tag cubrió) y hasta hoy
+   había que toparse con ella abriendo habitaciones. Va primero en la fila y
+   en coral, el mismo de .vj-tag.revisar: es la misma idea, no un color nuevo. */
+.vj-chip.revisar { color:var(--coral); border-color:rgba(216,90,48,0.5); }
+.vj-chip.revisar.active { background:var(--coral-light); }
 .vj-chip.alergia.active { background:var(--coral-light); }
 .vj-chip.dieta.active   { background:var(--gold-light); }
 .vj-chip.cond.active    { background:var(--wine-red-light); }
@@ -2161,6 +2174,13 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-flag.nino    { color:var(--teal); }
 .vj-flag.out     { color:var(--text-secondary); }
 .vj-flag.nota    { color:var(--text-tertiary); }
+/* Cumpleaños en la grilla: sin esto había que abrir hab por hab para
+   descubrir quién cumple en los próximos días. Mismo gold de la casa. */
+.vj-flag.cumple  { color:var(--gold); }
+/* Coral, igual que .vj-tag.revisar y .vj-chip.revisar: la misma idea en los
+   tres tamaños. Una hab con SÓLO una obs sin clasificar dejaba la fila de
+   flags vacía y se leía como una hab sin novedades. */
+.vj-flag.revisar { color:var(--coral); }
 
 /* Roster de la tarjeta: primer nombre + banderita de nacionalidad, en vez de
    las esferas de iniciales (leían crípticas). La cuenta se lee sola por líneas. */
@@ -2224,6 +2244,13 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-detail-person { display:flex; gap:12px; padding:13px 0; border-bottom:0.5px solid var(--border); }
 .vj-detail-person:last-child { border-bottom:none; }
 .vj-detail-person .vj-av { width:38px; height:38px; font-size:12px; margin-top:2px; }
+/* La bandera ocupa EXACTAMENTE la columna del avatar (38px): así la ficha no
+   se mueve cuando un código de nacionalidad no está mapeado y cae al avatar de
+   iniciales. Mismo criterio que la tarjeta de persona, que ya usaba bandera —
+   hasta hoy la ficha usaba avatar y eran dos lenguajes para la misma persona.
+   Caveat de ARCHITECTURE §12: en Windows headless las banderas salen como
+   letras; esto sólo se valida en iPhone. */
+.vj-detail-flag { flex:0 0 auto; width:38px; margin-top:2px; text-align:center; font-size:26px; line-height:1.45; }
 .vj-detail-main { flex:1 1 auto; min-width:0; }
 .vj-detail-name { font-size:15px; color:var(--text); line-height:1.3; }
 .vj-detail-meta { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.05em; color:var(--text-tertiary); margin-top:2px; }
@@ -4385,6 +4412,13 @@ const UI = {
     vjHab:'Hab', vjYears:'años', vjNino:'menor', vjNinoPl:'menores',
     vjSaleHoy:'sale hoy', vjSaleManana:'sale mañana', vjLlegaHoy:'llegó hoy',
     vjVerSalientes:'ver salientes', vjOcultarSalientes:'ocultar salientes',
+    // Desde 2026-09-16 la grilla esconde a quien YA SE FUE (hora de checkout
+    // cumplida), no a todo el que sale hoy. El texto tiene que decir eso.
+    // EN/PT propuestas, a revisar.
+    vjYaSalio:'ya salió', vjYaSalieron:'ya salieron',
+    vjChipRevisar:'revisar observación',
+    // Aviso de día dudoso en la vista Comedor — EN/PT propuestas, a revisar.
+    cmdDiaDudoso:'El detalle por grupo no cuadra con los cubiertos de hoy que informa PGO: puede ser de otro día. Los totales de arriba sí son de hoy.',
     vjSyncOtherDay:'NO ES DE HOY · actualizando',
     vjVista_viajeros:'viajeros', vjVista_comedor:'comedor',
     cmdOcupacion:'ocupación', cmdTurno:'Turno', cmdTurnos:'turnos',
@@ -4610,6 +4644,9 @@ const UI = {
     vjHab:'Room', vjYears:'yrs', vjNino:'minor', vjNinoPl:'minors',
     vjSaleHoy:'leaves today', vjSaleManana:'leaves tomorrow', vjLlegaHoy:'arrived today',
     vjVerSalientes:'show departures', vjOcultarSalientes:'hide departures',
+    vjYaSalio:'already left', vjYaSalieron:'already left',
+    vjChipRevisar:'check note',
+    cmdDiaDudoso:"The per-group breakdown doesn't match today's covers reported by PGO: it may be from another day. The totals above are today's.",
     vjSyncOtherDay:'NOT TODAY’S · refreshing',
     vjVista_viajeros:'guests', vjVista_comedor:'dining room',
     cmdOcupacion:'occupancy', cmdTurno:'Seating', cmdTurnos:'seatings',
@@ -4835,6 +4872,9 @@ const UI = {
     vjHab:'Quarto', vjYears:'anos', vjNino:'menor', vjNinoPl:'menores',
     vjSaleHoy:'sai hoje', vjSaleManana:'sai amanhã', vjLlegaHoy:'chegou hoje',
     vjVerSalientes:'ver saídas', vjOcultarSalientes:'ocultar saídas',
+    vjYaSalio:'já saiu', vjYaSalieron:'já saíram',
+    vjChipRevisar:'verificar observação',
+    cmdDiaDudoso:'O detalhe por grupo não bate com os talheres de hoje informados pelo PGO: pode ser de outro dia. Os totais acima são de hoje.',
     vjSyncOtherDay:'NÃO É DE HOJE · atualizando',
     vjVista_viajeros:'viajantes', vjVista_comedor:'salão',
     cmdOcupacion:'ocupação', cmdTurno:'Turno', cmdTurnos:'turnos',
@@ -8315,15 +8355,18 @@ setInterval(() => wxFetch(true), WX_REFRESH_MS);
 // filtros por tag (alergias/dietas/condiciones) + drill-down por habitación.
 // Path:  /viajeros/current (un solo doc, sobrescrito por cada sync)
 // Shape: { date:'YYYY-MM-DD', updatedAt, source, habs:{ '01':[traveler…] } }
-// Traveler: { id, nombre, edad, nac, grupo, in, out, tags[], obs, foto? }
+// Traveler: { id, pid, nombre, edad, nac, nacName?, grupo, in, out, tags[], obs,
+//             revisar?, cumple?, inAt?, outAt?, foto? }
 // Escribe solo scripts/sync_viajeros.py (seed hoy; Excel Dietas+Geos fase 2).
 // Read-only en la app, sin PIN. Estado y VJ_TAGS viven en STATE TOP.
 // "Menor" se deriva de edad ≤ VIAJEROS_NINO_MAX (17 = menor de edad); "sale
 // hoy" compara out con la fecha local del dispositivo (no con la del reporte).
-// Los que salen hoy quedan OCULTOS en las vistas por hab (acá y en el panel de
-// habs del Comande) — a la hora del servicio ya no están y solo estorban la
-// lectura. Siguen a un tap: el stat "salen hoy" los filtra, y cada tarjeta de
-// hab ofrece "ver salientes" (VIAJEROS_SHOW_OUT).
+// Los que YA SE FUERON (out hoy y hora de checkout cumplida, vjYaSeFue) quedan
+// ocultos en las vistas por hab — acá y en el panel de habs del Comande. Desde
+// 2026-09-16 el corte es por HORA y no por fecha: antes se escondía desde las
+// 00:00 a todo el que saliera hoy, mientras los contadores lo seguían contando
+// en el almuerzo. Siguen a un tap: cada tarjeta ofrece "ver salientes"
+// (VIAJEROS_SHOW_OUT).
 
 function viajerosUrl(){ return `${CF_FIREBASE_CONFIG.databaseURL}/${VIAJEROS_PATH}.json${fbQS()}`; }
 
@@ -8608,13 +8651,40 @@ function vjAvatarEl(tr, extra){
   return `<span class="vj-av ${vjAvatarClass(tr.grupo)} ${extra||''}">${vjEsc(vjInitials(tr.nombre))}</span>`;
 }
 function vjFlag(nac){ return VJ_NAC[String(nac || '').trim().toUpperCase()] || ''; }
+// Nacionalidad legible. `nacName` lo escribe el sync desde `nationalityName`
+// (la query ya lo pedía y el script lo tiraba): con él, un código sin bandera
+// muestra "Polonia" en vez de "POLA". Nunca se inventa una bandera para un
+// código desconocido — mejor texto crudo que la bandera de otro país.
+function vjNacTexto(tr){ return String(tr.nacName || tr.nac || '').trim(); }
+// La cara del viajero: bandera si la conocemos, avatar de iniciales si no.
+// Unifica la ficha con la tarjeta de persona, que ya usaba bandera.
+function vjCaraEl(tr){
+  const f = vjFlag(tr.nac);
+  return f ? `<span class="vj-detail-flag">${f}</span>` : vjAvatarEl(tr);
+}
+// 'YYYY-MM-DDTHH:MM' → 'HH:MM'. Vacío si la marca es sólo fecha: PGO entrega
+// hora sólo para las habitaciones CON movimiento del día.
+function vjHora(iso){ return (iso && iso.length > 10) ? iso.slice(11, 16) : ''; }
 function vjFirstName(nombre){ return String(nombre || '').trim().split(/\s+/)[0] || ''; }
 // Cumpleaños: PGO da 'DD-MM' sin año, así que se compara sólo día y mes.
-// Devuelve 0 si es hoy, N si faltan N días (hasta 3), o null.
+// Devuelve 0 si es hoy, N si faltan N días, o null.
+//
+// LA VENTANA ES LA ESTADÍA, no un número fijo de días (hasta 2026-09-16 eran 3
+// y estaban cableados). Un cumpleaños que cae después del check-out no es
+// accionable y no debe ocupar pantalla; uno que cae en 6 días SÍ lo es si el
+// huésped todavía va a estar, y es justo el que hay que preparar con tiempo —
+// una torta no se resuelve la misma tarde. El tope de 14 días es un cinturón
+// por si `out` viniera vacío o corrupto: sin él, un `out` faltante haría
+// recorrer el calendario entero.
 function vjCumpleEn(tr){
   if (!tr.cumple) return null;
   const hoy = vjDiaOperativo();
-  for (let d = 0; d <= 3; d++){
+  let tope = 14;
+  if (tr.out){
+    const dias = Math.round((new Date(tr.out + 'T12:00') - new Date(hoy + 'T12:00')) / 86400000);
+    if (isFinite(dias)) tope = Math.max(0, Math.min(tope, dias));
+  }
+  for (let d = 0; d <= tope; d++){
     const f = new Date(hoy + 'T12:00');
     f.setDate(f.getDate() + d);
     const dd = String(f.getDate()).padStart(2,'0') + '-' + String(f.getMonth()+1).padStart(2,'0');
@@ -8694,11 +8764,25 @@ function vjCuentaServicio(list, srv, diaIso){
   const [a, b] = vjVentana(srv, diaIso);
   return (list || []).filter(tr => vjPresenteEntre(tr, a, b)).length;
 }
-// Divide una hab en los que se quedan y los que salen hoy. Las vistas por hab
-// muestran solo `queda` salvo que el usuario pida ver los salientes.
+// ¿Ya se fue? Sale hoy Y su hora de checkout ya pasó.
+//
+// Hasta el 2026-09-16 la grilla escondía a TODO el que tuviera out == hoy,
+// desde las 00:00. Los contadores, en cambio, usan la hora real (inAt/outAt):
+// alguien con checkout 16:30 estaba contado en el almuerzo y escondido de la
+// pantalla al mismo tiempo. Ahora las dos cosas miden lo mismo.
+//
+// Sin hora (PGO no la dio, o reportInOut falló) la persona NO se esconde: el
+// default es permisivo — se prefiere una grilla con una fila de más que una
+// que borra a alguien que sigue sentado en el comedor.
+function vjYaSeFue(tr){
+  if (tr.out !== vjTodayIso()) return false;
+  return vjHasta(tr) < vjAhoraIso();
+}
+// Divide una hab en los que siguen y los que ya se fueron. Las vistas por hab
+// muestran solo `queda` salvo que el usuario pida ver a los que ya salieron.
 function vjSplitOut(list){
   const out = [], queda = [];
-  (list || []).forEach(tr => (vjSaleHoy(tr) ? out : queda).push(tr));
+  (list || []).forEach(tr => (vjYaSeFue(tr) ? out : queda).push(tr));
   return { queda, out };
 }
 // Lo que se muestra en una hab según el toggle. Si TODOS salen hoy, se muestran
@@ -8719,7 +8803,7 @@ function vjOutToggleLine(ocultos){
   if (!ocultos && !VIAJEROS_SHOW_OUT) return '';
   const txt = VIAJEROS_SHOW_OUT
     ? t('vjOcultarSalientes')
-    : `${ocultos} ${ocultos > 1 ? t('vjStatSalenHoy') : t('vjSaleHoy')} · ${t('vjVerSalientes')}`;
+    : `${ocultos} ${ocultos > 1 ? t('vjYaSalieron') : t('vjYaSalio')} · ${t('vjVerSalientes')}`;
   return `<button class="vj-out-toggle" onclick="vjToggleShowOut(event)">${txt}</button>`;
 }
 function vjHasAlergia(tr){ return (tr.tags || []).some(x => x.indexOf('alergia-') === 0); }
@@ -8887,6 +8971,14 @@ function vjRenderComedor(){
   const m = comedorMontaje(srv);
   const unSolo = m.turnos.length <= 1;
   const cls = m.excede ? 'is-alert' : (m.ocupacion > 90 ? 'is-watch' : '');
+  // El script ya resolvió esta duda y la dejó escrita: compara la suma del
+  // detalle por grupo contra la columna "Hoy" del pie del reporte y marca
+  // diaGrupos 'hoy' o '?'. La app la ignoraba, así que un detalle de MAÑANA
+  // (pasó el 21-08) se dibujaba con el mismo aspecto que uno confirmado.
+  // No es el bug del date-picker, que está resuelto: PGO sirve dos tablas de
+  // días distintos DENTRO de la página del día correcto.
+  const avisoDia = c.diaGrupos && c.diaGrupos !== 'hoy'
+    ? `<div class="cmd-dia-aviso">${vjEsc(t('cmdDiaDudoso'))}</div>` : '';
 
   const tabs = ['desayuno','almuerzo','cena'].map(k => {
     const x = comedorMontaje(k);
@@ -8943,7 +9035,7 @@ function vjRenderComedor(){
           ${tn.grupos.map(grupoHtml).join('')}
         </div>`).join('');
 
-  return `<div class="cmd-srvs">${tabs}</div>${cabecera}
+  return `<div class="cmd-srvs">${tabs}</div>${avisoDia}${cabecera}
     <div class="cmd-montaje">
       <div class="cmd-head">${t('cmdMontaje')}
         <span class="cmd-head-sub">${m.totalMesas} ${t('cmdMesas')}</span></div>
@@ -9067,11 +9159,21 @@ function vjRenderChips(){
   // Los chips NO se filtran a sí mismos: al tocar "sin lactosa" la lista se
   // reduce, pero los chips siguen contando sobre el servicio completo — si no,
   // quedaría uno solo en pantalla y se perdería el panorama.
-  vjBaseServicio().forEach(tr => (tr.tags || []).forEach(tag => { counts[tag] = (counts[tag] || 0) + 1; }));
+  const base = vjBaseServicio();
+  base.forEach(tr => (tr.tags || []).forEach(tag => { counts[tag] = (counts[tag] || 0) + 1; }));
   const rank = { alergia:0, dieta:1, cond:2 };
   const tags = Object.keys(counts).sort((a,b) =>
     (rank[vjTagCls(a)] ?? 3) - (rank[vjTagCls(b)] ?? 3) || counts[b] - counts[a] || a.localeCompare(b));
-  el.innerHTML = tags.map(tag => `
+  // REVISAR va PRIMERO y aparte de los tags: es la observación que dice algo y
+  // que ningún tag cubrió, o sea el único caso en que la pantalla no sabe qué
+  // se le puede servir a alguien. El filtro existía desde el principio
+  // (vjMatchesFilter) pero ningún control lo disparaba: había que toparse con
+  // el chip ámbar abriendo habitaciones una por una.
+  const nRev = base.filter(tr => tr.revisar).length;
+  el.innerHTML = (nRev ? `
+    <button class="vj-chip revisar ${VIAJEROS_FILTER === 'revisar' ? 'active' : ''}"
+            onclick="vjSetFilter('revisar')">${vjEsc(t('vjChipRevisar'))}<span class="vj-chip-n">${nRev}</span></button>` : '')
+    + tags.map(tag => `
     <button class="vj-chip ${vjTagCls(tag)} ${VIAJEROS_FILTER === tag ? 'active' : ''}"
             onclick="vjSetFilter('${tag}')">${vjEsc(vjTagLabel(tag))}<span class="vj-chip-n">${counts[tag]}</span></button>`).join('');
 }
@@ -9086,7 +9188,10 @@ function vjCumpleChip(tr){
     : `<span class="vj-cumple">${t('vjCumpleEn').replace('{n}', d)}</span>`;
 }
 function vjOutChip(tr){
-  if (tr.out === vjTodayIso())    return `<span class="vj-out-chip">${t('vjSaleHoy')}</span>`;
+  // Con hora real, "sale hoy 16:30" decide si el viajero almuerza; sin ella,
+  // "sale hoy" es todo lo que se puede afirmar.
+  const h = vjHora(tr.outAt);
+  if (tr.out === vjTodayIso())    return `<span class="vj-out-chip">${t('vjSaleHoy')}${h ? ' ' + h : ''}</span>`;
   if (tr.out === vjTomorrowIso()) return `<span class="vj-out-chip">${t('vjSaleManana')}</span>`;
   return '';
 }
@@ -9247,13 +9352,19 @@ function vjTravelerRow(tr, today){
   today = today || vjTodayIso();
   const outCls  = tr.out === today ? 'vj-meta-out-today' : '';
   const inToday = tr.in === today ? ` · ${t('vjLlegaHoy')}` : '';
+  // HORA REAL de check-in/out (PGO la entrega sólo para las habs con
+  // movimiento del día). Hasta el 2026-09-16 se calculaba y nunca se mostraba:
+  // la ficha decía "OUT 01-08" mientras el dato al minuto estaba en el doc.
+  // Es la diferencia entre "se va hoy" y "se va 16:30, o sea que almuerza".
+  const hIn  = vjHora(tr.inAt);
+  const hOut = vjHora(tr.outAt);
   return `
     <div class="vj-detail-person">
-      ${vjAvatarEl(tr)}
+      ${vjCaraEl(tr)}
       <div class="vj-detail-main">
         <div class="vj-detail-name">${vjEsc(tr.nombre)}${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
-        <div class="vj-detail-meta">${tr.edad ?? '—'} ${t('vjYears')} · ${vjFlag(tr.nac) ? vjFlag(tr.nac) + ' ' : ''}${vjEsc(tr.nac || '')} · IN ${vjShortDate(tr.in)} → <span class="${outCls}">OUT ${vjShortDate(tr.out)}${tr.out === today ? ` · ${t('vjSaleHoy')}` : ''}</span>${inToday}</div>
-        <div class="vj-detail-tags">${vjTagChips(tr)}</div>
+        <div class="vj-detail-meta">${tr.edad ?? '—'} ${t('vjYears')} · ${vjEsc(vjNacTexto(tr))} · IN ${vjShortDate(tr.in)}${hIn ? ' ' + hIn : ''} → <span class="${outCls}">OUT ${vjShortDate(tr.out)}${hOut ? ' ' + hOut : ''}${tr.out === today ? ` · ${t('vjSaleHoy')}` : ''}</span>${inToday}</div>
+        <div class="vj-detail-tags">${vjCumpleChip(tr)}${vjTagChips(tr)}</div>
         ${(tr.obs || '').trim() ? `<div class="vj-detail-obs">${vjEsc(tr.obs)}</div>` : ''}
         ${vjNotasBloque(tr)}
       </div>
@@ -9292,13 +9403,33 @@ function vjRenderHabs(){
     const nDi = list.filter(vjHasDieta).length;
     const nCo = list.filter(tr => (tr.tags || []).some(x => x.indexOf('cond-') === 0)).length;
     const nNi = list.filter(vjIsNino).length;
-    const nSale = full.filter(tr => tr.out === today).length;
+    // Sin esto, una hab cuyo ÚNICO dato es "revisar" (obs que dice algo y que
+    // ningún tag cubrió) se dibujaba con la fila de flags vacía: idéntica a una
+    // hab sin novedades. Es el caso que más necesita que lo abran.
+    const nRe = list.filter(tr => tr.revisar).length;
+    const salen = full.filter(tr => tr.out === today);
+    const nSale = salen.length;
+    // El cumpleaños más próximo de la hab. Sin esto había que abrir habitación
+    // por habitación para enterarse de que alguien cumple pasado mañana — que
+    // es exactamente cuando todavía se puede preparar algo.
+    const cumples = list.map(vjCumpleEn).filter(d => d !== null);
+    const cumple = cumples.length ? Math.min(...cumples) : null;
     const flags = [];
     if (nAl) flags.push(`<span class="vj-flag alergia">● ${nAl}</span>`);
     if (nDi) flags.push(`<span class="vj-flag dieta">● ${nDi}</span>`);
     if (nCo) flags.push(`<span class="vj-flag cond">● ${nCo}</span>`);
+    // Con palabra y no con "● N": los puntos de alergia/dieta/cond se
+    // distinguen sólo por color, y acá el color no puede ser el único
+    // portador — es el flag que dice "esta hab tiene algo que nadie clasificó".
+    if (nRe) flags.push(`<span class="vj-flag revisar">${nRe > 1 ? nRe + ' ' : ''}${t('vjRevisar')}</span>`);
     if (nNi) flags.push(`<span class="vj-flag nino">${nNi} ${nNi > 1 ? t('vjNinoPl') : t('vjNino')}</span>`);
-    if (nSale) flags.push(`<span class="vj-flag out">${nSale > 1 ? nSale + ' ' + t('vjStatSalenHoy') : t('vjSaleHoy')}</span>`);
+    if (cumple !== null) flags.push(`<span class="vj-flag cumple">${cumple === 0 ? t('vjCumpleHoy') : t('vjCumpleEn').replace('{n}', cumple)}</span>`);
+    if (nSale){
+      // Con una sola salida y hora conocida, la hora es más útil que el conteo.
+      const h = nSale === 1 ? vjHora(salen[0].outAt) : '';
+      flags.push(`<span class="vj-flag out">${nSale > 1 ? nSale + ' ' + t('vjStatSalenHoy')
+                                                        : t('vjSaleHoy') + (h ? ' ' + h : '')}</span>`);
+    }
     // Marca de que la hab tiene notas del equipo. Sin esto habría que abrir
     // habitación por habitación para descubrir que alguien dejó un dato.
     const nNo = list.reduce((a, tr) => a + vjNotasDe(tr).length, 0);
