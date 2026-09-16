@@ -117,7 +117,7 @@ de tabs:
 │  Comedor Nicolás · Sebastián · Diego · Viviana              │
 │  Apoyo   Victor                                              │
 ├─────────────────────────────────────────────────────────────┤
-│ [Menú] [Vinos] [PGO] [Comande] [Rol] [Café]                 │
+│ [Menú] [Vinos] [PGO] [Comande] [Café]                       │
 └─────────────────────────────────────────────────────────────┘
                     (contenido de la tab activa)
 ```
@@ -134,8 +134,8 @@ un `innerHTML`— es el patrón **park/place** de §5.
 | **Menú** | Servicio del día (Almuerzo · Cena · Bar) con matriz de restricciones por plato | Estático en el JS (`DISHES`, `BAR_DISHES`) | — |
 | **Vinos** | Ficha por vino + sub-vista "Maridajes generales" | Estático (`WINES`, `GUIONES`) | — |
 | **Café** | Manual de bebidas + modo servicio (mesero / barista) | Estático (`COFFEE_DATA`) + Firebase `/orders` | 555 (mesero) · 999 (barista) |
-| **E-Check** | Comandera por mesa · **mapa espacial de asientos** | Firebase `/comandas/{date}/{id}` | 666 |
-| **Viajeros** | Dietas/alergias/restricciones por hab + filtros y contadores | Firebase `/viajeros/current` (read-only; escribe `scripts/sync_viajeros.py`) | — |
+| **E-Check** | Comandera por mesa. **Dos vistas, a propósito distintas:** ingresar (fila de asientos, sin mapa) y entregar (la comanda completa ES el mapa de la mesa) | Firebase `/comandas/{date}/{id}` | 666 |
+| **Viajeros** | Observaciones de dieta por hab, **transcritas verbatim** (los tags derivados quedan en la ficha, no en la portada) | Firebase `/viajeros/current` (read-only; escribe `scripts/sync_viajeros.py`) | — |
 
 Los datos del Café (módulo Service Mode) y los del E-Check tienen su
 propia capa de Firebase. Del header, **staffing** escribe/lee Firebase; la
@@ -225,6 +225,17 @@ intacto. La "comanda completa" es ahora una **vista única** (sin toggle):
 tira de totales por producto para cocina + detalle por asiento con las
 notas/pedidos especiales siempre visibles y sin hora de envío.
 
+**El riel de días se ordena por su etiqueta, no por su posición.** El almuerzo
+y la cena corren desfasados, así que `menuAppDayToDoc()` (vía `MENU_CYCLE_OFFSET`)
+reescribe el *rótulo* de cada botón. Durante un tiempo los botones quedaron en
+orden de app con etiquetas remapeadas y el riel se leía **D3 D4 D1 D2**: buscar
+D2 obligaba a escanear los cuatro, y al cambiar de servicio las etiquetas se
+rebarajaban mientras las posiciones quedaban quietas — el botón bajo el pulgar
+cambiaba de nombre. Se arregla con `b.style.order = Number(label)`, que reordena
+**sólo lo visual** (el riel es grid): `onclick`, `setDay()`, `currentDay`, el
+ancla de fecha y el halo de hoy siguen todos en numeración de app, que es la
+única que circula por el modelo.
+
 ### 3.2 Clima de terraza (módulo `wx`)
 
 Primer elemento bajo el header, **una sola línea**, visible desde
@@ -259,6 +270,43 @@ largo (ráfaga de 3 dígitos + "mañana"): debe ser idéntico en todos.
 Si Open-Meteo cae, el módulo se apaga solo (`WX_ERROR`) y el resto de la
 ops-strip queda intacto. Estado en STATE TOP (`WX_LAT`, `WX_ALT_M`,
 `WX_GUST_*`, `WX_LUNCH_*`, `WX_DATA`); sin Firebase.
+
+---
+
+### 3.3 Comande: dos vistas para dos trabajos (2026-09-16)
+
+El módulo es un **borrador ágil**, no un POS: nada se envía a un sistema de
+caja. Sirve para anotar ordenado y para bajar los platos correctos. De ahí que
+se mida en una sola métrica —**taps y scroll a hora pico**— y que la misma mesa
+se dibuje de dos maneras distintas, cada una para su trabajo.
+
+**Ingresar: fila de asientos, sin mapa.** El mapa espacial costaba 291 px
+medidos a 390 px —más de un tercio del alto útil del iPhone— para resolver algo
+que una fila de números resuelve en 51. La fila va **arriba del buscador y del
+catálogo**: elegir a quién le estás anotando es lo primero que se hace. Con el
+catálogo comprimido (ficha de 66 px a 46 px) la vista entera pasó de **859 px a
+462 px**: entra sin scroll.
+
+**Entregar: la comanda completa ES el mapa.** Los platos y sus indicaciones
+cuelgan del asiento que los pidió, del lado de la mesa donde esa persona está
+sentada. Se mira una vez y se entrega, sin tocar nada.
+
+Tres decisiones que conviene no revertir por accidente:
+
+- **Los botones de la fila son los MISMOS `.cmd-seat` del diagrama**, con la
+  misma clase y el mismo `data-seat`. No es cosmético: `comandaPatchSeatBadges`
+  los alcanza sin saber en qué vista está, y el contador se parcha in-place.
+- **El diagrama usa grid de tres bandas, no globos en x/y absolutos.** Con
+  posiciones exactas, dos vecinos de una mesa redonda se pisan el texto y el bug
+  aparece sólo con ciertos números de comensales. El grid conserva lo que
+  importa —de qué lado estás y en qué orden— y hace el solapamiento imposible.
+- **La indicación especial nunca se esconde ni se resume.** Es la razón por la
+  que la vista de entrega existe. Los nombres de plato tampoco se truncan.
+
+**Cambiar de puesto** es UNA primitiva, intercambiar, porque cubre los dos casos
+reales: dos que se cambian entre sí, y uno que se corre a una silla vacía
+(intercambiar con vacío = mover). El asiento activo sigue a la **persona**, no al
+número.
 
 ---
 
@@ -739,6 +787,28 @@ funciones pueden vivir donde quieras (se hoistean). El estado, no.
 
 ### Sub-patrones recurrentes
 
+**Clavar el ancla: cambiar el alto sin mover lo que el dedo va a tocar.**
+`comandaPinAncla(sel, patch)` mide el Y de un elemento ancla, corre el patch, lo
+vuelve a medir y corrige el scroll en la diferencia. Lo que se corre es todo lo
+demás; el ancla queda quieta en pantalla.
+
+```js
+comandaPinAncla('#cmd-kbd', () => { ESTADO = nuevo; comandaPatchSearchPanel(); });
+```
+
+Dos detalles que no son opcionales:
+
+- **El ancla se pasa por selector y se RE-CONSULTA después del patch.** Guardar
+  el nodo sólo funciona si el patch no lo reemplaza. Cierto para un patch
+  parcial, falso para un `innerHTML` completo — y ahí la medición "después" cae
+  sobre un nodo detached y devuelve cero.
+- **Si el ancla todavía no existe, se ancla a otra cosa.** Al abrir el teclado,
+  el ancla es la barra de búsqueda: lo que está *arriba* de ella no cambia.
+
+Es la versión dinámica de la regla de §6 "nada se mueve bajo el dedo": cuando
+reservar alto fijo cuesta demasiado espacio en blanco, se compensa el scroll.
+
+
 **i18n hook registry** (`__i18nHooks` + `onI18nChange`). En lugar de que
 `setLang()` conozca a cada módulo por nombre, los módulos se registran
 solos. `setLang` itera el array con try/catch — un módulo roto no
@@ -877,8 +947,13 @@ estado abierto/cerrado, y evita el "flash" que destruye gestos.
 | Cualquier `let`/`const` accesible desde `setLang()` o el boot va en STATE TOP | Evita el bug TDZ que halta el script entero. |
 | Cada módulo abre con un comentario de contrato | Path en Firebase, shape del documento, ciclo de vida. Cuando vuelvas en 6 meses, no tienes que grep para entender. |
 | Reuso de componentes entre módulos | El numpad del PIN del Café se reusa en E-Check. Los modales (note edit, full view) comparten estilos. Los timers de "elapsed time" del barista y del E-Check usan la misma lógica de color (gold → naranja → rojo). |
-| Acentos de color como lenguaje visual | Gold = bebida principal · Azul = modifier seleccionado (leche, comensal activo) · Verde = sin alcohol (mocktails) · Rojo claro = "coming soon" (Momentos) · Sienna (`#c75c2a`) = brand mark (ATA) |
+| Acentos de color como lenguaje visual | **Gold (`--gold #BA7517`) = acción primaria y estado activo** · Azul = modifier seleccionado (leche, comensal activo) · Coral/salmón = alergia · Dorado apagado = preferencia de dieta · Iris (`--iris #7F77DD`) = condición médica (diabético, embarazada) · Verde = sin alcohol · Sienna (`#c75c2a`) = brand mark (ATA) |
+| Sobre gold va texto OSCURO (`#15110d`), nunca blanco | Medido: blanco sobre `#BA7517` da 3.72:1 y **no pasa WCAG AA** (pide 4.5); `#15110d` da 5.04:1. Aplica a todo relleno gold — botones primarios, riel de días, segmentos activos. |
+| Un token nombra lo que VALE | `--wine-red` valía `#7F77DD`, que es periwinkle, y encima hacía dos trabajos sin relación (acción primaria y categoría "condiciones"). Un nombre que miente es como se desvía una paleta: nadie audita un token que "ya existe". Se partió en `--gold` para la acción y `--iris` para la categoría. |
+| Un tag DERIVADO no se presenta como hallazgo | Los tags de dieta de PGO salen de regex sobre texto libre sin detección de polaridad (`FOOD_TOPICS`): "prefiere leche de almendras" cae como restricción de frutos secos. Contar algo lo convierte en afirmación, así que a nivel panorama se muestra `tr.obs` **verbatim**; el tag sirve adentro de la ficha, donde tiene contexto. |
 | Todo `position:fixed` anclado arriba suma `env(safe-area-inset-top)` | Bug real (2026-09-15): el toggle de idioma vive FUERA de `.app` a propósito (para que el `fixed` sea relativo al viewport), así que no hereda su padding de safe-area. Con `viewport-fit=cover`, instalada como PWA sus `top:13px` se medían desde el borde físico y caían dentro de la isla: la hora y la batería lo tapaban. **En el navegador el inset vale 0, así que el bug es invisible sin instalar la app** — se descubrió en el iPhone del owner, no en QA. |
+| El contenido que pasa por debajo de la status bar necesita un scrim | Con `viewport-fit=cover` el contenido scrollea bajo la barra del sistema — correcto y buscado. Falta lo que hace toda app nativa: `.app-scrim`, banda difuminada de alto `env(safe-area-inset-top)`, hermana de `.app` (no adentro) y con `z-index` bajo el toggle de idioma. **Mide 0 en el navegador: sólo se ve instalada como PWA**, así que es QA de iPhone, no de headless. |
+| `minmax(0,1fr)` en el track NO alcanza: el item también necesita `min-width:0` | Un item de grid que además es contenedor flex conserva `min-width:auto` y no baja de su `min-content`, así que desborda su columna aunque el track pueda encoger. Costó una tarde en el diagrama de mesa. Vale para cualquier banda de texto largo dentro de un grid. |
 | `overflow-x: clip` (no `hidden`) en html+body para matar el side-scroll en iOS | Bug real (2026-06-22): `hidden` no impide el paneo lateral en iOS Safari cuando un descendiente desborda por pocos px. `clip` no crea contenedor scrolleable ni admite pan táctil. Se deja `hidden` antes como fallback. El scroll-x propio de `.main-tabs` (su `overflow-x:auto`) no se ve afectado. |
 
 ---
@@ -1077,6 +1152,18 @@ hecha: falta que sobreviva a un reload.
 
 Hay decisiones conscientes de prototipo. Listarlas explícitas:
 
+- **Tab ROL oculta desde 2026-09-16.** No cumple función operativa: el turno
+  activo ya se lee en el panel de staffing del header, así que el lector semanal
+  duplicaba información sin agregar una decisión. Se ocultó el **acceso**, no el
+  módulo — `rolEnter()`, el diccionario y `scripts/sync_rol.py` siguen intactos
+  y el header sigue comiendo de `/staffing`. Revivirla = borrar el atributo
+  `hidden` del botón, nada más. Efecto lateral buscado: con cinco tabs la tira
+  se acorta y deja de cruzarse con la isla flotante del selector de idioma.
+- **La sopa no entra al catálogo del Comande.** Con el buffet 2026 el almuerzo
+  es autoservicio, así que la sopa la toma el viajero y nunca va en una comanda.
+  Sólo afecta al almuerzo (`MENU_SOPAS` se mapea a `'Almuerzo'`); en cena ese
+  lugar lo ocupa ENTRADA, con opciones reales.
+
 - ~~**La app no pide credencial.**~~ **Saldado en 2026-09**: el gate de
   cuatro dígitos (§4.4) es la clave del salón que esta deuda pedía, una vez
   por dispositivo y sin fricción recurrente. Queda la deuda menor de que un
@@ -1239,10 +1326,16 @@ está en exploración** — y cada una tiene su URL de Vercel distinta.
    justo cuando el garzón va a tocarlas. Para esos módulos hay que recorrer
    *todos* los estados, no sólo el feliz: cargando · sin red · cada umbral · y
    el peor caso de largo del texto. El Y del vecino debe ser idéntico en todos.
-8. **Screenshots headless con viewport real.** `chrome --headless=new` ignora
-   `--window-size` para el layout y renderiza más ancho de lo pedido, lo que
-   simula desbordes que no existen. La vuelta: un wrapper con un `<iframe>` de
-   ancho fijo (375 px) apuntando a la página, y screenshot del wrapper.
+8. **Screenshots y mediciones headless con viewport real.** `chrome
+   --headless=new` en Windows tiene un **piso de ~512 px** de viewport: pedir
+   `--window-size=390` renderiza a 512 y, peor, **las media queries de móvil no
+   disparan** — se mide un layout que en el teléfono no existe. La vuelta: un
+   wrapper con un `<iframe width="390">` apuntando a la página. El iframe evalúa
+   sus propias media queries contra su ancho, así que adentro `innerWidth` vale
+   390 de verdad. Para *leer* las mediciones desde el wrapper hace falta
+   `--allow-file-access-from-files`; sin eso, `contentDocument` es opaco. El
+   patrón que funciona: la página interna escribe el resultado en su
+   `document.title`, el wrapper lo copia al suyo, y se lee con `--dump-dom`.
 9. La **prueba real** sigue siendo cargar la página (server local o preview de Vercel) y, para lo que solo se ve en iOS, el QA del owner desde iPhone en la URL fija de staging.
 
 **Al cerrar:**
