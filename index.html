@@ -2257,6 +2257,23 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-detail-meta .vj-meta-out-today { color:#e08663; }
 .vj-detail-tags { margin-top:5px; }
 .vj-detail-obs { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-secondary); margin-top:5px; line-height:1.4; }
+/* Exploraciones (columnas `exp` e `historia` del Reporte Geos, 2026-09-16).
+   Mono y discreto: son CONTEXTO, no restricciones — no pueden competir con los
+   chips de alergia, que es lo único que cambia qué se sirve. El turno en gold
+   porque es el dato accionable de la línea ("vuelve en la tarde"). */
+.vj-exp { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px;
+  letter-spacing:0.04em; color:var(--text-secondary); margin-top:5px; }
+.vj-exp-lbl { color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.12em;
+  font-size:9px; margin-right:6px; }
+.vj-exp-turno { color:var(--gold); margin-right:5px; }
+.vj-hist { display:flex; flex-wrap:wrap; align-items:baseline; gap:3px 8px; margin-top:5px; }
+.vj-hist-lbl { font-family:'Courier Prime','Courier New',monospace; font-size:9px;
+  letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); }
+.vj-hist-i { font-family:'Courier Prime','Courier New',monospace; font-size:10px;
+  color:var(--text-tertiary); }
+.vj-hist-i em { font-style:normal; opacity:0.62; margin-left:4px; }
+.vj-hist-mas { font-family:'Courier Prime','Courier New',monospace; font-size:10px;
+  color:var(--text-tertiary); opacity:0.7; }
 
 /* NOTAS DEL EQUIPO — el dato flexible. La distinción tipográfica no es adorno:
    lo que viene de PGO va en Cormorant itálica (.vj-detail-obs, voz del reporte)
@@ -4416,6 +4433,8 @@ const UI = {
     // cumplida), no a todo el que sale hoy. El texto tiene que decir eso.
     // EN/PT propuestas, a revisar.
     vjYaSalio:'ya salió', vjYaSalieron:'ya salieron',
+    // Exploraciones (2026-09-16) — EN/PT propuestas, a revisar.
+    vjExpHoy:'hoy', vjHist:'ya hizo',
     vjChipRevisar:'revisar observación',
     // Aviso de día dudoso en la vista Comedor — EN/PT propuestas, a revisar.
     cmdDiaDudoso:'El detalle por grupo no cuadra con los cubiertos de hoy que informa PGO: puede ser de otro día. Los totales de arriba sí son de hoy.',
@@ -4645,6 +4664,7 @@ const UI = {
     vjSaleHoy:'leaves today', vjSaleManana:'leaves tomorrow', vjLlegaHoy:'arrived today',
     vjVerSalientes:'show departures', vjOcultarSalientes:'hide departures',
     vjYaSalio:'already left', vjYaSalieron:'already left',
+    vjExpHoy:'today', vjHist:'already did',
     vjChipRevisar:'check note',
     cmdDiaDudoso:"The per-group breakdown doesn't match today's covers reported by PGO: it may be from another day. The totals above are today's.",
     vjSyncOtherDay:'NOT TODAY’S · refreshing',
@@ -4873,6 +4893,7 @@ const UI = {
     vjSaleHoy:'sai hoje', vjSaleManana:'sai amanhã', vjLlegaHoy:'chegou hoje',
     vjVerSalientes:'ver saídas', vjOcultarSalientes:'ocultar saídas',
     vjYaSalio:'já saiu', vjYaSalieron:'já saíram',
+    vjExpHoy:'hoje', vjHist:'já fez',
     vjChipRevisar:'verificar observação',
     cmdDiaDudoso:'O detalhe por grupo não bate com os talheres de hoje informados pelo PGO: pode ser de outro dia. Os totais acima são de hoje.',
     vjSyncOtherDay:'NÃO É DE HOJE · atualizando',
@@ -8356,7 +8377,10 @@ setInterval(() => wxFetch(true), WX_REFRESH_MS);
 // Path:  /viajeros/current (un solo doc, sobrescrito por cada sync)
 // Shape: { date:'YYYY-MM-DD', updatedAt, source, habs:{ '01':[traveler…] } }
 // Traveler: { id, pid, nombre, edad, nac, nacName?, grupo, in, out, tags[], obs,
-//             revisar?, cumple?, inAt?, outAt?, foto? }
+//             revisar?, cumple?, inAt?, outAt?, foto?,
+//             exp?: {txt, turno},            ← exploración de HOY (Reporte Geos)
+//             historia?: [{n, t, d}],        ← lo que ya hizo: nombre, turno, DD-MM
+//             historiaTxt?: "…" }            ← crudo, cuando el formato no parseó
 // Escribe solo scripts/sync_viajeros.py (seed hoy; Excel Dietas+Geos fase 2).
 // Read-only en la app, sin PIN. Estado y VJ_TAGS viven en STATE TOP.
 // "Menor" se deriva de edad ≤ VIAJEROS_NINO_MAX (17 = menor de edad); "sale
@@ -8806,6 +8830,47 @@ function vjOutToggleLine(ocultos){
     : `${ocultos} ${ocultos > 1 ? t('vjYaSalieron') : t('vjYaSalio')} · ${t('vjVerSalientes')}`;
   return `<button class="vj-out-toggle" onclick="vjToggleShowOut(event)">${txt}</button>`;
 }
+// ── Exploraciones ───────────────────────────────────────────────────────────
+// `exp` (la de hoy, con turno) e `historia` (lo ya hecho) salen de dos columnas
+// del Reporte Geos que el sync descartaba hasta el 2026-09-16.
+//
+// Se dibujan en dos lugares DISTINTOS de la ficha a propósito: la de hoy sube
+// junto a la logística de la estadía —"vuelve en la tarde" cambia a qué hora
+// come—, y el histórico baja al final, porque es material de conversación y no
+// puede empujar las restricciones fuera de la pantalla.
+function vjExpHtml(tr){
+  const e = tr.exp;
+  if (!e || !(e.txt || e.turno)) return '';
+  return `<div class="vj-exp"><span class="vj-exp-lbl">${t('vjExpHoy')}</span>${
+    e.turno ? `<span class="vj-exp-turno">${vjEsc(e.turno)}</span>` : ''}${vjEsc(e.txt || '')}</div>`;
+}
+// Días hacia atrás desde el día operativo. PGO da 'DD-MM' sin año: una fecha
+// que cae en el futuro es del año pasado (estadía a caballo del año nuevo).
+function vjHistDias(h){
+  const p = String((h && h.d) || '').split('-').map(Number);
+  if (!p[0] || !p[1]) return 9999;
+  const base = new Date(vjDiaOperativo() + 'T12:00');
+  let f = new Date(base.getFullYear(), p[1] - 1, p[0], 12);
+  if (f > base) f = new Date(base.getFullYear() - 1, p[1] - 1, p[0], 12);
+  return Math.round((base - f) / 86400000);
+}
+const VJ_HIST_MAX = 4;   // lo más reciente primero; el resto se cuenta
+function vjHistHtml(tr){
+  const lista = Array.isArray(tr.historia) ? tr.historia.slice() : [];
+  // Formato que el script no supo parsear: se muestra crudo. Nunca nada.
+  if (!lista.length){
+    return tr.historiaTxt
+      ? `<div class="vj-hist"><span class="vj-hist-lbl">${t('vjHist')}</span><span class="vj-hist-i">${vjEsc(tr.historiaTxt)}</span></div>`
+      : '';
+  }
+  lista.sort((a, b) => vjHistDias(a) - vjHistDias(b));
+  const muestra = lista.slice(0, VJ_HIST_MAX);
+  const resto = lista.length - muestra.length;
+  return `<div class="vj-hist"><span class="vj-hist-lbl">${t('vjHist')}</span>${
+    muestra.map(h => `<span class="vj-hist-i">${vjEsc(h.n || '')}${
+      h.t || h.d ? `<em>${vjEsc([h.t, h.d].filter(Boolean).join(' '))}</em>` : ''}</span>`).join('')
+    }${resto > 0 ? `<span class="vj-hist-mas">+${resto}</span>` : ''}</div>`;
+}
 function vjHasAlergia(tr){ return (tr.tags || []).some(x => x.indexOf('alergia-') === 0); }
 // Cualquier cosa que condicione lo que se le puede servir: alergia, dieta,
 // condición, o una observación que quedó por revisar. El banner decía "3
@@ -8845,8 +8910,15 @@ function vjMatchesFilter(tr){
 function vjMatchesSearch(tr){
   const q = vjFold(VIAJEROS_SEARCH.trim());
   if (!q) return true;
+  // Las exploraciones también se buscan: "cejar" encuentra a quien fue hoy y a
+  // quien fue anteayer. Es la misma idea que ya tienen las notas — un dato que
+  // se guarda y no se puede buscar sirve la mitad.
+  const exp = (tr.exp && tr.exp.txt) || '';
+  const hist = (Array.isArray(tr.historia) ? tr.historia.map(h => h && h.n).join(' ') : '')
+             + ' ' + (tr.historiaTxt || '');
   return vjFold(tr.nombre).indexOf(q) >= 0 || vjFold(tr.grupo).indexOf(q) >= 0 ||
-         String(tr.hab).indexOf(q) >= 0 || !!vjNotaQueCalza(tr, q);
+         String(tr.hab).indexOf(q) >= 0 || !!vjNotaQueCalza(tr, q) ||
+         vjFold(exp).indexOf(q) >= 0 || vjFold(hist).indexOf(q) >= 0;
 }
 // Las notas también se buscan: sin esto, escribir "syrah" no encuentra a quien
 // toma syrah, y guardar el dato pierde la mitad de la gracia. Devuelve la nota
@@ -9348,8 +9420,15 @@ function vjNotasBloque(tr){
     </div>`;
 }
 
-function vjTravelerRow(tr, today){
+// `opts.hist:false` esconde el histórico de exploraciones. Lo usa el Comande:
+// ahí la pregunta es "qué le puedo servir a esta mesa", y hasta cuatro líneas
+// de conversación por persona empujan las restricciones fuera de pantalla. La
+// exploración de HOY sí va en las tres, porque dice a qué hora vuelve el
+// viajero, y eso es operativo. Para mostrarlo también en el Comande: borrar el
+// `{hist:false}` de comandaRenderRoomsPanel y comandaRenderFullRooms.
+function vjTravelerRow(tr, today, opts){
   today = today || vjTodayIso();
+  const verHist = !opts || opts.hist !== false;
   const outCls  = tr.out === today ? 'vj-meta-out-today' : '';
   const inToday = tr.in === today ? ` · ${t('vjLlegaHoy')}` : '';
   // HORA REAL de check-in/out (PGO la entrega sólo para las habs con
@@ -9364,8 +9443,10 @@ function vjTravelerRow(tr, today){
       <div class="vj-detail-main">
         <div class="vj-detail-name">${vjEsc(tr.nombre)}${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
         <div class="vj-detail-meta">${tr.edad ?? '—'} ${t('vjYears')} · ${vjEsc(vjNacTexto(tr))} · IN ${vjShortDate(tr.in)}${hIn ? ' ' + hIn : ''} → <span class="${outCls}">OUT ${vjShortDate(tr.out)}${hOut ? ' ' + hOut : ''}${tr.out === today ? ` · ${t('vjSaleHoy')}` : ''}</span>${inToday}</div>
+        ${vjExpHtml(tr)}
         <div class="vj-detail-tags">${vjCumpleChip(tr)}${vjTagChips(tr)}</div>
         ${(tr.obs || '').trim() ? `<div class="vj-detail-obs">${vjEsc(tr.obs)}</div>` : ''}
+        ${verHist ? vjHistHtml(tr) : ''}
         ${vjNotasBloque(tr)}
       </div>
     </div>`;
@@ -13029,7 +13110,7 @@ function comandaRenderRoomsPanel(c){
       // En el Comande importan los que están: los salientes van ocultos.
       const vis   = vjVisibles(list);
       const inner = (list && list.length)
-        ? vis.rows.map(tr => vjTravelerRow(tr, today)).join('') + vjOutToggleLine(vis.ocultos)
+        ? vis.rows.map(tr => vjTravelerRow(tr, today, { hist:false })).join('') + vjOutToggleLine(vis.ocultos)
         : `<div class="cmd-room-nodata">${t('cmdRoomNoData')}</div>`;
       return `
         <div class="cmd-room-card">
@@ -13063,7 +13144,7 @@ function comandaRenderFullRooms(c){
     const grupo = (list && list[0] && list[0].grupo) || '';
     const vis   = vjVisibles(list);
     const inner = (list && list.length)
-      ? vis.rows.map(tr => vjTravelerRow(tr, today)).join('') + vjOutToggleLine(vis.ocultos)
+      ? vis.rows.map(tr => vjTravelerRow(tr, today, { hist:false })).join('') + vjOutToggleLine(vis.ocultos)
       : `<div class="cmd-room-nodata">${t('cmdRoomNoData')}</div>`;
     return `
       <div class="cmd-room-card">

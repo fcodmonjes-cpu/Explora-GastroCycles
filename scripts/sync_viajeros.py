@@ -26,6 +26,9 @@ Escribe UN solo doc (sobrescrito por cada sync, como staffing):
     updatedAt: <ms epoch>,
     source: "seed" | "excel",
     habs: { "01": [ { id, pid, nombre, edad, nac, nacName?, grupo,
+                      exp: { txt, turno }?,           ← exploración de HOY
+                      historia: [ {n, t, d} ]?,       ← lo que ya hizo (turno + DD-MM)
+                      historiaTxt: "…"?,              ← crudo, si no se pudo parsear
                       in: "YYYY-MM-DD", out: "YYYY-MM-DD",
                       tags: ["alergia-mariscos", ...],   ← taxonomía canónica
                       obs: "texto original del reporte",
@@ -364,7 +367,7 @@ def pid_de(nombre):
 
 
 def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None, cumples=None,
-              nacnames=None):
+              nacnames=None, expl=None):
     habs = {}
     # Homónimos simultáneos comparten notas. En un lodge de 90 personas es casi
     # imposible, pero "casi" no alcanza si alguien escribe una restricción: se
@@ -430,6 +433,11 @@ def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None, cu
         nn = (nacnames or {}).get(norm_key(nombre))
         if nn and nn.upper() != str(nac or "").upper():
             traveler["nacName"] = nn
+        # Exploración del día e histórico, del Reporte Geos. Se copian tal cual
+        # las claves que existan: si un día el formato cambia y sólo sobrevive
+        # historiaTxt, la app igual tiene algo que mostrar.
+        for k, v in ((expl or {}).get(norm_key(nombre)) or {}).items():
+            traveler[k] = v
         for k in ("inFlightAt", "inFlight", "outFlightAt", "outFlight"):
             if h.get(k):
                 traveler[k] = h[k]
@@ -2575,8 +2583,24 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
             print(f"[sync-viajeros] roster por API falló ({type(e).__name__}: {e}); "
                   "vuelvo al Reporte Geos por HTML.")
             roster_api, nacnames = None, {}
+        # El Geos se lee SIEMPRE desde el 2026-09-16, no sólo como respaldo: sus
+        # columnas `exp` e `historia` son la exploración del día y el histórico
+        # del viajero, y no existen en ninguna otra fuente que hoy consultemos
+        # (la API las tiene, pero atadas por travellersIds, que no guardamos).
+        # Cuesta una navegación más por corrida; es el precio acordado.
+        #
+        # Que falle NO debe tumbar el sync cuando el roster ya vino por API: se
+        # pierden exp/historia y el resto sigue igual. Si el roster NO vino, en
+        # cambio, el Geos es el corazón y su SystemExit tiene que propagar.
         if roster_api is None:
             geos = _pgo_read_report(page, PGO_GEOS_PATH, fecha, "geos" if dump else None)
+        else:
+            try:
+                geos = _pgo_read_report(page, PGO_GEOS_PATH, fecha, "geos" if dump else None)
+            except Exception as e:
+                print(f"[sync-viajeros] Aviso: sin exploraciones — no pude leer el "
+                      f"Reporte Geos ({type(e).__name__}: {e})")
+                geos = []
         dietas = _pgo_read_report(page, PGO_DIETAS_PATH, fecha, "dietas" if dump else None)
         # Horas reales de movimiento por GraphQL (enfoque híbrido: el roster
         # sigue saliendo del HTML, que funciona; esto es lo nuevo). Si falla,
@@ -2687,6 +2711,11 @@ PGO_GEOS_COLS = {
     # mientras que Dietas parece listar sólo el movimiento del día — por eso se
     # usa como segunda fuente de observaciones (ver parse_pgo).
     "comentario geos": "obs_geos", "comentario": "obs_geos",
+    # Descubiertas con --explore el 2026-09-15. No estaban documentadas en
+    # ninguna parte del repo y son las dos que el salón pedía: `exp` es la
+    # exploración de HOY con su turno, `historia` lo que el viajero YA hizo.
+    "exp": "exp", "exploracion": "exp", "excursion": "exp",
+    "historia": "historia", "historial": "historia",
 }
 PGO_DIET_COLS = {
     "hab": "hab", "nombre": "nombre", "viajero": "nombre",
@@ -2806,6 +2835,84 @@ def cruzar_obs_comedor(rows, comedor, date_str=None):
         print(f"[sync-viajeros] comedor → obs: {saltadas} candidatos salteados "
               "(se van hoy; el detalle del comedor es de mañana)")
     return [tuple(r) for r in rows], sumadas
+
+
+# ── Exploraciones (columnas `exp` e `historia` del Reporte Geos) ─────────────
+# Formatos observados el 2026-09-15 sobre 100 filas reales:
+#   exp       "AM Valle de la Luna"          77/100 con dato · 65 con AM/PM
+#   historia  "El Valle Salado-2 (PM 12-09)" 75/100 con dato · 75 con AM/PM
+#
+# Los parsers son DEFENSIVOS a propósito: el texto crudo se guarda siempre, y
+# lo parseado se suma al lado. Un formato que no calce degrada a mostrar el
+# crudo, nunca a mostrar nada — es el mismo criterio que `revisar` con las
+# observaciones de dieta. Estos formatos se dedujeron de muestras ENMASCARADAS
+# (el sondeo oculta los nombres propios), así que conviene desconfiar de ellos.
+_RX_EXP_TURNO = re.compile(r"^\s*(AM|PM)\b[\s.:-]*", re.I)
+# Cada entrada del histórico termina en "(TURNO DD-MM)". El nombre es todo lo
+# que va antes, sin comerse el paréntesis anterior: por eso el no-codicioso.
+_RX_HIST_ITEM = re.compile(r"([^()]+?)\s*\(\s*(AM|PM)\s+(\d{1,2}-\d{1,2})\s*\)", re.I)
+
+
+def parse_exp(texto):
+    """'AM Valle de la Luna' → {'txt': 'Valle de la Luna', 'turno': 'AM'}."""
+    t = fix_mojibake(texto or "").strip()
+    if not t:
+        return None
+    m = _RX_EXP_TURNO.match(t)
+    out = {"txt": _RX_EXP_TURNO.sub("", t).strip() if m else t}
+    if m:
+        out["turno"] = m.group(1).upper()
+    return out if out["txt"] or out.get("turno") else None
+
+
+def parse_historia(texto):
+    """'El Valle Salado-2 (PM 12-09)' → [{'n':…, 't':'PM', 'd':'12-09'}, …].
+
+    Devuelve (lista, crudo). La lista puede venir vacía con crudo no vacío: ahí
+    el formato cambió y la app muestra el texto tal cual en vez de nada.
+    """
+    t = fix_mojibake(texto or "").strip()
+    if not t:
+        return [], ""
+    items = []
+    for nombre, turno, fecha in _RX_HIST_ITEM.findall(t):
+        n = nombre.strip(" ·,;-")
+        if n:
+            items.append({"n": n, "t": turno.upper(), "d": fecha})
+    return items, t
+
+
+def exploraciones_por_nombre(geos_rows):
+    """Filas del Geos → {nombre_normalizado: {'exp':…, 'historia':…, 'historiaTxt':…}}.
+
+    Se cruza por NOMBRE porque es lo único que comparten el Geos y el roster de
+    la API. Por habitación sería un error conocido: una hab que se reocupa el
+    mismo día le pegaría las exploraciones del que se fue al que llega.
+    """
+    out = {}
+    for raw in geos_rows or []:
+        r = _remap(raw, PGO_GEOS_COLS)
+        nombre = (r.get("nombre") or "").strip()
+        if not nombre:
+            continue
+        datos = {}
+        exp = parse_exp(r.get("exp"))
+        if exp:
+            datos["exp"] = exp
+        hist, crudo = parse_historia(r.get("historia"))
+        if hist:
+            datos["historia"] = hist
+        elif crudo:
+            datos["historiaTxt"] = crudo      # formato inesperado: no se pierde
+        if datos:
+            out[norm_key(fix_mojibake(nombre))] = datos
+    con_exp  = sum(1 for d in out.values() if d.get("exp"))
+    con_hist = sum(1 for d in out.values() if d.get("historia") or d.get("historiaTxt"))
+    sin_parse = sum(1 for d in out.values() if d.get("historiaTxt"))
+    print(f"[sync-viajeros] exploraciones: {con_exp} con exploración del día · "
+          f"{con_hist} con histórico"
+          + (f" · ⚠ {sin_parse} histórico sin parsear (se muestra crudo)" if sin_parse else ""))
+    return out
 
 
 def parse_roster_con_dietas(roster_rows, dietas_rows):
@@ -3080,7 +3187,8 @@ def main():
         if n_com:
             print(f"[sync-viajeros] comedor → obs: {n_com} observaciones por persona sumadas")
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
-        doc = build_doc(rows, date_str, "pgo", horas, totales, comedor, cumples, nacnames)
+        expl = exploraciones_por_nombre(geos)
+        doc = build_doc(rows, date_str, "pgo", horas, totales, comedor, cumples, nacnames, expl)
     else:
         doc = build_doc(SEED_ROWS, REPORT_DATE, "seed")
 
