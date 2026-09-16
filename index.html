@@ -76,9 +76,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    (will-change:transform creaba un containing block en iOS Safari). */
 
 :root {
-  --wine-red: #7F77DD;
-  --wine-red-light: #2a2660;
-  --wine-red-dark: #a9a0f0;
+  /* (2026-09-16) Se llamaba --wine-red y valía #7F77DD, que es periwinkle: el
+     nombre mentía sobre su propio valor, y así es como se desvía una paleta.
+     Además hacía DOS trabajos sin relación entre sí — pintaba la acción
+     primaria (Agregar, Enviar, OK del numpad) y pintaba la categoría
+     "condiciones" de PGO. Se partió: la acción primaria pasó al gold de la
+     paleta y el periwinkle se quedó SÓLO con el trabajo semántico, donde sí
+     rinde: es un tercer matiz claramente distinto del coral de alergias y del
+     dorado de preferencias. -strong en vez de -dark porque es más CLARO que el
+     base, que es lo que el nombre viejo tampoco decía. */
+  --iris: #7F77DD;
+  --iris-light: #2a2660;
+  --iris-strong: #a9a0f0;
   --gold: #BA7517;
   --gold-light: #3a2a05;
   --teal: #1D9E75;
@@ -107,8 +116,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     --text: #f0eeea;
     --text-secondary: #aaa;
     --text-tertiary: #777;
-    --wine-red-light: #2a2660;
-    --wine-red-dark: #a9a0f0;
+    --iris-light: #2a2660;
+    --iris-strong: #a9a0f0;
     --gold-light: #3a2a05;
     --teal-light: #0a2e20;
     --coral-light: #3a1a0a;
@@ -175,7 +184,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .desserts-form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
 .desserts-form-btn { padding: 7px 14px; border-radius: var(--radius-md); font-size: 12px; cursor: pointer; border: 0.5px solid var(--border-md); background: transparent; color: var(--text-secondary); transition: all .15s; touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent; }
 .desserts-form-btn:hover { color: var(--text); }
-.desserts-form-btn.primary { background: var(--wine-red); border-color: var(--wine-red); color: white; }
+.desserts-form-btn.primary { background: var(--gold); border-color: var(--gold); color: #15110d; }
 .desserts-form-btn.primary:hover { opacity: 0.85; }
 
 /* Servicios (Postres + 86) — fila justificada cuando ambos están vacíos (cada
@@ -355,9 +364,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 @media (hover:hover){ .cmd-btn:hover { color:var(--text); } }
 .cmd-btn:not(:disabled):active { color:var(--text); background:var(--gold-light); border-color:var(--gold); transform:scale(0.97); }
 .cmd-btn:disabled { opacity:0.35; cursor:default; }
-.cmd-btn.primary { background:var(--wine-red); border-color:var(--wine-red); color:white; }
+.cmd-btn.primary { background:var(--gold); border-color:var(--gold); color:#15110d; }
 @media (hover:hover){ .cmd-btn.primary:hover { opacity:0.88; } }
-.cmd-btn.primary:not(:disabled):active { background:var(--wine-red); border-color:var(--wine-red); color:white; opacity:0.82; transform:scale(0.97); }
+.cmd-btn.primary:not(:disabled):active { background:var(--gold); border-color:var(--gold); color:#15110d; opacity:0.82; transform:scale(0.97); }
 
 /* Active mesa view */
 .cmd-active-header { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:1rem; }
@@ -954,7 +963,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 /* Reference tabs: fila horizontal scrollable con underline dorado — el mismo
    sistema visual que los section-tabs del Checklist, así no hay nada nuevo
-   que aprender. La cuadrícula 3×2 con fondo violeta (--wine-red) rompía la
+   que aprender. La cuadrícula 3×2 con fondo violeta (el viejo --wine-red) rompía la
    identidad editorial del header; esto la recupera. La última tab (Rol) cae
    fuera del borde derecho y se descubre al hacer scroll — lo que permite
    quitarle el PIN gate (menos fricción, ver módulo Rol). El scroll horizontal
@@ -975,7 +984,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    por eso NO se toca acá — los overrides van scopeados a .main-tabs más abajo. */
 .tab { padding: 8px 6px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; text-align: center; }
 .tab:hover { background: var(--bg-secondary); }
-.tab.active { background: var(--wine-red); color: white; border-color: var(--wine-red); font-weight: 500; }
+.tab.active { background: var(--gold); color: #15110d; border-color: var(--gold); font-weight: 500; }
 /* Override scopeado: las tabs principales son editoriales (underline), no tarjetas. */
 .main-tabs .tab { flex: 0 0 auto; background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0; /* 13px->10px de padding lateral: con 13 la tira medía 377px contra 358 de
      ancho y se volvía scroller. Con 10 entra en UNA fila en los tres idiomas
@@ -984,7 +993,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .main-tabs .tab.active { background: none; border-color: transparent; border-bottom-color: #c07d2a; color: #c07d2a; font-weight: 400; box-shadow: none; }
 /* (2026-06-09) Las clases .tab-pairings / .tab-premium quedaron sin uso al
    reemplazar la fila de filtros de Vinos por .wine-nav-btn (ver más abajo).
-   Se removieron — usaban --wine-red (violeta), fuera de la paleta gold. */
+   Se removieron — usaban el viejo --wine-red (violeta), fuera de la paleta
+   gold. Desde 2026-09-16 ese token ya no pinta acciones: ver :root. */
 
 .search-bar { position: relative; margin-bottom: 1.25rem; }
 /* Font-size must be ≥ 16px to prevent iOS Safari from auto-zooming when the
@@ -1000,7 +1010,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .day-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 1.5rem; }
 .day-btn { padding: 7px 6px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; text-align: center; }
 .day-btn:hover { background: var(--bg-secondary); }
-.day-btn.active { background: var(--gold); color: white; border-color: var(--gold); font-weight: 500; }
+.day-btn.active { background: var(--gold); color: #15110d; border-color: var(--gold); font-weight: 500; }
 @keyframes today-glow {
   0%, 100% { box-shadow: 0 0 0 1px rgba(14,165,233,0.25), 0 0 7px 1px rgba(14,165,233,0.1); }
   50%       { box-shadow: 0 0 0 1px rgba(14,165,233,0.65), 0 0 14px 4px rgba(14,165,233,0.28); }
@@ -1259,7 +1269,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .wine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .wine-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; cursor: pointer; transition: border-color 0.15s; }
 .wine-card:hover { border-color: var(--border-md); }
-.wine-card.selected { border-color: var(--wine-red); border-width: 1.5px; grid-column: 1 / -1; }
+.wine-card.selected { border-color: var(--gold); border-width: 1.5px; grid-column: 1 / -1; }
 .wine-card.selected .wine-aroma { -webkit-line-clamp: unset; overflow: visible; }
 .wine-expanded { margin-top: 14px; padding-top: 14px; border-top: 0.5px solid var(--border); animation: panelIn 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
 /* Badge de tipo (2026-06-09): tratamiento monospace apagado, en vez del arcoíris
@@ -1353,7 +1363,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:1.5rem; }
 .cf-tab-btn { background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:9px 8px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; white-space:nowrap; text-align:center; transition:background .15s,color .15s,border-color .15s; }
 .cf-tab-btn:hover { background:var(--bg-secondary); color:#c07d2a; }
-.cf-tab-btn.active { background:var(--wine-red); border-color:var(--wine-red); color:#fff; font-weight:500; }
+.cf-tab-btn.active { background:var(--gold); border-color:var(--gold); color:#15110d; font-weight:500; }
 .cf-panel { display:none; } .cf-panel.active { display:block; }
 /* ── ORDER SYSTEM ────────────────────────────────────────────── */
 .cf-service-tab-btn { grid-column:1/-1; background:transparent; border:0.5px solid rgba(192,125,42,0.35); border-radius:var(--radius-md); padding:9px 8px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(192,125,42,0.65); cursor:pointer; text-align:center; transition:all .15s; margin-top:2px; }
@@ -1369,7 +1379,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-numpad-key { padding:15px 8px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text); font-size:18px; cursor:pointer; text-align:center; transition:background .1s; font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; touch-action:manipulation; user-select:none; }
 .cf-numpad-key:active { background:var(--bg-secondary); }
 .cf-numpad-key.cf-nk-del { color:var(--text-tertiary); font-size:15px; }
-.cf-numpad-key.cf-nk-ok { background:var(--wine-red); color:#fff; border-color:var(--wine-red); font-size:20px; }
+.cf-numpad-key.cf-nk-ok { background:var(--gold); color:#15110d; border-color:var(--gold); font-size:20px; }
 .cf-waiter-header { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; color:var(--gold); margin-bottom:0.2rem; }
 .cf-waiter-sub { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:1.25rem; }
 .cf-drink-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:1rem; }
@@ -1383,7 +1393,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-order-textarea { width:100%; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--text); font-size:16px; padding:7px 12px; resize:none; outline:none; box-sizing:border-box; font-family:inherit; line-height:1.35; }
 .cf-order-textarea:focus { border-color:var(--gold); }
 .cf-order-row { margin-bottom:0.9rem; }
-.cf-submit-btn { width:100%; padding:13px; border-radius:var(--radius-md); border:none; background:var(--wine-red); color:#fff; font-size:13px; font-weight:500; letter-spacing:0.04em; cursor:pointer; transition:opacity .15s; margin-top:0.25rem; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
+.cf-submit-btn { width:100%; padding:13px; border-radius:var(--radius-md); border:none; background:var(--gold); color:#15110d; font-size:13px; font-weight:500; letter-spacing:0.04em; cursor:pointer; transition:opacity .15s; margin-top:0.25rem; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
 .cf-submit-btn:hover { opacity:0.85; }
 .cf-submit-btn:disabled { opacity:0.38; cursor:default; }
 /* Cart (multi-item order builder) */
@@ -1406,7 +1416,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-cart-btn.cf-cb-rm { color:#d68a8a; border-color:rgba(214,138,138,0.32); font-size:14px; }
 .cf-cart-btn.cf-cb-rm:hover { background:rgba(214,138,138,0.08); }
 /* "Add to order" button — dashed blue accent so it doesn't compete with
-   the wine-red final Submit. */
+   the gold final Submit. */
 .cf-add-item-btn { width:100%; padding:11px; border-radius:var(--radius-md); border:0.5px dashed rgba(78,160,255,0.5); background:transparent; color:rgba(158,201,255,0.9); font-size:12px; letter-spacing:0.04em; cursor:pointer; transition:all .15s; margin-top:4px; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
 .cf-add-item-btn:hover { background:rgba(78,160,255,0.08); border-color:rgba(78,160,255,0.75); color:#bfdaff; }
 .cf-add-item-btn:active { transform:scale(0.99); }
@@ -2180,7 +2190,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-chip .vj-chip-n { font-family:'Courier Prime','Courier New',monospace; font-size:10px; opacity:0.75; }
 .vj-chip.alergia { color:#e08663; border-color:rgba(216,90,48,0.45); }
 .vj-chip.dieta   { color:#cfa14a; border-color:rgba(186,117,23,0.45); }
-.vj-chip.cond    { color:var(--wine-red-dark); border-color:rgba(127,119,221,0.45); }
+.vj-chip.cond    { color:var(--iris-strong); border-color:rgba(127,119,221,0.45); }
 /* REVISAR como chip-filtro, no sólo como marca en la ficha. Es la red de
    seguridad del módulo (obs que dice algo y ningún tag cubrió) y hasta hoy
    había que toparse con ella abriendo habitaciones. Va primero en la fila y
@@ -2189,7 +2199,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-chip.revisar.active { background:var(--coral-light); }
 .vj-chip.alergia.active { background:var(--coral-light); }
 .vj-chip.dieta.active   { background:var(--gold-light); }
-.vj-chip.cond.active    { background:var(--wine-red-light); }
+.vj-chip.cond.active    { background:var(--iris-light); }
 
 /* Grilla de habitaciones (vista general). */
 .vj-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
@@ -2202,7 +2212,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-av { width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-family:'Courier Prime','Courier New',monospace; font-size:10px; color:var(--text); border:0.5px solid var(--border-md); flex:0 0 auto; overflow:hidden; }
 .vj-av img { width:100%; height:100%; object-fit:cover; }
 .vj-av-0 { background:var(--gold-light); }
-.vj-av-1 { background:var(--wine-red-light); }
+.vj-av-1 { background:var(--iris-light); }
 .vj-av-2 { background:var(--teal-light); }
 .vj-av-3 { background:var(--coral-light); }
 .vj-av-4 { background:var(--bg-secondary); }
@@ -2210,7 +2220,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-flag { font-size:9px; letter-spacing:0.08em; text-transform:uppercase; }
 .vj-flag.alergia { color:#e08663; }
 .vj-flag.dieta   { color:#cfa14a; }
-.vj-flag.cond    { color:var(--wine-red-dark); }
+.vj-flag.cond    { color:var(--iris-strong); }
 .vj-flag.nino    { color:var(--teal); }
 .vj-flag.out     { color:var(--text-secondary); }
 .vj-flag.nota    { color:var(--text-tertiary); }
@@ -2261,7 +2271,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-tag { display:inline-block; font-size:10px; letter-spacing:0.03em; padding:2px 8px; border-radius:999px; margin:2px 5px 0 0; }
 .vj-tag.alergia { background:var(--coral-light); color:#e6906b; }
 .vj-tag.dieta   { background:var(--gold-light); color:#d4a24c; }
-.vj-tag.cond    { background:var(--wine-red-light); color:var(--wine-red-dark); }
+.vj-tag.cond    { background:var(--iris-light); color:var(--iris-strong); }
 .vj-tag.ok      { background:var(--teal-light); color:var(--teal); }
 /* Línea para recuperar los salientes ocultos. Deliberadamente tenue: está para
    quien la busca, no para competir con las fichas de los que sí están. */
