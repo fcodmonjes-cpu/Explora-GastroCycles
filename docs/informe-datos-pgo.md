@@ -332,3 +332,79 @@ Son decisiones del owner (CLAUDE.md, regla 4), no mías:
 Con esas cuatro respuestas, el Tier 1 completo son cambios acotados a
 `vjTravelerRow`, `vjRenderHabs`, `vjRenderStats` y `vjRenderComedor` — sin tocar
 el script ni el shape del doc, o sea sin riesgo sobre la base de producción.
+
+---
+
+## 7. Exploraciones: lo que devolvió el sondeo (2026-09-15)
+
+> Dos corridas de `--explore exploraciones` contra PGO real (runs 372 y 373).
+> La primera falló en perfilar la columna del Geos porque la buscó por regex y
+> se llama **`exp`**, no "excursión" — la lección está en el commit. La segunda
+> trajo todo. **Ninguna escribió Firebase.**
+
+### 7.1 El titular: ya estaban en el Reporte Geos, en dos columnas que tirábamos
+
+El Geos no tiene 8 columnas sino **10**, y las dos que faltaban en toda la
+documentación del repo son exactamente las que se pedían:
+
+| Columna | Llenas | Formato (enmascarado) | Qué es |
+|---|---|---|---|
+| `exp` | **77/100** · 65 con AM/PM | `AM <nombre de exploración>` | **La exploración del día, con turno** |
+| `historia` | **75/100** · 75 con AM/PM y fecha | `<nombre>-2 (PM 12-09)` | **Lo que ya hizo, con turno y fecha** |
+| `tipo viajero` | 100/100 | una letra | sin identificar (¿adulto/niño?) |
+
+`historia` **es el histórico de exploraciones**, ya resuelto por PGO, por
+persona, en la misma fila del reporte que ya leemos. No hay que acumularlo
+nosotros ni cruzar nada: viene servido.
+
+Las dos se descartan hoy en `_remap()` porque `PGO_GEOS_COLS` no las mapea. Y
+desde el 2026-08-17 el Geos **ni se abre** en el camino feliz, porque el roster
+salió de la API — así que recuperarlas implica volver a pedir ese reporte.
+
+### 7.2 La vía API: más rica, y con datos de F&B que no esperábamos
+
+`hotelExplorationsDay(hotelId, date)` devolvió **28 filas** para el 15-09
+(`hotelAllExplorationsDay`, 30). Tipo `ExplorationRegisterType`. Lo relevante:
+
+| Campo | Muestra | Por qué importa acá |
+|---|---|---|
+| `outsideLunch` | booleano, 28/28 | **Quién almuerza fuera.** Es el "full/terreno" a nivel de exploración |
+| `commentKitchen` | 1 con dato | **Comentario dirigido a cocina**, dentro de la exploración |
+| `redWineCount` / `whiteWineCount` | 28/28 | **Vino que se lleva cada exploración** |
+| `startTime` / `endTime` | `07:30:00` / `16:00:00` | Planificado: a qué hora vuelve el grupo |
+| `realStartTime` | 19-21 con dato | Salida real. `realEndTime` viene vacío |
+| `travellersIds` | `[888311, 890136, …]` | Ata la exploración a personas… **por ID, no por nombre** |
+| `numTravellers` / `maxQuota` | `6` / `6` | Pax y cupo |
+| `name`, `abbreviation`, `area`, `activity`, `code` | | Identidad de la exploración |
+| `comments` | 15 con dato | Comentario general |
+
+`futureExplorationsOnline(dateStart, dateEnd)` sobre los últimos 7 días trajo
+**29 filas con fechas PASADAS** (10-09, 12-09): el "future" del nombre no es
+literal. Trae `traveller` anidado con `id`, `firstName`, `lastName`, `age` — o
+sea que **sí** liga exploración ↔ persona por nombre. Pero 29 filas en una
+semana, contra 28-30 por día del otro endpoint, sugiere que sólo cubre las
+reservadas online. **No es el histórico completo.**
+
+⚠️ **No pedir `totalCash`**: el servidor de PGO revienta con
+`'ManyRelatedManager' object is not iterable`. Curiosamente la respuesta
+**degradó parcial** en vez de morir entera — devolvió las 30 filas con
+`errors` al lado. Es lo contrario de lo documentado en §4.2 y conviene no
+confiarse: el comportamiento seguro sigue siendo pedir sólo lo que se usa.
+
+### 7.3 El problema abierto: cómo se ata a NUESTRO viajero
+
+Las dos vías tienen el mismo obstáculo, y es la decisión que hay que tomar:
+
+- **Por HTML (`exp` + `historia`)**: el cruce ya está hecho — vienen en la fila
+  del viajero. **Costo:** volver a abrir el Reporte Geos en cada corrida (una
+  navegación más) y depender de columnas HTML, que es de lo que veníamos
+  saliendo. **Ganancia:** dos líneas en `PGO_GEOS_COLS` y listo.
+- **Por API (`hotelExplorationsDay`)**: dato más rico y estable, pero liga por
+  `travellersIds` — **IDs internos de PGO que nuestro doc no guarda**. El roster
+  sale de `travellersInhouse`, que hoy no pide el `id` del traveller. Habría que
+  pedirlo y guardarlo para poder cruzar.
+
+**Recomendación:** empezar por el HTML, que resuelve lo que se pidió con el
+menor riesgo, y dejar la API para cuando se quiera lo de F&B (`outsideLunch`,
+`commentKitchen`, los conteos de vino) — que es material para su propia
+conversación, porque eso ya no es la ficha del viajero sino insumo de cocina.
