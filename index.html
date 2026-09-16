@@ -2176,30 +2176,45 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
    anchas, sin media queries. */
 /* [hidden] explícito: el display:grid de abajo le gana al atributo, y en la
    vista Comedor los chips quedaban visibles pese a estar marcados. */
-.vj-chips[hidden], .vj-stats[hidden], .vj-search-bar[hidden] { display:none !important; }
-.vj-chips { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; margin:0.8rem 0 1rem; }
-/* (2026-09-16) Rótulo de grupo dentro de la grilla de chips. Toma el ancho
-   completo igual que .vj-stats-rotulo: es el mismo componente conceptual
-   —rotular una fila para que dos datos parecidos dejen de confundirse— y no
-   un estilo nuevo. Sin color propio: el rótulo es estructura, no acento. */
-.vj-chips-rotulo { grid-column:1 / -1; font-family:'Courier Prime','Courier New',monospace;
-  font-size:9px; letter-spacing:0.16em; text-transform:uppercase;
-  color:var(--text-tertiary); margin:5px 0 1px; }
-.vj-chips-rotulo:first-child { margin-top:0; }
-.vj-chip { display:flex; justify-content:space-between; align-items:baseline; gap:8px; text-align:left; font-size:11px; letter-spacing:0.03em; padding:5px 10px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:transparent; color:var(--text-secondary); cursor:pointer; transition:all .15s; -webkit-user-select:none; user-select:none; }
-.vj-chip .vj-chip-n { font-family:'Courier Prime','Courier New',monospace; font-size:10px; opacity:0.75; }
-.vj-chip.alergia { color:#e08663; border-color:rgba(216,90,48,0.45); }
-.vj-chip.dieta   { color:#cfa14a; border-color:rgba(186,117,23,0.45); }
-.vj-chip.cond    { color:var(--iris-strong); border-color:rgba(127,119,221,0.45); }
-/* REVISAR como chip-filtro, no sólo como marca en la ficha. Es la red de
-   seguridad del módulo (obs que dice algo y ningún tag cubrió) y hasta hoy
-   había que toparse con ella abriendo habitaciones. Va primero en la fila y
-   en coral, el mismo de .vj-tag.revisar: es la misma idea, no un color nuevo. */
-.vj-chip.revisar { color:var(--coral); border-color:rgba(216,90,48,0.5); }
-.vj-chip.revisar.active { background:var(--coral-light); }
-.vj-chip.alergia.active { background:var(--coral-light); }
-.vj-chip.dieta.active   { background:var(--gold-light); }
-.vj-chip.cond.active    { background:var(--iris-light); }
+.vj-obs[hidden], .vj-stats[hidden], .vj-search-bar[hidden] { display:none !important; }
+/* OBSERVACIONES — el resumen de la portada (2026-09-16). Reemplaza la grilla de
+   chips de tags. Plegado por defecto: un renglón que dice cuánto hay, y el
+   detalle a un tap, para que las habitaciones no queden empujadas hacia abajo.
+   El texto va en Cormorant itálica siguiendo la convención de .vj-detail-obs —
+   itálica = voz del reporte de PGO (transcripción), Courier = voz nuestra. Acá
+   esa distinción ES el mensaje de la sección: lo que se lee es lo que el
+   reporte dice, no lo que un regex dedujo. Sin paleta nueva. */
+.vj-obs { margin:0.8rem 0 1rem; }
+.vj-obs-head { display:flex; align-items:baseline; gap:6px; width:100%; padding:8px 11px;
+  border:0.5px solid var(--border-md); border-radius:var(--radius-md); background:transparent;
+  font-family:'Courier Prime','Courier New',monospace; color:var(--text-secondary);
+  cursor:pointer; text-align:left; transition:border-color .15s;
+  -webkit-tap-highlight-color:transparent; }
+.vj-obs-head.abierto { border-color:rgba(192,125,42,0.45); }
+.vj-obs-n { font-size:15px; color:var(--gold); line-height:1; }
+.vj-obs-lbl, .vj-obs-habs { font-size:10px; letter-spacing:0.06em; text-transform:uppercase;
+  color:var(--text-tertiary); }
+.vj-obs-sep { color:var(--text-tertiary); opacity:0.5; }
+.vj-obs-caret { margin-left:auto; font-size:11px; color:var(--text-tertiary); }
+.vj-obs-lista { display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+.vj-obs-item { display:flex; flex-direction:column; gap:5px; width:100%; padding:9px 11px;
+  border:0.5px solid var(--border); border-radius:var(--radius-md); background:var(--bg-secondary);
+  cursor:pointer; text-align:left; -webkit-tap-highlight-color:transparent;
+  transition:border-color .15s; }
+.vj-obs-item:active { border-color:rgba(192,125,42,0.45); }
+.vj-obs-hab { display:flex; align-items:baseline; gap:7px; }
+.vj-obs-hab-n { font-family:'Courier Prime','Courier New',monospace; font-size:13px; color:var(--text); }
+.vj-obs-hab-g { font-family:'Courier Prime','Courier New',monospace; font-size:9px;
+  letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); }
+/* Filete a la izquierda, igual que .vj-notas: marca "esto es una cita". */
+.vj-obs-row { display:flex; flex-direction:column; gap:1px; padding-left:9px;
+  border-left:1.5px solid var(--border-md); }
+.vj-obs-quien { font-family:'Courier Prime','Courier New',monospace; font-size:10px;
+  letter-spacing:0.06em; color:var(--text-secondary); }
+.vj-obs-flag { margin-right:4px; }
+.vj-obs-txt { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif;
+  font-style:italic; font-size:14px; line-height:1.35; color:var(--text-secondary);
+  overflow-wrap:anywhere; }
 
 /* Grilla de habitaciones (vista general). */
 .vj-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
@@ -2227,7 +2242,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 /* Cumpleaños en la grilla: sin esto había que abrir hab por hab para
    descubrir quién cumple en los próximos días. Mismo gold de la casa. */
 .vj-flag.cumple  { color:var(--gold); }
-/* Coral, igual que .vj-tag.revisar y .vj-chip.revisar: la misma idea en los
+/* Coral, igual que .vj-tag.revisar: la misma idea en los
    tres tamaños. Una hab con SÓLO una obs sin clasificar dejaba la fila de
    flags vacía y se leía como una hab sin novedades. */
 .vj-flag.revisar { color:var(--coral); }
@@ -4247,11 +4262,6 @@ const VJ_TAGS = {
   'cond-diabetico':        { cls:'cond',    key:'vjTagDiabetico' },
   'cond-embarazada':       { cls:'cond',    key:'vjTagEmbarazada' }
 };
-// Rótulo de cada clase en la grilla de chips. Vive al lado de VJ_TAGS porque es
-// el mismo vocabulario: VJ_TAGS dice a qué clase pertenece cada tag, esto dice
-// cómo se llama esa clase en pantalla. Un tag sin clase conocida no lleva
-// rótulo (cae al final por `rank` y se muestra suelto).
-const VJ_GRUPO_KEY = { alergia:'vjGrupoAlergias', dieta:'vjGrupoPreferencias', cond:'vjGrupoCondiciones' };
 // Nacionalidad → bandera emoji (nativa en iOS). Códigos de 4 letras que llegan
 // del Reporte Geos. Sólo los confirmados en la data — un código sin mapear cae
 // a su texto crudo (mejor que una bandera equivocada sobre un viajero real).
@@ -4263,6 +4273,7 @@ let VIAJEROS_LOAD_ERROR    = false;
 let VIAJEROS_FILTER        = null;   // null | 'ninos'|'alergias'|'dietas'|'salenhoy' | tag slug
 let VIAJEROS_SEARCH        = '';
 let VIAJEROS_HAB_OPEN      = null;   // hab abierta en el modal de detalle
+let VIAJEROS_OBS_OPEN      = false;  // lista de observaciones desplegada en la portada
 let VIAJEROS_NUMPAD_OPEN   = false;  // teclado numérico incorporado plegado/desplegado
 let VIAJEROS_SHOW_OUT      = false;
 let VIAJEROS_VISTA         = 'viajeros';   // 'viajeros' | 'comedor'   // salientes del día ocultos por defecto en las vistas por hab
@@ -4524,10 +4535,9 @@ const UI = {
     vjYaSalio:'ya salió', vjYaSalieron:'ya salieron',
     // Exploraciones (2026-09-16) — EN/PT propuestas, a revisar.
     vjExpHoy:'hoy', vjHist:'ya hizo',
-    vjChipRevisar:'revisar observación',
-    // Rótulos de grupo de los chips. EN/PT son cognados directos pero NO están
-    // revisados por hablante nativo — marcar en el QA (convención CLAUDE.md).
-    vjGrupoAlergias:'alergias', vjGrupoPreferencias:'preferencias', vjGrupoCondiciones:'condiciones',
+    // Resumen de observaciones de la portada (2026-09-16).
+    // EN/PT propuestas, a revisar por hablante nativo.
+    vjObsTit:'observaciones', vjObsHabs:'hab',
     // Aviso de día dudoso en la vista Comedor — EN/PT propuestas, a revisar.
     cmdDiaDudoso:'El detalle por grupo no cuadra con los cubiertos de hoy que informa PGO: puede ser de otro día. Los totales de arriba sí son de hoy.',
     vjSyncOtherDay:'NO ES DE HOY · actualizando',
@@ -4757,8 +4767,7 @@ const UI = {
     vjVerSalientes:'show departures', vjOcultarSalientes:'hide departures',
     vjYaSalio:'already left', vjYaSalieron:'already left',
     vjExpHoy:'today', vjHist:'already did',
-    vjChipRevisar:'check note',
-    vjGrupoAlergias:'allergies', vjGrupoPreferencias:'preferences', vjGrupoCondiciones:'conditions',
+    vjObsTit:'notes', vjObsHabs:'rooms',
     cmdDiaDudoso:"The per-group breakdown doesn't match today's covers reported by PGO: it may be from another day. The totals above are today's.",
     vjSyncOtherDay:'NOT TODAY’S · refreshing',
     vjVista_viajeros:'guests', vjVista_comedor:'dining room',
@@ -4987,8 +4996,7 @@ const UI = {
     vjVerSalientes:'ver saídas', vjOcultarSalientes:'ocultar saídas',
     vjYaSalio:'já saiu', vjYaSalieron:'já saíram',
     vjExpHoy:'hoje', vjHist:'já fez',
-    vjChipRevisar:'verificar observação',
-    vjGrupoAlergias:'alergias', vjGrupoPreferencias:'preferências', vjGrupoCondiciones:'condições',
+    vjObsTit:'observações', vjObsHabs:'qtos',
     cmdDiaDudoso:'O detalhe por grupo não bate com os talheres de hoje informados pelo PGO: pode ser de outro dia. Os totais acima são de hoje.',
     vjSyncOtherDay:'NÃO É DE HOJE · atualizando',
     vjVista_viajeros:'viajantes', vjVista_comedor:'salão',
@@ -9029,8 +9037,14 @@ function vjMatchesSearch(tr){
             : ((tr.exp && tr.exp.txt) || '');
   const hist = (Array.isArray(tr.historia) ? tr.historia.map(h => h && h.n).join(' ') : '')
              + ' ' + (tr.historiaTxt || '');
+  // La observación de PGO también se busca (2026-09-16). Faltaba: escribir
+  // "lactosa" no encontraba a quien la tiene escrita en la dieta, sólo a quien
+  // tuviera el tag. Ahora que la portada muestra el texto en vez de los tags,
+  // el buscador tiene que llegar al mismo lugar — y buscar sobre la frase real
+  // es más confiable que filtrar por un tag deducido: el que lee adjudica.
   return vjFold(tr.nombre).indexOf(q) >= 0 || vjFold(tr.grupo).indexOf(q) >= 0 ||
          String(tr.hab).indexOf(q) >= 0 || !!vjNotaQueCalza(tr, q) ||
+         vjFold(tr.obs || '').indexOf(q) >= 0 ||
          vjFold(exp).indexOf(q) >= 0 || vjFold(hist).indexOf(q) >= 0;
 }
 // Las notas también se buscan: sin esto, escribir "syrah" no encuentra a quien
@@ -9047,7 +9061,7 @@ function vjNotaQueCalza(tr, q){
 function vjSetFilter(f){
   VIAJEROS_FILTER = (VIAJEROS_FILTER === f) ? null : f;
   VIAJEROS_HAB_OPEN = null;
-  vjRenderStats(); vjRenderChips(); vjRenderBody();
+  vjRenderStats(); vjRenderObs(); vjRenderBody();
 }
 function vjSearchInput(v){
   VIAJEROS_SEARCH = v;
@@ -9257,7 +9271,7 @@ function viajerosRender(){
           ${['6','7','8','9','0'].map(d => `<button type="button" class="vj-num-key" onclick="vjNumPush('${d}')">${d}</button>`).join('')}
           <button type="button" class="vj-num-key action" onclick="vjNumClear()" aria-label="${t('vjClear')}">✕</button>
         </div>
-        <div class="vj-chips" id="vj-chips"></div>
+        <div class="vj-obs" id="vj-obs"></div>
       </div>
       <div id="vj-body"></div>`;
   }
@@ -9270,7 +9284,7 @@ function viajerosRender(){
   const barra = document.querySelector('.vj-search-bar');
   if (barra) barra.hidden = esCom;
   document.getElementById('vj-numpad').hidden = esCom || !VIAJEROS_NUMPAD_OPEN;
-  document.getElementById('vj-chips').hidden  = esCom;
+  document.getElementById('vj-obs').hidden    = esCom;
   // Las celdas de servicio de Viajeros y las del Comedor son la MISMA idea con
   // números distintos (presencia real vs cubiertos de PGO). Mostrarlas juntas
   // daba dos filas casi iguales en la misma pantalla, que es justo lo que
@@ -9284,7 +9298,7 @@ function viajerosRender(){
   if (esCom){
     document.getElementById('vj-body').innerHTML = vjRenderComedor();
   } else {
-    vjRenderChips(); vjRenderBody();
+    vjRenderObs(); vjRenderBody();
   }
 }
 
@@ -9337,47 +9351,63 @@ function vjBaseServicio(){
   const [a, b] = vjVentana(srv);
   return vjAll().filter(tr => vjPresenteEntre(tr, a, b));
 }
-function vjRenderChips(){
-  const el = document.getElementById('vj-chips');
+// OBSERVACIONES DE LA PORTADA — transcribir, no deducir (2026-09-16).
+//
+// Acá vivía una grilla de chips: los tags agregados y contados, como inventario
+// de lo que hay esta noche. El problema es de dónde salen esos tags. FOOD_TOPICS
+// (sync_viajeros.py) es una lista de regex que matchea la SUSTANCIA sin leer la
+// polaridad de la frase: "prefiere leche de almendras" pega contra ALMENDRA y
+// sale etiquetado como restricción de frutos secos. El reporte de dietas se
+// escribe en texto libre, así que mapearlo entero sin falsos positivos —o sin
+// tragarse los ambiguos— no es un problema que un regex pueda cerrar.
+//
+// El propio script ya lo decía en su cabecera: "los tags filtran, la observación
+// completa manda en el detalle". La portada invertía eso. Contados y numerados,
+// los tags se leían como hallazgos y no como aproximaciones, o sea que la
+// pantalla afirmaba más de lo que podía sostener.
+//
+// Ahora muestra lo que el reporte REALMENTE dice, agrupado por habitación, y el
+// que lee adjudica el contexto. Va plegado para no empujar las habitaciones
+// hacia abajo. Los tags siguen intactos dentro de la ficha del viajero, que es
+// donde tienen alrededor el texto que los vuelve interpretables.
+function vjRenderObs(){
+  const el = document.getElementById('vj-obs');
   if (!el) return;
-  const counts = {};
-  // Los chips NO se filtran a sí mismos: al tocar "sin lactosa" la lista se
-  // reduce, pero los chips siguen contando sobre el servicio completo — si no,
-  // quedaría uno solo en pantalla y se perdería el panorama.
+  // Igual que los chips de antes: cuenta sobre el servicio completo, no sobre
+  // el filtro activo — si no, se perdería el panorama al filtrar.
   const base = vjBaseServicio();
-  base.forEach(tr => (tr.tags || []).forEach(tag => { counts[tag] = (counts[tag] || 0) + 1; }));
-  const rank = { alergia:0, dieta:1, cond:2 };
-  const tags = Object.keys(counts).sort((a,b) =>
-    (rank[vjTagCls(a)] ?? 3) - (rank[vjTagCls(b)] ?? 3) || counts[b] - counts[a] || a.localeCompare(b));
-  // REVISAR va PRIMERO y aparte de los tags: es la observación que dice algo y
-  // que ningún tag cubrió, o sea el único caso en que la pantalla no sabe qué
-  // se le puede servir a alguien. El filtro existía desde el principio
-  // (vjMatchesFilter) pero ningún control lo disparaba: había que toparse con
-  // el chip ámbar abriendo habitaciones una por una.
-  const nRev = base.filter(tr => tr.revisar).length;
-  let clsPrev = null;   // clase del chip anterior: marca dónde cae el rótulo
-  el.innerHTML = (nRev ? `
-    <button class="vj-chip revisar ${VIAJEROS_FILTER === 'revisar' ? 'active' : ''}"
-            onclick="vjSetFilter('revisar')">${vjEsc(t('vjChipRevisar'))}<span class="vj-chip-n">${nRev}</span></button>` : '')
-    + tags.map(tag => {
-      const cls = vjTagCls(tag);
-      // (2026-09-16) Corte de grupo. "Mariscos" (alergia-mariscos, médico) y
-      // "Sin mariscos" (dieta-sin-mariscos, preferencia) convivían como chips
-      // gemelos: misma forma, mismo tamaño, etiqueta casi igual, separados
-      // SÓLO por un salto de matiz entre salmón (#e08663) y tan (#cfa14a) —
-      // dos cálidos de luminancia parecida, leídos a las apuradas y con poca
-      // luz. Con deuteranopia colapsan al mismo color. Bajo un rótulo,
-      // "Mariscos" se lee sin ambigüedad y el color pasa a ser refuerzo en
-      // vez de único canal. No hace falta color nuevo: alcanza con estructura.
-      // El orden ya venía dado por `rank` — acá sólo se rotula el límite.
-      const rot = (cls !== clsPrev && VJ_GRUPO_KEY[cls])
-        ? `<div class="vj-chips-rotulo">${vjEsc(t(VJ_GRUPO_KEY[cls]))}</div>` : '';
-      clsPrev = cls;
-      return rot + `
-    <button class="vj-chip ${cls} ${VIAJEROS_FILTER === tag ? 'active' : ''}"
-            onclick="vjSetFilter('${tag}')">${vjEsc(vjTagLabel(tag))}<span class="vj-chip-n">${counts[tag]}</span></button>`;
-    }).join('');
+  const con  = base.filter(tr => (tr.obs || '').trim());
+  if (!con.length){ el.innerHTML = ''; return; }
+  const habs = Array.from(new Set(con.map(tr => String(tr.hab)))).sort();
+  const cabecera = `
+    <button type="button" class="vj-obs-head${VIAJEROS_OBS_OPEN ? ' abierto' : ''}"
+            aria-expanded="${VIAJEROS_OBS_OPEN ? 'true' : 'false'}" onclick="vjToggleObs()">
+      <span class="vj-obs-n">${con.length}</span>
+      <span class="vj-obs-lbl">${vjEsc(t('vjObsTit'))}</span>
+      <span class="vj-obs-sep">·</span>
+      <span class="vj-obs-habs">${habs.length} ${vjEsc(t('vjObsHabs'))}</span>
+      <span class="vj-obs-caret" aria-hidden="true">${VIAJEROS_OBS_OPEN ? '▴' : '▾'}</span>
+    </button>`;
+  if (!VIAJEROS_OBS_OPEN){ el.innerHTML = cabecera; return; }
+  el.innerHTML = cabecera + `<div class="vj-obs-lista">` + habs.map(h => {
+    const rows  = con.filter(tr => String(tr.hab) === h);
+    const grupo = (rows[0] && rows[0].grupo) || '';
+    return `
+      <button type="button" class="vj-obs-item" onclick="vjOpenHab('${h}')">
+        <span class="vj-obs-hab">
+          <span class="vj-obs-hab-n">${vjEsc(h)}</span>
+          <span class="vj-obs-hab-g">${vjEsc(grupo)}</span>
+        </span>` + rows.map(tr => `
+        <span class="vj-obs-row">
+          <span class="vj-obs-quien">${vjFlag(tr.nac) ? `<span class="vj-obs-flag">${vjFlag(tr.nac)}</span>` : ''}${vjEsc(vjFirstName(tr.nombre))}</span>
+          <span class="vj-obs-txt">${vjEsc(tr.obs.trim())}</span>
+        </span>`).join('') + `
+      </button>`;
+  }).join('') + `</div>`;
 }
+// Plegado/desplegado. Sólo repinta su propia sección: el cuerpo de habitaciones
+// no cambia, así que no hay razón para reconstruirlo y perder scroll.
+function vjToggleObs(){ VIAJEROS_OBS_OPEN = !VIAJEROS_OBS_OPEN; vjRenderObs(); }
 
 // El cumpleaños del día se anuncia; los de los próximos 3 días se insinúan.
 // Un cumpleaños que se pasa por alto es de las pocas cosas que el huésped nota.
