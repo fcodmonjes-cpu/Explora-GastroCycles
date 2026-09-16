@@ -397,26 +397,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    El asiento se ubica por posición en la mesa, no por un número chico en lista.
    Reusa el acento azul del selector de comensal y el dorado de la marca; sin
    colores nuevos. */
-.cmd-table-wrap { margin-bottom:1rem; padding-bottom:0.85rem; border-bottom:0.5px solid var(--border); }
-.cmd-table-toolbar { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px; }
-.cmd-table-hint { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; letter-spacing:0.09em; text-transform:uppercase; color:var(--text-tertiary); }
-.cmd-table-tools { display:flex; gap:6px; flex:0 0 auto; }
-.cmd-mini-btn { background:var(--surface); border:0.5px solid var(--border-md); color:var(--text-secondary); border-radius:var(--radius-md); padding:5px 10px; font-size:12px; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; transition:all .15s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
-@media (hover:hover){ .cmd-mini-btn:hover { border-color:var(--gold); color:var(--gold); } }
-.cmd-mini-btn:active { border-color:var(--gold); color:var(--gold); background:rgba(186,117,23,0.2); transform:scale(0.94); }
-.cmd-mini-btn.active { border-color:var(--gold); color:var(--gold); background:rgba(186,117,23,0.12); }
+/* (2026-09-16) Acá vivían .cmd-table-* y .cmd-mini-btn: el mapa espacial de
+   la vista de ingreso. El mapa se mudó entero a la comanda completa
+   (.cmd-dg-*) y acá lo reemplazó la fila de asientos (.cmd-seatrow). Se
+   borran en vez de dejarlas por las dudas: CSS que no pinta nada es una
+   trampa para el que venga a buscar por qué algo no se ve. */
 .cmd-shape-ctl { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:8px 0 4px; padding:8px 10px; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:var(--radius-md); animation:panelIn 0.2s ease both; }
 .cmd-shape-opt { flex:1 1 0; min-width:66px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text-secondary); border-radius:var(--radius-md); padding:7px 8px; font-size:12px; cursor:pointer; font-family:'Courier Prime','Courier New',monospace; text-align:center; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 .cmd-shape-opt:active { background:rgba(186,117,23,0.22); border-color:var(--gold); color:var(--gold); transform:scale(0.96); }
 .cmd-shape-opt.active { background:rgba(186,117,23,0.16); border-color:var(--gold); color:var(--gold); }
 
-.cmd-table-map { position:relative; width:100%; max-width:380px; margin:6px auto 0; height:clamp(230px, 62vw, 320px); }
-.cmd-table-surface { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; text-align:center; color:var(--gold); background:rgba(202,138,4,0.05); border:0.5px solid rgba(202,138,4,0.32); box-shadow:inset 0 0 22px rgba(202,138,4,0.05); }
-.cmd-table-surface.shape-rect   { width:42%; height:62%; border-radius:16px; }
-.cmd-table-surface.shape-round  { width:52%; height:52%; border-radius:50%; }
-.cmd-table-surface.shape-couple { width:28%; height:28%; border-radius:50%; }
-.cmd-table-name { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.1; }
-.cmd-table-name small { display:block; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); margin-top:3px; }
 .cmd-seat { position:absolute; transform:translate(-50%,-50%); width:46px; height:46px; border-radius:50%; border:0.5px solid var(--border-md); background:var(--surface); color:var(--text-secondary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:22px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s, border-color .15s, box-shadow .15s, color .15s, transform .08s; touch-action:manipulation; user-select:none; -webkit-tap-highlight-color:transparent; }
 @media (hover:hover){ .cmd-seat:hover { border-color:rgba(78,160,255,0.5); } }
 .cmd-seat:active { border-color:#4ea0ff; background:rgba(78,160,255,0.16); transform:translate(-50%,-50%) scale(0.9); }
@@ -451,8 +441,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Deshabilitado y NO oculto: que el − esté apagado comunica "el último asiento
    tiene pedidos" mejor que un botón que desaparece y reacomoda la fila. */
 .cmd-seatrow-btn:disabled { opacity:0.3; cursor:default; }
-.cmd-seat-panel-head { display:flex; align-items:baseline; gap:8px; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; }
-.cmd-seat-panel-head strong { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:normal; font-size:18px; letter-spacing:0; text-transform:none; color:#9ec9ff; font-weight:500; }
+/* Intercambio de puesto: el origen se marca lleno, los destinos punteados. El
+   punteado ya significa "todavía no" en el resto de la app (.mn-tile.unk,
+   .cmd-mesa-chip.is-empty) — no es un lenguaje nuevo. */
+.cmd-seatrow .cmd-seat.swap-origen { border-color:var(--gold); color:var(--gold);
+  box-shadow:0 0 0 1px var(--gold), 0 0 12px rgba(202,138,4,0.45); z-index:2; }
+.cmd-seatrow .cmd-seat.swap-destino { border-style:dashed; border-color:rgba(202,138,4,0.5); }
 
 /* Vista única de comanda — tira de totales para cocina */
 .cmd-totals-strip { font-family:'Courier Prime','Courier New',monospace; font-size:12px; line-height:1.7; color:var(--text-secondary); background:rgba(202,138,4,0.05); border:0.5px solid rgba(202,138,4,0.24); border-radius:var(--radius-md); padding:9px 12px; margin-bottom:14px; }
@@ -566,18 +560,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 }
 /* Teclado plegado: en el zero-state la lista del día se queda con la pantalla;
    el teclado aparece recién al tocar la barra de búsqueda. */
-.cmd-kbd-open { width:100%; margin-top:10px; padding:9px; border:0.5px dashed var(--border-md); border-radius:var(--radius-md); background:transparent; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
-@media (hover:hover){ .cmd-kbd-open:hover { border-color:var(--gold); color:var(--gold); } }
-.cmd-kbd-open:active { border-color:var(--gold); color:var(--gold); background:var(--gold-light); }
-.cmd-search-otro { width:100%; padding:9px; margin-bottom:10px; border:0.5px dashed var(--border-md); border-radius:var(--radius-md); background:transparent; color:var(--text-tertiary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:15px; cursor:pointer; transition:border-color .15s, color .15s; -webkit-tap-highlight-color:transparent; }
-@media (hover:hover){ .cmd-search-otro:hover { border-color:var(--gold); color:var(--gold); } }
-.cmd-search-otro:active { border-color:var(--gold); color:var(--gold); background:var(--gold-light); }
 .cmd-kbd { display:flex; flex-direction:column; gap:5px; }
 .cmd-kbd-row { display:flex; gap:5px; justify-content:center; }
 .cmd-kbd-key { flex:1 1 0; min-width:0; padding:13px 0; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:var(--surface); color:var(--text); font-size:16px; text-transform:uppercase; font-family:'Courier Prime','Courier New',monospace; cursor:pointer; transition:background .12s, border-color .12s, opacity .12s; touch-action:manipulation; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
 .cmd-kbd-key:active { background:var(--gold-light); border-color:rgba(192,125,42,0.5); }
 .cmd-kbd-key.dim { opacity:0.22; pointer-events:none; }
 .cmd-kbd-key.cmd-kbd-del { flex:0 0 15%; color:var(--text-tertiary); font-size:15px; }
+/* Control de dos modos (2026-09-16): buscar producto registrado / anotar algo
+   fuera de carta. Segmentos reales con relleno en el activo — los botones que
+   reemplaza eran fantasmas punteados en gris terciario y el owner reportó que
+   directamente no se veían. Gold con texto oscuro: el mismo tratamiento que
+   toda acción primaria desde el arreglo de paleta, y pasa contraste AA. */
+.cmd-modos { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:10px 0 8px; }
+.cmd-modo { padding:10px 8px; border-radius:9px; border:0.5px solid var(--border-md);
+  background:var(--surface); color:var(--text-secondary);
+  font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em;
+  text-transform:uppercase; cursor:pointer; touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .15s, border-color .15s, color .15s; }
+.cmd-modo:active { border-color:var(--gold); }
+.cmd-modo.active { background:var(--gold); border-color:var(--gold); color:#15110d; font-weight:500; }
 .cmd-search-mode { width:100%; margin-top:10px; padding:8px; border:none; background:transparent; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:color .15s; -webkit-tap-highlight-color:transparent; }
 @media (hover:hover){ .cmd-search-mode:hover { color:var(--gold); } }
 .cmd-search-mode:active { color:var(--gold); }
@@ -3986,6 +3988,7 @@ let COMANDA_ACTIVE_CATEGORY = 'dishes';
 let COMANDA_CATALOG_MODE    = 'search'; // 'search' | 'browse'
 let COMANDA_SEARCH_QUERY    = '';       // buffer del teclado en pantalla
 let COMANDA_SEARCH_CUSTOM   = false;    // captura de texto libre ("Otro / pedido especial")
+let COMANDA_SWAP_FROM       = null;     // asiento de origen mientras se cambia de puesto
 let COMANDA_SEARCH_INDEX    = null;     // índice plano del catálogo (rebuild al abrir mesa)
 // Animación de entrada del panel de catálogo: se consume (vuelve a false) en el
 // primer comandaRenderSearch() que la use. Sin esto la animación estaba cableada
@@ -4576,7 +4579,7 @@ const UI = {
     cmdSeatShort:'asiento', cmdTrayOneItem:'1 ítem', cmdTrayNItems:'{n} ítems',
     cmdShapeRect:'Rectangular', cmdShapeRound:'Redonda', cmdShapeCouple:'Pareja',
     cmdTableShape:'Forma de mesa', cmdTableTotals:'Totales de la mesa', cmdBySeat:'Por asiento',
-    cmdAddSeat:'Agregar comensal', cmdRemoveSeat:'Quitar comensal', cmdTapSeat:'Tocá un asiento para tomar su pedido',
+    cmdAddSeat:'Agregar comensal', cmdRemoveSeat:'Quitar comensal', cmdSwapSeat:'Cambiar de puesto', cmdSwapPick:'tocá el asiento destino', cmdModoOtro:'Fuera de carta', cmdTapSeat:'Tocá un asiento para tomar su pedido',
     cmdServiceUnit:'D', /* short for cycle day */
     // Checklist module
     tabChecklist:'Checklist & Protocolos',
@@ -4816,7 +4819,7 @@ const UI = {
     cmdSeatShort:'seat', cmdTrayOneItem:'1 item', cmdTrayNItems:'{n} items',
     cmdShapeRect:'Rectangular', cmdShapeRound:'Round', cmdShapeCouple:'Couple',
     cmdTableShape:'Table shape', cmdTableTotals:'Table totals', cmdBySeat:'By seat',
-    cmdAddSeat:'Add guest', cmdRemoveSeat:'Remove guest', cmdTapSeat:'Tap a seat to take its order',
+    cmdAddSeat:'Add guest', cmdRemoveSeat:'Remove guest', cmdSwapSeat:'Change seat', cmdSwapPick:'tap the destination seat', cmdModoOtro:'Off menu', cmdTapSeat:'Tap a seat to take its order',
     cmdServiceUnit:'D',
     // Checklist module
     tabChecklist:'Checklist & Protocols',
@@ -5045,7 +5048,7 @@ const UI = {
     cmdSeatShort:'assento', cmdTrayOneItem:'1 item', cmdTrayNItems:'{n} itens',
     cmdShapeRect:'Retangular', cmdShapeRound:'Redonda', cmdShapeCouple:'Casal',
     cmdTableShape:'Forma da mesa', cmdTableTotals:'Totais da mesa', cmdBySeat:'Por assento',
-    cmdAddSeat:'Adicionar hóspede', cmdRemoveSeat:'Remover hóspede', cmdTapSeat:'Toque num assento para fazer o pedido',
+    cmdAddSeat:'Adicionar hóspede', cmdRemoveSeat:'Remover hóspede', cmdSwapSeat:'Trocar de lugar', cmdSwapPick:'toque no assento de destino', cmdModoOtro:'Fora do menu', cmdTapSeat:'Toque num assento para fazer o pedido',
     cmdServiceUnit:'D',
     // Checklist module
     tabChecklist:'Checklist & Protocolos',
@@ -11543,7 +11546,41 @@ async function comandaOpenMesa(id){
 
 // --- Active view actions ---------------------------------------------------
 function comandaSetDiner(n){
+  // En modo intercambio el tap NO selecciona: elige el destino. Tocar el mismo
+  // asiento de origen cancela — salir tiene que costar lo mismo que entrar.
+  if (COMANDA_SWAP_FROM !== null){
+    const desde = COMANDA_SWAP_FROM;
+    COMANDA_SWAP_FROM = null;
+    if (n !== desde) comandaSwapAsientos(desde, n);
+    else comandaRender();
+    return;
+  }
   COMANDA_ACTIVE_DINER = n;
+  comandaRender();
+}
+// Un comensal que se cambia de silla dejaba su pedido en el asiento viejo, y no
+// había forma de moverlo: había que borrar ítem por ítem y volver a anotarlos en
+// el otro asiento, en pleno servicio. El intercambio es UNA sola primitiva
+// porque cubre los dos casos reales — dos que se cambian entre sí, y uno que se
+// corre a una silla vacía (intercambiar con vacío = mover).
+function comandaSwapStart(){
+  if (!COMANDA_ACTIVE_DATA) return;
+  COMANDA_SWAP_FROM = (COMANDA_SWAP_FROM === null) ? COMANDA_ACTIVE_DINER : null;
+  comandaRender();
+}
+function comandaSwapAsientos(a, b){
+  const c = COMANDA_ACTIVE_DATA;
+  if (!c || a === b){ comandaRender(); return; }
+  const items = c.items || [];
+  let tocados = 0;
+  items.forEach(it => {
+    if      (it.dinerN === a){ it.dinerN = b; tocados++; }
+    else if (it.dinerN === b){ it.dinerN = a; tocados++; }
+  });
+  // El asiento activo sigue a la PERSONA, no al número: si le estabas anotando
+  // a alguien y esa persona se corrió de silla, seguís con ella.
+  COMANDA_ACTIVE_DINER = b;
+  if (tocados) comandaPersist({ items });
   comandaRender();
 }
 function comandaAddDiner(){
@@ -11851,10 +11888,20 @@ function comandaRenderSearch(){
         ${q ? `<button class="cmd-search-clear" onclick="event.stopPropagation();comandaKbdPress('clr')" aria-label="${t('vjClear')}">✕</button>` : ''}
       </div>
       <div class="cmd-search-results${kbdOpen ? '' : ' kbd-folded'}" id="cmd-search-results">${body}</div>
-      ${custom ? '' : `<button class="cmd-search-otro" onclick="comandaSearchOtro()">✎ ${t('cmdSearchOtro')}</button>`}
-      ${kbdOpen
-        ? `<div class="cmd-kbd" id="cmd-kbd">${kbdHtml}</div>`
-        : `<button class="cmd-kbd-open" onclick="comandaOpenKbd()">⌨ ${t('cmdSearchFind')}</button>`}
+      <!-- (2026-09-16) LOS DOS MODOS, PERMANENTES Y PEGADOS AL TECLADO.
+           Antes esto eran TRES botones repartidos en dos lugares, cada uno con
+           su propia condición: "✎ Otro" desaparecía justo al entrar en Otro,
+           "⌨ Buscar" sólo existía con el teclado cerrado, y "← Buscar" vivía
+           DEBAJO del teclado. Ninguno tenía lugar fijo, así que parecían ir y
+           venir por capricho. Ahora es un control de dos segmentos que está
+           siempre, en el único lugar donde importa: justo sobre las teclas.
+           Relleno gold en el activo, no un fantasma punteado — era el otro
+           problema, que no se veían. -->
+      <div class="cmd-modos">
+        <button class="cmd-modo${custom ? '' : ' active'}" onclick="comandaModo(false)">⌕ ${t('cmdSearchFind')}</button>
+        <button class="cmd-modo${custom ? ' active' : ''}" onclick="comandaModo(true)">✎ ${t('cmdModoOtro')}</button>
+      </div>
+      ${kbdOpen ? `<div class="cmd-kbd" id="cmd-kbd">${kbdHtml}</div>` : ''}
       ${custom
         ? `<button class="cmd-search-mode" onclick="comandaCustomCancel()">← ${t('cmdSearchFind')}</button>`
         : `<button class="cmd-search-mode" onclick="comandaSetCatalogMode('browse')">${t('cmdSearchBrowse')} ▾</button>`}
@@ -11922,6 +11969,12 @@ function comandaPatchSearchPanel(){
   // tiene que actualizarse acá o queda mintiendo.
   const icoEl = document.querySelector('.cmd-search-icon');
   if (icoEl) icoEl.textContent = custom ? '✎' : '⌕';
+  // El segmento activo también, ahora que cambiar de modo se parchea.
+  const modos = document.querySelectorAll('.cmd-modos .cmd-modo');
+  if (modos.length === 2){
+    modos[0].classList.toggle('active', !custom);
+    modos[1].classList.toggle('active',  custom);
+  }
   const kbd = document.getElementById('cmd-kbd');
   if (!custom){   // el atenuado predictivo solo aplica al buscar
     const live = comandaLiveKeys(q);
@@ -11963,6 +12016,21 @@ function comandaSearchAdd(srcKey, sourceId, name, allergens, group){
 // nodo del teclado, por eso la referencia sobrevive) y comandaPinKbd corrige el
 // scroll en la diferencia exacta. El teclado no se mueve; se corre lo de arriba.
 // Si el teclado todavía no existe no hay nada que clavar: render normal.
+// Los dos segmentos entran por acá. Un solo camino para las dos direcciones:
+// menos estados que mantener en sincronía, y el teclado SIEMPRE queda abierto —
+// tocar un modo es decir "voy a escribir", nunca "cerrame el teclado".
+function comandaModo(custom){
+  if (COMANDA_SEARCH_CUSTOM === custom && COMANDA_KBD_OPEN) return;   // ya estás ahí
+  const habiaKbd = !!document.getElementById('cmd-kbd');
+  comandaPinAncla(habiaKbd ? '#cmd-kbd' : '.cmd-search-bar', () => {
+    COMANDA_SEARCH_CUSTOM = custom;
+    COMANDA_KBD_OPEN = true;
+    // Con el teclado ya en pantalla alcanza con parchar el panel: reconstruir
+    // la vista entera tiraría el nodo del teclado y con él el ancla.
+    if (habiaKbd) comandaPatchSearchPanel();
+    else comandaRender();
+  });
+}
 function comandaSearchOtro(){
   if (!document.getElementById('cmd-kbd')){
     COMANDA_SEARCH_CUSTOM = true;
@@ -13070,9 +13138,13 @@ function comandaRenderActive(root){
   // la comanda completa, que es donde se lee de pie frente a la mesa.
   const headSet = {};
   layout.forEach(sx => { if (sx.isHead) headSet[sx.n] = true; });
+  const enSwap = COMANDA_SWAP_FROM !== null;
   let seatsRowHtml = '';
   for (let n = 1; n <= diners; n++){
-    const active = (n === COMANDA_ACTIVE_DINER) ? ' active' : '';
+    // En intercambio el activo no se marca: lo que importa es de dónde sale y
+    // a dónde puede ir. Dos marcas compitiendo confunden justo al elegir.
+    const active = (!enSwap && n === COMANDA_ACTIVE_DINER) ? ' active' : '';
+    const swap   = enSwap ? (n === COMANDA_SWAP_FROM ? ' swap-origen' : ' swap-destino') : '';
     const head   = headSet[n] ? ' head' : '';
     const cnt    = seatCount[n] || 0;
     const badge  = cnt ? `<span class="cmd-seat-badge">${cnt}</span>` : '';
@@ -13080,7 +13152,7 @@ function comandaRenderActive(root){
     // MISMA clase .cmd-seat y mismo data-seat que en el mapa, a propósito:
     // comandaPatchSeatBadges los sigue alcanzando y el contador se parcha
     // in-place en vez de re-renderizar la fila en cada tap.
-    seatsRowHtml += `<button class="cmd-seat${active}${head}" data-seat="${n}" onclick="comandaSetDiner(${n})" title="${t('cmdSeat')} ${n}">${crown}${n}${badge}</button>`;
+    seatsRowHtml += `<button class="cmd-seat${active}${head}${swap}" data-seat="${n}" onclick="comandaSetDiner(${n})" title="${t('cmdSeat')} ${n}">${crown}${n}${badge}</button>`;
   }
   // El − sólo quita el último asiento y sólo si está vacío (ver
   // comandaRemoveDiner). Deshabilitado dice por qué mejor que un tap que no
@@ -13098,6 +13170,7 @@ function comandaRenderActive(root){
       <div class="cmd-seatrow">
         <button class="cmd-seatrow-btn" onclick="comandaRemoveDiner()"${puedeQuitar ? '' : ' disabled'} title="${t('cmdRemoveSeat')}">−</button>
         <div class="cmd-seatrow-nums">${seatsRowHtml}</div>
+        ${diners > 1 ? `<button class="cmd-seatrow-btn${enSwap ? ' active' : ''}" onclick="comandaSwapStart()" title="${t('cmdSwapSeat')}">⇄</button>` : ''}
         <button class="cmd-seatrow-btn" onclick="comandaAddDiner()" title="${t('cmdAddSeat')}">＋</button>
         <button class="cmd-seatrow-btn${COMANDA_SHAPE_CTL_OPEN ? ' active' : ''}" onclick="comandaToggleShapeCtl()" title="${t('cmdTableShape')}">⚙</button>
       </div>
@@ -13183,7 +13256,10 @@ function comandaRenderActive(root){
         <!-- El título es el control del nº de mesa: sin número invita a ponerlo,
              con número abre el mismo numpad de "cambiar mesa". -->
         <button class="cmd-active-title cmd-mesa-chip${sinNumero ? ' is-empty' : ''}" onclick="comandaChangeMesaShow()" title="${t('cmdSetMesa')}">${sinNumero ? t('cmdSetMesa') : t('cmdMesaPrefix') + ' ' + comandaMesaLabel(c)}</button>
-        <div class="cmd-active-sub">${diners} ${diners===1?t('cmdComensal'):t('cmdComensales')}</div>
+        <!-- En intercambio esta línea dice qué hacer. Reusa un renglón que ya
+             existe y ya reserva su alto, así aparecer la instrucción no empuja
+             nada hacia abajo: nada se mueve bajo el dedo. -->
+        <div class="cmd-active-sub">${enSwap ? t('cmdSwapPick') : `${diners} ${diners===1?t('cmdComensal'):t('cmdComensales')}`}</div>
       </div>
       <div class="cmd-active-controls">
         ${timerChip}
