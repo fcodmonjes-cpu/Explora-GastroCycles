@@ -2847,22 +2847,55 @@ def cruzar_obs_comedor(rows, comedor, date_str=None):
 # crudo, nunca a mostrar nada — es el mismo criterio que `revisar` con las
 # observaciones de dieta. Estos formatos se dedujeron de muestras ENMASCARADAS
 # (el sondeo oculta los nombres propios), así que conviene desconfiar de ellos.
-_RX_EXP_TURNO = re.compile(r"^\s*(AM|PM)\b[\s.:-]*", re.I)
+# Códigos de turno de PGO. Confirmados contra pantalla el 2026-09-16: un mismo
+# viajero puede tener AM, PM y NOC el mismo día, y el reporte los concatena.
+# Agregar uno acá es todo lo que hace falta si aparece otro.
+_TURNOS = ("FULL", "NOC", "AM", "PM")     # FULL primero: nunca es prefijo de otro
+# Las exploraciones vienen PEGADAS, sin separador: "AM HK HuayraPM eBK Ckuta".
+# PGO pone cada una en su propio elemento y textContent las une sin espacio.
+# Por eso el corte es un lookahead — parte ANTES del código aunque venga
+# soldado a la letra anterior — y exige espacio o fin después, para no cortar
+# un nombre que por casualidad termine en esas letras.
+_RX_EXP_CORTE = re.compile(r"(?=(?:%s)(?:\s|$))" % "|".join(_TURNOS))
+_RX_EXP_TURNO = re.compile(r"^(%s)(?:\s|$)" % "|".join(_TURNOS))
 # Cada entrada del histórico termina en "(TURNO DD-MM)". El nombre es todo lo
 # que va antes, sin comerse el paréntesis anterior: por eso el no-codicioso.
 _RX_HIST_ITEM = re.compile(r"([^()]+?)\s*\(\s*(AM|PM)\s+(\d{1,2}-\d{1,2})\s*\)", re.I)
 
 
 def parse_exp(texto):
-    """'AM Valle de la Luna' → {'txt': 'Valle de la Luna', 'turno': 'AM'}."""
+    """La columna `exp` → LISTA de exploraciones del día.
+
+    'AM HK HuayraPM eBK CkutaNOC Astronomia'
+      → [{'t':'AM','n':'HK Huayra'}, {'t':'PM','n':'eBK Ckuta'}, {'t':'NOC','n':'Astronomia'}]
+
+    Un viajero puede tener varias en el mismo día. La primera versión (2026-09-16)
+    asumía UNA sola y devolvía {'txt','turno'}: sacaba el 'AM' inicial y metía
+    todo el resto —códigos de turno incluidos— como si fuera el nombre. En
+    pantalla eso se veía como 'AM HK HuayraPM eBK CkutaNOC Astronomia' con un
+    solo código resaltado. Lo reportó el owner desde el iPhone.
+
+    Sin código de turno reconocible, la entrada igual se devuelve con 'n' y sin
+    't': se muestra como texto y no se pierde.
+    """
     t = fix_mojibake(texto or "").strip()
     if not t:
         return None
-    m = _RX_EXP_TURNO.match(t)
-    out = {"txt": _RX_EXP_TURNO.sub("", t).strip() if m else t}
-    if m:
-        out["turno"] = m.group(1).upper()
-    return out if out["txt"] or out.get("turno") else None
+    out = []
+    for parte in _RX_EXP_CORTE.split(t):
+        parte = parte.strip(" ·,;-")
+        if not parte:
+            continue
+        m = _RX_EXP_TURNO.match(parte)
+        item = {}
+        if m:
+            item["t"] = m.group(1).upper()
+            parte = parte[m.end():].strip(" ·,;-")
+        if parte:
+            item["n"] = parte
+        if item:
+            out.append(item)
+    return out or None
 
 
 def parse_historia(texto):

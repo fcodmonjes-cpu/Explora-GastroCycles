@@ -2255,16 +2255,25 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-detail-name { font-size:15px; color:var(--text); line-height:1.3; }
 .vj-detail-meta { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.05em; color:var(--text-tertiary); margin-top:2px; }
 .vj-detail-meta .vj-meta-out-today { color:#e08663; }
+/* La fecha no se parte por la mitad. Con `nac` de 4 letras la línea entraba
+   justa; al pasar a nombre de país legible ("Brasil" en vez de "BRAZ") empezó
+   a cortar en "OUT 19-" / "09". Que envuelva entre bloques, nunca dentro. */
+.vj-meta-mov { white-space:nowrap; }
 .vj-detail-tags { margin-top:5px; }
 .vj-detail-obs { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-secondary); margin-top:5px; line-height:1.4; }
 /* Exploraciones (columnas `exp` e `historia` del Reporte Geos, 2026-09-16).
    Mono y discreto: son CONTEXTO, no restricciones — no pueden competir con los
    chips de alergia, que es lo único que cambia qué se sirve. El turno en gold
    porque es el dato accionable de la línea ("vuelve en la tarde"). */
-.vj-exp { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px;
+.vj-exp { display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 12px;
+  font-family:'Courier Prime','Courier New',monospace; font-size:10.5px;
   letter-spacing:0.04em; color:var(--text-secondary); margin-top:5px; }
 .vj-exp-lbl { color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.12em;
-  font-size:9px; margin-right:6px; }
+  font-size:9px; }
+/* Cada exploración es una unidad: el gap del flex las separa sin meter un
+   carácter de puntuación. Sin esto, tres exploraciones pegadas por PGO se
+   leían como una sola frase ("HK HuayraPM eBK CkutaNOC Astronomia"). */
+.vj-exp-i { white-space:nowrap; }
 .vj-exp-turno { color:var(--gold); margin-right:5px; }
 .vj-hist { display:flex; flex-wrap:wrap; align-items:baseline; gap:3px 8px; margin-top:5px; }
 .vj-hist-lbl { font-family:'Courier Prime','Courier New',monospace; font-size:9px;
@@ -2288,8 +2297,19 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-nota-txt { flex:1 1 auto; font-family:'Courier Prime','Courier New',monospace; font-size:12px; line-height:1.4; color:var(--text-secondary); word-break:break-word; }
 .vj-nota-x { flex:0 0 auto; background:none; border:0; padding:0 3px; color:var(--text-tertiary); font-size:14px; line-height:1.2; cursor:pointer; }
 .vj-nota-x:active { color:var(--coral); }
-.vj-nota-add { background:none; border:0; padding:2px 0; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; color:var(--text-tertiary); cursor:pointer; }
-.vj-nota-add:active { color:var(--gold); }
+/* Con contorno desde el 2026-09-16: sin borde no se leía como botón y el
+   owner lo reportó. Pastilla de trazo fino, el mismo lenguaje que .vj-cumple
+   y .vj-out-chip — no es un elemento nuevo, es el que ya existía hecho
+   visible. Sigue siendo la acción más callada de la ficha, que es lo que
+   corresponde: el dato duro manda. */
+.vj-nota-add { display:inline-flex; align-items:center; gap:5px; margin-top:3px;
+  background:none; border:0.5px solid var(--border-md); border-radius:999px;
+  padding:3px 10px; font-family:'Courier Prime','Courier New',monospace;
+  font-size:10px; letter-spacing:0.08em; color:var(--text-tertiary);
+  cursor:pointer; transition:color .15s, border-color .15s;
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.vj-nota-add:hover, .vj-nota-add:focus-visible { color:var(--gold); border-color:rgba(186,117,23,0.5); outline:none; }
+.vj-nota-add:active { color:var(--gold); border-color:var(--gold); }
 .vj-nota-editor { margin-top:5px; }
 /* La firma va ARRIBA del editor: se escribe una vez y queda, así que en el
    uso diario es un recordatorio de con qué nombre estás anotando, no un
@@ -8838,11 +8858,20 @@ function vjOutToggleLine(ocultos){
 // junto a la logística de la estadía —"vuelve en la tarde" cambia a qué hora
 // come—, y el histórico baja al final, porque es material de conversación y no
 // puede empujar las restricciones fuera de la pantalla.
+// Un viajero puede tener VARIAS exploraciones el mismo día (AM + PM + NOC), y
+// PGO las concatena sin separador. Cada una se dibuja como su propia unidad
+// con el código de turno en gold: la primera versión resaltaba sólo el primer
+// código y el resto se leía como una sola frase pegada ("HuayraPM eBK").
 function vjExpHtml(tr){
-  const e = tr.exp;
-  if (!e || !(e.txt || e.turno)) return '';
+  let lista = tr.exp;
+  // Forma vieja del doc ({txt, turno}) — sobrevive hasta el próximo sync.
+  if (lista && !Array.isArray(lista)) lista = [{ t: lista.turno, n: lista.txt }];
+  lista = (lista || []).filter(e => e && (e.n || e.t));
+  if (!lista.length) return '';
   return `<div class="vj-exp"><span class="vj-exp-lbl">${t('vjExpHoy')}</span>${
-    e.turno ? `<span class="vj-exp-turno">${vjEsc(e.turno)}</span>` : ''}${vjEsc(e.txt || '')}</div>`;
+    lista.map(e => `<span class="vj-exp-i">${
+      e.t ? `<span class="vj-exp-turno">${vjEsc(e.t)}</span>` : ''}${vjEsc(e.n || '')}</span>`).join('')
+  }</div>`;
 }
 // Días hacia atrás desde el día operativo. PGO da 'DD-MM' sin año: una fecha
 // que cae en el futuro es del año pasado (estadía a caballo del año nuevo).
@@ -8913,7 +8942,8 @@ function vjMatchesSearch(tr){
   // Las exploraciones también se buscan: "cejar" encuentra a quien fue hoy y a
   // quien fue anteayer. Es la misma idea que ya tienen las notas — un dato que
   // se guarda y no se puede buscar sirve la mitad.
-  const exp = (tr.exp && tr.exp.txt) || '';
+  const exp = Array.isArray(tr.exp) ? tr.exp.map(e => e && e.n).join(' ')
+            : ((tr.exp && tr.exp.txt) || '');
   const hist = (Array.isArray(tr.historia) ? tr.historia.map(h => h && h.n).join(' ') : '')
              + ' ' + (tr.historiaTxt || '');
   return vjFold(tr.nombre).indexOf(q) >= 0 || vjFold(tr.grupo).indexOf(q) >= 0 ||
@@ -9442,7 +9472,7 @@ function vjTravelerRow(tr, today, opts){
       ${vjCaraEl(tr)}
       <div class="vj-detail-main">
         <div class="vj-detail-name">${vjEsc(tr.nombre)}${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
-        <div class="vj-detail-meta">${tr.edad ?? '—'} ${t('vjYears')} · ${vjEsc(vjNacTexto(tr))} · IN ${vjShortDate(tr.in)}${hIn ? ' ' + hIn : ''} → <span class="${outCls}">OUT ${vjShortDate(tr.out)}${hOut ? ' ' + hOut : ''}${tr.out === today ? ` · ${t('vjSaleHoy')}` : ''}</span>${inToday}</div>
+        <div class="vj-detail-meta">${tr.edad ?? '—'} ${t('vjYears')} · ${vjEsc(vjNacTexto(tr))} · <span class="vj-meta-mov">IN ${vjShortDate(tr.in)}${hIn ? ' ' + hIn : ''}</span> → <span class="vj-meta-mov ${outCls}">OUT ${vjShortDate(tr.out)}${hOut ? ' ' + hOut : ''}${tr.out === today ? ` · ${t('vjSaleHoy')}` : ''}</span>${inToday}</div>
         ${vjExpHtml(tr)}
         <div class="vj-detail-tags">${vjCumpleChip(tr)}${vjTagChips(tr)}</div>
         ${(tr.obs || '').trim() ? `<div class="vj-detail-obs">${vjEsc(tr.obs)}</div>` : ''}
