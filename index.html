@@ -657,6 +657,87 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cmd-full-toggle { display:flex; gap:6px; margin-bottom:1rem; }
 .cmd-full-tab { flex:1; padding:7px 10px; border-radius:8px; background:transparent; border:0.5px solid var(--border); color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:background .15s, color .15s, border-color .15s; -webkit-tap-highlight-color:transparent; }
 .cmd-full-tab.active { background:rgba(202,138,4,0.12); border-color:rgba(202,138,4,0.5); color:var(--gold); }
+
+/* DIAGRAMA DE MESA DE LA COMANDA COMPLETA (2026-09-16) — los platos cuelgan
+   del asiento que los pidió, del lado donde esa persona está sentada.
+   Tres bandas: izquierda · mesa · derecha, más cabecera arriba y pie abajo.
+   El grid hace el solapamiento imposible por construcción — con globos en x/y
+   exactos, dos vecinos de una mesa redonda se pisan el texto y el bug aparece
+   sólo con ciertos números de comensales.
+   Se lee de pie desde el borde inferior de la mesa: izquierda es izquierda. */
+.cmd-dg { display:grid; gap:9px 11px; margin-bottom:1.1rem;
+  /* minmax(0,1fr) y no 1fr: una columna 1fr no baja de su min-content, así que
+     con un nombre de plato largo la banda derecha se salía de pantalla. */
+  grid-template-columns:minmax(0,1fr) minmax(48px, 76px) minmax(0,1fr);
+  grid-template-areas:"arr arr arr" "izq mesa der" "aba aba aba"; }
+.cmd-dg-arr  { grid-area:arr; }
+.cmd-dg-izq  { grid-area:izq; }
+.cmd-dg-mesa { grid-area:mesa; }
+.cmd-dg-der  { grid-area:der; }
+.cmd-dg-aba  { grid-area:aba; }
+/* Banda vacía = sin fila: una mesa sin cabecera no debe dejar aire arriba. */
+.cmd-dg-arr:empty, .cmd-dg-aba:empty, .cmd-dg-izq:empty, .cmd-dg-der:empty { display:none; }
+/* min-width:0 en las bandas: son items de grid Y contenedores flex. El
+   minmax(0,1fr) deja que el TRACK encoja, pero el item sigue con
+   min-width:auto y no baja de su min-content — por ahí se escapaba el
+   desborde de la banda derecha. Va en las cuatro, no sólo en las laterales. */
+.cmd-dg-izq, .cmd-dg-der { display:flex; flex-direction:column; justify-content:space-around; gap:11px; min-width:0; }
+.cmd-dg-arr, .cmd-dg-aba { display:flex; justify-content:center; gap:16px; flex-wrap:wrap; min-width:0; }
+/* La mesa: la misma lámina ámbar del mapa de edición, para que se reconozca
+   como el mismo objeto y no como un recuadro nuevo. */
+.cmd-dg-mesa { display:flex; align-items:center; justify-content:center; min-height:130px;
+  background:rgba(202,138,4,0.05); border:0.5px solid rgba(202,138,4,0.32);
+  box-shadow:inset 0 0 22px rgba(202,138,4,0.05); border-radius:9px; }
+.cmd-dg-mesa.shape-round { border-radius:50%; }
+.cmd-dg-mesa-lbl { font-family:'Courier Prime','Courier New',monospace; font-size:9px;
+  letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); opacity:0.75;
+  writing-mode:vertical-rl; text-orientation:mixed; }
+.cmd-dg-mesa.shape-round .cmd-dg-mesa-lbl,
+.cmd-dg-mesa.shape-couple .cmd-dg-mesa-lbl { writing-mode:horizontal-tb; }
+
+/* Un puesto: la bocha del asiento pegada a la mesa, el texto hacia afuera. */
+.cmd-dg-puesto { display:flex; gap:6px; align-items:flex-start; min-width:0; max-width:100%; }
+.cmd-dg-puesto.lado-izq { flex-direction:row-reverse; text-align:right; }
+.cmd-dg-puesto.lado-arr, .cmd-dg-puesto.lado-aba { flex-direction:column; align-items:center; text-align:center; max-width:46%; }
+.cmd-dg-bocha { flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
+  gap:1px; min-width:21px; height:21px; padding:0 4px; border-radius:11px;
+  background:var(--surface); border:0.5px solid var(--border-md); color:#9ec9ff;
+  font-family:'Courier Prime','Courier New',monospace; font-size:11px; line-height:1; }
+.cmd-dg-bocha.es-cabecera { border-color:var(--gold); color:var(--gold); }
+.cmd-dg-platos { min-width:0; flex:1 1 auto; }
+.cmd-dg-it { margin-bottom:4px; }
+.cmd-dg-it:last-child { margin-bottom:0; }
+/* Cormorant para el plato (es el nombre del producto, la misma voz que en el
+   menú) y Courier para la indicación (voz operativa). Misma convención que
+   .vj-detail-obs vs .vj-notas. */
+.cmd-dg-nom { display:block; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif;
+  font-size:14px; line-height:1.18; color:var(--text); overflow-wrap:anywhere; }
+.cmd-dg-q { font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:#9ec9ff; margin-right:3px; }
+/* Por enviar: un aro, no un relleno. Marca sin gritar y sin ocupar renglón. */
+.cmd-dg-pend { color:var(--gold); font-size:10px; margin-right:4px; vertical-align:middle; }
+.cmd-dg-it.es-bebida .cmd-dg-nom { color:var(--text-secondary); font-style:italic; }
+/* La indicación especial NUNCA se esconde ni se resume: es la razón por la
+   que esta vista existe. */
+.cmd-dg-nota { display:block; font-family:'Courier Prime','Courier New',monospace;
+  font-size:10px; line-height:1.3; color:var(--gold); overflow-wrap:anywhere; margin-top:1px; }
+.cmd-dg-vacio { font-family:'Courier Prime','Courier New',monospace; font-size:12px; color:var(--text-tertiary); }
+
+/* iPhone: se achica la letra antes que abreviar nada (decisión del owner). */
+@media (max-width:480px){
+  .cmd-dg { gap:7px 7px; grid-template-columns:minmax(0,1fr) minmax(34px, 46px) minmax(0,1fr); }
+  .cmd-dg-mesa { min-height:104px; }
+  .cmd-dg-nom  { font-size:12.5px; }
+  .cmd-dg-nota { font-size:9.5px; }
+  .cmd-dg-bocha { min-width:19px; height:19px; font-size:10px; }
+}
+/* Tablet: la vista para la que se diseñó. Respira y el plato se lee de lejos. */
+@media (min-width:700px){
+  .cmd-dg { gap:14px 18px; grid-template-columns:minmax(0,1fr) minmax(90px, 140px) minmax(0,1fr); }
+  .cmd-dg-mesa { min-height:190px; }
+  .cmd-dg-nom  { font-size:16px; }
+  .cmd-dg-nota { font-size:11px; }
+  .cmd-dg-bocha { min-width:24px; height:24px; font-size:12px; }
+}
 /* Comanda completa — vista Resumen (conteo por producto) */
 .cmd-tally-total { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); text-align:right; margin-bottom:6px; }
 .cmd-tally-block { margin-bottom:0.9rem; }
@@ -13428,41 +13509,66 @@ function comandaRenderFullTotals(items){
   return `<div class="cmd-totals-strip"><span class="cmd-totals-label">${t('cmdTableTotals')}</span>${lines}</div>`;
 }
 
-// Detalle por asiento: persona por persona, notas siempre visibles, cabecera
-// marcada (♛), sin hora de envío (solo el rótulo Por enviar / Enviado).
-function comandaRenderFullBySeat(items, diners, seatCfg){
+// LA COMANDA COMPLETA ES EL MAPA DE LA MESA (2026-09-16).
+//
+// Antes esta vista tiraba la geometría a la basura justo cuando más sirve:
+// armaba secciones verticales "Asiento 1", "Asiento 2"… o sea que para
+// entregar los platos había que leer una lista y traducirla mentalmente a
+// posiciones, con el tablet en la mano, scrolleando. La mesa espacial ya
+// estaba construida y la desaprovechábamos.
+//
+// Ahora los platos y sus indicaciones cuelgan del asiento que los pidió, en
+// el lado de la mesa donde esa persona está sentada. Se mira una vez y se
+// entrega: sin scroll, sin tocar nada.
+//
+// POR QUÉ GRID Y NO POSICIONES ABSOLUTAS: con globos en x/y exactos, dos
+// asientos vecinos en una mesa redonda se pisan el texto, y el bug aparece
+// sólo con ciertos números de comensales. El grid de tres bandas
+// (izquierda · mesa · derecha, más cabecera arriba y pie abajo) conserva lo
+// que importa —de qué lado estás y en qué orden— y hace el solapamiento
+// imposible por construcción, con cualquier forma y cualquier cantidad.
+function comandaRenderFullDiagrama(items, diners, seatCfg){
   const layout = comandaSeatLayout(diners, seatCfg.shape, seatCfg.hasHead);
-  const headSet = {};
-  layout.forEach(s => { if (s.isHead) headSet[s.n] = true; });
-  const sections = [];
-  for (let n = 1; n <= diners; n++){
-    const its = items.filter(it => it.dinerN === n && !comandaIsSep(it));
-    let lines = '';
-    if (its.length){
-      const batches = comandaSplitBatches(its);
-      lines = batches.map(batch => {
-        const isPending = batch.kind === 'open';
-        const header = `<div class="cmd-batch-divider ${isPending?'is-pending':'is-sent'}"><span class="cmd-batch-label">${isPending?t('cmdPendingBatch'):t('cmdSentBatch')}</span></div>`;
-        let prevDrink = null;
-        const inner = batch.items.map(it => {
-          const isDrink = comandaIsDrink(it);
-          const div = (isDrink && prevDrink === false) ? `<div class="cmd-course-divider"><span>${t('cmdDrinksDivider')}</span></div>` : '';
-          prevDrink = isDrink;
-          const isCancelled = it.status === 'cancelled';
-          const isSent = !!it.sentAt && !isCancelled;
-          const cls = ['cmd-line', isCancelled?'is-cancelled':'', isSent?'is-sent':''].filter(Boolean).join(' ');
-          const cancelledChip = isCancelled ? `<span class="cmd-cancelled-chip">${t('cmdItemCancelled')}</span>` : '';
-          return `${div}<div class="${cls}"><div class="cmd-line-qty">${it.qty||1}×</div><div class="cmd-line-body"><span class="cmd-line-name">${it.name}</span>${cancelledChip}${it.notes?`<span class="cmd-line-note">⚐ ${it.notes}</span>`:''}</div></div>`;
-        }).join('');
-        return header + inner;
-      }).join('');
-    } else {
-      lines = `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`;
-    }
-    const crown = headSet[n] ? ' ♛' : '';
-    sections.push(`<div class="cmd-full-diner"><div class="cmd-full-diner-head by-seat">${t('cmdSeat')} ${n}${crown}</div>${lines}</div>`);
-  }
-  return sections.join('');
+  // Reparto por banda según la posición real que ya calcula el mapa.
+  const izq = [], der = [], arr = [], aba = [];
+  layout.forEach(sx => {
+    if      (sx.x < 42) izq.push(sx);
+    else if (sx.x > 58) der.push(sx);
+    else if (sx.y < 50) arr.push(sx);
+    else                aba.push(sx);
+  });
+  izq.sort((a,b) => a.y - b.y);   der.sort((a,b) => a.y - b.y);
+  arr.sort((a,b) => a.x - b.x);   aba.sort((a,b) => a.x - b.x);
+
+  const puesto = (sx, lado) => {
+    // Los cancelados no se dibujan: esta vista se lee para entregar, y un
+    // plato tachado en el diagrama es ruido que compite con lo que sí va.
+    const its = items.filter(it => it.dinerN === sx.n && !comandaIsSep(it) && it.status !== 'cancelled');
+    const lineas = its.length
+      ? its.map(it => `
+        <div class="cmd-dg-it${comandaIsDrink(it) ? ' es-bebida' : ''}">
+          <span class="cmd-dg-nom">${!it.sentAt ? '<span class="cmd-dg-pend">◦</span>' : ''}${(it.qty || 1) > 1 ? `<span class="cmd-dg-q">${it.qty}×</span>` : ''}${it.name}</span>
+          ${it.notes ? `<span class="cmd-dg-nota">⚐ ${it.notes}</span>` : ''}
+        </div>`).join('')
+      : `<div class="cmd-dg-vacio">—</div>`;
+    return `
+      <div class="cmd-dg-puesto lado-${lado}">
+        <span class="cmd-dg-bocha${sx.isHead ? ' es-cabecera' : ''}">${sx.isHead ? '♛' : ''}${sx.n}</span>
+        <div class="cmd-dg-platos">${lineas}</div>
+      </div>`;
+  };
+  const banda = (arrSeats, lado) => arrSeats.map(sx => puesto(sx, lado)).join('');
+  const c = COMANDA_ACTIVE_DATA;
+  return `
+    <div class="cmd-dg">
+      <div class="cmd-dg-arr">${banda(arr, 'arr')}</div>
+      <div class="cmd-dg-izq">${banda(izq, 'izq')}</div>
+      <div class="cmd-dg-mesa shape-${seatCfg.shape}">
+        <span class="cmd-dg-mesa-lbl">${t('cmdMesaPrefix')} ${comandaMesaLabel(c)}</span>
+      </div>
+      <div class="cmd-dg-der">${banda(der, 'der')}</div>
+      <div class="cmd-dg-aba">${banda(aba, 'aba')}</div>
+    </div>`;
 }
 
 function comandaRenderFullModal(){
@@ -13473,7 +13579,7 @@ function comandaRenderFullModal(){
   const seatCfg = comandaSeatConfig(c);
   const hasItems = items.some(it => it.status !== 'cancelled');
   const body = comandaRenderFullRooms(c) + (hasItems
-    ? comandaRenderFullTotals(items) + comandaRenderFullBySeat(items, diners, seatCfg)
+    ? comandaRenderFullTotals(items) + comandaRenderFullDiagrama(items, diners, seatCfg)
     : `<div class="cmd-summary-empty">— ${t('cmdNoOrders')} —</div>`);
   return `
     <div class="cmd-modal-overlay" onclick="if(event.target===this) comandaHideFullView()">
