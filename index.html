@@ -1600,6 +1600,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Estado vacío: sin contadores que proteger, el aviso y el botón comparten la
    línea — el botón vuelve a flex-basis:auto y se va a la derecha con el auto. */
 .pgo-banner.is-vacio .pgo-b-refresh { flex-basis:auto; margin-left:auto; }
+.pgo-b-refresh.is-fallo .pgo-b-icon,
+.pgo-b-refresh.is-fallo .pgo-b-label { color:var(--coral); }
 .pgo-b-vacio { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); }
 .pgo-b-icon { font-size:13px; line-height:1; color:var(--text-tertiary); display:inline-block; }
 .pgo-b-refresh.is-busy  .pgo-b-icon { color:var(--gold); animation:pgoSpin .9s linear infinite; }
@@ -4138,6 +4140,7 @@ let VIAJEROS_VISTA         = 'viajeros';   // 'viajeros' | 'comedor'   // salien
 // declararlo abajo lo dejaría en TDZ y haltearía el programa entero (§5).
 let PGO_REFRESH_BUSY  = false;   // hay una revalidación en curso
 let PGO_SW_NUEVA      = false;   // el service worker tiene una versión esperando
+let PGO_REFRESH_FALLO = false;   // el último refresco manual no pudo traer datos
 let VJ_NOTAS               = {};     // { pid: { notaId: {txt, ts, chip} } }
 let VJ_NOTA_OPEN           = null;   // pid con el editor abierto (uno a la vez)
 let VJ_NOTA_BUF            = '';     // lo tipeado, para que un re-render no lo pierda
@@ -4372,6 +4375,7 @@ const UI = {
     vjStatViajeros:'viajeros', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'salen hoy',
     // Botón de refresco del banner de PGO. La palabra va visible, no sólo el
     // ícono: el garzón tiene que saber qué hace sin probarlo.
+    pgoRefreshFail:'no se pudo actualizar',
     pgoNoData:'sin datos de PGO',
     pgoRefresh:'actualizar', pgoRefreshing:'actualizando', pgoRefreshNew:'versión nueva',
     pgoRefreshTitle:'Volver a pedir los datos de PGO, rol y clima',
@@ -4595,6 +4599,7 @@ const UI = {
     vjSyncAgoNow:'just now', vjSyncAgoMin:'{n} min ago', vjSyncAgoHours:'{n} h ago', vjSyncAgoDays:'{n} d ago',
     vjSyncFresh:'Up to date', vjSyncStale:'Behind', vjSyncDown:'Not syncing',
     vjStatViajeros:'guests', vjStatNinos:'minors', vjStatAlergias:'allergies', vjStatDietas:'diets', vjStatSalenHoy:'leave today',
+    pgoRefreshFail:'could not refresh',
     pgoNoData:'PGO unavailable',
     pgoRefresh:'refresh', pgoRefreshing:'refreshing', pgoRefreshNew:'new version',
     pgoRefreshTitle:'Fetch PGO, roster and weather again',
@@ -4818,6 +4823,7 @@ const UI = {
     vjSyncAgoNow:'agora', vjSyncAgoMin:'há {n} min', vjSyncAgoHours:'há {n} h', vjSyncAgoDays:'há {n} d',
     vjSyncFresh:'Em dia', vjSyncStale:'Atrasado', vjSyncDown:'Sem sincronizar',
     vjStatViajeros:'viajantes', vjStatNinos:'menores', vjStatAlergias:'alergias', vjStatDietas:'dietas', vjStatSalenHoy:'saem hoje',
+    pgoRefreshFail:'não foi possível atualizar',
     pgoNoData:'sem dados do PGO',
     pgoRefresh:'atualizar', pgoRefreshing:'atualizando', pgoRefreshNew:'versão nova',
     pgoRefreshTitle:'Pedir de novo os dados de PGO, escala e clima',
@@ -7434,8 +7440,36 @@ window.ataGateReset = function(){
   firebase.auth().signOut().then(() => location.reload());
 };
 
+// ── EL TOKEN VIGENTE, PEDIDO AL SDK Y NO A UNA VARIABLE ────────────────────
+// La causa raíz del "abro el tablet y no hay datos" (2026-09-16). FB_AUTH_TOKEN
+// se escribía SÓLO desde onIdTokenChanged, que dispara cuando el SDK renueva
+// por su cuenta. Instalada como PWA la app no se cierra: se SUSPENDE, y con ella
+// los timers del SDK. Al volver después de horas el token de la variable está
+// vencido, cada GET REST contesta 401 y —peor— el 401 se trataba como respuesta
+// buena y borraba los datos en memoria. Recargar arreglaba porque el arranque
+// vuelve a mintear el token desde el refresh token de IndexedDB.
+//
+// getIdToken() devuelve el token cacheado mientras sirva y lo renueva solo si
+// venció o está por vencer, así que llamarlo antes de cada fetch es barato:
+// en el 99% de los casos no toca la red.
+async function fbTokenRefrescar(forzar){
+  try {
+    const auth = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth() : null;
+    const u = auth && auth.currentUser;
+    if (!u) return FB_AUTH_TOKEN;
+    const tk = await u.getIdToken(!!forzar);
+    if (tk) FB_AUTH_TOKEN = tk;
+    return tk;
+  } catch(e){
+    console.warn('[auth] no se pudo renovar el token:', e && (e.code || e.message));
+    return FB_AUTH_TOKEN;
+  }
+}
 function fbAuthInit(){
-  if (_FB_AUTH_READY) return _FB_AUTH_READY;
+  // Ya arrancado: esta llamada deja de significar "esperá el arranque" y pasa a
+  // significar "asegurá un token vigente". Es el punto por el que ya pasaban
+  // todos los fetch, así que renovar acá los cubre a todos sin tocarlos.
+  if (_FB_AUTH_READY) return _FB_AUTH_READY.then(() => fbTokenRefrescar(false));
   _FB_AUTH_READY = new Promise(resolve => {
     let listo = false;
     const fin = v => { if (!listo){ listo = true; resolve(v); } };
@@ -7518,6 +7552,24 @@ function fbAuthInit(){
     }
   });
   return _FB_AUTH_READY;
+}
+// GET autenticado con reintento por token vencido. Devuelve el JSON o LANZA:
+// que un 401 llegara como respuesta buena era la mitad del bug — el cuerpo de
+// error de Firebase es JSON válido, así que resp.json() no se quejaba y el
+// llamador guardaba {"error":...} como si fueran datos.
+async function fbGetJson(urlFn, opts){
+  let resp = await fetch(urlFn(), opts);
+  if (resp.status === 401 || resp.status === 403){
+    // Token vencido: se fuerza la renovación y se reintenta UNA vez. urlFn se
+    // vuelve a evaluar a propósito, para que lleve el token nuevo.
+    console.info('[auth] ' + resp.status + ' — renovando token y reintentando');
+    await fbTokenRefrescar(true);
+    resp = await fetch(urlFn(), opts);
+  }
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const raw = await resp.json();
+  if (raw && raw.error) throw new Error(String(raw.error));
+  return raw;
 }
 // Sufijo para las URLs REST. Sin token devuelve '' y la llamada sale como antes.
 function fbQS(sep){ return FB_AUTH_TOKEN ? `${sep || '?'}auth=${encodeURIComponent(FB_AUTH_TOKEN)}` : ''; }
@@ -7656,12 +7708,14 @@ async function staffingFetch(){
   const monthKey = staffingMonthKey(new Date());
   STAFFING_MONTH_KEY = monthKey;
   try {
-    const url = `${CF_FIREBASE_CONFIG.databaseURL}/${STAFFING_PATH}/${monthKey}.json${fbQS()}`;
-    const resp = await fetch(url);
-    const raw = await resp.json();
+    const url = () => `${CF_FIREBASE_CONFIG.databaseURL}/${STAFFING_PATH}/${monthKey}.json${fbQS()}`;
+    const raw = await fbGetJson(url);
     STAFFING_DATA = raw ? normalizeStaffingMonth(raw) : {};
   } catch(e){
-    STAFFING_DATA = {};
+    // Mismo criterio que viajeros: un fetch caído no borra el roster que el
+    // turno ya tiene en pantalla. Sólo se vacía si nunca hubo nada.
+    console.warn('[staffing] fetch falló, se conserva lo que había:', e && e.message);
+    if (!STAFFING_DATA) STAFFING_DATA = {};
   }
   staffingRender();
 }
@@ -8275,11 +8329,17 @@ async function viajerosFetch(){
   try {
     // no-store: el doc de viajeros es dato vivo. Sin esto, un tablet que
     // reabre la app puede resolver el GET desde el cache del navegador.
-    const resp = await fetch(viajerosUrl(), { cache: 'no-store' });
-    const raw  = await resp.json();
+    const raw = await fbGetJson(viajerosUrl, { cache: 'no-store' });
+    // Sólo acá se pisa lo que hay en memoria: la respuesta vino bien. Un doc
+    // sin `habs` sí es "no hay datos" de verdad y debe quedar en null.
     VIAJEROS_DATA = (raw && raw.habs) ? raw : null;
     VIAJEROS_LOAD_ERROR = false;
   } catch(e){
+    // FALLÓ: NO se toca VIAJEROS_DATA. Antes el 401 entraba por el camino
+    // bueno y dejaba la memoria en null; un tablet con los datos del servicio
+    // en pantalla los perdía por un token vencido, y el botón de refresco
+    // repetía el mismo borrado en cada tap.
+    console.warn('[viajeros] fetch falló, se conserva lo que había:', e && e.message);
     VIAJEROS_LOAD_ERROR = true;
   }
   VIAJEROS_FETCHED_AT = Date.now();
@@ -8323,9 +8383,13 @@ function pgoBannerCounts(){
 }
 // El botón, aparte del render principal: lo dibujan los DOS estados del banner.
 function pgoRefreshBtn(){
-  return `<button type="button" class="pgo-b-item pgo-b-refresh${PGO_REFRESH_BUSY ? ' is-busy' : ''}${PGO_SW_NUEVA ? ' is-nueva' : ''}"
+  const etiqueta = PGO_SW_NUEVA    ? t('pgoRefreshNew')
+                 : PGO_REFRESH_BUSY  ? t('pgoRefreshing')
+                 : PGO_REFRESH_FALLO ? t('pgoRefreshFail')
+                 : t('pgoRefresh');
+  return `<button type="button" class="pgo-b-item pgo-b-refresh${PGO_REFRESH_BUSY ? ' is-busy' : ''}${PGO_SW_NUEVA ? ' is-nueva' : ''}${PGO_REFRESH_FALLO && !PGO_REFRESH_BUSY ? ' is-fallo' : ''}"
             onclick="pgoRefrescar()" title="${vjEsc(t('pgoRefreshTitle'))}">
-      <span class="pgo-b-icon">&#8635;</span><span class="pgo-b-label">${vjEsc(PGO_SW_NUEVA ? t('pgoRefreshNew') : PGO_REFRESH_BUSY ? t('pgoRefreshing') : t('pgoRefresh'))}</span></button>`;
+      <span class="pgo-b-icon">&#8635;</span><span class="pgo-b-label">${vjEsc(etiqueta)}</span></button>`;
 }
 function pgoBannerRender(){
   const el = document.getElementById('pgo-banner');
@@ -8389,6 +8453,7 @@ function pgoRefrescar(){
   if (PGO_SW_NUEVA){ location.reload(); return; }
   if (PGO_REFRESH_BUSY) return;
   PGO_REFRESH_BUSY = true;
+  PGO_REFRESH_FALLO = false;
   pgoBannerRender();
   // Piso de 600ms para el giro: si la red contesta al instante el ícono
   // parpadearía sin que nadie lo vea, y el garzón vuelve a tocar creyendo que
@@ -8399,7 +8464,14 @@ function pgoRefrescar(){
   catch(e){ console.warn('[pgo] refresco', e); trabajo = Promise.resolve(); }
   Promise.all([trabajo.catch(() => {}), minimo]).then(() => {
     PGO_REFRESH_BUSY = false;
+    // Un tap que no trajo nada tiene que decirlo: si no, el garzón vuelve a
+    // tocar creyendo que el problema es suyo. El aviso se borra solo, para no
+    // dejar una alarma pegada cuando la red vuelva.
+    PGO_REFRESH_FALLO = !!VIAJEROS_LOAD_ERROR;
     pgoBannerRender();
+    if (PGO_REFRESH_FALLO) setTimeout(() => {
+      PGO_REFRESH_FALLO = false; pgoBannerRender();
+    }, 6000);
   });
 }
 // El service worker avisa que hay una versión instalada esperando. sw.js llama
@@ -15840,6 +15912,13 @@ let  _PWA_ULTIMA_REVALIDA = Date.now();
 // girar mientras dura de verdad y no contra un timer inventado.
 function pwaRevalidar(motivo, forzar){
   const ahora = Date.now();
+  // EL TOKEN PRIMERO, Y AUNQUE LA REVALIDACIÓN CAIGA EN EL MARGEN. Los módulos
+  // que escriben —comandera, checklist, rol, café— arman su URL con fbQS() de
+  // forma síncrona y no esperan a fbAuthInit(), así que después de una
+  // suspensión larga mandarían el token vencido y comerían un 401 en silencio.
+  // Renovar acá es la única oportunidad garantizada al volver del background,
+  // y es barato: el SDK sólo toca la red si el token de verdad venció.
+  try { fbTokenRefrescar(false); } catch(e){}
   // Si el doc que tenemos es de otro DÍA, se revalida sí o sí: es exactamente
   // el caso "abro el tablet a la mañana y veo el reporte de ayer".
   const otroDia = !!(VIAJEROS_DATA && VIAJEROS_DATA.date && VIAJEROS_DATA.date !== vjTodayIso());

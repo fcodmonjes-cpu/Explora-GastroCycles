@@ -640,6 +640,58 @@ Ninguna de las dos filtra nada: quien tiene el fuente ya podía calcularlas.
 
 ---
 
+### 4.5 El token vence en una hora y la PWA no se entera
+
+**El bug que costó meses de vueltas (resuelto 2026-09-16).** El síntoma que se
+reportaba una y otra vez: *"el tablet lleva rato abierto y no muestra datos de
+PGO, o muestra los de antes; si recargo la página vuelven"*. Se había culpado al
+cache del service worker y al estado en memoria (§ el fix de 2026-08-17), y las
+dos veces se arregló algo real — pero el síntoma volvía.
+
+**La causa verdadera es el token.** Las URLs REST llevan la credencial en el
+query string (`?auth=<idToken>`), y ese token **vence en una hora**. El SDK lo
+renueva solo y avisa por `onIdTokenChanged`, que era el ÚNICO lugar donde se
+escribía `FB_AUTH_TOKEN`. Instalada como PWA la app no se cierra: se suspende, y
+con ella los timers del SDK. Al volver después de horas la variable tiene un
+token vencido, y cada GET contesta 401.
+
+**Y el 401 entraba por la puerta de los datos buenos.** El cuerpo de error de
+Firebase es JSON válido (`{"error":"Auth token is expired"}`), así que
+`resp.json()` no se quejaba y nadie miraba `resp.ok`. El llamador hacía
+`VIAJEROS_DATA = raw.habs ? raw : null` → **null**, y además
+`VIAJEROS_LOAD_ERROR = false`: la app borraba los datos que tenía en pantalla y
+declaraba que todo había ido bien. El botón de refresco repetía ese mismo
+borrado en cada tap, que es por lo que no arreglaba nada.
+
+Recargar funcionaba porque el arranque vuelve a mintear el token desde el
+refresh token que `Persistence.LOCAL` guarda en IndexedDB.
+
+**La solución, en tres piezas:**
+
+1. **El token se le pide al SDK, no a una variable.** `fbTokenRefrescar()` llama
+   `getIdToken()`, que devuelve el cacheado mientras sirva y renueva solo si
+   venció — es barato llamarlo antes de cada fetch. `fbAuthInit()`, ya
+   inicializado, pasa a significar "asegurá un token vigente": como todos los
+   fetch ya lo esperaban, se arreglan todos sin tocarlos.
+2. **`fbGetJson()` no miente.** Mira `resp.ok`, detecta el `error` del cuerpo, y
+   ante un 401/403 fuerza la renovación y reintenta UNA vez.
+3. **Un fetch caído ya no pisa memoria.** Sólo se escribe `VIAJEROS_DATA` cuando
+   la respuesta vino bien; si falla se conserva lo que había y se marca el
+   error. Mismo criterio en staffing.
+
+`pwaRevalidar()` además renueva el token **aunque la revalidación caiga en el
+margen de 60 s**: los módulos que escriben (comandera, checklist, rol, café)
+arman su URL con `fbQS()` de forma síncrona y no esperan a `fbAuthInit()`, así
+que sin eso mandarían el token vencido y comerían un 401 en silencio.
+
+> **La lección general:** en esta app, `resp.json()` sin `resp.ok` es una
+> trampa. Firebase responde los errores con 200-like JSON bien formado, y
+> cualquier llamador que no chequee el status va a guardar un error como si
+> fueran datos. Si se agrega un módulo que lea de Firebase por REST, que use
+> `fbGetJson()`.
+
+---
+
 ## 5. El patrón "módulo"
 
 Cada feature operativo del programa (staffing, desserts, café orders,
