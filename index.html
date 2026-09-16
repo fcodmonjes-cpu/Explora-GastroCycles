@@ -11567,8 +11567,16 @@ function comandaScrollAsientoAVista(){
   const fila = document.querySelector('.cmd-seatrow-nums');
   if (!fila) return;
   const act = fila.querySelector('.cmd-seat.active');
-  if (!act || typeof act.scrollIntoView !== 'function') return;
-  try { act.scrollIntoView({ inline:'nearest', block:'nearest' }); } catch(e){}
+  if (!act) return;
+  // SOLO el eje horizontal, y moviendo el contenedor a mano. scrollIntoView,
+  // aunque sea con block:'nearest', puede scrollear la PÁGINA para traer la fila
+  // a la vista: si la fila queda fuera de pantalla al abrirse el teclado, el
+  // resultado es un tirón vertical justo mientras se está anotando. Con
+  // scrollLeft el contenedor se mueve solo por dentro y la página no se entera.
+  const izq = act.offsetLeft, der = izq + act.offsetWidth;
+  const vIzq = fila.scrollLeft, vDer = vIzq + fila.clientWidth;
+  if (izq < vIzq)       fila.scrollLeft = Math.max(0, izq - 8);
+  else if (der > vDer)  fila.scrollLeft = der - fila.clientWidth + 8;
 }
 function comandaRemoveDiner(){
   const c = COMANDA_ACTIVE_DATA;
@@ -11602,10 +11610,17 @@ function comandaResetSearch(){
   COMANDA_KBD_OPEN = false;      // arranca con el menú del día a pantalla completa
 }
 // Despliega el teclado (tap en la barra de búsqueda o en "buscar otra cosa").
+// Abrir el teclado reemplaza el catálogo por resultados + teclado, o sea que
+// cambia el alto total de la página. Si el mozo venía scrolleado, el navegador
+// recorta el scrollTop al nuevo máximo y TODO salta. El teclado todavía no
+// existe, así que el ancla es la barra de búsqueda: lo de arriba de ella no
+// cambia, y clavarla deja la pantalla quieta mientras el teclado entra abajo.
 function comandaOpenKbd(){
   if (COMANDA_KBD_OPEN) return;
-  COMANDA_KBD_OPEN = true;
-  comandaRender();
+  comandaPinAncla('.cmd-search-bar', () => {
+    COMANDA_KBD_OPEN = true;
+    comandaRender();
+  });
 }
 function comandaBuildSearchIndex(){
   const idx = [];
@@ -11861,17 +11876,24 @@ function comandaScroller(el){
 // y corrige el scroll en esa diferencia: el marco de resultados puede medir lo
 // que le pida el contenido (cero espacio en blanco) sin mover la tecla que el
 // mozo está por tocar. Lo que se corre es lo de arriba, no el teclado.
-function comandaPinKbd(patch){
-  const kbd = document.getElementById('cmd-kbd');
-  if (!kbd){ patch(); return; }
-  const before = kbd.getBoundingClientRect().top;
+// Generalizado (2026-09-16): el ancla se pasa por selector y se RE-CONSULTA
+// después del patch. Antes se guardaba el nodo, lo cual sólo funciona si el
+// patch no lo reemplaza — cierto para comandaPatchSearchPanel, falso para
+// comandaRender(), que reconstruye todo. Con el selector sirve para los dos.
+function comandaPinAncla(sel, patch){
+  const antes = document.querySelector(sel);
+  const y0 = antes ? antes.getBoundingClientRect().top : null;
   patch();
-  const delta = kbd.getBoundingClientRect().top - before;
+  if (y0 === null) return;
+  const desp = document.querySelector(sel);
+  if (!desp) return;
+  const delta = desp.getBoundingClientRect().top - y0;
   if (!delta) return;
-  const sc = comandaScroller(kbd);
+  const sc = comandaScroller(desp);
   if (sc) sc.scrollTop += delta;
   else window.scrollBy(0, delta);
 }
+function comandaPinKbd(patch){ comandaPinAncla('#cmd-kbd', patch); }
 // Teclado: parcha SOLO el panel de búsqueda (sin comandaRender completo, para no
 // reconstruir la vista activa por cada tecla — mismo motivo que change-mesa).
 function comandaKbdPress(k){
@@ -11895,10 +11917,19 @@ function comandaPatchSearchPanel(){
   if (qEl) qEl.innerHTML = q ? vjEsc(q) : `<span class="cmd-search-ph">${t(custom ? 'cmdSearchOtro' : 'cmdSearchPlaceholder')}</span>`;
   const resEl = document.getElementById('cmd-search-results');
   if (resEl) resEl.innerHTML = custom ? comandaCustomPreviewHtml(q) : comandaSearchResultsHtml(q);
+  // El ícono de la barra distingue los dos modos (⌕ buscar / ✎ escribir). Antes
+  // lo repintaba el render completo; ahora que el cambio de modo se parchea,
+  // tiene que actualizarse acá o queda mintiendo.
+  const icoEl = document.querySelector('.cmd-search-icon');
+  if (icoEl) icoEl.textContent = custom ? '✎' : '⌕';
+  const kbd = document.getElementById('cmd-kbd');
   if (!custom){   // el atenuado predictivo solo aplica al buscar
     const live = comandaLiveKeys(q);
-    const kbd = document.getElementById('cmd-kbd');
     if (kbd) kbd.querySelectorAll('.cmd-kbd-key[data-k]').forEach(btn => btn.classList.toggle('dim', !live.has(btn.getAttribute('data-k'))));
+  } else if (kbd){
+    // En texto libre no se atenúa nada: sin esto, las teclas que quedaron
+    // apagadas por la última búsqueda seguían apagadas y parecían rotas.
+    kbd.querySelectorAll('.cmd-kbd-key.dim').forEach(btn => btn.classList.remove('dim'));
   }
   // Botón limpiar: aparece/desaparece según haya query.
   const bar = qEl && qEl.parentElement;
@@ -11925,10 +11956,21 @@ function comandaSearchAdd(srcKey, sourceId, name, allergens, group){
 // "Otro / pedido especial": captura el nombre con el MISMO teclado en pantalla
 // (sin ir a la vista de botones ni disparar el teclado del iPhone). Semilla: lo
 // que el mozo ya venía tecleando en la búsqueda.
+// Pasar a captura libre colapsaba la lista de resultados a UNA fila de preview,
+// y como esto re-renderizaba la vista entera el teclado saltaba ~200px hacia
+// arriba de golpe — con el dedo ya en camino a una tecla. Ahora va por el mismo
+// carril que tipear: se parcha SOLO el panel (comandaPatchSearchPanel no toca el
+// nodo del teclado, por eso la referencia sobrevive) y comandaPinKbd corrige el
+// scroll en la diferencia exacta. El teclado no se mueve; se corre lo de arriba.
+// Si el teclado todavía no existe no hay nada que clavar: render normal.
 function comandaSearchOtro(){
-  COMANDA_SEARCH_CUSTOM = true;
-  COMANDA_PANEL_ANIM = true;   // cambia de modo → el panel sí se re-anima
-  comandaRender();
+  if (!document.getElementById('cmd-kbd')){
+    COMANDA_SEARCH_CUSTOM = true;
+    COMANDA_PANEL_ANIM = true;
+    comandaRender();
+    return;
+  }
+  comandaPinKbd(() => { COMANDA_SEARCH_CUSTOM = true; comandaPatchSearchPanel(); });
 }
 function comandaCustomConfirm(){
   const name = (COMANDA_SEARCH_QUERY || '').trim();
@@ -11938,10 +11980,16 @@ function comandaCustomConfirm(){
   COMANDA_SEARCH_CUSTOM = false;
   comandaAddItem('custom', null, disp, [], 'Otros');   // hace comandaRender()
 }
+// La vuelta, por el mismo carril: la lista se vuelve a llenar y el teclado
+// bajaría de golpe si no se compensara.
 function comandaCustomCancel(){
-  COMANDA_SEARCH_CUSTOM = false;
-  COMANDA_PANEL_ANIM = true;
-  comandaRender();
+  if (!document.getElementById('cmd-kbd')){
+    COMANDA_SEARCH_CUSTOM = false;
+    COMANDA_PANEL_ANIM = true;
+    comandaRender();
+    return;
+  }
+  comandaPinKbd(() => { COMANDA_SEARCH_CUSTOM = false; comandaPatchSearchPanel(); });
 }
 function comandaSetCatalogMode(mode){
   COMANDA_CATALOG_MODE = mode;
@@ -13145,11 +13193,15 @@ function comandaRenderActive(root){
 
     ${comandaRenderRoomsPanel(c)}
 
-    <div class="cmd-seat-panel-head">${t('cmdSeat')} <strong>${COMANDA_ACTIVE_DINER}</strong>${seatCfg.hasHead && COMANDA_ACTIVE_DINER===1 ? ' ♛' : ''}</div>
+    <!-- (2026-09-16) La fila de asientos va ARRIBA del buscador y del catálogo,
+         justo bajo habitaciones. Estaba al final de todo, que es el peor lugar:
+         elegir a quién le estás anotando es lo PRIMERO que se hace, y quedaba
+         después de la cosa que se elige. Se fue también el rótulo "ASIENTO N":
+         la fila ya marca el activo en gold y con su contador — el texto decía
+         de nuevo lo que el control ya muestra. -->
+    ${tableMap}
 
     ${catalogSection}
-
-    ${tableMap}
 
     <div class="cmd-tray-spacer"></div>
     ${trayHtml}
