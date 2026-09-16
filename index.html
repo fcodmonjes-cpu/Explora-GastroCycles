@@ -937,6 +937,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .lang-btn:hover { color: var(--text-secondary); background: transparent; }
 .lang-btn:last-child { border-right: none; }
 .lang-btn.active { color: #c07d2a; background: transparent; }
+/* (2026-09-16) Scrim de la status bar. Con viewport-fit=cover el contenido
+   scrollea por debajo de la barra del sistema — eso es correcto y buscado. Lo
+   que faltaba es lo que hace toda app nativa: una banda difuminada que proteja
+   esa zona. Sin ella, instalada como PWA, la píldora de cumpleaños salía
+   cortada y la línea de contadores quedaba pisada por el reloj y la batería.
+   Alto = env(safe-area-inset-top): en el navegador vale 0, la banda mide 0 y
+   simplemente no existe. O sea que esto SÓLO se ve instalada en el iPhone —
+   no se valida en headless ni en el browser, igual que el bug del toggle que
+   documenta §6. z-index 40: debajo del toggle de idioma (50), encima del resto.
+   pointer-events:none para no robar el tap de nada que quede abajo. */
+.app-scrim { position: fixed; top: 0; left: 0; right: 0; z-index: 40; pointer-events: none;
+  height: env(safe-area-inset-top, 0px);
+  background: rgba(26,25,23,0.72);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 
 /* Reference tabs: fila horizontal scrollable con underline dorado — el mismo
    sistema visual que los section-tabs del Checklist, así no hay nada nuevo
@@ -1108,7 +1122,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .mn-tile.wide .mn-name { font-size:16px; }
 /* Lo único que marca la ficha cerrada: lo que el plato EXCLUYE. El silencio
    significa apto — no hay chip verde, sólo se marcan las excepciones. */
-.mn-excl { font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.05em; color:#e08663; opacity:0.9; line-height:1.3; }
+/* (2026-09-16) Era el dato de más riesgo de la app en la tipografía más chica
+   del archivo: 9px con letter-spacing. A ese tamaño el tracking SEPARA los
+   glifos y estorba en vez de ayudar, y 9px queda bajo el piso de lectura en un
+   comedor con poca luz. Sube a 11px, sin tracking, opacidad plena. No se
+   recorta ni se resume la lista: una restricción que no se ve es una
+   restricción que no existe. */
+.mn-excl { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0; color:#e08663; opacity:1; line-height:1.35; }
 .mn-excl.nodata { color:var(--text-tertiary); }
 /* Atenuado con la lente activa: recede, pero sigue tapeable y legible —
    el garzón necesita saber qué NO servir tanto como qué sí. */
@@ -2136,6 +2156,14 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
    vista Comedor los chips quedaban visibles pese a estar marcados. */
 .vj-chips[hidden], .vj-stats[hidden], .vj-search-bar[hidden] { display:none !important; }
 .vj-chips { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; margin:0.8rem 0 1rem; }
+/* (2026-09-16) Rótulo de grupo dentro de la grilla de chips. Toma el ancho
+   completo igual que .vj-stats-rotulo: es el mismo componente conceptual
+   —rotular una fila para que dos datos parecidos dejen de confundirse— y no
+   un estilo nuevo. Sin color propio: el rótulo es estructura, no acento. */
+.vj-chips-rotulo { grid-column:1 / -1; font-family:'Courier Prime','Courier New',monospace;
+  font-size:9px; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--text-tertiary); margin:5px 0 1px; }
+.vj-chips-rotulo:first-child { margin-top:0; }
 .vj-chip { display:flex; justify-content:space-between; align-items:baseline; gap:8px; text-align:left; font-size:11px; letter-spacing:0.03em; padding:5px 10px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:transparent; color:var(--text-secondary); cursor:pointer; transition:all .15s; -webkit-user-select:none; user-select:none; }
 .vj-chip .vj-chip-n { font-family:'Courier Prime','Courier New',monospace; font-size:10px; opacity:0.75; }
 .vj-chip.alergia { color:#e08663; border-color:rgba(216,90,48,0.45); }
@@ -2344,6 +2372,12 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
   <div class="intro-rule"></div>
   <div class="intro-tagline">Detail, at hand.</div>
 </div>
+<!-- Banda que protege la zona de la status bar del sistema (reloj, señal,
+     batería) del contenido que scrollea por debajo. Vive acá, hermana de .app
+     y no adentro, porque es chrome del viewport y no contenido de la app.
+     Mide 0 en el navegador — sólo aparece instalada como PWA. -->
+<div class="app-scrim" aria-hidden="true"></div>
+
 <div class="app">
   <div class="header">
     <div class="header-text">
@@ -2481,7 +2515,15 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
          a descubrirla y se retira cuando deje de serlo. -->
     <button class="tab" onclick="setTab('viajeros',this)" id="tab-btn-viajeros">PGO</button>
     <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">Comande</button>
-    <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol">Rol</button>
+    <!-- (2026-09-16) ROL OCULTO. La tab no cumple función operativa hoy: el
+         turno activo ya se lee en el panel de staffing del header, así que el
+         lector semanal duplicaba información sin agregar decisión. Se oculta
+         el ACCESO, no el módulo: rolEnter(), el diccionario y sync_rol.py
+         siguen intactos y el header sigue comiendo de /staffing. Para
+         revivirla, borrar el atributo hidden — nada más.
+         Efecto lateral buscado: con 5 tabs la tira se acorta y deja de
+         cruzarse con la isla flotante del selector de idioma. -->
+    <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol" hidden>Rol</button>
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
   </div>
 
@@ -4183,6 +4225,11 @@ const VJ_TAGS = {
   'cond-diabetico':        { cls:'cond',    key:'vjTagDiabetico' },
   'cond-embarazada':       { cls:'cond',    key:'vjTagEmbarazada' }
 };
+// Rótulo de cada clase en la grilla de chips. Vive al lado de VJ_TAGS porque es
+// el mismo vocabulario: VJ_TAGS dice a qué clase pertenece cada tag, esto dice
+// cómo se llama esa clase en pantalla. Un tag sin clase conocida no lleva
+// rótulo (cae al final por `rank` y se muestra suelto).
+const VJ_GRUPO_KEY = { alergia:'vjGrupoAlergias', dieta:'vjGrupoPreferencias', cond:'vjGrupoCondiciones' };
 // Nacionalidad → bandera emoji (nativa en iOS). Códigos de 4 letras que llegan
 // del Reporte Geos. Sólo los confirmados en la data — un código sin mapear cae
 // a su texto crudo (mejor que una bandera equivocada sobre un viajero real).
@@ -4456,6 +4503,9 @@ const UI = {
     // Exploraciones (2026-09-16) — EN/PT propuestas, a revisar.
     vjExpHoy:'hoy', vjHist:'ya hizo',
     vjChipRevisar:'revisar observación',
+    // Rótulos de grupo de los chips. EN/PT son cognados directos pero NO están
+    // revisados por hablante nativo — marcar en el QA (convención CLAUDE.md).
+    vjGrupoAlergias:'alergias', vjGrupoPreferencias:'preferencias', vjGrupoCondiciones:'condiciones',
     // Aviso de día dudoso en la vista Comedor — EN/PT propuestas, a revisar.
     cmdDiaDudoso:'El detalle por grupo no cuadra con los cubiertos de hoy que informa PGO: puede ser de otro día. Los totales de arriba sí son de hoy.',
     vjSyncOtherDay:'NO ES DE HOY · actualizando',
@@ -4686,6 +4736,7 @@ const UI = {
     vjYaSalio:'already left', vjYaSalieron:'already left',
     vjExpHoy:'today', vjHist:'already did',
     vjChipRevisar:'check note',
+    vjGrupoAlergias:'allergies', vjGrupoPreferencias:'preferences', vjGrupoCondiciones:'conditions',
     cmdDiaDudoso:"The per-group breakdown doesn't match today's covers reported by PGO: it may be from another day. The totals above are today's.",
     vjSyncOtherDay:'NOT TODAY’S · refreshing',
     vjVista_viajeros:'guests', vjVista_comedor:'dining room',
@@ -4915,6 +4966,7 @@ const UI = {
     vjYaSalio:'já saiu', vjYaSalieron:'já saíram',
     vjExpHoy:'hoje', vjHist:'já fez',
     vjChipRevisar:'verificar observação',
+    vjGrupoAlergias:'alergias', vjGrupoPreferencias:'preferências', vjGrupoCondiciones:'condições',
     cmdDiaDudoso:'O detalhe por grupo não bate com os talheres de hoje informados pelo PGO: pode ser de outro dia. Os totais acima são de hoje.',
     vjSyncOtherDay:'NÃO É DE HOJE · atualizando',
     vjVista_viajeros:'viajantes', vjVista_comedor:'salão',
@@ -5798,7 +5850,16 @@ function menuRenderChrome(searching){
   const enAlmuerzo = MENU_SERVICE === 'almuerzo';
   document.querySelectorAll('#mn-day-selector .day-btn').forEach((b, i) => {
     const appDay = String(i + 1);
-    b.textContent = 'D' + (enAlmuerzo ? menuAppDayToDoc(appDay) : appDay);
+    const label  = enAlmuerzo ? menuAppDayToDoc(appDay) : appDay;
+    b.textContent = 'D' + label;
+    // (2026-09-16) El riel se leía "D3 D4 D1 D2": las etiquetas se remapean por
+    // MENU_CYCLE_OFFSET pero los botones quedaban en orden de app. Dos costos:
+    // buscar D2 obligaba a escanear los cuatro, y al cambiar de servicio las
+    // etiquetas se rebarajaban mientras las posiciones quedaban quietas — el
+    // botón bajo el pulgar cambiaba de nombre. `order` reordena SÓLO lo visual
+    // (.day-selector es grid); el onclick, setDay(), currentDay, el ancla de
+    // fecha y el halo de hoy siguen en numeración de app, intactos.
+    b.style.order = Number(label);
   });
   // Pie del riel: dice en qué numeración están esos botones. En Bar va vacío
   // pero el alto queda reservado — la grilla no salta al cambiar de servicio.
@@ -9272,12 +9333,28 @@ function vjRenderChips(){
   // (vjMatchesFilter) pero ningún control lo disparaba: había que toparse con
   // el chip ámbar abriendo habitaciones una por una.
   const nRev = base.filter(tr => tr.revisar).length;
+  let clsPrev = null;   // clase del chip anterior: marca dónde cae el rótulo
   el.innerHTML = (nRev ? `
     <button class="vj-chip revisar ${VIAJEROS_FILTER === 'revisar' ? 'active' : ''}"
             onclick="vjSetFilter('revisar')">${vjEsc(t('vjChipRevisar'))}<span class="vj-chip-n">${nRev}</span></button>` : '')
-    + tags.map(tag => `
-    <button class="vj-chip ${vjTagCls(tag)} ${VIAJEROS_FILTER === tag ? 'active' : ''}"
-            onclick="vjSetFilter('${tag}')">${vjEsc(vjTagLabel(tag))}<span class="vj-chip-n">${counts[tag]}</span></button>`).join('');
+    + tags.map(tag => {
+      const cls = vjTagCls(tag);
+      // (2026-09-16) Corte de grupo. "Mariscos" (alergia-mariscos, médico) y
+      // "Sin mariscos" (dieta-sin-mariscos, preferencia) convivían como chips
+      // gemelos: misma forma, mismo tamaño, etiqueta casi igual, separados
+      // SÓLO por un salto de matiz entre salmón (#e08663) y tan (#cfa14a) —
+      // dos cálidos de luminancia parecida, leídos a las apuradas y con poca
+      // luz. Con deuteranopia colapsan al mismo color. Bajo un rótulo,
+      // "Mariscos" se lee sin ambigüedad y el color pasa a ser refuerzo en
+      // vez de único canal. No hace falta color nuevo: alcanza con estructura.
+      // El orden ya venía dado por `rank` — acá sólo se rotula el límite.
+      const rot = (cls !== clsPrev && VJ_GRUPO_KEY[cls])
+        ? `<div class="vj-chips-rotulo">${vjEsc(t(VJ_GRUPO_KEY[cls]))}</div>` : '';
+      clsPrev = cls;
+      return rot + `
+    <button class="vj-chip ${cls} ${VIAJEROS_FILTER === tag ? 'active' : ''}"
+            onclick="vjSetFilter('${tag}')">${vjEsc(vjTagLabel(tag))}<span class="vj-chip-n">${counts[tag]}</span></button>`;
+    }).join('');
 }
 
 // El cumpleaños del día se anuncia; los de los próximos 3 días se insinúan.
