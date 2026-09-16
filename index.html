@@ -560,6 +560,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Captura "Otro / pedido especial" con el teclado en pantalla */
 .cmd-custom-preview { display:flex; align-items:center; gap:12px; padding:12px; margin-bottom:8px; background:rgba(202,138,4,0.05); border:0.5px solid rgba(202,138,4,0.25); border-radius:var(--radius-md); }
 .cmd-custom-preview-name { flex:1; min-width:0; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:19px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* Vacío: la invitación va en Courier y en terciario para que se lea como
+   instrucción y no como un pedido ya tipeado. Misma convención de siempre —
+   Cormorant es el producto, Courier es la voz operativa. */
+.cmd-custom-preview-name.es-invitacion { font-family:'Courier Prime','Courier New',monospace; font-size:12px; letter-spacing:0.04em; color:var(--text-tertiary); }
 .cmd-custom-go { flex-shrink:0; }
 /* Separador manual en el resumen del asiento (línea movible) + botón */
 .cmd-line.cmd-sep-line { background:transparent; border:none; min-height:0; padding:4px 0; }
@@ -4535,13 +4539,13 @@ const UI = {
     cmdItemCancelled:'cancelado',
     cmdCustomTitle:'Producto especial',
     cmdCustomNamePh:'Nombre del producto', cmdCustomCatPh:'Categoría (jugo, gaseosa…)',
-    cmdCustomAdd:'Agregar', cmdCustomCancel:'Cancelar',
+    cmdCustomAdd:'Agregar', cmdCustomVacio:'Escribí el nombre del pedido', cmdCustomCancel:'Cancelar',
     cmdTimerStart:'Iniciar', cmdTimerReset:'Reiniciar', cmdTimerCancel:'Cancelar',
     cmdFullViewTitle:'Comanda completa',
     // Mapa de mesa espacial + vista única de comanda
     cmdSeat:'Asiento', cmdHead:'Cabecera',
     // Bandeja del pedido (2026-08-08) — traducciones EN/PT propuestas, a revisar.
-    cmdSeatShort:'as.', cmdTrayOneItem:'1 ítem', cmdTrayNItems:'{n} ítems',
+    cmdSeatShort:'asiento', cmdTrayOneItem:'1 ítem', cmdTrayNItems:'{n} ítems',
     cmdShapeRect:'Rectangular', cmdShapeRound:'Redonda', cmdShapeCouple:'Pareja',
     cmdTableShape:'Forma de mesa', cmdTableTotals:'Totales de la mesa', cmdBySeat:'Por asiento',
     cmdAddSeat:'Agregar comensal', cmdTapSeat:'Tocá un asiento para tomar su pedido',
@@ -4776,12 +4780,12 @@ const UI = {
     cmdItemCancelled:'cancelled',
     cmdCustomTitle:'Special item',
     cmdCustomNamePh:'Item name', cmdCustomCatPh:'Category (juice, soda…)',
-    cmdCustomAdd:'Add', cmdCustomCancel:'Cancel',
+    cmdCustomAdd:'Add', cmdCustomVacio:'Type the order', cmdCustomCancel:'Cancel',
     cmdTimerStart:'Start', cmdTimerReset:'Reset', cmdTimerCancel:'Cancel',
     cmdFullViewTitle:'Full ticket',
     // Spatial table map + single order view · [EN — revisar]
     cmdSeat:'Seat', cmdHead:'Head',
-    cmdSeatShort:'st.', cmdTrayOneItem:'1 item', cmdTrayNItems:'{n} items',
+    cmdSeatShort:'seat', cmdTrayOneItem:'1 item', cmdTrayNItems:'{n} items',
     cmdShapeRect:'Rectangular', cmdShapeRound:'Round', cmdShapeCouple:'Couple',
     cmdTableShape:'Table shape', cmdTableTotals:'Table totals', cmdBySeat:'By seat',
     cmdAddSeat:'Add guest', cmdTapSeat:'Tap a seat to take its order',
@@ -5005,12 +5009,12 @@ const UI = {
     cmdItemCancelled:'cancelado',
     cmdCustomTitle:'Produto especial',
     cmdCustomNamePh:'Nome do produto', cmdCustomCatPh:'Categoria (suco, refrigerante…)',
-    cmdCustomAdd:'Adicionar', cmdCustomCancel:'Cancelar',
+    cmdCustomAdd:'Adicionar', cmdCustomVacio:'Escreva o pedido', cmdCustomCancel:'Cancelar',
     cmdTimerStart:'Iniciar', cmdTimerReset:'Reiniciar', cmdTimerCancel:'Cancelar',
     cmdFullViewTitle:'Comanda completa',
     // Mapa espacial da mesa + vista única · [PT — revisar]
     cmdSeat:'Assento', cmdHead:'Cabeceira',
-    cmdSeatShort:'as.', cmdTrayOneItem:'1 item', cmdTrayNItems:'{n} itens',
+    cmdSeatShort:'assento', cmdTrayOneItem:'1 item', cmdTrayNItems:'{n} itens',
     cmdShapeRect:'Retangular', cmdShapeRound:'Redonda', cmdShapeCouple:'Casal',
     cmdTableShape:'Forma da mesa', cmdTableTotals:'Totais da mesa', cmdBySeat:'Por assento',
     cmdAddSeat:'Adicionar hóspede', cmdTapSeat:'Toque num assento para fazer o pedido',
@@ -11723,9 +11727,12 @@ function comandaRepeatRowsHtml(){
 // Modo captura libre ("Otro / pedido especial"): preview del nombre + botón agregar.
 function comandaCustomPreviewHtml(q){
   const name = (q || '').trim();
-  return `<div class="cmd-search-hint">${t('cmdSearchOtro')}</div>
-    <div class="cmd-custom-preview">
-      <span class="cmd-custom-preview-name">${name ? vjEsc(name) : '—'}</span>
+  // Sin rótulo de sección: la barra de búsqueda de arriba YA muestra
+  // "Otro / pedido especial" como placeholder, así que repetirlo acá era el
+  // mismo control dicho dos veces. Y vacío no va un em-dash —que se lee como
+  // roto, no como vacío— sino la invitación a escribir.
+  return `<div class="cmd-custom-preview">
+      <span class="cmd-custom-preview-name${name ? '' : ' es-invitacion'}">${name ? vjEsc(name) : t('cmdCustomVacio')}</span>
       <button class="cmd-btn primary cmd-custom-go" onclick="comandaCustomConfirm()" ${name?'':'disabled'}>${t('cmdCustomAdd')}</button>
     </div>`;
 }
@@ -12957,7 +12964,10 @@ function comandaRenderActive(root){
   const tableMap = `
     <div class="cmd-table-wrap">
       <div class="cmd-table-toolbar">
-        <span class="cmd-table-hint">${t('cmdTapSeat')}</span>
+        <!-- El hint enseña la interacción; una vez que hay asiento elegido, o
+             con el teclado abierto, ya no aplica y compite con lo que sí. El
+             span queda (flex:1) para que los botones no se corran. -->
+        <span class="cmd-table-hint">${(!COMANDA_ACTIVE_DINER && !COMANDA_KBD_OPEN) ? t('cmdTapSeat') : ''}</span>
         <div class="cmd-table-tools">
           <button class="cmd-mini-btn" onclick="comandaAddDiner()" title="${t('cmdAddSeat')}">＋</button>
           <button class="cmd-mini-btn ${COMANDA_SHAPE_CTL_OPEN?'active':''}" onclick="comandaToggleShapeCtl()" title="${t('cmdTableShape')}">⚙</button>
@@ -13048,7 +13058,7 @@ function comandaRenderActive(root){
       <div>
         <!-- El título es el control del nº de mesa: sin número invita a ponerlo,
              con número abre el mismo numpad de "cambiar mesa". -->
-        <button class="cmd-active-title cmd-mesa-chip${sinNumero ? ' is-empty' : ''}" onclick="comandaChangeMesaShow()" title="${t('cmdSetMesa')}">${t('cmdMesaPrefix')} ${comandaMesaLabel(c)}</button>
+        <button class="cmd-active-title cmd-mesa-chip${sinNumero ? ' is-empty' : ''}" onclick="comandaChangeMesaShow()" title="${t('cmdSetMesa')}">${sinNumero ? t('cmdSetMesa') : t('cmdMesaPrefix') + ' ' + comandaMesaLabel(c)}</button>
         <div class="cmd-active-sub">${diners} ${diners===1?t('cmdComensal'):t('cmdComensales')}</div>
       </div>
       <div class="cmd-active-controls">
