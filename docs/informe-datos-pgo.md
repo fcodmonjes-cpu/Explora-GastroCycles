@@ -408,3 +408,27 @@ Las dos vías tienen el mismo obstáculo, y es la decisión que hay que tomar:
 menor riesgo, y dejar la API para cuando se quiera lo de F&B (`outsideLunch`,
 `commentKitchen`, los conteos de vino) — que es material para su propia
 conversación, porque eso ya no es la ficha del viajero sino insumo de cocina.
+
+### 7.4 Verificación contra datos reales (dry run, 2026-09-15)
+
+Implementada la vía HTML, un `dry_run` contra PGO (no escribe Firebase):
+
+```
+roster (API): 100 viajeros en 42 habitaciones · 93 con nombre de país
+/report-geos: 100 filas · hab, tipo viajero, viajero, nac, in/out, edad,
+              exp, grupo, comentario geos, historia
+exploraciones: 77 con exploración del día · 75 con histórico
+Modo debug — Firebase no modificado.
+```
+
+**Sin advertencia de `histórico sin parsear`: los 75 parsearon limpios.** Los
+formatos se habían deducido de muestras enmascaradas, así que esto era lo que
+quedaba por confirmar. El degradado a `historiaTxt` sigue en su lugar por si el
+formato cambia.
+
+`nacName` llega en **93 de 100**, así que el respaldo legible para los códigos
+sin bandera está poblado.
+
+**Suelto, para otro día:** el reporte `/dietas` tiene columnas `hr in` y
+`hr out` que tampoco mapeamos. No hacen falta —las horas reales ya vienen por
+`reportInOut`, y sin el redondeo del HTML (§4.2)—, pero quedan anotadas.
