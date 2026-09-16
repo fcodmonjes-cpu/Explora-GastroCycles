@@ -1587,7 +1587,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* (2026-08-09) Halo retirado: PGO dejó de ser novedad, así que el banner deja
    de anunciarse y pasa a ser mobiliario — fila mono con una regla inferior, sin
    caja ni animación. Vuelve a mandar la ops-strip, que es lo que corresponde. */
-.pgo-banner { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 13px; overflow:hidden; margin:0 0 1.3rem; padding:0.5rem 0 0.7rem; border-bottom:0.5px solid var(--border); font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
+/* column-gap 13px -> 10px (2026-09-16): junto con el tracking de .pgo-b-label
+   es lo que devuelve los tres contadores a una sola línea. El row-gap queda en
+   4px, que estaba puesto para el wrap del refresco. */
+.pgo-banner { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; overflow:hidden; margin:0 0 1.3rem; padding:0.5rem 0 0.7rem; border-bottom:0.5px solid var(--border); font-family:'Courier Prime','Courier New',monospace; -webkit-tap-highlight-color:transparent; }
 .pgo-banner[hidden] { display:none; }
 /* Qué servicio está midiendo el número. Sin él, '31 viajeros' es ambiguo:
    no se sabe si es ahora, hoy o el almuerzo. Discreto — es una etiqueta. */
@@ -1597,7 +1600,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .pgo-b-num { font-size:15px; color:var(--text); line-height:1; }
 .pgo-b-num.ninos  { color:var(--teal); }
 .pgo-b-num.dietas { color:var(--gold); }
-.pgo-b-label { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); }
+/* (2026-09-16) El tracking baja de 0.12em a 0.06em. No es estética: es lo que
+   hace que los tres contadores entren en UNA línea, que es la premisa sobre la
+   que se eligió flex-basis:100% para el botón de refresco (ver su comentario).
+   Esa premisa no se estaba cumpliendo en el iPhone real: medido a 390px con
+   0.12em los contadores miden 343px contra 358 de caja, se parten 2/1 y el
+   refresco agrega un tercer renglón — 73px de header. Con 0.06em entran juntos
+   y el bloque baja a 54px, que es exactamente lo que ese comentario buscaba.
+   A 10px en mayúsculas, además, 0.12em ya separaba de más: el tracking ayuda a
+   rotular, pero pasado cierto punto desarma la palabra. */
+.pgo-b-label { font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); }
 .pgo-b-tag { font-size:8px; letter-spacing:0.08em; color:var(--teal); border:0.5px solid rgba(29,158,117,0.45); border-radius:3px; padding:0 3px; }
 /* Botón de refresco del banner (2026-09-15). Vive acá y no en la píldora de
    idioma porque este banner ES el dato que falla: PGO es lo que no carga o se
