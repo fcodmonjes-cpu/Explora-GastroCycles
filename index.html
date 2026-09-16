@@ -4395,6 +4395,7 @@ const UI = {
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'grupo viene solo', cmdSolos:'grupos vienen solos',
     cmdSinDatos:'Sin datos de comedor para hoy',
     cmdSinGuardar:'Sin conexión con la base — el pedido NO se guardó',
+    cmdSinLista:'Sin conexión con la base — las mesas en pantalla pueden estar atrasadas',
     vjNotas:'notas del equipo', vjNotaAdd:'agregar nota', vjNotaPh:'preferencia, pedido, dato útil…',
     vjNotaGuardar:'guardar', vjNotaCancelar:'cancelar', vjNotaBorrar:'borrar nota',
     vjNotaSinGuardar:'La nota NO se guardó — revisá la conexión',
@@ -4619,6 +4620,7 @@ const UI = {
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'party of one', cmdSolos:'parties of one',
     cmdSinDatos:'No dining room data for today',
     cmdSinGuardar:'No connection to the database — the order was NOT saved',
+    cmdSinLista:'No connection to the database — the tables on screen may be out of date',
     vjNotas:'team notes', vjNotaAdd:'add note', vjNotaPh:'preference, request, useful detail…',
     vjNotaGuardar:'save', vjNotaCancelar:'cancel', vjNotaBorrar:'delete note',
     vjNotaSinGuardar:'The note was NOT saved — check the connection',
@@ -4843,6 +4845,7 @@ const UI = {
     cmdPax:'pax', cmdPax1:'pax', cmdSolo:'grupo vem sozinho', cmdSolos:'grupos vêm sozinhos',
     cmdSinDatos:'Sem dados do salão para hoje',
     cmdSinGuardar:'Sem conexão com a base — o pedido NÃO foi salvo',
+    cmdSinLista:'Sem conexão com a base — as mesas na tela podem estar desatualizadas',
     vjNotas:'notas da equipe', vjNotaAdd:'adicionar nota', vjNotaPh:'preferência, pedido, dado útil…',
     vjNotaGuardar:'salvar', vjNotaCancelar:'cancelar', vjNotaBorrar:'apagar nota',
     vjNotaSinGuardar:'A nota NÃO foi salva — verifique a conexão',
@@ -10896,18 +10899,43 @@ function comandaAvisoSinGuardar(clave){
   setTimeout(() => { const n = document.getElementById('cmd-aviso'); if (n) n.classList.remove('on'); }, 6000);
 }
 
+// Todo lo que la comandera pide o escribe pasa por acá. Renueva el token antes
+// (comandaFireUrl lo arma con fbQS() de forma síncrona, así que después de una
+// suspensión larga mandaría el vencido) y reintenta UNA vez ante 401/403 con el
+// token nuevo. urlFn se re-evalúa a propósito en el reintento.
+async function comandaFetchAuth(urlFn, opts){
+  await fbTokenRefrescar(false);
+  let resp = await fetch(urlFn(), opts);
+  if (resp.status === 401 || resp.status === 403){
+    console.info('[comanda] ' + resp.status + ' — renovando token y reintentando');
+    await fbTokenRefrescar(true);
+    resp = await fetch(urlFn(), opts);
+  }
+  return resp;
+}
 // --- Home view (list of open mesas) ---------------------------------------
 async function comandaFetchOpenMesas(){
   // Fetches today's full set and partitions into open + closed lists.
   // Both populate the home view; closed ones live in the History section
   // below "Mesas activas" and are tappable for read-only review or reopen.
   try {
-    const url = comandaFireUrl(comandaDateKey());
-    const resp = await fetch(url);
+    const url = () => comandaFireUrl(comandaDateKey());
+    const resp = await comandaFetchAuth(url);
     const data = await resp.json();
     // Si la base rechazó, se conserva la lista que ya estaba: mejor mesas de
     // hace un minuto que una pantalla vacía a hora de servicio.
-    if (resp && !resp.ok) { if (COMANDA_VIEW === 'home') comandaRender(); return; }
+    if (resp && !resp.ok) {
+      console.warn('[comanda] la base rechazó la lista:', resp.status);
+      comandaAvisoSinGuardar('cmdSinLista');
+      if (COMANDA_VIEW === 'home') comandaRender();
+      return;
+    }
+    if (data && data.error) {
+      console.warn('[comanda] la base devolvió error:', data.error);
+      comandaAvisoSinGuardar('cmdSinLista');
+      if (COMANDA_VIEW === 'home') comandaRender();
+      return;
+    }
     const open = [];
     const closed = [];
     if (data && !data.error){
@@ -10922,8 +10950,14 @@ async function comandaFetchOpenMesas(){
     COMANDA_LIST         = open;
     COMANDA_HISTORY_LIST = closed;
   } catch(e){
-    COMANDA_LIST = [];
-    COMANDA_HISTORY_LIST = [];
+    // ACÁ ESTABA EL "DE PRONTO DESAPARECIERON TODAS LAS MESAS" (2026-09-16).
+    // Un fetch caído —el wifi del lodge parpadeando a hora de servicio— vaciaba
+    // las dos listas, y el garzón veía la comandera en blanco con mesas
+    // abiertas de verdad. No se pierde nada en la base, pero en pleno servicio
+    // es indistinguible de haberlo perdido todo. Ahora se conserva lo último
+    // bueno y se avisa; el próximo tick lo corrige solo.
+    console.warn('[comanda] fetch de mesas falló, se conserva la lista:', e && e.message);
+    comandaAvisoSinGuardar('cmdSinLista');
   }
   if (COMANDA_VIEW === 'home') comandaRender();
 }
@@ -11737,11 +11771,15 @@ async function _comandaPersistDrain(){
     const toSend = _CMD_WRITE_PENDING;
     _CMD_WRITE_PENDING = null;
     try {
-      const resp = await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID), {
-        method: 'PATCH',
-        headers: { 'Content-Type':'application/json' },
-        body: JSON.stringify(toSend)
-      });
+      // comandaFetchAuth: renueva el token y reintenta una vez ante 401/403. Sin
+      // esto, un token vencido a mitad de servicio hacía fallar la escritura y
+      // sólo quedaba el aviso — el pedido nunca llegaba a la base.
+      const resp = await comandaFetchAuth(
+        () => comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID), {
+          method: 'PATCH',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify(toSend)
+        });
       // Un 401/403 resuelve el fetch sin lanzar: sin este chequeo la escritura
       // fallaba en silencio y el garzón creía haber mandado el pedido.
       if (!resp.ok){
@@ -11967,7 +12005,7 @@ function comandaStartPolling(){
     // a re-render would break. After 2.5s of stillness, sync resumes.
     if (Date.now() - COMANDA_LAST_INTERACTION < 2500) return;
     try {
-      const resp = await fetch(comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID));
+      const resp = await comandaFetchAuth(() => comandaFireUrl(comandaDateKey() + '/' + COMANDA_ACTIVE_ID));
       const data = await resp.json();
       // Un rechazo NUNCA debe pisar lo que el garzón tiene en pantalla: si la
       // respuesta no es dato, se deja la mesa como está y se reintenta al
@@ -12161,10 +12199,12 @@ function comandaRenderRecibidorDetail(root){
 // --- Auto-close stale + auto-purge old days ------------------------------
 async function comandaAutoCloseStale(){
   try {
-    const url = comandaFireUrl(comandaDateKey());
-    const resp = await fetch(url);
+    const url = () => comandaFireUrl(comandaDateKey());
+    const resp = await comandaFetchAuth(url);
     const data = await resp.json();
-    if (!data) return;
+    // Guard explícito: un 401 trae {"error":...}, que es truthy y pasaba el
+    // `if (!data)`. No llegaba a borrar nada de casualidad, no por diseño.
+    if (!comandaDatoOk(resp, data)) return;
     const updates = {};
     const now = Date.now();
     Object.entries(data).forEach(([id, c]) => {
@@ -12173,16 +12213,31 @@ async function comandaAutoCloseStale(){
       }
     });
     if (Object.keys(updates).length){
-      await fetch(url, { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(updates) });
+      await comandaFetchAuth(url, { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(updates) });
     }
-  } catch(e){}
+  } catch(e){ console.warn('[comanda] auto-cierre:', e && e.message); }
 }
+// ⚠ ESTA FUNCIÓN HOY NO BORRA NADA, Y ES A PROPÓSITO QUE SIGA ASÍ HASTA QUE EL
+// OWNER LO APRUEBE (revisado 2026-09-16).
+// `comandaFireUrl()` ya termina en `?auth=<token>` (lo agrega fbQS()), así que
+// `root + '?shallow=true'` arma una URL con DOS signos de pregunta: el segundo
+// queda dentro del valor del token, Firebase contesta 401 y el purgado no corre.
+// Quedó así desde que se cerró el acceso con el gate; antes, sin token, la URL
+// era válida.
+// Que no borre de más era casualidad, no diseño: el cuerpo del 401 es
+// {"error":...}, pasaba el viejo `if (!data)` por ser truthy, y sólo se salvaba
+// porque la clave 'error' no es menor que la fecha de corte. Ahora hay un guard
+// explícito y un filtro de formato, así que el día que se arregle la URL
+// —cambiar el '?' por fbQS('&') o equivalente— sólo va a borrar días cerrados
+// con formato YYYY-MM-DD anteriores al corte, que es lo que se quiso siempre.
+// NO se arregla acá: encender un borrado de 30 días es decisión del owner, no
+// un efecto colateral de un fix de otra cosa.
 async function comandaPurgeOldDays(){
   try {
     const root = comandaFireUrl();
     const resp = await fetch(root + '?shallow=true');
     const data = await resp.json();
-    if (!data) return;
+    if (!comandaDatoOk(resp, data)) return;
     const todayKey = comandaDateKey();
     const cutoff = (function(){
       const d = new Date();
@@ -12194,6 +12249,9 @@ async function comandaPurgeOldDays(){
     })();
     const updates = {};
     Object.keys(data).forEach(key => {
+      // Sólo claves con forma de fecha: sin esto, cualquier cosa rara en la
+      // raíz podría entrar a la comparación de strings y marcarse para borrar.
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return;
       if (key < cutoff) updates[key] = null;
     });
     if (Object.keys(updates).length){
