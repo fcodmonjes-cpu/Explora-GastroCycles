@@ -2106,23 +2106,98 @@ _RX_EXPLORACION = re.compile(
     r"itinerar|booking|reserva|servicio|service|guide|guia", re.I)
 
 
+def _gql_escalares(page, tipo):
+    """Campos ESCALARES de un tipo GraphQL → [(nombre, tipo)]. [] si no existe.
+
+    Sólo escalares: pedir un campo objeto sin subselección devuelve `errors` y
+    `data:null`, y eso se ve idéntico a "hoy no hay datos" (§4.2).
+    """
+    q = '''{ __type(name: "%s") { fields { name
+             type { name kind ofType { name kind ofType { name kind } } } } } }''' % tipo
+    try:
+        r = pgo_graphql(page, q)
+    except Exception as e:
+        print(f"[explora] {tipo}: no pude introspeccionarlo ({e})")
+        return []
+    campos = (((r.get("data") or {}).get("__type") or {}).get("fields") or [])
+    out = []
+    for c in campos:
+        tn = _gql_tname(c["type"])
+        if tn.strip("[]!") in _GQL_ESCALARES:
+            out.append((c["name"], tn))
+    print(f"[explora] ── {tipo}: {len(campos)} campos · {len(out)} escalares")
+    print(f"[explora]    escalares: {[n for n, _ in out]}")
+    objetos = [f"{c['name']}:{_gql_tname(c['type'])}" for c in campos
+               if _gql_tname(c["type"]).strip("[]!") not in _GQL_ESCALARES]
+    if objetos:
+        print(f"[explora]    anidados : {objetos}")
+    return out
+
+
+def _gql_muestra(page, etiqueta, query, variables, ruta):
+    """Corre una query y perfila el resultado SIN mostrar nombres propios."""
+    try:
+        r = pgo_graphql(page, query, variables)
+    except Exception as e:
+        print(f"[explora] {etiqueta}: la llamada falló ({type(e).__name__}: {e})")
+        return
+    if r.get("errors"):
+        # Un campo inválido tumba la respuesta entera: sin esto se depura a ciegas.
+        print(f"[explora] {etiqueta}: errores → {str(r['errors'])[:300]}")
+    filas = (r.get("data") or {}).get(ruta)
+    if isinstance(filas, dict):
+        filas = [filas]
+    filas = filas or []
+    print(f"[explora] {etiqueta}: {len(filas)} filas")
+    if not filas:
+        return
+    # Un nivel de aplanado: sin esto un `traveller` anidado se enmascara como
+    # bloque y se pierden los nombres de los subcampos, que son justamente los
+    # que dicen si la exploración se puede atar a una persona y a una hab.
+    planas = []
+    for f in filas:
+        if not isinstance(f, dict):
+            continue
+        p = {}
+        for k, v in f.items():
+            if isinstance(v, dict):
+                for k2, v2 in v.items():
+                    p[f"{k}.{k2}"] = v2
+            else:
+                p[k] = v
+        planas.append(p)
+    filas = planas
+    claves = sorted({k for f in filas if isinstance(f, dict) for k in f})
+    for k in claves:
+        vals = [f.get(k) for f in filas if isinstance(f, dict) and f.get(k) not in (None, "", [])]
+        if not vals:
+            print(f"[explora]    {k:26} 0 con dato")
+            continue
+        ej = [_mask_value(str(v))[:34] for v in vals[:3]]
+        print(f"[explora]    {k:26} {len(vals):>3} con dato · {ej}")
+
+
 def pgo_probe_exploraciones(page, date_str):
-    """¿Por dónde salen las exploraciones del viajero (hoy y su histórico)?
+    """¿Por dónde salen las exploraciones del viajero (del día y su histórico)?
 
     El handbook quiere dos cosas distintas: la exploración DE HOY (para saber
     si vuelve tarde, si lleva box lunch, si desayuna temprano) y el HISTÓRICO
     de la estadía (para conversar con el viajero sobre lo que hizo). Hoy no se
     extrae ninguna de las dos.
 
-    Lo único conocido es la columna "excursión" del Reporte Geos, que se lee y
-    se descarta (PGO_GEOS_COLS no la mapea) y que desde el 2026-08-17 ni
-    siquiera se abre, porque el roster salió del HTML. Antes de volver ahí
-    conviene ver si la API la entrega estructurada: sería con fecha y turno en
-    vez de un texto por fila, y no se rompe cuando PGO cambia una clase.
+    La corrida del 2026-09-15 dejó dos lecciones que esta versión incorpora:
+      · La columna del Reporte Geos se llama **`exp`**, no "excursión". Buscarla
+        por regex fue el error: ahora se perfilan TODAS las columnas. Ahí
+        aparecieron además `historia` y `tipo viajero`, que no estaban
+        documentadas en ninguna parte.
+      · Mirar "los primeros 6 tipos candidatos" tocó los de guías y nunca
+        `ExplorationRegisterType`. Ahora la lista está priorizada y los tipos
+        clave se piden por nombre.
 
-    Sólo lee y perfila. Enmascara los nombres propios y NUNCA escribe Firebase.
+    Sólo lee y perfila. Enmascara los valores y NUNCA escribe Firebase.
     """
     print("\n[explora] ══ Sondeo de exploraciones ══")
+    hid = str(PGO_HOTEL_ID)
 
     # 1) Queries del esquema que huelan a exploración.
     q = """{ __schema { queryType { fields {
@@ -2147,43 +2222,58 @@ def pgo_probe_exploraciones(page, date_str):
         if limpio and limpio not in tipos_cand:
             tipos_cand.append(limpio)
 
-    # 2) Campos de esos tipos. Lo que se busca es una fecha + un turno (AM/PM)
-    #    + el nombre de la exploración, y algo que ate la fila a una persona.
-    rx_util = re.compile(r"date|fecha|hour|hora|time|am|pm|shift|turno|name|nombre|"
-                         r"title|titulo|descrip|room|hab|traveller|guest|pax|"
-                         r"status|estado|guide|guia", re.I)
-    for tn in tipos_cand[:6]:
-        q2 = """{ __type(name: "%s") { fields { name
-                  type { name kind ofType { name kind } } } } }""" % tn
-        try:
-            r2 = pgo_graphql(page, q2)
-            campos = (((r2.get("data") or {}).get("__type") or {}).get("fields") or [])
-        except Exception as e:
-            print(f"[explora] {tn}: no pude leerlo ({e})")
-            continue
-        if not campos:
-            continue
-        utiles = [f"{c['name']}:{_gql_tname(c['type'])}" for c in campos if rx_util.search(c["name"])]
-        print(f"[explora] ── {tn}: {len(campos)} campos · {len(utiles)} de interés")
-        print(f"[explora]    {utiles}")
+    # 2) Tipos, PRIORIZADOS. Los que nombran una exploración van primero; los de
+    #    guías, reservas y spa quedan al final. Los cuatro de abajo se piden por
+    #    nombre aunque no hayan salido arriba: son los que cierran la pregunta.
+    fijos = ["ExplorationRegisterType", "DailyProgramType", "FutureExplorationType",
+             "BriefTravellerType", "ExplorationType"]
+    rx_top = re.compile(r"exploration|dailyprogram|activity", re.I)
+    orden = fijos + [t for t in sorted(tipos_cand, key=lambda x: (not rx_top.search(x), x))
+                     if t not in fijos]
+    escalares = {}
+    for tn in orden[:10]:
+        esc = _gql_escalares(page, tn)
+        if esc:
+            escalares[tn] = esc
 
-    # 3) La vía conocida: la columna del Reporte Geos. Se perfila enmascarada
-    #    para poder mapearla sin ver un solo nombre de huésped.
+    # 3) Pedir datos de verdad. La exploración DEL DÍA primero.
+    hoy = date_str or datetime.date.today().isoformat()
+    er = [n for n, _ in escalares.get("ExplorationRegisterType", [])]
+    if er:
+        for qname in ("hotelExplorationsDay", "hotelAllExplorationsDay"):
+            _gql_muestra(page, f"{qname}({hoy})",
+                         """query ($h: ID!, $d: Date!) { %s(hotelId: $h, date: $d) { %s } }"""
+                         % (qname, " ".join(er)),
+                         {"h": hid, "d": hoy}, qname)
+
+    # 4) El HISTÓRICO: lo mismo sobre un rango que cubra la estadía típica.
+    #    FutureExplorationType trae date + name + traveller, que es exactamente
+    #    "qué hizo esta persona y cuándo" si el rango mira hacia atrás.
+    fe = [n for n, _ in escalares.get("FutureExplorationType", [])]
+    bt = [n for n, _ in escalares.get("BriefTravellerType", [])]
+    if fe:
+        sel = " ".join(fe) + (f" traveller {{ {' '.join(bt)} }}" if bt else "")
+        desde = (datetime.date.fromisoformat(hoy) - datetime.timedelta(days=7)).isoformat()
+        _gql_muestra(page, f"futureExplorationsOnline({desde}→{hoy})",
+                     """query ($h: ID, $a: Date, $b: Date) {
+                          futureExplorationsOnline(hotelId: $h, dateStart: $a, dateEnd: $b) { %s }
+                        }""" % sel,
+                     {"h": hid, "a": desde, "b": hoy}, "futureExplorationsOnline")
+
+    # 5) La vía conocida: el Reporte Geos. Se perfilan TODAS las columnas —
+    #    adivinar el nombre por regex ya costó una corrida.
     try:
         fecha = datetime.date.fromisoformat(date_str).strftime(PGO_DATE_FMT) if date_str else None
         filas = _pgo_read_report(page, PGO_GEOS_PATH, fecha)
-        cols = list(filas[0].keys()) if filas else []
-        exc = [c for c in cols if _RX_EXPLORACION.search(c)]
-        print(f"[explora] Reporte Geos: {len(filas)} filas · columnas {cols}")
-        print(f"[explora] columnas que parecen exploración: {exc or '(ninguna)'}")
-        for c in exc:
+        _pgo_profile("report-geos (todas las columnas)", filas, muestras=4)
+        for c in ("exp", "historia", "tipo viajero"):
             vals = [r.get(c, "") for r in filas if str(r.get(c, "")).strip()]
-            print(f"[explora]   {c!r}: {len(vals)} llenas · "
-                  f"{[_mask_value(v)[:40] for v in vals[:4]]}")
-            # ¿Trae turno y hora dentro del texto, o hay que pedirlos aparte?
+            if not vals:
+                continue
             con_hora  = sum(1 for v in vals if re.search(r"\d{1,2}:\d{2}", str(v)))
             con_turno = sum(1 for v in vals if re.search(r"\b(AM|PM)\b", str(v), re.I))
-            print(f"[explora]   → con hora: {con_hora} · con AM/PM: {con_turno} de {len(vals)}")
+            print(f"[explora] columna {c!r}: {len(vals)}/{len(filas)} con dato · "
+                  f"con hora {con_hora} · con AM/PM {con_turno}")
     except Exception as e:
         print(f"[explora] no pude perfilar el Reporte Geos: {type(e).__name__}: {e}")
 
