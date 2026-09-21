@@ -37,3 +37,7 @@
 scripts/
 __pycache__/
 *.pyc
+
+# Quincho (temporal): el plano con nombres nunca debe viajar al deployment.
+buscador-mesas.html
+quincho*.json

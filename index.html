@@ -2509,6 +2509,70 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-nota-btn.on { border-color:var(--gold); color:var(--gold); }
 
 .vj-empty { font-family:'Courier Prime','Courier New',monospace; font-size:12px; color:var(--text-tertiary); text-align:center; padding:2.5rem 1rem; line-height:1.8; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MÓDULO QUINCHO — TEMPORAL. Borrar este bloque entero con el módulo.
+   Ver ARCHITECTURE.md §3.4. No introduce tokens nuevos: la acción y el
+   destaque son --gold (texto oscuro encima, regla de §6) y el acento de
+   "grupo grande" reusa --teal, que ya existe en la paleta.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Selector de vista: mismo lenguaje que el segmented de Menú (.mn-svc), con
+   clases propias para que el borrado sea un solo bloque. */
+.qn-seg { display:grid; grid-template-columns:repeat(2,1fr); gap:2px; padding:3px; margin:0 0 1.1rem; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:9px; }
+.qn-seg-btn { background:none; border:none; border-radius:6px; padding:9px 6px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.11em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; transition:background .15s, color .15s; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+.qn-seg-btn.active { background:rgba(192,125,42,0.14); color:#f3b572; box-shadow:0 0 0 0.5px rgba(192,125,42,0.4) inset; }
+
+.qn-search-bar { margin-bottom:1.1rem; }
+.qn-search-bar input { padding-right:34px; }
+.qn-search-bar.has-query .chk-search-clear { display:flex; }
+
+/* Tira del salón: las diez mesas en su orden físico. flex:1 1 0 + min-width:0
+   para que las diez entren en 390px sin scroll lateral (§6: el item también
+   necesita min-width:0, el track no alcanza). */
+.qn-tira { margin:0 0 1.2rem; }
+.qn-tira-rot { color:var(--text-tertiary); font-size:9px; letter-spacing:0.13em; text-transform:uppercase; margin-bottom:6px; }
+.qn-fila { display:flex; gap:3px; }
+.qn-casilla { flex:1 1 0; min-width:0; padding:7px 1px; text-align:center; cursor:pointer; border:0.5px solid var(--border-md); border-radius:6px; background:var(--surface); color:var(--text); font-family:'Courier Prime','Courier New',monospace; font-size:13px; font-weight:700; line-height:1.1; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.qn-casilla small { display:block; font-weight:400; font-size:8px; color:var(--text-tertiary); margin-top:1px; }
+.qn-casilla.grupo { border-color:rgba(29,158,117,0.55); }
+.qn-casilla.on { background:var(--gold); border-color:var(--gold); color:#15110d; }
+.qn-casilla.on small { color:#15110d; }
+
+/* Tarjetas de resultado */
+.qn-card { border:0.5px solid var(--border); border-radius:var(--radius-md); background:var(--bg-secondary); padding:12px; margin-bottom:9px; }
+.qn-card.destaca { border-color:rgba(186,117,23,0.55); }
+.qn-card-top { display:flex; align-items:center; gap:11px; }
+.qn-mesa { flex:0 0 auto; width:46px; height:46px; border-radius:var(--radius-md); background:var(--gold); color:#15110d; display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',Georgia,serif; font-size:27px; font-weight:600; line-height:1; }
+.qn-card.grp .qn-mesa { background:var(--teal); color:#07231a; }
+.qn-quien { flex:1; min-width:0; }
+.qn-nombre { font-size:15px; font-weight:700; line-height:1.25; }
+.qn-sub { color:var(--text-secondary); font-size:11.5px; margin-top:2px; }
+.qn-ubic { margin-top:10px; padding-top:8px; border-top:0.5px solid var(--border); font-size:12.5px; color:#f3b572; }
+.qn-card.grp .qn-ubic { color:#6fd9b4; }
+.qn-compa { margin-top:7px; font-size:11.5px; color:var(--text-secondary); line-height:1.45; }
+.qn-mas { color:var(--text-tertiary); }
+.qn-det { margin-top:8px; }
+.qn-det-u { display:flex; gap:9px; padding:4px 0; border-bottom:0.5px dotted var(--border); font-size:12.5px; }
+.qn-det-u:last-child { border-bottom:0; }
+.qn-det-hab { flex:0 0 44px; color:#f3b572; font-weight:700; }
+.qn-card.grp .qn-det-hab { color:#6fd9b4; }
+.qn-vacio { color:var(--text-secondary); text-align:center; padding:26px 10px; font-size:13px; line-height:1.6; }
+.qn-aviso { color:var(--text-tertiary); font-size:11px; margin:-0.5rem 0 1rem; }
+
+/* Vista "Cómo funciona el servicio" */
+.qn-guia { font-size:13.5px; line-height:1.65; }
+.qn-guia h3 { font-family:'Cormorant Garamond',Georgia,serif; font-weight:600; font-size:19px; margin:1.5rem 0 0.4rem; color:var(--text); }
+.qn-guia h3:first-child { margin-top:0; }
+.qn-guia p { margin:0 0 0.7rem; color:var(--text-secondary); }
+.qn-guia strong { color:var(--text); font-weight:700; }
+.qn-guia ul { margin:0 0 0.9rem; padding-left:1.1rem; color:var(--text-secondary); }
+.qn-guia li { margin-bottom:0.35rem; }
+/* El bloque del show es una VENTANA, no una línea más de la lista: recuadro
+   con fondo y borde gold, como en la versión impresa. */
+.qn-ventana { border:0.5px solid rgba(186,117,23,0.5); border-left-width:2px; border-radius:var(--radius-md); background:rgba(186,117,23,0.07); padding:13px 14px 4px; margin:1.3rem 0 1rem; }
+.qn-ventana h3 { margin-top:0; color:#f3b572; }
+.qn-ventana ul { margin-bottom:0.6rem; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -2677,6 +2741,10 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
          cruzarse con la isla flotante del selector de idioma. -->
     <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol" hidden>Rol</button>
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
+    <!-- QUINCHO — TAB TEMPORAL del evento. Va última, después de Café: es lo
+         menos consultado en un día normal y lo primero que se borra. La
+         bandera QUINCHO_ON la esconde sin tocar el markup. -->
+    <button class="tab" onclick="setTab('quincho',this)" id="tab-btn-quincho">Quincho</button>
   </div>
 
   <!-- MENÚS TAB — desde el cambio de menú 2026 la vista corta primero por
@@ -2783,6 +2851,20 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
        Renders entirely from JS; datos read-only desde /viajeros/current. -->
   <div id="tab-viajeros" class="hidden">
     <div class="vj-root" id="vj-root"></div>
+  </div>
+
+  <!-- QUINCHO TAB — MÓDULO TEMPORAL (ver ARCHITECTURE.md §3.4). El selector
+       de vista y la barra de búsqueda son markup ESTÁTICO fuera de #qn-root:
+       mismo patrón que Menú y Checklist, para que re-renderear los resultados
+       no le robe el foco al teclado mientras se escribe. -->
+  <div id="tab-quincho" class="hidden">
+    <div class="qn-seg" id="qn-seg"></div>
+    <div class="search-bar qn-search-bar" id="qn-search-bar">
+      <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+      <input type="text" id="qn-search" placeholder="Habitación, apellido o grupo..." oninput="quinchoBuscar()" autocomplete="off" autocapitalize="off">
+      <button class="chk-search-clear" id="qn-search-clear" onclick="quinchoLimpiar()" aria-label="Limpiar búsqueda">×</button>
+    </div>
+    <div class="qn-root" id="qn-root"></div>
   </div>
 
   <!-- CHECKLIST TAB — GEO pre-service checklists. Renders entirely from JS.
@@ -4439,6 +4521,17 @@ const WX_CACHE_TTL_MS = 8 * 60 * 1000;        // cache local: sobrevive recargas
 let   WX_DATA  = null;   // { tempC, windKmh, gustKmh, peak:{gustKmh,hour,tomorrow}|null } | null
 let   WX_ERROR = false;
 
+// ── Quincho (MÓDULO TEMPORAL — se borra tras el evento, ver ARCHITECTURE §3.4) ─
+// Bandera de apagado: en false la tab no se dibuja y el módulo queda inerte.
+const QUINCHO_ON        = true;
+const QUINCHO_PATH      = 'quincho/actual';
+const QUINCHO_CACHE_KEY = 'ata_quincho_v1';
+const QUINCHO_STALE_MS  = 10 * 60 * 1000;   // re-fetch al abrir la tab si la copia envejeció
+let   QUINCHO_DATA       = null;   // { fecha, titulo, orden:[…], mesas:[…] } | null
+let   QUINCHO_VIEW       = 'mesas';  // 'mesas' | 'servicio'
+let   QUINCHO_FETCHED_AT = 0;
+let   QUINCHO_LOAD_ERROR = false;
+
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
 // ════════════════════════════════════════════════════════════════════════════
@@ -5564,13 +5657,14 @@ function setTab(tab, el) {
   document.body.classList.toggle('in-checklist', tab === 'checklist');
   // #tab-cocktails NO está en esta lista: vive dentro de #tab-menus y su
   // visibilidad la controla renderDishes() según el segmento BAR › Tragos.
-  ['menus','vinos','cafe','comandera','rol','viajeros','checklist'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  ['menus','vinos','cafe','comandera','rol','viajeros','checklist','quincho'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'menus') renderDishes();
   if (tab === 'cafe') renderCafeTab();
   if (tab === 'comandera') comandaEnter();
   if (tab === 'rol') rolEnter();
   if (tab === 'viajeros') viajerosEnter();
   else vjStopTick();   // el chip de frescura sólo se refresca con la tab a la vista
+  if (tab === 'quincho') quinchoEnter();   // módulo temporal — ver §3.4
   if (tab === 'checklist') chkEnter();
   else {
     // The checklist PIN/image overlays live on <body> (not inside chk-root),
@@ -13932,6 +14026,344 @@ function cmdDragCommit(){
 
 // Register for i18n updates so labels swap on language change
 onI18nChange(() => { if (currentTab === 'comandera') comandaRender(); });
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// MÓDULO QUINCHO — TEMPORAL. Se borra entero después del evento.
+// Pasos de borrado: ARCHITECTURE.md §3.4.
+//
+// CONTRATO
+//   Path Firebase : quincho/actual — read-only. Escribe scripts/sync_quincho.py
+//                   con service account (pasa por encima de las reglas, §4.3).
+//   Shape         : { fecha:'YYYY-MM-DD', titulo, orden:[n…],
+//                     mesas:[{ n, titulo, grupo:bool, pos, total,
+//                              unidades:[{ clave, hab, nombres:[…] }] }] }
+//   Ciclo de vida : se lee al entrar a la tab y se copia a localStorage. En el
+//                   quincho se cae la señal, así que la copia local es la que
+//                   manda: el fetch sólo la refresca.
+//
+// POR QUÉ LOS DATOS NO ESTÁN ESCRITOS ACÁ. Son nombres completos de viajeros
+// con su habitación. El repo es PÚBLICO y Vercel sirve este archivo tal cual:
+// el gate de cuatro dígitos (§4.4) protege los datos de Firebase, no los bytes
+// del HTML — un curl a la URL los leería sin teclear un dígito, y el historial
+// de git no se borra con un commit. Mismo criterio que PGO (§4.1): el PII de
+// viajeros vive en Firebase, el HTML sólo trae el código que lo lee.
+//
+// IDIOMA. Módulo interno, sólo español (decisión del owner, 2026-09-21): no
+// entra al diccionario UI y NO registra onI18nChange — no tiene nada que
+// retraducir cuando cambia el idioma.
+// ════════════════════════════════════════════════════════════════════════════
+
+function quinchoUrl(){ return `${CF_FIREBASE_CONFIG.databaseURL}/${QUINCHO_PATH}.json${fbQS()}`; }
+
+// Escape propio en vez de reusar vjEsc(): el módulo se borra de una pieza y no
+// debe dejar al de Viajeros sosteniéndole un helper.
+function qnEsc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]
+  ));
+}
+
+// Insensible a tildes: "vasquez" tiene que encontrar a Carolina Vásquez.
+function qnNorm(s){
+  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+// Partes numéricas de una habitación: '11-12' → [11,12] · '05' → [5]. Sirve
+// para que tecleando 5 aparezca la hab 05 y tecleando 11 aparezca la 11-12.
+function qnHabPartes(hab){
+  return String(hab == null ? '' : hab).split(/[^0-9]+/).filter(Boolean).map(Number);
+}
+
+function qnPorN(n){ return (QUINCHO_DATA && QUINCHO_DATA.mesas || []).find(m => m.n === n) || null; }
+function qnOrdinal(pos){ return pos + 'ª de izquierda a derecha'; }
+
+function qnFechaLarga(iso){
+  const p = String(iso || '').split('-').map(Number);
+  if (p.length !== 3 || p.some(isNaN)) return String(iso || '');
+  // new Date(y, m-1, d) es LOCAL. Con new Date('2026-09-21') el navegador lo
+  // lee como UTC y en Chile la fecha se corre un día hacia atrás.
+  const dt = new Date(p[0], p[1] - 1, p[2]);
+  const dias  = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return `${dias[dt.getDay()]} ${dt.getDate()} de ${meses[dt.getMonth()]}`;
+}
+
+// ── Cache local: lo que hace que el módulo funcione sin red ─────────────────
+// El service worker a propósito NO cachea Firebase (ver cabecera de sw.js), así
+// que la red de emergencia del plano tiene que ser propia.
+function quinchoCacheLeer(){
+  try {
+    const c = JSON.parse(localStorage.getItem(QUINCHO_CACHE_KEY) || 'null');
+    return (c && c.data && Array.isArray(c.data.mesas) && c.data.mesas.length) ? c : null;
+  } catch(e){ return null; }
+}
+function quinchoCacheGuardar(data){
+  // Sin TTL a propósito, al revés que el clima: si a las 22:00 en el quincho no
+  // hay señal, una copia "vencida" es todo lo que hay y vencerla sería apagar
+  // el módulo justo cuando se usa.
+  try { localStorage.setItem(QUINCHO_CACHE_KEY, JSON.stringify({ at: Date.now(), data })); }
+  catch(e){ /* modo privado de iOS: sin cache, con red el módulo igual anda */ }
+}
+
+async function quinchoFetch(){
+  await fbAuthInit();
+  try {
+    const raw = await fbGetJson(quinchoUrl, { cache: 'no-store' });
+    if (raw && Array.isArray(raw.mesas) && raw.mesas.length){
+      QUINCHO_DATA = raw;
+      QUINCHO_FETCHED_AT = Date.now();
+      quinchoCacheGuardar(raw);
+      QUINCHO_LOAD_ERROR = false;
+    } else {
+      // Documento vacío o borrado tras el evento: no se pisa lo que haya en
+      // memoria, pero si no hay nada sí es "no hay datos" de verdad.
+      QUINCHO_LOAD_ERROR = !QUINCHO_DATA;
+    }
+  } catch(e){
+    // §4.5: un fetch caído NO pisa memoria. Un teléfono con el plano en
+    // pantalla no lo pierde por un token vencido o por quedarse sin señal.
+    console.warn('[quincho] fetch falló, se conserva lo que había:', e && e.message);
+    QUINCHO_LOAD_ERROR = !QUINCHO_DATA;
+  }
+  quinchoRender();
+}
+
+function quinchoEnter(){
+  if (!QUINCHO_ON) return;
+  // Hidratar del cache ANTES de pedir la red: el primer paint no puede esperar
+  // a un fetch que en el quincho quizá no vuelve nunca.
+  if (!QUINCHO_DATA){
+    const hit = quinchoCacheLeer();
+    if (hit){ QUINCHO_DATA = hit.data; QUINCHO_FETCHED_AT = hit.at || 0; }
+  }
+  quinchoRender();
+  if (!QUINCHO_DATA || Date.now() - QUINCHO_FETCHED_AT > QUINCHO_STALE_MS) quinchoFetch();
+}
+
+function quinchoSetView(v){ QUINCHO_VIEW = v; quinchoRender(); }
+
+// La consulta vive en el input, no en una variable — mismo patrón que la
+// búsqueda de Menú: el input es markup estático fuera de #qn-root, así que
+// re-renderear los resultados no le roba el foco al teclado.
+function quinchoBuscar(){
+  const bar = document.getElementById('qn-search-bar');
+  const inp = document.getElementById('qn-search');
+  if (bar && inp) bar.classList.toggle('has-query', !!inp.value);
+  quinchoRender();
+}
+function quinchoLimpiar(){
+  const inp = document.getElementById('qn-search');
+  if (inp){ inp.value = ''; inp.focus(); }
+  quinchoBuscar();
+}
+function quinchoVerMesa(n){
+  const inp = document.getElementById('qn-search');
+  if (inp) inp.value = 'mesa ' + n;
+  quinchoBuscar();
+}
+
+// ── Tarjetas ────────────────────────────────────────────────────────────────
+
+// Con quién comparte mesa. Los de su MISMA habitación primero —son con quienes
+// llega y se sienta— y el resto recortado: en una mesa de grupo de catorce,
+// trece nombres repetidos en cada tarjeta son un muro que nadie lee de pie,
+// con una mano y a media luz. Lo que se vino a buscar es dónde se sienta.
+function qnCompaneros(m, u, nombre){
+  const TOPE = 5;
+  const todos = u.nombres.filter(x => x !== nombre)
+    .concat(m.unidades.filter(x => x !== u).reduce((a, x) => a.concat(x.nombres), []));
+  if (!todos.length) return '';
+  const resto = todos.length - TOPE;
+  return `<div class="qn-compa">Con: ${todos.slice(0, TOPE).map(x => qnEsc(x)).join(' · ')}`
+    + (resto > 0 ? ` <span class="qn-mas">y ${resto} más en la mesa</span>` : '') + `</div>`;
+}
+
+function qnTarjetaPersona(m, u, nombre){
+  return `<div class="qn-card destaca${m.grupo ? ' grp' : ''}">`
+    + `<div class="qn-card-top"><div class="qn-mesa">${qnEsc(m.n)}</div>`
+    + `<div class="qn-quien"><div class="qn-nombre">${qnEsc(nombre)}</div>`
+    + `<div class="qn-sub">habitación ${qnEsc(u.hab)} · ${qnEsc(m.titulo)}</div></div></div>`
+    + `<div class="qn-ubic">Mesa ${qnEsc(m.n)} — ${qnEsc(qnOrdinal(m.pos))}</div>`
+    + qnCompaneros(m, u, nombre)
+    + `</div>`;
+}
+
+function qnTarjetaMesa(m){
+  const filas = m.unidades.map(u =>
+    `<div class="qn-det-u"><span class="qn-det-hab">${qnEsc(u.hab)}</span>`
+    + `<span>${u.nombres.map(x => qnEsc(x)).join(' · ')}</span></div>`
+  ).join('');
+  return `<div class="qn-card${m.grupo ? ' grp' : ''}">`
+    + `<div class="qn-card-top"><div class="qn-mesa">${qnEsc(m.n)}</div>`
+    + `<div class="qn-quien"><div class="qn-nombre">${qnEsc(m.titulo)}</div>`
+    + `<div class="qn-sub">${qnEsc(m.total)} personas</div></div></div>`
+    + `<div class="qn-ubic">${qnEsc(qnOrdinal(m.pos))}</div>`
+    + `<div class="qn-det">${filas}</div></div>`;
+}
+
+// Tira del salón en su orden físico real. Tocar una casilla = ver esa mesa.
+function qnTiraHtml(resaltar){
+  const orden = (QUINCHO_DATA && QUINCHO_DATA.orden) || [];
+  const casillas = orden.map((n, i) => {
+    const m = qnPorN(n);
+    if (!m) return '';
+    return `<button class="qn-casilla${m.grupo ? ' grupo' : ''}${resaltar.has(n) ? ' on' : ''}"`
+      + ` onclick="quinchoVerMesa(${n})" aria-label="Mesa ${n}, ${i + 1}ª de izquierda a derecha">`
+      + `${n}<small>${i + 1}ª</small></button>`;
+  }).join('');
+  return `<div class="qn-tira"><div class="qn-tira-rot">Salón · de izquierda a derecha</div>`
+    + `<div class="qn-fila">${casillas}</div></div>`;
+}
+
+function qnCabeceraHtml(){
+  const d = QUINCHO_DATA;
+  const total = d.mesas.reduce((a, m) => a + (Number(m.total) || 0), 0);
+  const partes = [];
+  if (d.fecha) partes.push(qnFechaLarga(d.fecha));
+  partes.push(`${d.mesas.length} mesas · ${total} viajeros`);
+  return `<div class="qn-aviso">${qnEsc(partes.join(' · '))}</div>`;
+}
+
+// ── Búsqueda ────────────────────────────────────────────────────────────────
+// Devuelve el HTML de los resultados y qué mesas hay que encender en la tira.
+function quinchoResultados(q){
+  const mesas = QUINCHO_DATA.mesas;
+  const out = [], resaltar = new Set();
+  const push = (html, n) => { out.push(html); resaltar.add(n); };
+  const cerrar = () => ({ html: out.join(''), resaltar });
+
+  // Sin consulta: las diez mesas en orden físico.
+  if (!q){
+    mesas.slice().sort((a, b) => a.pos - b.pos).forEach(m => out.push(qnTarjetaMesa(m)));
+    return cerrar();
+  }
+
+  // "mesa 7" → sólo esa mesa.
+  const mMesa = q.match(/^mesa\s*(\d{1,2})$/);
+  if (mMesa){
+    const m = qnPorN(Number(mMesa[1]));
+    if (m) push(qnTarjetaMesa(m), m.n);
+    return cerrar();
+  }
+
+  // Un número suelto es ambiguo: puede ser habitación o mesa. Se muestran las
+  // dos cosas y la gente primero — a hora de servicio se teclea el número de
+  // la habitación mucho más seguido que el de la mesa.
+  const mNum = q.match(/^(\d{1,3})$/);
+  if (mNum){
+    const n = Number(mNum[1]);
+    mesas.forEach(m => m.unidades.forEach(u => {
+      if (qnHabPartes(u.hab).indexOf(n) >= 0){
+        u.nombres.forEach(nom => push(qnTarjetaPersona(m, u, nom), m.n));
+      }
+    }));
+    const m = qnPorN(n);
+    if (m) push(qnTarjetaMesa(m), m.n);
+    return cerrar();
+  }
+
+  // Texto: apellido, nombre de pila, grupo, o habitación con guion ('11-12').
+  mesas.forEach(m => {
+    // Si lo buscado nombra a la MESA entera (un grupo, un apellido del
+    // rótulo), la respuesta útil es la tarjeta de mesa: catorce tarjetas
+    // individuales para "kangaroo" son catorce scrolls a hora de servicio.
+    if (qnNorm(m.titulo).indexOf(q) >= 0){ push(qnTarjetaMesa(m), m.n); return; }
+    const golpes = [];
+    m.unidades.forEach(u => {
+      const porUnidad = qnNorm(u.clave).indexOf(q) >= 0 || qnNorm(u.hab).indexOf(q) >= 0;
+      u.nombres.forEach(nom => {
+        if (porUnidad || qnNorm(nom).indexOf(q) >= 0) golpes.push([u, nom]);
+      });
+    });
+    golpes.forEach(g => push(qnTarjetaPersona(m, g[0], g[1]), m.n));
+  });
+  return cerrar();
+}
+
+// ── Vista 2: cómo funciona el servicio ──────────────────────────────────────
+// Texto fijo, sin interacción. El bloque del show es una VENTANA (recuadro con
+// fondo y borde gold), no una línea más de la lista: es el momento en que el
+// equipo trabaja más y tiene que saltar a la vista.
+function qnGuiaHtml(){
+  return `<div class="qn-guia">`
+    + `<p><strong>La idea general.</strong> Dos cosas no las hacemos nosotros: la parrilla y el buffet de ensaladas son autoservicio, el viajero se sirve solo y no llevamos comida a la mesa. Una cosa es toda nuestra: los drinks. Nadie en la mesa se queda sin bebida.</p>`
+
+    + `<h3>1 · Antes — montaje y traslado</h3>`
+    + `<p>Llevar todas las cosas de la lista y dejar el quincho montado antes de que llegue el primer grupo.</p>`
+
+    + `<h3>2 · Recepción — se repite completa con cada grupo</h3>`
+    + `<p>Los viajeros llegan por oleadas: un primer grupo, después un segundo y posiblemente un tercero. Con cada grupo se hace lo mismo, entero, porque la experiencia de ser recibido tiene que ser igual para todos.</p>`
+    + `<ul>`
+    + `<li>GEOs situados en la mitad del quincho, recibiendo.</li>`
+    + `<li>Ofrecer las bandejas a medida que van llegando: empanadas vegetarianas, empanadas de carne y choripanes.</li>`
+    + `<li>Ofrecer bebida de bienvenida: pisco sour, jugo o bebida.</li>`
+    + `<li>Ubicar al grupo en su mesa.</li>`
+    + `</ul>`
+
+    + `<h3>3 · Servicio en mesa</h3>`
+    + `<p>Ya sentados los viajeros, cada uno toma su plaza y se dedica a ofrecer vinos dentro de ella.</p>`
+    + `<ul>`
+    + `<li>Parrilla y buffet de ensaladas son autoservicio: el viajero va, nosotros no llevamos comida.</li>`
+    + `<li>Lo nuestro son todos los drinks: copa de vino, agua, jugo, bebida, pisco sour. Nadie con la copa vacía.</li>`
+    + `<li>Todo sale del bar, atendido por el bartender encargado del quincho: bebidas, pisco sour, jugos y también los vinos. Vamos al bar a buscar lo que pide el viajero.</li>`
+    + `<li>Para el refill en mesa llevamos la botella con un lito, para limpiarla y servir sin gotear.</li>`
+    + `</ul>`
+
+    + `<div class="qn-ventana">`
+    + `<h3>Ventana de trabajo — el show</h3>`
+    + `<p>El show no es una pausa: es el momento en que trabajamos. Mientras los viajeros disfrutan la música y el baile, nosotros movemos todo en paralelo para llevar buen pulso del servicio.</p>`
+    + `<ul>`
+    + `<li>Al empezar el show, comenzar a preparar el buffet de postres.</li>`
+    + `<li>Desconchar y limpiar las mesas: retirar todos los platos sucios antes del postre.</li>`
+    + `<li>Cambiar el buffet de ensaladas por el de postres.</li>`
+    + `<li>Invitar a pasar por el postre durante el show, no después de que termine.</li>`
+    + `<li>El postre es autoservicio y suma café y té.</li>`
+    + `</ul>`
+    + `</div></div>`;
+}
+
+// ── Render ──────────────────────────────────────────────────────────────────
+
+function quinchoRender(){
+  const root = document.getElementById('qn-root');
+  if (!root) return;
+
+  const seg = document.getElementById('qn-seg');
+  if (seg){
+    const btn = (k, label) => `<button class="qn-seg-btn${QUINCHO_VIEW === k ? ' active' : ''}"`
+      + ` onclick="quinchoSetView('${k}')">${label}</button>`;
+    seg.innerHTML = btn('mesas', 'Buscar mesa') + btn('servicio', 'Cómo funciona');
+  }
+
+  // La búsqueda sólo aplica a la vista de mesas; en la guía no tiene nada que
+  // filtrar y sólo robaría alto de pantalla.
+  const bar = document.getElementById('qn-search-bar');
+  if (bar) bar.classList.toggle('hidden', QUINCHO_VIEW !== 'mesas');
+
+  if (QUINCHO_VIEW === 'servicio'){ root.innerHTML = qnGuiaHtml(); return; }
+
+  if (!QUINCHO_DATA){
+    root.innerHTML = QUINCHO_LOAD_ERROR
+      ? `<div class="qn-vacio">No pude cargar el plano de mesas.<br>Entrá una vez con señal y queda guardado para toda la noche.</div>`
+      : `<div class="qn-vacio">Cargando el plano de mesas…</div>`;
+    return;
+  }
+
+  const inp   = document.getElementById('qn-search');
+  const crudo = inp ? inp.value : '';
+  const res   = quinchoResultados(qnNorm(crudo));
+
+  root.innerHTML = qnCabeceraHtml() + qnTiraHtml(res.resaltar)
+    + (res.html || `<div class="qn-vacio">Sin resultados para «${qnEsc(crudo)}».<br>Probá con el apellido o el número de habitación.</div>`);
+}
+
+// Boot: la bandera decide si la tab existe siquiera. En false no se dibuja y el
+// módulo queda inerte — es la válvula para apagarlo sin borrar código.
+if (!QUINCHO_ON){
+  const _qnBtn = document.getElementById('tab-btn-quincho');
+  if (_qnBtn) _qnBtn.hidden = true;
+}
 
 
 // ── Rol module (weekly shift schedule reader) ───────────────────────────

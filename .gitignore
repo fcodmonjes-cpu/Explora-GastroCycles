@@ -28,3 +28,10 @@ firebase-rules.json
 # Python
 __pycache__/
 *.pyc
+
+# Quincho (MÓDULO TEMPORAL, ver ARCHITECTURE.md §3.4). El plano de mesas trae
+# nombres completos de viajeros con su habitación: el repo es PÚBLICO y Vercel
+# sirve el árbol entero, así que esa planilla no entra ni por error. Viaja a
+# Firebase con scripts/sync_quincho.py y se borra de acá junto con el módulo.
+buscador-mesas.html
+quincho*.json

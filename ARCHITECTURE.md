@@ -310,6 +310,74 @@ número.
 
 ---
 
+### 3.4 Quincho: el módulo que nace con fecha de vencimiento (2026-09-21)
+
+**TEMPORAL.** Es el plano de mesas de un asado puntual, no contenido del
+handbook. Los pasos de borrado están al final de esta sección; al ejecutarlos,
+borrar también esta sección.
+
+**Qué es.** Una sexta tab, `Quincho`, con dos vistas y un segmented entre
+ellas: *Buscar mesa* (buscador instantáneo por habitación, apellido, nombre de
+pila, grupo o número de mesa, más la tira del salón en su orden físico real) y
+*Cómo funciona* (la guía de servicio, texto fijo).
+
+**Por qué los datos NO están en el `index.html`.** Es la decisión de diseño que
+importa y la que se repetiría mal la próxima vez. El módulo maneja nombres
+completos de viajeros con su número de habitación, y la inclinación natural
+—"es un one-off, lo dejo en un array estático y lo borro en un commit"— es
+falsa en este repo por dos razones acumuladas:
+
+| | Por qué no alcanza |
+|---|---|
+| **El repo es público** | Un commit saca el dato de HEAD, **no del historial**. `git show <commit>:index.html` lo recupera y la búsqueda de código de GitHub lo indexa. No hay "borrarlo después". |
+| **El gate no protege el HTML** | El gate de §4.4 canjea el PIN por una credencial de Firebase: protege *la base*, no los bytes del archivo. `index.html` lo sirve Vercel como estático — `curl <url> \| grep <apellido>` lo lee sin teclear un dígito. |
+
+Así que el plano viaja por donde ya viaja el PII de viajeros (§4.1): **Firebase
+`quincho/actual`, read-only desde la app**, escrito por `scripts/sync_quincho.py`
+con service account. El `index.html` trae el código, nunca los nombres. La
+regla general que queda: *en este repo, dato de viajero identificable no entra
+al archivo estático* — el archivo es tan público como el repo.
+
+**Offline.** El quincho se queda sin señal, y el service worker a propósito no
+cachea Firebase (cabecera de `sw.js`), así que el módulo tiene su propia red de
+emergencia: copia el plano a `localStorage` (`ata_quincho_v1`) y **sin TTL**, al
+revés que el clima. Vencer la copia a las 22:00, sin señal, sería apagar el
+módulo justo cuando se usa. El orden del render también es ése: hidrata del
+cache primero y recién después pide la red.
+
+**Idioma.** Interno y sólo en español, por decisión del owner: no entra al
+diccionario `UI` y **no registra `onI18nChange`** — no tiene nada que
+retraducir. Es la excepción consciente a la convención trilingüe de §6.
+
+**Paleta.** Sin tokens nuevos: el destaque y la acción son `--gold` (con texto
+oscuro encima, regla de §6) y el acento de "mesa de grupo grande" reusa
+`--teal`. El `#C9973F` y el verde del archivo original no existen en el
+handbook y no se importaron.
+
+**Un detalle de oficio.** El buscador original listaba a *todos* los
+compañeros de mesa en cada tarjeta. En una mesa de grupo de catorce eso son
+trece nombres repetidos en cada una de las tarjetas: ilegible de pie, con una
+mano y a media luz. `qnCompaneros()` pone primero a los de la misma habitación
+y corta en cinco con un "y N más en la mesa".
+
+**Cómo se borra (cuatro pasos, sin restos):**
+
+1. En `index.html`, borrar los cinco bloques marcados `MÓDULO QUINCHO` /
+   `QUINCHO — TAB TEMPORAL`: el bloque de CSS, el botón de la tab, el
+   contenedor `#tab-quincho`, el bloque del STATE TOP y el módulo JS.
+2. En `setTab()`, sacar `'quincho'` de la lista de tabs y la línea
+   `if (tab === 'quincho') quinchoEnter();`.
+3. Borrar `scripts/sync_quincho.py`, las dos entradas de `.gitignore` y las de
+   `.vercelignore`, y esta sección.
+4. Borrar el dato de Firebase:
+   `FIREBASE_KEY=$(cat firebase-key.json) python scripts/sync_quincho.py --borrar`
+   y sacar la línea `quincho` de las reglas en la consola.
+
+Mientras tanto, la constante `QUINCHO_ON` en `index.html` lo apaga en una
+palabra: en `false` la tab no se dibuja y el módulo queda inerte.
+
+---
+
 ## 4. Arquitectura de datos en Firebase
 
 Cinco paths bajo el mismo proyecto Firebase. Cada uno con su propio
