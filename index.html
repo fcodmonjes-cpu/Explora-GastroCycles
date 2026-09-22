@@ -1194,14 +1194,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    el default display:none del user-agent). Sin esto, los dos hijos del riel
    se dibujan a la vez. */
 .mn-daybar > [hidden] { display:none !important; }
-/* Pie del riel: dice EN QUÉ numeración están los botones de arriba. Almuerzo y
-   cena corren desfasados, así que el mismo día real se llama distinto en cada
-   servicio; sin esta línea, ver "D3" en almuerzo y "D1" en cena el mismo día
-   parece un error de la app. Alto SIEMPRE reservado (aunque el texto vaya
-   vacío, como en Bar): la grilla de abajo no se mueve al cambiar de servicio.
-   Sin color ni tipografía nuevos — es el mismo tratamiento del rótulo de carta
-   fija, sin el borde. */
-.mn-daynote { height:15px; margin-top:5px; display:flex; align-items:center; justify-content:center; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.11em; text-transform:uppercase; color:var(--text-tertiary); }
 
 /* --- La lente de restricciones ------------------------------------------- */
 /* Arranca colapsada en una línea. Al abrirse, la fila de acciones existe
@@ -2700,9 +2692,6 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
         <button class="day-btn" onclick="setDay('4',this)">D4</button>
       </div>
       <div class="mn-fixed-note" id="mn-fixed-note" hidden></div>
-      <!-- Pie del riel: en qué numeración están los botones. Lo llena el JS
-           (menuRenderChrome) porque depende del servicio y del idioma. -->
-      <div class="mn-daynote" id="mn-daynote"></div>
     </div>
     <div class="mn-svc" id="mn-svc"></div>
     <!-- Segundo nivel, sólo dentro de BAR: la carta de bar tiene comida y
@@ -2935,40 +2924,27 @@ const BUFFET_SLOTS = [
   { key:'prococ',  uiKey:'slotProCoc'  }
 ];
 
-// --- Corrección del ciclo ---------------------------------------------------
+// --- Alineación del ciclo ---------------------------------------------------
 // El documento numera "Día de servicio 1..4"; la app calcula su D1..D4 desde
-// el ancla de fecha (ver el IIFE de auto-selección de día). Ambas numeraciones
-// NO coinciden: el desfase quedó CONFIRMADO el 12-08-2026 contra el servicio
-// real. Ese día la app marcaba D4, la cena (que no cambió y es el master del
-// ciclo) era la del día 4, y el almuerzo que correspondía servir era el del
-// DÍA 2 del documento. De ahí offset = 2.
+// el ancla de fecha (ver el IIFE de auto-selección de día).
 //
-//   documento día 1 → D3      documento día 3 → D1
-//   documento día 2 → D4      documento día 4 → D2
+// El 22-09-2026 cocina adelantó el ciclo de almuerzo dos puestos para dejarlo
+// sincronizado con la cena. Desde entonces las dos numeraciones COINCIDEN:
+// documento día N = app DN, en almuerzo y en cena. De ahí offset = 0.
 //
-// El +2 es su propio inverso mod 4, así que la tabla se lee igual en los dos
-// sentidos. La cena y el ancla de fecha no se tocan: el desfase se corrige
-// enteramente del lado del menú nuevo.
-// Si vuelve a moverse: preguntar en cocina qué día de servicio corresponde a hoy
-// y compararlo con el D que la app marca con el halo azul.
-const MENU_CYCLE_OFFSET = 2;
+// La constante se mantiene (en vez de borrar la traducción) porque el ciclo ya
+// se movió dos veces: si vuelve a correrse, esto es un dígito y no rearmar la
+// tubería. Para recalcularlo: preguntar en cocina qué día de servicio va hoy y
+// compararlo con el D que la app marca con el halo azul.
+const MENU_CYCLE_OFFSET = 0;
 
-// El desfase se aplica UNA sola vez, al entrar los platos nuevos al catálogo:
+// La traducción se aplica UNA sola vez, al entrar los platos nuevos al catálogo:
 // a partir de ahí todo el resto de la app ve un único sistema de numeración
 // (el de la app) y ningún consumidor necesita saber que el offset existe.
 // Los platos que ya estaban en DISHES no pasan por acá — su `day` ya está en
 // la numeración de la app.
 function menuDocDayToApp(docDay){
   return String(((Number(docDay) - 1 + MENU_CYCLE_OFFSET) % 4 + 4) % 4 + 1);
-}
-// La vuelta: de la numeración de la app a la del documento de almuerzo. Se usa
-// SÓLO para rotular los botones de día — el modelo nunca sale de la numeración
-// de la app. Con offset = 2 la función es su propia inversa (2 es su inverso
-// mod 4), así que por dentro es la misma cuenta; existe con nombre propio para
-// que el lugar donde se usa se lea, y para que siga siendo correcta si algún
-// día el offset cambia.
-function menuAppDayToDoc(appDay){
-  return String(((Number(appDay) - 1 - MENU_CYCLE_OFFSET) % 4 + 4) % 4 + 1);
 }
 
 // --- Buffet: 6 bandejas × 4 días -------------------------------------------
@@ -4464,9 +4440,6 @@ const UI = {
     slotCocidos:'Vegetales cocidos', slotProFria:'Proteína fría', slotProCoc:'Proteína cocida',
     slotFruta:'Fruta', slotGranos2:'Granos y chocolate', slotSinAzucar:'Sin azúcar',
     slotVegana:'Vegana', slotMar:'De mar', slotAveCerdo:'Ave / cerdo', slotRes:'Carne de res',
-    // EN/PT de estas dos PENDIENTES DE REVISIÓN del owner.
-    dayNumLunch:'Numeración del almuerzo · la cena corre su propio día',
-    dayNumDinner:'Numeración de la cena · el almuerzo corre su propio día',
     dietVeg:'Vegano', dietVgt:'Vegetariano', dietPesc:'Pescetariano',
     dietMar:'Sin mariscos', dietFs:'Sin frutos secos', dietLac:'Sin lactosa',
     dietGe:'Sin gluten estricto', dietGs:'Sin gluten superficial', dietHalal:'Sin cerdo / Halal',
@@ -4707,8 +4680,6 @@ const UI = {
     slotCocidos:'Cooked vegetables', slotProFria:'Cold protein', slotProCoc:'Cooked protein',
     slotFruta:'Fruit', slotGranos2:'Grains & chocolate', slotSinAzucar:'No added sugar',
     slotVegana:'Vegan', slotMar:'From the sea', slotAveCerdo:'Poultry / pork', slotRes:'Beef',
-    dayNumLunch:'Lunch day numbering · dinner runs its own',
-    dayNumDinner:'Dinner day numbering · lunch runs its own',
     dietVeg:'Vegan', dietVgt:'Vegetarian', dietPesc:'Pescatarian',
     dietMar:'No shellfish', dietFs:'No nuts', dietLac:'No lactose',
     dietGe:'Strict gluten-free', dietGs:'Light gluten-free', dietHalal:'No pork / Halal',
@@ -4936,8 +4907,6 @@ const UI = {
     slotCocidos:'Legumes cozidos', slotProFria:'Proteína fria', slotProCoc:'Proteína cozida',
     slotFruta:'Fruta', slotGranos2:'Grãos e chocolate', slotSinAzucar:'Sem açúcar',
     slotVegana:'Vegana', slotMar:'Do mar', slotAveCerdo:'Ave / porco', slotRes:'Carne bovina',
-    dayNumLunch:'Numeração do almoço · o jantar tem a sua',
-    dayNumDinner:'Numeração do jantar · o almoço tem a sua',
     dietVeg:'Vegano', dietVgt:'Vegetariano', dietPesc:'Pescetariano',
     dietMar:'Sem frutos do mar', dietFs:'Sem frutos secos', dietLac:'Sem lactose',
     dietGe:'Sem glúten estrito', dietGs:'Sem glúten superficial', dietHalal:'Sem porco / Halal',
@@ -5983,34 +5952,11 @@ function menuRenderChrome(searching){
   if (daySel) daySel.hidden = isBar;
   if (note){ note.hidden = !isBar; note.textContent = t('barFixed'); }
 
-  // Numeración por servicio: almuerzo y cena corren desfasados, así que el
-  // MISMO día real se llama distinto en cada uno. Los botones muestran el
-  // número que usa el servicio que se está mirando; el almuerzo, el de su
-  // documento (el que habla cocina).
-  //
-  // OJO: acá cambia SÓLO la etiqueta. El onclick, setDay(), currentDay, el
-  // ancla de fecha, el halo de hoy (day-btn-today) y menuJumpTwin() siguen
-  // todos en numeración de app, que es la única que circula por el modelo.
-  // El halo queda sobre el mismo botón real: en almuerzo ese botón dirá el día
-  // que hoy corresponde en cocina.
-  const enAlmuerzo = MENU_SERVICE === 'almuerzo';
-  document.querySelectorAll('#mn-day-selector .day-btn').forEach((b, i) => {
-    const appDay = String(i + 1);
-    const label  = enAlmuerzo ? menuAppDayToDoc(appDay) : appDay;
-    b.textContent = 'D' + label;
-    // (2026-09-16) El riel se leía "D3 D4 D1 D2": las etiquetas se remapean por
-    // MENU_CYCLE_OFFSET pero los botones quedaban en orden de app. Dos costos:
-    // buscar D2 obligaba a escanear los cuatro, y al cambiar de servicio las
-    // etiquetas se rebarajaban mientras las posiciones quedaban quietas — el
-    // botón bajo el pulgar cambiaba de nombre. `order` reordena SÓLO lo visual
-    // (.day-selector es grid); el onclick, setDay(), currentDay, el ancla de
-    // fecha y el halo de hoy siguen en numeración de app, intactos.
-    b.style.order = Number(label);
-  });
-  // Pie del riel: dice en qué numeración están esos botones. En Bar va vacío
-  // pero el alto queda reservado — la grilla no salta al cambiar de servicio.
-  const dayNote = document.getElementById('mn-daynote');
-  if (dayNote) dayNote.textContent = isBar ? '' : t(enAlmuerzo ? 'dayNumLunch' : 'dayNumDinner');
+  // El riel de día no necesita JS: almuerzo y cena comparten numeración desde
+  // que cocina sincronizó los dos ciclos (22-09-2026), así que los botones
+  // D1..D4 del HTML sirven tal cual en los dos servicios. Hubo un tiempo en que
+  // acá se re-rotulaban y reordenaban por servicio, con un pie que explicaba
+  // por qué el mismo día se llamaba distinto en cada uno; ya no hace falta.
 
   // Sub-control comida / tragos: existe sólo dentro de BAR.
   const barTabs = document.getElementById('mn-bar-tabs');

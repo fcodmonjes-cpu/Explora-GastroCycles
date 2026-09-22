@@ -31,8 +31,12 @@ La única bandeja sin información nueva era la **proteína caliente del Día 1*
 el documento no la menciona. El owner confirmó el 2026-09-08 que **cambió de
 lomo de cerdo a pavo**, y así quedó en la ficha.
 
-Recordatorio para el briefing: **doc Día 1 → D3 en la app**, doc 2 → D4,
-doc 3 → D1, doc 4 → D2 (`MENU_CYCLE_OFFSET = 2`).
+> **Actualizado el 2026-09-22:** cuando se escribió esto el almuerzo corría
+> desfasado dos días respecto de la app (`MENU_CYCLE_OFFSET = 2`, doc Día 1 → D3).
+> Cocina adelantó el ciclo de almuerzo dos puestos para sincronizarlo con la
+> cena, así que ahora **doc Día N = DN en la app**, en los dos servicios, y el
+> offset quedó en 0. Nada de las tablas de abajo cambia: siguen en numeración de
+> documento.
 
 ---
 

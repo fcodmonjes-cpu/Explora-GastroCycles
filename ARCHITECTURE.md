@@ -225,16 +225,14 @@ intacto. La "comanda completa" es ahora una **vista única** (sin toggle):
 tira de totales por producto para cocina + detalle por asiento con las
 notas/pedidos especiales siempre visibles y sin hora de envío.
 
-**El riel de días se ordena por su etiqueta, no por su posición.** El almuerzo
-y la cena corren desfasados, así que `menuAppDayToDoc()` (vía `MENU_CYCLE_OFFSET`)
-reescribe el *rótulo* de cada botón. Durante un tiempo los botones quedaron en
-orden de app con etiquetas remapeadas y el riel se leía **D3 D4 D1 D2**: buscar
-D2 obligaba a escanear los cuatro, y al cambiar de servicio las etiquetas se
-rebarajaban mientras las posiciones quedaban quietas — el botón bajo el pulgar
-cambiaba de nombre. Se arregla con `b.style.order = Number(label)`, que reordena
-**sólo lo visual** (el riel es grid): `onclick`, `setDay()`, `currentDay`, el
-ancla de fecha y el halo de hoy siguen todos en numeración de app, que es la
-única que circula por el modelo.
+**El riel de días es `D1..D4` plano, sin JS.** Desde que cocina sincronizó los
+dos ciclos (22-09-2026) el almuerzo y la cena comparten numeración, así que los
+botones estáticos del HTML sirven igual en los dos servicios y el halo de hoy cae
+sobre el mismo botón en ambos. Entre agosto y septiembre de 2026, mientras los
+ciclos corrían desfasados, el riel se re-rotulaba y se reordenaba por servicio y
+llevaba un pie que explicaba por qué el mismo día se llamaba distinto en cada
+uno; todo eso se retiró. Si los ciclos vuelven a separarse, el punto único sigue
+siendo `MENU_CYCLE_OFFSET` (§ bloque de datos).
 
 ### 3.2 Clima de terraza (módulo `wx`)
 
@@ -992,8 +990,9 @@ final del bloque de datos, más `BAR_DISHES` para la carta fija del bar.
 ```js
 {
   id:'bf1-hojas',            // id estable y legible (no correlativo)
-  day:'1',                   // DÍA DEL DOCUMENTO — se traduce al día de la
-                             // app con MENU_CYCLE_OFFSET al entrar a DISHES
+  day:'1',                   // DÍA DEL DOCUMENTO — pasa por MENU_CYCLE_OFFSET
+                             // al entrar a DISHES; hoy el offset es 0, así que
+                             // coincide con el día de la app
   slot:'hojas',              // slot fijo: ver BUFFET_SLOTS / POSTRE_SLOTS
   recipeDay:'1',             // ficha técnica de cocina (≠ día de servicio)
   name:'César de Lechuga Costina, Pollo Ahumado y Pan Gratato',
