@@ -3958,13 +3958,12 @@ let MENU_GUION_OPEN  = null;        // id del plato con la explicación extendid
 // Vive como cuarto segmento de Menú (MENU_SERVICE === 'estudio'). Todo lo que
 // el render o el boot pueden tocar va acá arriba, por la regla de STATE TOP.
 //
-// Válvula de publicación: los deploys leen de Firebase Storage, que HOY NO
-// EXISTE en el proyecto (el bucket responde 404 — probado el 2026-09-25). En
-// false, Estudio no pide nada a la red fuera de localhost: dice "todavía no
-// está publicado" y no ensucia la consola con 404. Se prende una vez que
-// Storage esté habilitado, con las reglas y el CORS de ARCHITECTURE.md §3.4, y
-// con los archivos subidos a la carpeta estudio/.
-const EST_STORAGE_ON = false;
+// Válvula de publicación: los deploys leen de Firebase Storage. Encendida el
+// 2026-09-25, con el bucket creado (US-EAST1), las reglas y el CORS de
+// ARCHITECTURE.md §3.4 aplicados y los 17 archivos subidos a estudio/. En
+// false, Estudio no pide nada a la red fuera de localhost y dice "todavía no
+// está publicado" — la salida de emergencia si Storage alguna vez estorba.
+const EST_STORAGE_ON = true;
 const EST_BUCKET     = 'explora-cafe-orders.firebasestorage.app';
 const EST_CACHE      = 'ata-estudio-v1';   // Cache API propio; sw.js no lo borra
 const EST_LOCAL      = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);

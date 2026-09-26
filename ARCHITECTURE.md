@@ -50,7 +50,7 @@ que es operacional (turnos, postres, pedidos, comandas).
 | Hosting | Vercel (auto-deploy por branch) | `main` → `gastrocycles.vercel.app` (producción). `staging` → URL fija para QA desde iPhone. `feature/*` y `fix/*` → preview por commit. Ver sección 12. **Cada deployment copia el árbol entero del repo y todos suman contra los 10 GB del plan Hobby** — por eso existe `.vercelignore` (§12). |
 | Tipografía | Cormorant Garamond (italic 500/700) + Courier Prime monospace | Cargadas vía Google Fonts. Family declarada en CSS desde el inicio; sólo recientemente se cargó la real. |
 | Instalable | PWA: `manifest.webmanifest` + `sw.js` (service worker propio, ~50 líneas) | Se agrega al home screen y abre sin chrome del browser. Network-first: el cache es red de emergencia, no fuente de verdad. Ver §2.1. |
-| Archivos pesados | Firebase Storage, carpeta `estudio/` (audios del menú) | Fuera del repo a propósito: cada deploy de Vercel copia el árbol entero (§12). Detrás del gate por reglas de Storage. Hoy apagado (`EST_STORAGE_ON`) hasta habilitar el bucket. Ver §3.4. |
+| Archivos pesados | Firebase Storage, carpeta `estudio/` (audios del menú) | Fuera del repo a propósito: cada deploy de Vercel copia el árbol entero (§12). Detrás del gate por reglas de Storage. Plan Blaze, bucket en US-EAST1, válvula `EST_STORAGE_ON`. Ver §3.4. |
 | Clima | Open-Meteo (REST, sin API key) | **Único tercero fuera de Firebase.** Gratis, CORS abierto y sin registro — en una app sin build step, una API key quedaría visible en el HTML. Si cae, el módulo se apaga solo. Ver §3.2. |
 | Telemetría | Vercel Analytics (`/_vercel/insights/script.js`) | Pageviews ligeros, sin más. Da 404 en local — solo existe en el deploy de Vercel. |
 
@@ -332,7 +332,7 @@ el texto del plato **no se ve durante un repaso** (ni en la prueba final);
 viene apagado**. Tocar una fila es un gesto, no autoplay: salta y suena. Llegar
 desde el buscador deja el audio en pausa en el plato.
 
-**Almacenamiento: Firebase Storage, NO el repo.** Los mp3 son ~35 MB (a 64 kbps
+**Almacenamiento: Firebase Storage, NO el repo.** Los mp3 son ~38 MB (a 64 kbps
 mono) y cambian con cada carta. En el repo, cada deployment de Vercel los
 copiaría enteros (la lección de §12 que costó la cuota), y `.vercelignore` ya
 excluye `*.mp3`: ni siquiera se desplegarían. Storage además deja el contenido
@@ -351,13 +351,19 @@ En `localhost` el módulo lee la misma estructura desde `/estudio-local/`
 (ignorada por git y por Vercel): QA con los audios reales sin subirlos a ningún
 lado.
 
-**Válvula `EST_STORAGE_ON`** (STATE TOP de `index.html`). Al 2026-09-25 el
-bucket **no existe** (la API responde 404). En `false`, Estudio no pide nada a
-la red fuera de localhost: dice "todavía no está publicado" y no ensucia la
-consola. Para publicar, en este orden:
+**Válvula `EST_STORAGE_ON`** (STATE TOP de `index.html`). **Encendida desde el
+2026-09-25.** En `false`, Estudio no pide nada a la red fuera de localhost: dice
+"todavía no está publicado" y no ensucia la consola — la salida de emergencia.
 
-1. Consola de Firebase → Storage → *Get started*. Hoy Firebase exige el plan
-   **Blaze** para Storage; con ~35 MB y el tráfico del equipo queda dentro de la
+**Estado de Storage (2026-09-25):** proyecto en plan **Blaze** ("Mi cuenta de
+facturación", CLP, con presupuesto); bucket `explora-cafe-orders.firebasestorage.app`
+en **US-EAST1** (ubicación sin costo, la más cercana a Chile de las tres; es
+permanente); reglas y CORS de abajo aplicados; 17 archivos (37,65 MiB) en
+`estudio/`. Verificado desde afuera: sin sesión, 403; preflight de CORS desde
+staging, 200. Así se armó, por si hay que rehacerlo:
+
+1. Consola de Firebase → Storage → *Comenzar*. Firebase exige el plan
+   **Blaze** para Storage; con ~38 MB y el tráfico del equipo queda dentro de la
    cuota sin costo, pero la tarjeta la pone el owner.
 2. Reglas de Storage (copiar sobre las vigentes, nunca de memoria — §4.3):
    ```
