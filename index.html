@@ -1176,7 +1176,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    dieta (#cfa14a), los mismos que ya usan PGO y el Checklist. */
 
 /* --- Selector de servicio: la primera decisión de la pantalla ------------- */
-.mn-svc { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; padding:3px; margin:0 0 1.1rem; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:9px; }
+.mn-svc { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:2px; padding:3px; margin:0 0 1.1rem; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:9px; }
 .mn-svc-btn { background:none; border:none; border-radius:6px; padding:9px 6px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.11em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; transition:background .15s, color .15s; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
 .mn-svc-btn.active { background:rgba(192,125,42,0.14); color:#f3b572; box-shadow:0 0 0 0.5px rgba(192,125,42,0.4) inset; }
 /* Segundo nivel (comida / tragos), sólo dentro de BAR: más chico y sin caja,
@@ -1184,6 +1184,98 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .mn-svc2 { grid-template-columns:repeat(2,1fr); background:none; border:none; padding:0; margin:-0.6rem 0 1.1rem; width:fit-content; gap:6px; }
 .mn-svc2 .mn-svc-btn { padding:7px 16px; font-size:10px; border:0.5px solid var(--border); border-radius:999px; }
 .mn-svc2 .mn-svc-btn.active { border-color:rgba(192,125,42,0.45); }
+
+/* ── Estudio: el menú en audio ─────────────────────────────────────────────
+   Sin colores nuevos: gold para lo activo, coral para lo que el plato lleva,
+   punteado para "sin dato". Alturas FIJAS en todo lo que cambia con el audio
+   (lo que suena, el aviso, el texto, la lista) para que nada se mueva bajo el
+   dedo mientras avanza. */
+.est { display:flex; flex-direction:column; gap:10px; }
+.est-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.est-top .mn-svc2 { margin:0; }
+.est-dl { flex:0 0 auto; min-width:122px; min-height:34px; padding:7px 12px; border-radius:999px; background:none; border:0.5px solid var(--border-md); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-secondary); cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.est-dl.si { color:#cfa14a; border-color:rgba(192,125,42,0.45); }
+.est-dl.viejo, .est-dl.lleno { color:#e08663; border-color:rgba(216,90,48,0.45); }
+.est-dl:disabled, .est-dl.bajando { opacity:0.5; cursor:default; }
+.est-card { background:var(--surface); border:0.5px solid var(--border-md); border-radius:12px; padding:12px 13px 12px; }
+.est-card-msg { font-size:13px; line-height:1.5; color:var(--text-secondary); }
+.est-kind { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); }
+/* Alto medido en headless con los 100 nombres reales: el más largo ocupa
+   64 px a 375 de ancho y 87 px a 320. Fijo para que el cambio de plato no
+   mueva los controles; nunca se recorta un nombre. */
+.est-now { height:70px; overflow:hidden; display:flex; flex-direction:column; gap:4px; }
+@media (max-width:359px){ .est-now { height:92px; } }
+.est-name { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:19px; line-height:1.18; color:var(--text); overflow-wrap:anywhere; }
+.est-name.dim { font-style:italic; color:var(--text-secondary); }
+.est-msg { height:32px; display:flex; align-items:center; gap:8px; font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.04em; color:var(--text-tertiary); }
+.est-chip { min-height:30px; padding:5px 11px; border-radius:999px; background:none; border:0.5px solid var(--border-md); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary); cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.est-chip.on { color:#cfa14a; border-color:rgba(186,117,23,0.55); background:var(--gold-light); }
+.est-bar { position:relative; height:6px; margin:4px 0 5px; border-radius:3px; background:rgba(255,255,255,0.07); overflow:hidden; }
+.est-bar-fill { position:absolute; left:0; top:0; bottom:0; width:0; background:var(--gold); opacity:0.85; }
+.est-tick { position:absolute; top:0; bottom:0; width:1px; background:var(--surface); opacity:0.9; }
+.est-seg { position:absolute; top:0; bottom:0; background:rgba(255,255,255,0.13); }
+.est-time { display:flex; justify-content:space-between; font-family:'Courier Prime','Courier New',monospace; font-size:10px; color:var(--text-tertiary); font-variant-numeric:tabular-nums; }
+.est-ctrls { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; margin:10px 0 12px; }
+.est-back { justify-self:start; min-height:40px; padding:8px 12px; border-radius:8px; background:none; border:0.5px solid var(--border-md); font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-secondary); cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.est-play { width:58px; height:58px; border-radius:50%; border:none; background:var(--gold); color:#15110d; display:flex; align-items:center; justify-content:center; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; transition:transform .07s; }
+.est-play svg { width:24px; height:24px; }
+.est-play:active { transform:scale(0.95); }
+.est-play:disabled { background:rgba(186,117,23,0.3); cursor:default; }
+.est-rates { justify-self:end; display:flex; gap:2px; }
+.est-rate { min-height:40px; padding:6px 7px; border-radius:6px; background:none; border:none; font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-tertiary); cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.est-rate.on { color:#f3b572; background:rgba(192,125,42,0.14); }
+.est-modes { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.est-mode { min-height:40px; padding:7px 8px; border-radius:8px; background:transparent; border:0.5px solid var(--border-md); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.09em; text-transform:uppercase; color:var(--text-secondary); cursor:pointer; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+.est-mode.on { color:#cfa14a; border-color:rgba(186,117,23,0.55); background:var(--gold-light); }
+.est-mode:disabled, .est-back:disabled { opacity:0.4; cursor:default; }
+.est-text { height:170px; overflow-y:auto; overscroll-behavior:contain; margin-top:11px; padding:2px 4px 2px 12px; border-left:1.5px solid rgba(192,125,42,0.5); }
+.est-text[hidden] { display:none; }
+.est-text-d { display:block; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16.5px; line-height:1.5; color:var(--text); }
+.est-text-off { display:block; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:15.5px; line-height:1.5; color:var(--text-tertiary); padding-top:2px; }
+.est-alg { display:block; margin-top:6px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; line-height:1.4; color:#e08663; }
+.est-alg.nodata { color:var(--text-tertiary); }
+/* La lista scrollea sola dentro de su caja: seguir la marca que suena no
+   mueve la página ni los controles. */
+.est-list { position:relative; height:52vh; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; border-top:0.5px solid var(--border); }
+.est-list-free { height:auto; overflow:visible; }
+.est-row { display:grid; grid-template-columns:40px minmax(0,1fr); column-gap:10px; row-gap:2px; width:100%; padding:10px 8px 10px 6px; background:none; border:none; border-bottom:0.5px solid var(--border); color:var(--text); text-align:left; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.est-row > * { min-width:0; grid-column:2; }
+.est-row .est-row-t { grid-column:1; grid-row:1 / span 2; padding-top:3px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; color:var(--text-tertiary); font-variant-numeric:tabular-nums; }
+.est-row-n { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16.5px; line-height:1.2; overflow-wrap:anywhere; }
+.est-row-s { font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
+.est-row-d { display:block; margin-top:6px; font-size:13px; line-height:1.55; color:var(--text-secondary); }
+.est-row.rep .est-row-n { font-style:italic; color:var(--text-secondary); }
+.est-row.rep { background:rgba(255,255,255,0.018); }
+.est-row.wait { cursor:default; opacity:0.55; }
+.est-row.on { background:rgba(192,125,42,0.1); box-shadow:inset 2px 0 0 var(--gold); }
+.est-row.on .est-row-t { color:#cfa14a; }
+.est-row.loop .est-row-t::after { content:' ↻'; color:#cfa14a; }
+.est-res { position:relative; display:flex; flex-direction:column; gap:3px; width:100%; margin-bottom:6px; padding:10px 40px 10px 12px; border-radius:10px; background:var(--surface); border:0.5px solid var(--border-md); color:var(--text); text-align:left; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.est-res-m { font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
+.est-res-n { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:17px; line-height:1.18; overflow-wrap:anywhere; }
+.est-res .est-alg { margin-top:2px; }
+.est-res .mn-v { margin-top:5px; }
+.est-res-go { position:absolute; right:12px; top:50%; width:18px; height:18px; margin-top:-9px; color:var(--text-tertiary); }
+.est-res-go svg, .est-res-listen svg, .mn-listen svg { width:100%; height:100%; }
+.est-res-src { font-size:11px; color:var(--text-tertiary); font-style:italic; }
+.est-res-d { display:block; margin-top:6px; font-size:13px; line-height:1.55; color:var(--text-secondary); }
+.est-res-listen { display:inline-flex; align-items:center; gap:7px; align-self:flex-start; margin-top:8px; padding:6px 11px; border-radius:999px; border:0.5px solid rgba(192,125,42,0.45); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:#cfa14a; }
+.est-res-listen svg { width:14px; height:14px; }
+.est-res.nd { background:transparent; border-style:dashed; border-color:rgba(255,255,255,0.16); }
+.est-res.no { background:transparent; border-color:rgba(255,255,255,0.06); }
+.est-res.no .est-res-n { color:var(--text-secondary); }
+.est-res.open { border-color:rgba(192,125,42,0.55); }
+.est-alg-ctl { display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; }
+.est-alg-ctl .mn-svc2 { margin:0; }
+.est-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.est-grp { margin-top:6px; }
+.est-grp > summary { cursor:pointer; list-style:none; }
+.est-grp > summary::-webkit-details-marker { display:none; }
+.est-grp > summary::before { content:'▸'; font-size:9px; margin-right:-3px; transition:transform .15s; }
+.est-grp[open] > summary::before { transform:rotate(90deg); }
+/* "Escuchar" en la ficha del Menú: discreto, del mismo trazo que el resto. */
+.mn-listen { display:inline-flex; align-items:center; gap:8px; margin-top:11px; min-height:34px; padding:7px 13px; border-radius:999px; background:none; border:0.5px solid rgba(192,125,42,0.45); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:#cfa14a; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.mn-listen svg { width:15px; height:15px; }
 
 /* Riel del selector de día. Alto reservado: en BAR el selector se reemplaza
    por el rótulo de carta fija y NADA se mueve de lugar. */
@@ -3862,6 +3954,45 @@ let MENU_ROOM_ACTIVE = '';          // hab desde la que se cargó la lente
 let MENU_ROOM_MSG    = '';          // aviso cuando la hab no tiene restricciones
 let MENU_GUION_OPEN  = null;        // id del plato con la explicación extendida abierta
 
+// --- Estudio: el menú en audio (ver el bloque ESTUDIO, junto a selectDish) --
+// Vive como cuarto segmento de Menú (MENU_SERVICE === 'estudio'). Todo lo que
+// el render o el boot pueden tocar va acá arriba, por la regla de STATE TOP.
+//
+// Válvula de publicación: los deploys leen de Firebase Storage, que HOY NO
+// EXISTE en el proyecto (el bucket responde 404 — probado el 2026-09-25). En
+// false, Estudio no pide nada a la red fuera de localhost: dice "todavía no
+// está publicado" y no ensucia la consola con 404. Se prende una vez que
+// Storage esté habilitado, con las reglas y el CORS de ARCHITECTURE.md §3.4, y
+// con los archivos subidos a la carpeta estudio/.
+const EST_STORAGE_ON = false;
+const EST_BUCKET     = 'explora-cafe-orders.firebasestorage.app';
+const EST_CACHE      = 'ata-estudio-v1';   // Cache API propio; sw.js no lo borra
+const EST_LOCAL      = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+let EST_VIEW      = 'escuchar';  // 'escuchar' | 'alergenos'
+let EST_SVC       = null;        // 'almuerzo' | 'cena' — null: se decide por la hora al entrar
+let EST_IDX       = null;        // indice.json parseado (se baja una vez, al entrar)
+let EST_IDX_PROM  = null;        // carga en curso — nunca dos a la vez
+let EST_IDX_FALLO = false;       // se intentó y no hubo índice (ni red ni cache)
+let EST_AVAIL     = null;        // Set de rutas presentes en el origen; null = no se sabe
+let EST_CUR       = null;        // audio abierto: {key, day, svc, estado, marcas, dur, i, …}
+let EST_AUDIO     = null;        // HTMLAudioElement FUERA del DOM: sobrevive a los innerHTML
+let EST_TIMER     = null;        // tick fino mientras suena (loop y repasos necesitan <100 ms)
+let EST_MODE      = null;        // null | 'loop' (repetir plato) | 'repasos'
+let EST_LOOP_I    = -1;          // índice de la marca que se repite
+let EST_TEXTO     = false;       // ver texto — APAGADO por defecto: primero escuchar
+let EST_RATE      = 1;
+let EST_DL        = {};          // key → {estado:'no'|'bajando'|'si'|'viejo'|'lleno'}
+let EST_ALG_MODE  = 'lleva';     // 'lleva' (qué platos llevan X) | 'apto' (qué le doy a Y)
+let EST_ALG_SEL   = '';          // alérgeno o aptitud elegida
+let EST_ALG_CICLO = false;       // false = el día del riel · true = los 4 días
+let EST_OPEN_ROW  = null;        // id de plato con el texto desplegado (listas sin audio)
+let EST_TOUCH_AT  = 0;           // último gesto sobre la lista: el seguimiento no le roba el scroll
+let EST_AVISO     = '';          // aviso de una línea en el reproductor
+// Íconos de línea, del mismo trazo que la lupa del buscador (no emoji).
+const EST_ICON_AUD   = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M2.5 10V8a5.5 5.5 0 0 1 11 0v2"/><rect x="2" y="9.5" width="3" height="4.5" rx="1"/><rect x="11" y="9.5" width="3" height="4.5" rx="1"/></svg>';
+const EST_ICON_PLAY  = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.6 8z" fill="currentColor"/></svg>';
+const EST_ICON_PAUSE = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="3.2" width="2.8" height="9.6" rx="0.6" fill="currentColor"/><rect x="9.2" y="3.2" width="2.8" height="9.6" rx="0.6" fill="currentColor"/></svg>';
+
 // ════════════════════════════════════════════════════════════════════════════
 // STATE TOP — module-level let/const declarations
 // ════════════════════════════════════════════════════════════════════════════
@@ -4430,6 +4561,33 @@ const UI = {
     momentosBannerSub:'Nueva carta por implementar',
     ctMethod:'Método', ctGlass:'Vaso', ctIce:'Hielo', ctIngredients:'Ingredientes', ctGarnish:'Garnish', ctSearch:'Buscar cocktail...',
     searchDish:'Buscar plato o ingrediente...', searchWine:'Buscar vino o cepa...',
+    // Estudio (menú en audio) — MÓDULO INTERNO, SÓLO ES por decisión del owner
+    // (2026-09-25): es para el equipo y el contenido está en español. Sin
+    // claves en en/pt a propósito: t() cae a estas.
+    svcEstudio:'Estudio', estEscuchar:'Escuchar', estAlergenos:'Alérgenos',
+    estSearch:'Buscar en los platos del ciclo…', estListen:'Escuchar',
+    estDl:'Descargar', estDlIng:'Guardando…', estDlOk:'Descargado', estDlOld:'Actualizar',
+    estDlFull:'Sin espacio', estLoading:'Cargando audio', estBack:'−10 s',
+    estLoop:'Repetir plato', estRepasos:'Solo repasos', estNombres:'Solo nombres', estTexto:'Ver texto',
+    estResume:'Retomar en', estFromStart:'Desde el inicio',
+    estIntro:'Introducción', estRepaso:'Repaso', estCierre:'Solo nombres · la prueba',
+    estNowIntro:'Introducción', estNowRepaso:'Repaso — responde de memoria', estNowCierre:'La prueba — completa cada plato',
+    estTextRepaso:'Repaso en curso: el texto vuelve al terminar. Responde de memoria.',
+    estTextCierre:'Suena el nombre; tú completas el plato. El texto no se muestra en la prueba.',
+    estTextIntro:'El texto aparece con cada plato.',
+    estMissing:'Este audio todavía no está disponible. Los platos y su texto, igual:',
+    estOffline:'Sin conexión, y este audio no está descargado. Los platos y su texto, igual:',
+    estNoIndex:'No se pudo cargar el índice de platos. Revisa la conexión.',
+    estUnpublished:'El estudio del menú todavía no está publicado.',
+    estError:'No se pudo cargar el audio. Revisa la conexión.', estRetry:'Reintentar',
+    estNotInAudio:'Este plato no está en los audios del ciclo.',
+    estNoAlg:'Sin alérgenos declarados', estLleva:'Lleva', estAptoPara:'Apto para',
+    estDiaN:'Día', estCiclo:'Ciclo completo', estAlgHint:'Elige un alérgeno o una aptitud.',
+    estGrpLleva:'Lo llevan', estGrpCond:'Con condición', estGrpApto:'Aptos',
+    estGrpNd:'Sin dato — consultar cocina', estGrpNo:'No aptos',
+    estConflicto:'El índice del audio no coincide con la ficha del Menú — confirmar con cocina.',
+    estSoloMenu:'Según la ficha del Menú (el índice del audio no lo declara).',
+    estResults:'platos', estPlato:'Plato', estTras:'tras', estOjo:'Ojo',
     allDays:'Todos', day:'Día', lunch:'Almuerzo', dinner:'Cena', lunchDinner:'Almuerzo y Cena',
     starter:'Entrada', main:'Plato principal', dessert:'Postre',
     // --- Cambio de menú 2026: buffet, lente de restricciones y Carta de Bar ---
@@ -5716,6 +5874,7 @@ function menuTile(d, slotLabel, wide){
       ${extOpen && d.extended ? `<div class="mn-ext">${vjEsc(tr.extended || d.extended)}</div>` : ''}
       ${menuVerdicts(d)}
       ${d.draft ? `<div class="mn-draft">${t('barDraft')}</div>` : ''}
+      ${estFichaEscuchable(d) ? `<button class="mn-listen" onclick="event.stopPropagation();estDesdeFicha('${d.id}')">${EST_ICON_AUD}<span>${t('estListen')}</span></button>` : ''}
       ${wines ? `<div class="detail-section" style="margin-top:12px"><h3>${t('pairings')}</h3><div class="wine-suggestions">${wines}</div></div>` : ''}
       ${twin ? `<div class="mn-twin" onclick="event.stopPropagation();menuJumpTwin('${twin.id}')">💡 ${d.barTwin ? t('barTwin') : t('lunchTwin')} · ${vjEsc((tw => tw.short || tw.name)(getDishTr(twin)))}</div>` : ''}
       ${d.recipeDay ? `<div class="mn-meta">${t('recipeDayLabel')} ${d.recipeDay}</div>` : ''}
@@ -5819,6 +5978,13 @@ function renderDishes(){
   grid.classList.toggle('hidden', showDrinks);
   if (showDrinks){ grid.innerHTML = ''; return; }
 
+  // Estudio: el nodo de los tips se queda en su casa (no hay hueco acá), y el
+  // audio vive fuera del DOM, así que reescribir el grid no lo interrumpe.
+  if (MENU_SERVICE === 'estudio'){
+    grid.innerHTML = searching ? estRenderBuscar(q) : estRenderVista();
+    estDespuesDeRender(searching);
+    return;
+  }
   if (searching)                 { grid.innerHTML = menuRenderSearch(q); winetipsPlace(); return; }
   if (MENU_SERVICE === 'bar')    { grid.innerHTML = menuRenderBar();     winetipsPlace(); return; }
   if (MENU_SERVICE === 'cena')   { grid.innerHTML = menuRenderCena();    winetipsPlace(); return; }
@@ -5942,8 +6108,13 @@ function menuRenderChrome(searching){
   const svc = document.getElementById('mn-svc');
   if (svc){
     const btn = (key, label) => `<button class="mn-svc-btn${MENU_SERVICE === key ? ' active' : ''}" onclick="menuSetService('${key}')">${label}</button>`;
-    svc.innerHTML = btn('almuerzo', t('lunch')) + btn('cena', t('dinner')) + btn('bar', t('svcBar'));
+    svc.innerHTML = btn('almuerzo', t('lunch')) + btn('cena', t('dinner')) + btn('bar', t('svcBar'))
+                  + btn('estudio', t('svcEstudio'));
   }
+  // En Estudio la misma barra busca en los platos del ciclo (indice.json), no en
+  // la carta: una sola caja de búsqueda, que cambia de alcance con el segmento.
+  const search = document.getElementById('dish-search');
+  if (search) search.placeholder = MENU_SERVICE === 'estudio' ? t('estSearch') : t('searchDish');
   // En BAR el selector de día no tiene sentido, pero tampoco desaparece: se
   // reemplaza por el rótulo de carta fija, del mismo alto. Nada se mueve.
   const daySel = document.getElementById('mn-day-selector');
@@ -5961,7 +6132,12 @@ function menuRenderChrome(searching){
   // Sub-control comida / tragos: existe sólo dentro de BAR.
   const barTabs = document.getElementById('mn-bar-tabs');
   if (barTabs){
-    if (!isBar) barTabs.innerHTML = '';
+    // Estudio usa el mismo segundo nivel que BAR: escuchar / alérgenos.
+    if (MENU_SERVICE === 'estudio' && !searching){
+      const b = (key, label) => `<button class="mn-svc-btn${EST_VIEW === key ? ' active' : ''}" onclick="estSetView('${key}')">${label}</button>`;
+      barTabs.innerHTML = `<div class="mn-svc mn-svc2">${b('escuchar', t('estEscuchar'))}${b('alergenos', t('estAlergenos'))}</div>`;
+    }
+    else if (!isBar) barTabs.innerHTML = '';
     else {
       const b = (key, label) => `<button class="mn-svc-btn${MENU_BAR_VIEW === key ? ' active' : ''}" onclick="menuSetBarView('${key}')">${label}</button>`;
       barTabs.innerHTML = `<div class="mn-svc mn-svc2">${b('comida', t('barFood'))}${b('tragos', t('barDrinks'))}</div>`;
@@ -6153,6 +6329,911 @@ function menuApplyRoom(){
   MENU_ROOM_MSG    = sinMapa.length ? t('lensRoomUnmapped') + ' ' + sinMapa.map(legible).join(', ') : '';
   renderDishes();
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// ESTUDIO — el menú en audio (2026-09-25)
+// ════════════════════════════════════════════════════════════════════════════
+// Para que un GEO nuevo aprenda los platos del ciclo escuchando, y para
+// verificar un ingrediente o un alérgeno en segundos. Es contenido permanente:
+// el ciclo se repite y el equipo rota.
+//
+// ORIGEN — nada en RTDB: es contenido estático por ciclo, no estado compartido.
+//   Firebase Storage, carpeta estudio/ del bucket del proyecto:
+//     estudio/indice.json                   los platos (id d{día}{a|c}-{orden})
+//     estudio/audio/dia{N}-{servicio}.mp3   un audio por servicio
+//     estudio/audio/dia{N}-{servicio}.json  sus marcas {duracion, marcas:[{id,tipo,inicio,fin}]}
+//   Queda detrás del gate: las reglas de Storage piden auth y cada pedido lleva
+//   el token de la sesión. En localhost se lee la misma estructura desde
+//   /estudio-local/ (fuera de git y de Vercel). Cambiar de ciclo = subir
+//   archivos nuevos; no se toca código. Válvula: EST_STORAGE_ON (STATE TOP).
+//
+// PESO Y ARRANQUE — nada se pide al cargar la página. El índice (~90 KB) se
+//   baja la primera vez que se entra a Estudio o se toca "Escuchar" en una
+//   ficha, y queda en cache. Las marcas, sólo las del audio abierto. El audio,
+//   sólo al abrir su servicio, entero y a un Blob: así el salto a un segundo
+//   exacto y el loop son precisos en cualquier servidor (el http.server de QA
+//   no sirve rangos) y no dependen de la red una vez cargado.
+//
+// OFFLINE — botón "Descargar" por servicio → Cache API (EST_CACHE). El service
+//   worker NO precachea audio: sólo aprendió a no borrar este bucket al
+//   activarse. Si el audio se regenera, la duración de las marcas nuevas no
+//   coincide con la guardada y el botón ofrece "Actualizar".
+//
+// EL MÉTODO — no negociable, el silencio es la parte que enseña:
+//   1. el texto del plato NO se ve durante un repaso (ni en la prueba final);
+//   2. nada de autoplay ni de saltar pausas: no hay +10 s ni barra arrastrable;
+//   3. ver texto va apagado por defecto.
+//
+// ALÉRGENOS — almuerzo: manda la matriz del Handbook (verificada contra el
+//   asesor), cruzada por estPlatoApp(). Cena: manda indice.json. Sin dato ≠
+//   apto y no hay verde: el mismo lenguaje de la ficha (coral · nota · punteado).
+//   Cuando la ficha es MÁS permisiva que el índice del audio, se dice.
+// ════════════════════════════════════════════════════════════════════════════
+
+// --- Utilidades --------------------------------------------------------------
+// La misma normalización con la que se escribió el campo `busqueda` del índice.
+function estFold(s){ return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+function estMMSS(s){ s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function estCap(s){ s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
+function estDay(){ return (currentDay === 'all') ? menuTodayCycleDay() : currentDay; }
+function estSvc(){
+  if (!EST_SVC) EST_SVC = new Date().getHours() < 16 ? 'almuerzo' : 'cena';
+  return EST_SVC;
+}
+function estSvcLabel(svc){ return svc === 'cena' ? t('dinner') : t('lunch'); }
+// Los archivos se nombran con el día del DOCUMENTO; el riel muestra el de la
+// app. Hoy coinciden (MENU_CYCLE_OFFSET = 0), pero el ciclo ya se corrió dos
+// veces: si vuelve a pasar, esto sigue abriendo el audio correcto.
+function estDocDay(appDay, svc){
+  return svc === 'almuerzo' ? String(((Number(appDay) - 1 - MENU_CYCLE_OFFSET) % 4 + 4) % 4 + 1) : String(appDay);
+}
+function estAppDay(p){ return p.servicio === 'almuerzo' ? menuDocDayToApp(p.dia) : String(p.dia); }
+function estKey(docDay, svc){ return `dia${docDay}-${svc}`; }
+function estOrigenActivo(){ return EST_LOCAL || EST_STORAGE_ON; }
+function estOnline(){ return estOrigenActivo() && navigator.onLine !== false; }
+function estOrden(a, b){
+  return (a.dia - b.dia) || ((a.servicio === 'cena') - (b.servicio === 'cena')) || (a.orden - b.orden);
+}
+// "Buffet · Hojas", "Sopa", "Principales · Mar". Sin repetir ("Entradas · Entrada").
+function estSeccion(p){
+  const s = p.seccion || '', sub = p.subseccion || '';
+  return !sub || estFold(s).startsWith(estFold(sub)) ? s : `${s} · ${sub}`;
+}
+
+// --- Origen: Storage (deploys) o /estudio-local/ (QA) --------------------------
+function estUrl(path){
+  return EST_LOCAL ? '/estudio-local/' + path
+    : `https://firebasestorage.googleapis.com/v0/b/${EST_BUCKET}/o/${encodeURIComponent('estudio/' + path)}?alt=media`;
+}
+async function estHeaders(){
+  if (EST_LOCAL) return {};
+  const tk = await fbTokenRefrescar();
+  return tk ? { Authorization: 'Firebase ' + tk } : {};
+}
+async function estFetch(path){
+  return fetch(estUrl(path), { headers: await estHeaders(), cache: 'no-store' });
+}
+// Qué audios existen, en UN pedido. Así un audio que todavía no se subió no
+// cuesta un 404 en la consola: simplemente no se pide.
+async function estListar(){
+  try {
+    if (EST_LOCAL){
+      const r = await fetch('/estudio-local/audio/', { cache: 'no-store' });
+      if (!r.ok) return null;
+      const set = new Set();
+      (await r.text()).replace(/href="([^"?#\/]+)"/g, (_, h) => { set.add('audio/' + decodeURIComponent(h)); return _; });
+      return set;
+    }
+    const r = await fetch(`https://firebasestorage.googleapis.com/v0/b/${EST_BUCKET}/o?prefix=${encodeURIComponent('estudio/audio/')}`,
+                          { headers: await estHeaders(), cache: 'no-store' });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return new Set((j.items || []).map(it => String(it.name).replace(/^estudio\//, '')));
+  } catch(e){ return null; }
+}
+function estHay(path){ return !!(EST_AVAIL && EST_AVAIL.has(path)); }
+
+// --- Cache API ----------------------------------------------------------------
+// La clave es una URL lógica del propio origen, no la de Storage: el token
+// cambia cada hora y no puede formar parte de la clave.
+function estCacheKey(path){ return location.origin + '/estudio/' + path; }
+async function estCacheGet(path){
+  try { return (await (await caches.open(EST_CACHE)).match(estCacheKey(path))) || null; }
+  catch(e){ return null; }   // sin Cache API (http por IP de la LAN): se trabaja sin descargas
+}
+async function estCachePut(path, resp){
+  try { await (await caches.open(EST_CACHE)).put(estCacheKey(path), resp); return true; }
+  catch(e){ return (e && e.name === 'QuotaExceededError') ? 'lleno' : false; }
+}
+async function estCacheJson(path){
+  const r = await estCacheGet(path);
+  try { return r ? await r.json() : null; } catch(e){ return null; }
+}
+
+// --- Índice: una vez, al primer uso --------------------------------------------
+async function estCargarIndice(){
+  if (EST_IDX) return EST_IDX;
+  if (EST_IDX_PROM) return EST_IDX_PROM;
+  EST_IDX_PROM = (async () => {
+    let data = null;
+    if (estOnline()){
+      try {
+        const r = await estFetch('indice.json');
+        if (r.ok){
+          const txt = await r.text();
+          data = JSON.parse(txt);
+          // Son 90 KB: se guardan siempre, así la búsqueda y los alérgenos
+          // funcionan sin señal aunque no se haya descargado ningún audio.
+          estCachePut('indice.json', new Response(txt, { headers: { 'Content-Type': 'application/json' } }));
+        }
+      } catch(e){ data = null; }
+    }
+    if (!data) data = await estCacheJson('indice.json');
+    EST_IDX = (data && Array.isArray(data.platos)) ? data : null;
+    EST_IDX_FALLO = !EST_IDX;
+    EST_IDX_PROM = null;
+    return EST_IDX;
+  })();
+  return EST_IDX_PROM;
+}
+function estPlato(id){ return EST_IDX ? EST_IDX.platos.find(p => p.id === id) || null : null; }
+function estPlatosDe(c){
+  if (!EST_IDX || !c) return [];
+  return EST_IDX.platos.filter(p => String(p.dia) === c.docDay && p.servicio === c.svc).sort(estOrden);
+}
+
+// --- Puente índice ↔ Menú -------------------------------------------------------
+// El almuerzo se cruza por POSICIÓN FIJA, la misma de la vista Menú: orden 1-6
+// son las bandejas, 7 la sopa, 8-11 los principales y 12-14 los postres. Encima
+// se exige que los nombres se parezcan: si un ciclo futuro cambia el orden, el
+// cruce falla CERRADO —el plato se queda con los datos del índice y "sin dato"
+// donde el índice calla— y nunca le presta la matriz de otro plato.
+// La cena todavía es la del DISHES antiguo, sin slots: se cruza por nombre
+// dentro del mismo día.
+function estPalabras(s){ return estFold(s).replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length > 3); }
+function estParecido(a, b){
+  const A = estPalabras(a), B = new Set(estPalabras(b));
+  if (!A.length || !B.size) return 0;
+  return A.filter(w => B.has(w)).length / Math.min(A.length, B.size);
+}
+function estPlatoApp(p){
+  if (!p) return null;
+  const dia = String(p.dia), o = Number(p.orden);
+  if (p.servicio === 'almuerzo'){
+    let course, slot = null;
+    if (o >= 1 && o <= 6)        { course = 'Buffet';          slot = BUFFET_SLOTS[o - 1]; }
+    else if (o === 7)            { course = 'Sopa'; }
+    else if (o >= 8 && o <= 11)  { course = 'Plato principal'; slot = PRINCIPAL_SLOTS[o - 8]; }
+    else if (o >= 12 && o <= 14) { course = 'Postre';          slot = POSTRE_SLOTS[o - 12]; }
+    else return null;
+    const d = DISHES.find(x => x.service === 'Almuerzo' && String(x.docDay) === dia && x.course === course
+                             && (!slot || x.slot === slot.key));
+    return d && estParecido(p.nombre, d.name) >= 0.5 ? d : null;
+  }
+  let best = null, score = 0;
+  DISHES.forEach(x => {
+    if (x.day !== dia || x.service !== 'Cena') return;
+    const s = estParecido(p.nombre, x.name);
+    if (s > score){ score = s; best = x; }
+  });
+  return score >= 0.6 ? best : null;
+}
+
+// --- Veredictos -----------------------------------------------------------------
+function estEje(apt){ return { 'vegano':'veg', 'vegetariano':'vgt', 'sin gluten':'ge', 'sin lactosa':'lac', 'halal':'halal' }[apt]; }
+// indice.json mezcla en `no_apto` aptitudes ("vegano") con lo que el plato
+// excluye ("gluten", "lácteos", "cerdo"). Se leen las dos formas que usa el
+// propio archivo para decir lo mismo — nada se deduce de la receta.
+function estNoAptoIdx(p, apt){
+  const eq = { 'sin gluten':['sin gluten', 'gluten'], 'sin lactosa':['sin lactosa', 'lacteos', 'lactosa'], 'halal':['halal', 'cerdo'] }[apt] || [apt];
+  return (p.no_apto || []).some(x => eq.includes(estFold(x)));
+}
+// "¿Qué le puedo dar a un vegano?" → {v:'si'|'cond'|'nd'|'no', nota, conflicto}
+function estApto(p, apt){
+  const noIdx = estNoAptoIdx(p, apt);
+  const d  = p.servicio === 'almuerzo' ? estPlatoApp(p) : null;
+  const ax = estEje(apt);
+  if (d && menuHasMatrix(d) && ax){
+    const v = dietVerdict(d, ax);
+    // La ficha del Menú manda. Pero si es MÁS permisiva que el índice del
+    // audio, el plato no sale como apto limpio: sale con la discrepancia escrita.
+    if (v === 1)   return noIdx ? { v:'cond', conflicto:true } : { v:'si' };
+    if (v === '*') return { v:'cond', nota:(d.dietNotes || {})[ax] || '', conflicto:noIdx };
+    if (v === 0)   return { v:'no' };
+    // Eje sin dato en la matriz: se lee lo que declare el índice, o "sin dato".
+  }
+  if ((p.apto || []).includes(apt)) return p.apto_condicional ? { v:'cond', nota:p.descripcion } : { v:'si' };
+  if (noIdx) return { v:'no' };
+  return { v:'nd' };
+}
+// "¿Qué platos llevan frutos secos?" → null si no, {v:'si'|'cond', nota, …} si sí.
+// Une las dos fuentes (lo que declare cualquiera cuenta): para "lo lleva", la
+// unión es la dirección segura.
+function estLleva(p, alg){
+  const k   = estFold(alg);
+  const idx = (p.alergenos || []).some(a => estFold(a) === k);
+  // Sólo los ejes de la matriz que nombran la MISMA sustancia. Lácteos ≠ lactosa
+  // (una mantequilla puede ser apta sin lactosa y seguir siendo lácteo), así
+  // que la matriz sólo SUMA lácteos cuando dice 0, nunca contradice.
+  const ax  = { 'frutos secos':'fs', 'mariscos':'mar', 'gluten':'ge', 'lacteos':'lac' }[k];
+  const d   = ax && p.servicio === 'almuerzo' ? estPlatoApp(p) : null;
+  const v   = d && menuHasMatrix(d) ? dietVerdict(d, ax) : undefined;
+  if (v === '*') return { v:'cond', nota:(d.dietNotes || {})[ax] || '' };
+  if (idx)       return { v:'si', conflicto: v === 1 && ax !== 'lac' };
+  if (v === 0)   return { v:'si', soloMenu:true };
+  return null;
+}
+function estAlgLinea(p){
+  const a = p.alergenos || [];
+  return a.length ? `<span class="est-alg">${t('estLleva')}: ${a.map(vjEsc).join(' · ')}</span>`
+                  : `<span class="est-alg nodata">${t('estNoAlg')}</span>`;
+}
+
+// --- Reproductor: carga ---------------------------------------------------------
+function estAbrir(key, seekId){
+  estSoltar();
+  const m = /^dia(\d)-(almuerzo|cena)$/.exec(key) || [];
+  EST_CUR = { key, docDay:m[1], svc:m[2], estado:'cargando', pct:0, marcas:null, meta:null, dur:0,
+              i:-1, seek:seekId || null, resume:null, pendingT:null, blob:null, url:null, deCache:false, savedAt:0 };
+  EST_MODE = null; EST_LOOP_I = -1; EST_AVISO = '';
+  estCargar(EST_CUR);
+}
+// Suelta el audio anterior: guarda dónde quedó, lo detiene y libera el Blob.
+function estSoltar(){
+  const a = EST_AUDIO, c = EST_CUR;
+  if (a && c && c.estado === 'listo'){ estGuardarPos(); a.pause(); }
+  if (a){ a.removeAttribute('src'); try { a.load(); } catch(e){} }
+  if (c && c.url) URL.revokeObjectURL(c.url);
+  estTimer(false);
+}
+async function estCargar(c){
+  const vivo = () => EST_CUR === c;
+  await estCargarIndice();
+  if (!vivo()) return;
+  if (!EST_IDX){ c.estado = estOrigenActivo() ? 'sinindice' : 'nopub'; return estRepintar(); }
+
+  const pA = `audio/${c.key}.mp3`, pJ = `audio/${c.key}.json`;
+  if (estOnline() && EST_AVAIL === null) EST_AVAIL = await estListar();
+  if (!vivo()) return;
+  const enRed  = estOnline() && EST_AVAIL !== null;
+  const aRed   = enRed && estHay(pA);
+  const cacheA = await estCacheGet(pA);
+  let meta = null, metaDeRed = false;
+  if (enRed && estHay(pJ)){
+    try { const r = await estFetch(pJ); if (r.ok){ meta = await r.json(); metaDeRed = true; } } catch(e){}
+  }
+  if (!meta && cacheA) meta = await estCacheJson(pJ);
+  if (!vivo()) return;
+  if (!meta || !Array.isArray(meta.marcas) || !meta.marcas.length || !(cacheA || aRed)){
+    // Sin red no se sabe si el audio existe: el aviso dice lo que sí se sabe.
+    c.estado = 'falta'; c.sinRed = !enRed; return estRepintar();
+  }
+  // ¿La descarga guardada es la de este audio? Si se regeneró, sus marcas
+  // nuevas traen otra duración.
+  const durGuardada = cacheA ? Number(cacheA.headers.get('X-Est-Dur')) : 0;
+  const viejo = !!(cacheA && metaDeRed && Math.abs(durGuardada - Number(meta.duracion)) > 0.05);
+  EST_DL[c.key] = { estado: cacheA ? (viejo ? 'viejo' : 'si') : 'no' };
+
+  let blob = null;
+  if (cacheA && !(viejo && aRed)){
+    // Sin red para bajar el nuevo: se usa el guardado CON sus propias marcas.
+    if (viejo) meta = (await estCacheJson(pJ)) || meta;
+    blob = await cacheA.blob(); c.deCache = true;
+  } else if (aRed){
+    blob = await estBajar(pA, pct => { if (vivo() && pct !== c.pct){ c.pct = pct; estPatchMsg(); } });
+  }
+  if (!vivo()) return;
+  if (!blob){ c.estado = 'error'; return estRepintar(); }
+
+  c.blob = blob; c.meta = meta; c.marcas = meta.marcas; c.dur = Number(meta.duracion) || 0;
+  c.url = URL.createObjectURL(blob);
+  const a = estAudioEl();
+  a.defaultPlaybackRate = EST_RATE;
+  a.src = c.url;
+  a.load();
+  a.playbackRate = EST_RATE;
+  c.estado = 'listo';
+  if (c.seek){
+    const i = c.marcas.findIndex(m => m.id === c.seek);
+    if (i > -1){ c.i = i; estSeek(c.marcas[i].inicio); }
+    c.seek = null;
+  } else {
+    const pos = estPosGuardada(c.key);
+    if (pos > 15 && pos < c.dur - 15) c.resume = pos;
+  }
+  estMediaSession();
+  estRepintar();
+}
+async function estBajar(path, onPct){
+  try {
+    const r = await estFetch(path);
+    if (!r.ok) return null;
+    const total = Number(r.headers.get('Content-Length')) || 0;
+    const tipo  = r.headers.get('Content-Type') || 'audio/mpeg';
+    if (!r.body || !r.body.getReader || !total) return await r.blob();
+    const reader = r.body.getReader(), partes = [];
+    let llevo = 0;
+    for (;;){
+      const { done, value } = await reader.read();
+      if (done) break;
+      partes.push(value); llevo += value.length;
+      if (onPct) onPct(Math.min(99, Math.round(llevo * 100 / total)));
+    }
+    return new Blob(partes, { type: tipo });
+  } catch(e){ return null; }
+}
+function estReintentar(){
+  EST_IDX_FALLO = false; EST_AVAIL = null;
+  if (EST_CUR) estSoltar();
+  EST_CUR = null;
+  estRepintar();
+}
+
+// --- Reproductor: el <audio> y el tiempo ------------------------------------------
+function estAudioEl(){
+  if (EST_AUDIO) return EST_AUDIO;
+  const a = new Audio();
+  a.preload = 'auto';
+  a.addEventListener('timeupdate', estTick);
+  a.addEventListener('play',  () => { estTimer(true); if (EST_CUR) EST_CUR.resume = null; estPatchCtrls(); estPatchMsg(); });
+  a.addEventListener('pause', () => { estTimer(false); estGuardarPos(); estPatchCtrls(); });
+  a.addEventListener('ended', () => { EST_MODE = null; estGuardarPos(); estPatchCtrls(); });
+  a.addEventListener('loadedmetadata', () => {
+    const c = EST_CUR;
+    if (c && c.pendingT != null){ try { a.currentTime = c.pendingT; } catch(e){} c.pendingT = null; }
+    estTick();
+  });
+  EST_AUDIO = a;
+  return a;
+}
+function estSeek(tt){
+  const a = estAudioEl(), c = EST_CUR;
+  if (a.readyState >= 1){ try { a.currentTime = tt; } catch(e){} }
+  else if (c) c.pendingT = tt;
+}
+// timeupdate llega cada ~250 ms: para cortar el loop en el borde del plato
+// hace falta más fino. El intervalo corre SÓLO mientras suena.
+function estTimer(on){
+  if (on && !EST_TIMER) EST_TIMER = setInterval(estTick, 40);
+  if (!on && EST_TIMER){ clearInterval(EST_TIMER); EST_TIMER = null; }
+}
+// La marca en la que está `tt`. Tolera 50 ms: tras un salto, currentTime puede
+// leer un pelo antes del inicio pedido y no debe caer en la marca anterior.
+function estMarcaEn(tt){
+  const M = EST_CUR.marcas;
+  let i = 0;
+  for (let k = 0; k < M.length; k++){ if (M[k].inicio <= tt + 0.05) i = k; else break; }
+  return i;
+}
+function estTick(){
+  const a = EST_AUDIO, c = EST_CUR;
+  if (!a || !c || c.estado !== 'listo' || !c.marcas || a.src !== c.url) return;
+  let tt = a.currentTime;
+  const M = c.marcas;
+  // Repetir plato: vuelve al inicio 80 ms antes del borde — las marcas cortan
+  // en la pausa entre platos, así que no se come la primera sílaba ni se
+  // asoma el plato siguiente.
+  if (!a.paused && EST_MODE === 'loop' && M[EST_LOOP_I]){
+    const m = M[EST_LOOP_I];
+    if (tt >= m.fin - 0.08 || tt < m.inicio - 0.3){ a.currentTime = m.inicio; tt = m.inicio; }
+  }
+  // Solo repasos: al terminar uno, salta al siguiente; tras el último, pausa.
+  else if (!a.paused && EST_MODE === 'repasos'){
+    const i = estMarcaEn(tt), m = M[i];
+    if (m.tipo !== 'repaso' || tt >= m.fin - 0.08){
+      const k = m.tipo === 'repaso' ? M.findIndex((x, j) => j > i && x.tipo === 'repaso')
+                                    : M.findIndex(x => x.tipo === 'repaso' && x.inicio >= tt - 0.1);
+      if (k === -1){ EST_MODE = null; a.pause(); estPatchCtrls(); }
+      else { a.currentTime = M[k].inicio; tt = M[k].inicio; }
+    }
+  }
+  const i = estMarcaEn(tt);
+  if (i !== c.i){ c.i = i; estPatchMarca(); }
+  estPatchTiempo(tt);
+  if (!a.paused && Date.now() - c.savedAt > 5000){ c.savedAt = Date.now(); estGuardarPos(); }
+}
+
+// --- Dónde quedé (por audio, en este aparato) --------------------------------------
+function estPosGuardada(key){
+  try { return Number(localStorage.getItem('ata.estudio.pos.' + key)) || 0; } catch(e){ return 0; }
+}
+function estGuardarPos(){
+  const a = EST_AUDIO, c = EST_CUR;
+  if (!a || !c || c.estado !== 'listo' || a.src !== c.url) return;
+  try {
+    const k = 'ata.estudio.pos.' + c.key;
+    if (a.ended || a.currentTime >= c.dur - 5) localStorage.removeItem(k);
+    else if (a.currentTime > 1) localStorage.setItem(k, a.currentTime.toFixed(1));
+  } catch(e){}
+}
+function estRateInit(){
+  if (estRateInit.hecho) return;
+  estRateInit.hecho = true;
+  try { const r = Number(localStorage.getItem('ata.estudio.rate')); if ([0.75, 1, 1.25].includes(r)) EST_RATE = r; } catch(e){}
+}
+
+// --- Controles ------------------------------------------------------------------------
+function estListo(){ return !!(EST_CUR && EST_CUR.estado === 'listo' && EST_AUDIO); }
+function estTocar(){ const p = EST_AUDIO.play(); if (p && p.catch) p.catch(() => {}); }
+function estPlay(){
+  if (!estListo()) return;
+  if (EST_AUDIO.paused) estTocar(); else EST_AUDIO.pause();
+}
+function estAtras(){
+  if (!estListo()) return;
+  EST_AUDIO.currentTime = Math.max(0, EST_AUDIO.currentTime - 10);
+  estTick();
+}
+function estRate(r){
+  EST_RATE = r;
+  if (EST_AUDIO){ EST_AUDIO.defaultPlaybackRate = r; EST_AUDIO.playbackRate = r; }
+  try { localStorage.setItem('ata.estudio.rate', String(r)); } catch(e){}
+  estPatchCtrls();
+}
+function estIrA(i, tocar){
+  const c = EST_CUR;
+  if (!estListo() || !c.marcas[i]) return;
+  const m = c.marcas[i];
+  c.resume = null; EST_AVISO = '';
+  if (EST_MODE === 'loop') EST_LOOP_I = i;
+  if (EST_MODE === 'repasos' && m.tipo !== 'repaso') EST_MODE = null;
+  estSeek(m.inicio);
+  c.i = i;
+  EST_TOUCH_AT = 0;           // el salto lo pidió el usuario: la lista puede seguirlo
+  estPatchMarca(); estPatchTiempo(m.inicio); estPatchCtrls(); estPatchMsg();
+  if (tocar && EST_AUDIO.paused) estTocar();
+}
+// Tocar una fila es pedir escuchar ESO: salta y suena. No es autoplay — es un
+// gesto. Llegar desde el buscador, en cambio, deja el audio en pausa en el plato.
+function estFila(i){ estIrA(i, true); }
+function estToggleLoop(){
+  if (!estListo()) return;
+  if (EST_MODE === 'loop') EST_MODE = null;
+  else { EST_MODE = 'loop'; EST_LOOP_I = Math.max(0, EST_CUR.i); }
+  estPatchCtrls();
+}
+function estToggleRepasos(){
+  if (!estListo()) return;
+  if (EST_MODE === 'repasos'){ EST_MODE = null; estPatchCtrls(); return; }
+  const k = EST_CUR.marcas.findIndex(m => m.tipo === 'repaso');
+  if (k === -1) return;
+  EST_MODE = 'repasos';       // en secuencia, desde el primero
+  estIrA(k, true);
+}
+function estSoloNombres(){
+  if (!estListo()) return;
+  const k = EST_CUR.marcas.findIndex(m => m.tipo === 'cierre');
+  if (k === -1) return;
+  EST_MODE = null;
+  estIrA(k, true);
+}
+function estToggleTexto(){ EST_TEXTO = !EST_TEXTO; estPatchCtrls(); estPatchTexto(true); }
+function estRetomar(){
+  const c = EST_CUR;
+  if (!estListo() || c.resume == null) return;
+  const t0 = c.resume;
+  c.resume = null;
+  estSeek(t0);
+  c.i = estMarcaEn(t0);
+  EST_TOUCH_AT = 0;
+  estPatchMarca(); estPatchTiempo(t0); estPatchMsg();
+}
+function estDesdeInicio(){ if (EST_CUR){ EST_CUR.resume = null; estPatchMsg(); } }
+function estSetSvc(s){ EST_SVC = s; EST_OPEN_ROW = null; estRepintar(); }
+function estSetView(v){ EST_VIEW = v; EST_OPEN_ROW = null; renderDishes(); }
+
+// --- Descarga para offline ----------------------------------------------------------
+async function estDescargar(){
+  const c = EST_CUR;
+  if (!estListo() || !c.blob) return;
+  const st = (EST_DL[c.key] || {}).estado;
+  if (st === 'si' || st === 'bajando') return;
+  if (st === 'viejo' && c.deCache) return;     // sin red no hay versión nueva que guardar
+  EST_DL[c.key] = { estado:'bajando' }; estPatchDl();
+  // Que el navegador no desaloje estos datos por su cuenta cuando le falte
+  // espacio. Instalada en el home screen ya es así; en una pestaña, lo pide.
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
+  const pA = `audio/${c.key}.mp3`, pJ = `audio/${c.key}.json`;
+  // El audio ya está en memoria (se bajó para escucharlo): no se baja dos veces.
+  const okA = await estCachePut(pA, new Response(c.blob, { headers: { 'Content-Type': c.blob.type || 'audio/mpeg', 'X-Est-Dur': String(c.dur) } }));
+  const okJ = okA === true ? await estCachePut(pJ, new Response(JSON.stringify(c.meta), { headers: { 'Content-Type': 'application/json' } })) : okA;
+  if (okA === true && okJ === true && EST_IDX)
+    await estCachePut('indice.json', new Response(JSON.stringify(EST_IDX), { headers: { 'Content-Type': 'application/json' } }));
+  EST_DL[c.key] = { estado: (okA === true && okJ === true) ? 'si' : (okA === 'lleno' || okJ === 'lleno') ? 'lleno' : 'no' };
+  if (EST_DL[c.key].estado === 'si') c.deCache = false;
+  estPatchDl();
+}
+
+// --- Media Session: controles en la pantalla bloqueada --------------------------------
+function estMediaSession(){
+  const c = EST_CUR;
+  if (!c || !('mediaSession' in navigator)) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: `${t('estDiaN')} ${estAppDay({ servicio:c.svc, dia:c.docDay })} · ${estSvcLabel(c.svc)}`,
+      artist: 'The ATA Handbook', album: t('svcEstudio'),
+      artwork: [{ src:'/assets/icon-512-v2.png', sizes:'512x512', type:'image/png' }]
+    });
+    navigator.mediaSession.setActionHandler('play',  () => { if (estListo()) estTocar(); });
+    navigator.mediaSession.setActionHandler('pause', () => { if (EST_AUDIO) EST_AUDIO.pause(); });
+    navigator.mediaSession.setActionHandler('seekbackward', () => estAtras());
+    // Sin adelantar: saltarse las pausas es saltarse el método (regla 2).
+    ['seekforward', 'nexttrack', 'previoustrack', 'seekto'].forEach(x => {
+      try { navigator.mediaSession.setActionHandler(x, null); } catch(e){}
+    });
+  } catch(e){}
+}
+
+// --- Entradas desde otras vistas ------------------------------------------------------
+// Del buscador (o de una fila de alérgenos) al segundo exacto del plato.
+function estAbrirPlato(id){
+  const p = estPlato(id);
+  if (!p) return;
+  MENU_SERVICE = 'estudio'; EST_VIEW = 'escuchar'; EST_AVISO = '';
+  selectedDish = null; MENU_GUION_OPEN = null;
+  EST_SVC = p.servicio;
+  const day = estAppDay(p);
+  currentDay = day;
+  document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', String(i + 1) === day));
+  const input = document.getElementById('dish-search');
+  if (input) input.value = '';
+  EST_OPEN_ROW = id;            // si el audio falta, el plato queda abierto con su texto
+  const key = estKey(String(p.dia), p.servicio);
+  if (EST_CUR && EST_CUR.key === key && EST_CUR.estado === 'listo'){
+    renderDishes();
+    const i = EST_CUR.marcas.findIndex(m => m.id === id);
+    if (i > -1) estIrA(i, false);
+  } else {
+    if (!EST_CUR || EST_CUR.key !== key) estAbrir(key, id);
+    else EST_CUR.seek = id;     // todavía cargando: el salto se aplica al llegar
+    renderDishes();
+  }
+  estSubirAlReproductor();
+}
+// "Escuchar" en la ficha del Menú.
+function estFichaEscuchable(d){ return !!(d && DISHES.includes(d)); }
+async function estDesdeFicha(appId){
+  const d = DISHES.find(x => x.id === appId);
+  MENU_SERVICE = 'estudio'; EST_VIEW = 'escuchar';
+  selectedDish = null; MENU_GUION_OPEN = null;
+  const input = document.getElementById('dish-search');
+  if (input) input.value = '';
+  renderDishes();
+  estSubirAlReproductor();
+  await estCargarIndice();
+  const p = EST_IDX && EST_IDX.platos.find(q => estPlatoApp(q) === d);
+  if (p) return estAbrirPlato(p.id);
+  // El índice no lo tiene (o no cruza con seguridad): se dice, no se adivina.
+  if (EST_IDX){ EST_AVISO = t('estNotInAudio'); estPatchMsg(); }
+}
+// Deja la fila de servicios a la vista, pero DEBAJO del selector de idioma
+// flotante (fixed arriba a la derecha): pegada al borde, la isla le tapaba el
+// botón de Estudio. Se mide la isla en vivo: instalada como PWA baja con el
+// safe-area, y un número fijo quedaría corto en el iPhone.
+function estSubirAlReproductor(){
+  const el = document.getElementById('mn-svc');
+  if (!el) return;
+  const isla = document.querySelector('.lang-floating');
+  const piso = isla ? isla.getBoundingClientRect().bottom + 12 : 52;
+  const top  = el.getBoundingClientRect().top;
+  if (top < piso) window.scrollTo(0, Math.max(0, window.scrollY + top - piso));
+}
+function estListaToque(){ EST_TOUCH_AT = Date.now(); }
+function estFilaTexto(id){ EST_OPEN_ROW = EST_OPEN_ROW === id ? null : id; estRepintar(); }
+function estAlgModo(m){ EST_ALG_MODE = m; EST_ALG_SEL = ''; EST_OPEN_ROW = null; estRepintar(); }
+function estAlgSel(v){ EST_ALG_SEL = EST_ALG_SEL === v ? '' : v; EST_OPEN_ROW = null; estRepintar(); }
+function estAlgCiclo(b){ EST_ALG_CICLO = !!b; estRepintar(); }
+
+// --- Render -----------------------------------------------------------------------------
+// Sólo el contenido del grid: la chrome de Menú (segmented, riel) no cambia.
+function estRepintar(){
+  if (currentTab !== 'menus' || MENU_SERVICE !== 'estudio') return;
+  const grid  = document.getElementById('dish-grid');
+  const input = document.getElementById('dish-search');
+  if (!grid) return;
+  const q = (input && input.value || '').trim().toLowerCase();
+  grid.innerHTML = q ? estRenderBuscar(q) : estRenderVista();
+  estDespuesDeRender(!!q);
+}
+function estDespuesDeRender(searching){
+  if (!EST_IDX && !EST_IDX_PROM && !EST_IDX_FALLO)
+    estCargarIndice().then(() => { if (EST_IDX) estRepintar(); });
+  if (searching || EST_VIEW !== 'escuchar') return;
+  estPatchCtrls();
+  estPatchTexto(true);
+  const c = EST_CUR;
+  if (c && c.estado === 'listo'){
+    estPatchTiempo(EST_AUDIO && EST_AUDIO.src === c.url && EST_AUDIO.readyState >= 1 ? EST_AUDIO.currentTime
+                   : (c.pendingT != null ? c.pendingT : 0));
+    const list = document.getElementById('est-list');
+    const row  = list && list.querySelector(`.est-row[data-i="${c.i}"]`);
+    if (row){ row.classList.add('on'); EST_TOUCH_AT = 0; estSeguir(list, row, true); }
+  }
+  if (c && c.estado === 'falta' && EST_OPEN_ROW){
+    const row = document.querySelector(`.est-row[data-id="${EST_OPEN_ROW}"]`);
+    if (row) row.scrollIntoView({ block:'nearest' });
+  }
+}
+function estRenderVista(){
+  estRateInit();
+  return EST_VIEW === 'alergenos' ? estRenderAlergenos() : estRenderEscuchar();
+}
+function estRenderEscuchar(){
+  const day = estDay(), svc = estSvc();
+  const key = estKey(estDocDay(day, svc), svc);
+  if (!EST_CUR || EST_CUR.key !== key) estAbrir(key, null);
+  const c = EST_CUR;
+  const sb = s => `<button class="mn-svc-btn${svc === s ? ' active' : ''}" onclick="estSetSvc('${s}')">${estSvcLabel(s)}</button>`;
+  const top = `<div class="est-top"><div class="mn-svc mn-svc2 est-svc">${sb('almuerzo')}${sb('cena')}</div>${estDlHtml()}</div>`;
+  const aviso = (txt, retry) => `<div class="est">${top}<div class="est-card est-card-msg">${txt}${retry ? ` <button class="est-chip" onclick="estReintentar()">${t('estRetry')}</button>` : ''}</div></div>`;
+  if (c.estado === 'nopub')     return aviso(t('estUnpublished'), false);
+  if (c.estado === 'sinindice') return aviso(t('estNoIndex'), true);
+  if (c.estado === 'error')     return aviso(t('estError'), true);
+  if (c.estado === 'falta'){
+    return `<div class="est">${top}<div class="est-card est-card-msg">${c.sinRed ? t('estOffline') : t('estMissing')}</div>
+      <div class="est-list est-list-free">${estListaSinAudio(c)}</div></div>`;
+  }
+  // 'cargando' y 'listo' comparten esqueleto y altos: cuando el audio llega
+  // no se mueve nada bajo el dedo.
+  const rates = [0.75, 1, 1.25].map(r =>
+    `<button class="est-rate" data-r="${r}" onclick="estRate(${r})">${String(r).replace('.', ',')}×</button>`).join('');
+  return `<div class="est">${top}
+    <div class="est-card">
+      <div class="est-now" id="est-now">${estNowHtml()}</div>
+      <div class="est-msg" id="est-msg">${estMsgHtml()}</div>
+      <div class="est-bar" id="est-bar"><div class="est-bar-fill" id="est-bar-fill"></div>${estTicksHtml()}</div>
+      <div class="est-time"><span id="est-t">0:00</span><span>${c.dur ? estMMSS(c.dur) : '–:––'}</span></div>
+      <div class="est-ctrls">
+        <button class="est-back" id="est-back" onclick="estAtras()">${t('estBack')}</button>
+        <button class="est-play" id="est-play" onclick="estPlay()" aria-label="Play/Pausa">${EST_ICON_PLAY}</button>
+        <div class="est-rates">${rates}</div>
+      </div>
+      <div class="est-modes">
+        <button class="est-mode" id="est-m-loop" onclick="estToggleLoop()">${t('estLoop')}</button>
+        <button class="est-mode" id="est-m-rep"  onclick="estToggleRepasos()">${t('estRepasos')}</button>
+        <button class="est-mode" id="est-m-nom"  onclick="estSoloNombres()">${t('estNombres')}</button>
+        <button class="est-mode" id="est-m-txt"  onclick="estToggleTexto()">${t('estTexto')}</button>
+      </div>
+      <div class="est-text" id="est-text" hidden></div>
+    </div>
+    <div class="est-list" id="est-list" ontouchstart="estListaToque()" onwheel="estListaToque()">${estListaHtml(c)}</div>
+  </div>`;
+}
+function estDlHtml(){
+  const c  = EST_CUR;
+  const st = c && c.estado === 'listo' ? ((EST_DL[c.key] || {}).estado || 'no') : null;
+  const lbl = { no:t('estDl'), bajando:t('estDlIng'), si:t('estDlOk'), viejo:t('estDlOld'), lleno:t('estDlFull') }[st] || t('estDl');
+  return `<button class="est-dl ${st || 'off'}" id="est-dl" onclick="estDescargar()"${st ? '' : ' disabled'}>${st === 'si' ? '✓' : '↓'} ${lbl}</button>`;
+}
+function estNowHtml(){
+  const c = EST_CUR;
+  const donde = `${estSvcLabel(c.svc)} · ${t('estDiaN')} ${estAppDay({ servicio:c.svc, dia:c.docDay })}`;
+  if (!c.marcas) return `<div class="est-kind">${donde}</div><div class="est-name dim">${t('estLoading')}…</div>`;
+  const i = Math.max(0, c.i), m = c.marcas[i];
+  if (m.tipo === 'plato'){
+    const p = estPlato(m.id);
+    let n = 0;
+    for (let k = 0; k <= i; k++) if (c.marcas[k].tipo === 'plato') n++;
+    const total = c.marcas.filter(x => x.tipo === 'plato').length;
+    return `<div class="est-kind">${t('estPlato')} ${n}/${total}${p ? ' · ' + vjEsc(estSeccion(p)) : ''}</div>
+      <div class="est-name">${vjEsc((p && p.nombre) || m.nombre || m.id)}</div>`;
+  }
+  const lbl = m.tipo === 'repaso' ? t('estNowRepaso') : m.tipo === 'cierre' ? t('estNowCierre') : t('estNowIntro');
+  return `<div class="est-kind">${donde}</div><div class="est-name dim">${lbl}</div>`;
+}
+function estMsgHtml(){
+  const c = EST_CUR;
+  if (EST_AVISO) return `<span>${vjEsc(EST_AVISO)}</span>`;
+  if (!c) return '';
+  if (c.estado === 'cargando') return `<span>${t('estLoading')}${c.pct ? ' · ' + c.pct + ' %' : '…'}</span>`;
+  if (c.resume != null)
+    return `<button class="est-chip on" onclick="estRetomar()">${t('estResume')} ${estMMSS(c.resume)}</button>`
+         + `<button class="est-chip" onclick="estDesdeInicio()">${t('estFromStart')}</button>`;
+  return '';
+}
+// La barra no se arrastra (regla 2): sólo muestra dónde vas y dónde están los
+// repasos y la prueba final.
+function estTicksHtml(){
+  const c = EST_CUR;
+  if (!c || !c.marcas || !c.dur) return '';
+  return c.marcas.map(m => {
+    const l = (m.inicio / c.dur * 100).toFixed(2), w = ((m.fin - m.inicio) / c.dur * 100).toFixed(2);
+    if (m.tipo === 'repaso' || m.tipo === 'cierre') return `<span class="est-seg" style="left:${l}%;width:${w}%"></span>`;
+    return m.inicio > 0 ? `<span class="est-tick" style="left:${l}%"></span>` : '';
+  }).join('');
+}
+function estListaHtml(c){
+  // Mientras llega el audio, los platos del índice (sin minutos): la lista no
+  // aparece de golpe y ya se puede leer qué viene.
+  if (!c.marcas){
+    return estPlatosDe(c).map(p => `<div class="est-row wait"><span class="est-row-t"></span>
+      <span class="est-row-n">${vjEsc(p.nombre)}</span><span class="est-row-s">${vjEsc(estSeccion(p))}</span></div>`).join('');
+  }
+  let n = 0;
+  return c.marcas.map((m, i) => {
+    let cls = 'est-row', nombre, sub = '';
+    if (m.tipo === 'plato'){
+      n++;
+      const p = estPlato(m.id);
+      nombre = (p && p.nombre) || m.nombre || m.id;
+      sub = p ? estSeccion(p) : '';
+    }
+    else if (m.tipo === 'repaso'){ cls += ' rep'; nombre = t('estRepaso'); sub = `${t('estTras')} ${n} ${t('estResults')}`; }
+    else if (m.tipo === 'cierre'){ cls += ' rep'; nombre = t('estCierre'); }
+    else { cls += ' rep'; nombre = t('estIntro'); }
+    return `<button class="${cls}" data-i="${i}" onclick="estFila(${i})"><span class="est-row-t">${estMMSS(m.inicio)}</span>`
+         + `<span class="est-row-n">${vjEsc(nombre)}</span>${sub ? `<span class="est-row-s">${vjEsc(sub)}</span>` : ''}</button>`;
+  }).join('');
+}
+// Sin audio todavía: los platos del servicio con su texto, igual. Tocar abre.
+function estListaSinAudio(c){
+  return estPlatosDe(c).map(p => {
+    const open = EST_OPEN_ROW === p.id;
+    return `<button class="est-row${open ? ' open' : ''}" data-id="${p.id}" onclick="estFilaTexto('${p.id}')">`
+      + `<span class="est-row-t">${p.orden}</span><span class="est-row-n">${vjEsc(p.nombre)}</span>`
+      + `<span class="est-row-s">${vjEsc(estSeccion(p))}</span>`
+      + (open ? `<span class="est-row-d">${vjEsc(p.descripcion)}</span>${estAlgLinea(p)}` : '')
+      + `</button>`;
+  }).join('');
+}
+
+// --- Patches en sitio (el tick corre 25 veces por segundo: nada de innerHTML grande) --
+function estPatchTiempo(tt){
+  const c = EST_CUR;
+  if (!c || !c.dur) return;
+  const f = document.getElementById('est-bar-fill');
+  if (f) f.style.width = Math.min(100, tt / c.dur * 100).toFixed(2) + '%';
+  const e = document.getElementById('est-t');
+  if (e){ const s = estMMSS(tt); if (e.textContent !== s) e.textContent = s; }
+}
+function estPatchMarca(){
+  const c = EST_CUR;
+  if (!c) return;
+  const now = document.getElementById('est-now');
+  if (now) now.innerHTML = estNowHtml();
+  const list = document.getElementById('est-list');
+  if (list){
+    list.querySelectorAll('.est-row.on').forEach(r => r.classList.remove('on'));
+    const row = list.querySelector(`.est-row[data-i="${c.i}"]`);
+    if (row){ row.classList.add('on'); estSeguir(list, row, false); }
+  }
+  estPatchTexto(false);
+}
+// La lista sigue a la marca que suena, dentro de su propio scroll (la página
+// no se mueve). Si el dedo anduvo por la lista hace menos de 4 s, no se le roba.
+function estSeguir(list, row, instant){
+  if (Date.now() - EST_TOUCH_AT < 4000) return;
+  const top = Math.max(0, row.offsetTop - list.clientHeight * 0.3);
+  if (Math.abs(list.scrollTop - top) < 2) return;
+  if (instant || !list.scrollTo) list.scrollTop = top;
+  else list.scrollTo({ top, behavior:'smooth' });
+}
+// Regla 1 del método: durante un repaso (y en la prueba final) el texto NO se
+// muestra — leer la respuesta mata el ejercicio. Vuelve solo al salir.
+function estPatchTexto(forzar){
+  const box = document.getElementById('est-text');
+  if (!box) return;
+  box.hidden = !EST_TEXTO;
+  if (!EST_TEXTO) return;
+  const c = EST_CUR;
+  const m = c && c.marcas ? c.marcas[Math.max(0, c.i)] : null;
+  const k = m ? m.id : '';
+  if (!forzar && box.dataset.k === k) return;
+  box.dataset.k = k;
+  let html = '';
+  if (m && m.tipo === 'plato'){
+    const p = estPlato(m.id);
+    html = p ? `<span class="est-text-d">${vjEsc(p.descripcion)}</span>${estAlgLinea(p)}` : '';
+  } else if (m){
+    html = `<span class="est-text-off">${m.tipo === 'repaso' ? t('estTextRepaso') : m.tipo === 'cierre' ? t('estTextCierre') : t('estTextIntro')}</span>`;
+  }
+  box.innerHTML = html;
+  box.scrollTop = 0;
+}
+function estPatchCtrls(){
+  const a = EST_AUDIO, listo = estListo();
+  const play = document.getElementById('est-play');
+  if (play){
+    const sonando = listo && !a.paused;
+    const want = sonando ? 'pause' : 'play';
+    if (play.dataset.s !== want){ play.innerHTML = sonando ? EST_ICON_PAUSE : EST_ICON_PLAY; play.dataset.s = want; }
+    play.classList.toggle('on', sonando);
+    play.disabled = !listo;
+  }
+  ['est-back', 'est-m-loop', 'est-m-rep', 'est-m-nom'].forEach(id => {
+    const b = document.getElementById(id); if (b) b.disabled = !listo;
+  });
+  const on = (id, v) => { const b = document.getElementById(id); if (b) b.classList.toggle('on', !!v); };
+  on('est-m-loop', EST_MODE === 'loop');
+  on('est-m-rep',  EST_MODE === 'repasos');
+  on('est-m-txt',  EST_TEXTO);
+  document.querySelectorAll('.est-rate').forEach(b => b.classList.toggle('on', Number(b.dataset.r) === EST_RATE));
+  const list = document.getElementById('est-list');
+  if (list){
+    list.querySelectorAll('.est-row.loop').forEach(r => r.classList.remove('loop'));
+    if (EST_MODE === 'loop'){ const r = list.querySelector(`.est-row[data-i="${EST_LOOP_I}"]`); if (r) r.classList.add('loop'); }
+  }
+}
+function estPatchMsg(){ const e = document.getElementById('est-msg'); if (e) e.innerHTML = estMsgHtml(); }
+function estPatchDl(){ const e = document.getElementById('est-dl'); if (e) e.outerHTML = estDlHtml(); }
+
+// --- Buscar: los platos del ciclo, de la palabra al segundo ------------------------------
+function estRenderBuscar(q){
+  if (!EST_IDX){
+    const msg = EST_IDX_FALLO ? (estOrigenActivo() ? t('estNoIndex') : t('estUnpublished')) : t('estLoading') + '…';
+    return `<div class="empty-state">${msg}</div>`;
+  }
+  const n = estFold(q).trim();
+  const hits = EST_IDX.platos.filter(p =>
+       (/^d\d/.test(n) && p.id.startsWith(n))
+    || String(p.busqueda || '').includes(n)
+    || estFold(p.nombre).includes(n)
+    || estFold(estSeccion(p)).includes(n)
+    || (p.alergenos || []).some(a => estFold(a) === n)
+  ).sort(estOrden);
+  if (!hits.length) return `<div class="empty-state">${t('noDishes')}</div>`;
+  return `<div class="est"><div class="mn-sec-head">${hits.length} ${t('estResults')}</div>`
+       + hits.map(p => `<button class="est-res" onclick="estAbrirPlato('${p.id}')">`
+           + `<span class="est-res-m">${t('estDiaN')} ${estAppDay(p)} · ${estSvcLabel(p.servicio)} · ${vjEsc(estSeccion(p))}</span>`
+           + `<span class="est-res-n">${vjEsc(p.nombre)}</span>${estAlgLinea(p)}`
+           + `<span class="est-res-go" aria-hidden="true">${EST_ICON_AUD}</span></button>`).join('')
+       + `</div>`;
+}
+
+// --- Alérgenos y aptitudes: referencia de pasillo, sin audio -------------------------------
+function estRenderAlergenos(){
+  if (!EST_IDX){
+    const msg = EST_IDX_FALLO ? (estOrigenActivo() ? t('estNoIndex') : t('estUnpublished')) : t('estLoading') + '…';
+    return `<div class="empty-state">${msg}</div>`;
+  }
+  const day   = estDay();
+  const vocab = EST_ALG_MODE === 'lleva' ? (EST_IDX.alergenos_usados || [])
+                                         : ['vegano', 'vegetariano', 'sin gluten', 'sin lactosa', 'halal'];
+  const seg = (lbl, on, fn) => `<button class="mn-svc-btn${on ? ' active' : ''}" onclick="${fn}">${lbl}</button>`;
+  const ctl = `<div class="est-alg-ctl">
+      <div class="mn-svc mn-svc2">${seg(t('estLleva') + '…', EST_ALG_MODE === 'lleva', "estAlgModo('lleva')")}${seg(t('estAptoPara') + '…', EST_ALG_MODE === 'apto', "estAlgModo('apto')")}</div>
+      <div class="mn-svc mn-svc2">${seg(t('estDiaN') + ' ' + day, !EST_ALG_CICLO, 'estAlgCiclo(false)')}${seg(t('estCiclo'), EST_ALG_CICLO, 'estAlgCiclo(true)')}</div>
+    </div>`;
+  const chips = `<div class="est-chips">${vocab.map(v =>
+    `<button class="mn-chip${EST_ALG_SEL === v ? ' active' : ''}" data-v="${vjEsc(v)}" onclick="estAlgSel(this.dataset.v)">${vjEsc(estCap(v))}</button>`).join('')}</div>`;
+  if (!EST_ALG_SEL) return `<div class="est">${ctl}${chips}<div class="empty-state">${t('estAlgHint')}</div></div>`;
+
+  const platos = EST_IDX.platos.filter(p => EST_ALG_CICLO || estAppDay(p) === day).sort(estOrden);
+  let grupos;
+  if (EST_ALG_MODE === 'lleva'){
+    const si = [], cond = [];
+    platos.forEach(p => { const v = estLleva(p, EST_ALG_SEL); if (v) (v.v === 'cond' ? cond : si).push([p, v]); });
+    grupos = [['estGrpLleva', si], ['estGrpCond', cond]];
+  } else {
+    const g = { si:[], cond:[], nd:[], no:[] };
+    platos.forEach(p => { const v = estApto(p, EST_ALG_SEL); g[v.v].push([p, v]); });
+    grupos = [['estGrpApto', g.si], ['estGrpCond', g.cond], ['estGrpNd', g.nd], ['estGrpNo', g.no]];
+  }
+  const body = grupos.map(([k, list]) => {
+    if (!list.length) return '';
+    const head = `${t(k)}<span class="mn-sec-count">${list.length}</span>`;
+    const rows = list.map(([p, v]) => estAlgFila(p, v, k)).join('');
+    // Los no aptos quedan plegados: saber qué NO servir importa, pero la
+    // pregunta de pasillo es qué SÍ.
+    if (k === 'estGrpNo') return `<details class="est-grp"><summary class="mn-sec-head">${head}</summary>${rows}</details>`;
+    return `<div class="est-grp"><div class="mn-sec-head">${head}</div>${rows}</div>`;
+  }).join('');
+  return `<div class="est">${ctl}${chips}${body || `<div class="empty-state">${t('noDishes')}</div>`}</div>`;
+}
+function estAlgFila(p, v, grupo){
+  const open = EST_OPEN_ROW === p.id;
+  const cls  = grupo === 'estGrpNd' ? ' nd' : grupo === 'estGrpNo' ? ' no' : '';
+  const nota = v.nota ? `<span class="mn-v note"><span class="mn-v-tag">${t('estGrpCond')}</span><span class="mn-v-txt">${vjEsc(v.nota)}</span></span>` : '';
+  const conf = v.conflicto ? `<span class="mn-v no"><span class="mn-v-tag">${t('estOjo')}</span><span class="mn-v-txt">${t('estConflicto')}</span></span>` : '';
+  const solo = v.soloMenu ? `<span class="est-res-src">${t('estSoloMenu')}</span>` : '';
+  return `<button class="est-res${cls}${open ? ' open' : ''}" onclick="estAlgAbrir('${p.id}')">`
+    + `<span class="est-res-m">${t('estDiaN')} ${estAppDay(p)} · ${estSvcLabel(p.servicio)} · ${vjEsc(estSeccion(p))}</span>`
+    + `<span class="est-res-n">${vjEsc(p.nombre)}</span>${estAlgLinea(p)}${nota}${conf}${solo}`
+    + (open ? `<span class="est-res-d">${vjEsc(p.descripcion)}</span>`
+            + `<span class="est-res-listen" role="button" onclick="event.stopPropagation();estAbrirPlato('${p.id}')">${EST_ICON_AUD}<span>${t('estListen')}</span></span>` : '')
+    + `</button>`;
+}
+function estAlgAbrir(id){ EST_OPEN_ROW = EST_OPEN_ROW === id ? null : id; estRepintar(); }
 
 function selectDish(id) {
   selectedDish = selectedDish === id ? null : id;

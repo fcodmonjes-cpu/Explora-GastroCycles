@@ -28,3 +28,8 @@ firebase-rules.json
 # Python
 __pycache__/
 *.pyc
+
+# Estudio de menús: copia LOCAL de los audios para QA en localhost. En los
+# deploys el módulo lee de Firebase Storage (ver ARCHITECTURE.md §3.4); esto
+# no se versiona nunca — son ~35-70 MB que cada deployment copiaría entero.
+/estudio-local/

@@ -37,3 +37,7 @@
 scripts/
 __pycache__/
 *.pyc
+
+# Estudio de menús: la copia local de QA (los audios reales viven en Firebase
+# Storage). Segunda barrera por si alguien la saca del .gitignore.
+estudio-local/

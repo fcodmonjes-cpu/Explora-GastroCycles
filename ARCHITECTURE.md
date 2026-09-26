@@ -50,6 +50,7 @@ que es operacional (turnos, postres, pedidos, comandas).
 | Hosting | Vercel (auto-deploy por branch) | `main` → `gastrocycles.vercel.app` (producción). `staging` → URL fija para QA desde iPhone. `feature/*` y `fix/*` → preview por commit. Ver sección 12. **Cada deployment copia el árbol entero del repo y todos suman contra los 10 GB del plan Hobby** — por eso existe `.vercelignore` (§12). |
 | Tipografía | Cormorant Garamond (italic 500/700) + Courier Prime monospace | Cargadas vía Google Fonts. Family declarada en CSS desde el inicio; sólo recientemente se cargó la real. |
 | Instalable | PWA: `manifest.webmanifest` + `sw.js` (service worker propio, ~50 líneas) | Se agrega al home screen y abre sin chrome del browser. Network-first: el cache es red de emergencia, no fuente de verdad. Ver §2.1. |
+| Archivos pesados | Firebase Storage, carpeta `estudio/` (audios del menú) | Fuera del repo a propósito: cada deploy de Vercel copia el árbol entero (§12). Detrás del gate por reglas de Storage. Hoy apagado (`EST_STORAGE_ON`) hasta habilitar el bucket. Ver §3.4. |
 | Clima | Open-Meteo (REST, sin API key) | **Único tercero fuera de Firebase.** Gratis, CORS abierto y sin registro — en una app sin build step, una API key quedaría visible en el HTML. Si cae, el módulo se apaga solo. Ver §3.2. |
 | Telemetría | Vercel Analytics (`/_vercel/insights/script.js`) | Pageviews ligeros, sin más. Da 404 en local — solo existe en el deploy de Vercel. |
 
@@ -131,7 +132,7 @@ un `innerHTML`— es el patrón **park/place** de §5.
 
 | Tab | Propósito | Datos | PIN |
 |---|---|---|---|
-| **Menú** | Servicio del día (Almuerzo · Cena · Bar) con matriz de restricciones por plato | Estático en el JS (`DISHES`, `BAR_DISHES`) | — |
+| **Menú** | Servicio del día (Almuerzo · Cena · Bar) con matriz de restricciones por plato, y **Estudio**: el menú en audio + buscador del ciclo + alérgenos (§3.4) | Estático en el JS (`DISHES`, `BAR_DISHES`) · Estudio: Firebase Storage `estudio/` | — |
 | **Vinos** | Ficha por vino + sub-vista "Maridajes generales" | Estático (`WINES`, `GUIONES`) | — |
 | **Café** | Manual de bebidas + modo servicio (mesero / barista) | Estático (`COFFEE_DATA`) + Firebase `/orders` | 555 (mesero) · 999 (barista) |
 | **E-Check** | Comandera por mesa. **Dos vistas, a propósito distintas:** ingresar (fila de asientos, sin mapa) y entregar (la comanda completa ES el mapa de la mesa) | Firebase `/comandas/{date}/{id}` | 666 |
@@ -305,6 +306,123 @@ Tres decisiones que conviene no revertir por accidente:
 reales: dos que se cambian entre sí, y uno que se corre a una silla vacía
 (intercambiar con vacío = mover). El asiento activo sigue a la **persona**, no al
 número.
+
+### 3.4 Estudio: el menú en audio (2026-09-25)
+
+Para que un GEO nuevo aprenda los platos del ciclo **escuchando**, y para
+verificar un ingrediente o un alérgeno en segundos. Es contenido permanente: el
+ciclo de 4 días se repite y el equipo rota. El contenido (guiones, voz, marcas
+de tiempo) se genera fuera del repo, en la máquina del owner; el módulo sólo
+consume `indice.json`, los `.mp3` y sus `.json` de marcas.
+
+**Dónde vive: cuarto segmento de Menú, no una tab.** `ALMUERZO · CENA · BAR ·
+ESTUDIO`. Es contenido del menú, y la tira de tabs se recortó a 5 a propósito
+(al ocultar Rol) para no cruzarse con la isla del selector de idioma. Segundo
+nivel `Escuchar · Alérgenos`, igual que `Comida · Tragos` en BAR. Y acceso
+transversal: cada ficha de plato de almuerzo o cena tiene **Escuchar**, que
+salta al segundo exacto de ese plato en su audio. La barra de búsqueda de Menú,
+con Estudio activo, busca en los platos del ciclo (`indice.json`): una sola
+caja, que cambia de alcance con el segmento.
+
+**El método manda sobre el diseño.** Cada plato se dice tres veces con pausas
+reales, cada 4 platos hay un repaso con silencio para responder, y al final
+queda sólo la lista de nombres. El silencio es la parte que enseña, así que:
+el texto del plato **no se ve durante un repaso** (ni en la prueba final);
+**no hay +10 s ni barra arrastrable** (sólo −10 s y velocidad); **ver texto
+viene apagado**. Tocar una fila es un gesto, no autoplay: salta y suena. Llegar
+desde el buscador deja el audio en pausa en el plato.
+
+**Almacenamiento: Firebase Storage, NO el repo.** Los mp3 son ~35 MB (a 64 kbps
+mono) y cambian con cada carta. En el repo, cada deployment de Vercel los
+copiaría enteros (la lección de §12 que costó la cuota), y `.vercelignore` ya
+excluye `*.mp3`: ni siquiera se desplegarían. Storage además deja el contenido
+**detrás del gate**: las reglas piden auth y cada pedido lleva el token de la
+sesión (`Authorization: Firebase <idToken>`), mientras que todo lo estático del
+repo —`index.html` incluido, con sus recetas y proveedores— es público para
+quien tenga la URL.
+
+```
+estudio/indice.json                    los platos (id d{día}{a|c}-{orden})
+estudio/audio/dia{N}-{servicio}.mp3    un audio por servicio (8)
+estudio/audio/dia{N}-{servicio}.json   sus marcas {duracion, marcas:[{id,tipo,inicio,fin}]}
+```
+
+En `localhost` el módulo lee la misma estructura desde `/estudio-local/`
+(ignorada por git y por Vercel): QA con los audios reales sin subirlos a ningún
+lado.
+
+**Válvula `EST_STORAGE_ON`** (STATE TOP de `index.html`). Al 2026-09-25 el
+bucket **no existe** (la API responde 404). En `false`, Estudio no pide nada a
+la red fuera de localhost: dice "todavía no está publicado" y no ensucia la
+consola. Para publicar, en este orden:
+
+1. Consola de Firebase → Storage → *Get started*. Hoy Firebase exige el plan
+   **Blaze** para Storage; con ~35 MB y el tráfico del equipo queda dentro de la
+   cuota sin costo, pero la tarjeta la pone el owner.
+2. Reglas de Storage (copiar sobre las vigentes, nunca de memoria — §4.3):
+   ```
+   rules_version = '2';
+   service firebase.storage {
+     match /b/{bucket}/o {
+       match /estudio/{todo=**} {
+         allow read: if request.auth != null;   // → auth.uid === '<uid>' cuando RTDB cierre por uid
+         allow write: if false;                  // se sube desde la consola
+       }
+     }
+   }
+   ```
+3. CORS del bucket (el `fetch` con header de auth hace preflight). `origin: *`
+   es deliberado: la seguridad la ponen las reglas, no el origen, y así también
+   funcionan los previews por commit, que no tienen URL fija.
+   ```bash
+   echo '[{"origin":["*"],"method":["GET"],"responseHeader":["Authorization","Content-Type","Content-Length"],"maxAgeSeconds":3600}]' > cors.json
+   gcloud storage buckets update gs://explora-cafe-orders.firebasestorage.app --cors-file=cors.json
+   ```
+4. Subir `indice.json` y `audio/*` a la carpeta `estudio/` desde la consola.
+5. `EST_STORAGE_ON = true` → staging → QA en iPhone → main.
+
+**Cambiar de ciclo sin tocar código:** regenerar (`gen_guiones.py` →
+`generar_audio_menu.py`), recodificar a 64 kbps mono, y subir encima con los
+mismos nombres. Un audio que falta no rompe nada: el reproductor lo dice y
+muestra los platos con su texto. Un teléfono que ya había descargado la versión
+anterior lo detecta solo (la duración de las marcas nuevas no coincide con la
+guardada) y el botón pasa a **Actualizar**.
+
+**Carga en background, cero costo en el arranque.** Nada se pide al abrir la
+página. El índice (~90 KB) se baja la primera vez que se entra a Estudio y queda
+en cache (búsqueda y alérgenos funcionan sin señal). Las marcas, sólo las del
+audio abierto. El audio se baja entero a un Blob al abrir su servicio: el salto
+a un segundo y el loop quedan exactos en cualquier servidor (el `http.server`
+de QA no sirve rangos) y no dependen de la red una vez cargado. Un listado
+previo de la carpeta evita pedir —y loguear 404 de— lo que no se subió.
+
+**Offline: descarga explícita, no precache.** Botón por servicio →
+Cache API, bucket `ata-estudio-v1`. El service worker sigue siendo network-first
+y **no** precachea audio; sólo aprendió dos cosas: no borrar los buckets
+`ata-estudio-*` al activarse (un deploy no puede llevarse las descargas del
+garzón) y no meter `/estudio-local/` en el cache del core. La clave del cache es
+una URL lógica del propio origen, no la de Storage: el token cambia cada hora.
+
+**Alérgenos: dos fuentes, una regla.** Almuerzo lee la **matriz del Handbook**
+(verificada contra el asesor, con sus notas de condición); cena lee
+`indice.json`, porque la cena del Menú todavía es el `DISHES` antiguo sin
+matriz. El cruce índice↔Menú es por **posición fija** (orden 1-6 bandejas, 7
+sopa, 8-11 principales, 12-14 postres) **más** parecido de nombre: si un ciclo
+futuro cambia el orden, falla cerrado y nunca presta la matriz de otro plato.
+Medido: 56/56 almuerzo, 44/44 cena. Sin dato ≠ apto, y no hay verde. Cuando la
+ficha del Menú es **más permisiva** que el índice del audio, el plato no sale
+como apto: sale "con condición" y la discrepancia escrita (hoy: Membrillos y
+Piña, veganos según la ficha, no aptos según el índice).
+
+**Idioma: sólo ES, marcado como interno.** Decisión del owner: el módulo es para
+el equipo y el contenido está en español. Las claves `est*` existen sólo en
+`UI.es`; `t()` cae a ellas desde EN/PT sin error.
+
+**Pendientes del contenido** (en `datos_dia*.py`, fuera del repo): la
+descripción de la César no dice que el pan gratato lleva maní (el alérgeno sí
+está listado; el Handbook lo corrigió el 2026-09-07); `apto_condicional` no trae
+el texto de la condición (hoy sale de las notas del Menú); el `LEEME` habla de
+"los tres del charqui" y sólo uno lleva charqui.
 
 ---
 

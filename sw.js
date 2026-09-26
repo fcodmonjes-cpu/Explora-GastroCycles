@@ -28,10 +28,13 @@ self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
 });
 
+// Los buckets 'ata-estudio-*' NO son de este service worker: son los audios
+// que el garzón descargó a mano desde Estudio para escuchar sin señal (la
+// página los escribe con Cache API). Un deploy nuevo no puede borrárselos.
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(ks => Promise.all(ks.filter(k => k !== CACHE && !k.startsWith('ata-estudio')).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -40,7 +43,11 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   // Solo GET del propio origen. Firebase, Google Fonts y cualquier otra cosa
   // pasan de largo sin tocar el cache.
-  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  const url = new URL(req.url);
+  if (req.method !== 'GET' || url.origin !== self.location.origin) return;
+  // La copia local de audios para QA (sólo existe en localhost) no entra al
+  // cache del core: son decenas de MB que no son parte de la app.
+  if (url.pathname.startsWith('/estudio-local/')) return;
   e.respondWith(
     fetch(req)
       .then(resp => {
