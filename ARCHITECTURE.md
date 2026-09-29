@@ -1166,7 +1166,10 @@ Reglas duras al cargar la matriz:
    un cuadro de demora— sino porque el `<img>` ni siquiera existe en el DOM
    mientras la ficha está cerrada. Pesan contra la cuota de
    Vercel como todo el árbol (§12): las siete del día 1 (cuatro principales +
-   tres postres) son ~563 KB, y llevaron el repo de 2,9 a 3,4 MB. Un ciclo
+   tres postres) son ~563 KB, y llevaron el repo de 2,9 a 3,4 MB. El
+   2026-09-29 entraron cinco bandejas del buffet del día 3 (hojas, firmes,
+   granos, proteína fría y cocida; faltan los hongos, que no salieron ese
+   día): ~440 KB más, 12 fotos y ~1 MB en total. Un ciclo
    completo con foto en todo —60 platos— serían unos 5 MB, casi el triple del
    repo: si se va para allá, decidir antes si las fotos siguen en el repo o
    pasan a un CDN.
