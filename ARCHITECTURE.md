@@ -1170,7 +1170,8 @@ Reglas duras al cargar la matriz:
    2026-09-29 entraron cinco bandejas del buffet del día 3 (hojas, firmes,
    granos, proteína fría y cocida; faltan los hongos, que no salieron ese
    día), los cuatro principales y dos de los tres postres (falta el
-   coulant): ~895 KB más entre las once, 18 fotos y ~1,4 MB en total. Un ciclo
+   coulant): ~895 KB más entre las once. Después, los tres postres del
+   día 2 (~163 KB): 21 fotos y ~1,6 MB en total. Un ciclo
    completo con foto en todo —60 platos— serían unos 5 MB, casi el triple del
    repo: si se va para allá, decidir antes si las fotos siguen en el repo o
    pasan a un CDN.
