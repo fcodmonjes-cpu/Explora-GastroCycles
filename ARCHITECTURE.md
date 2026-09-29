@@ -1172,10 +1172,39 @@ Reglas duras al cargar la matriz:
    día), los cuatro principales y dos de los tres postres (falta el
    coulant): ~895 KB más entre las once. Después, los tres postres del
    día 2 (~163 KB), y del día 4 la alcachofa del buffet, tres principales
-   y dos postres (~473 KB): 27 fotos y ~2 MB en total. Un ciclo
-   completo con foto en todo —60 platos— serían unos 5 MB, casi el triple del
-   repo: si se va para allá, decidir antes si las fotos siguen en el repo o
-   pasan a un CDN.
+   y dos postres (~473 KB): 27 fotos y ~2 MB en total. El almuerzo completo
+   —56 platos— rondará los 4 MB.
+
+   **Decisión tomada (2026-09-29): las fotos se mudan a Firebase Storage
+   cuando el almuerzo esté completo.** Mientras tanto siguen entrando al repo
+   como hasta ahora — la mudanza es un paso único al final, no foto a foto.
+   El plan acordado con el owner:
+
+   - **Storage, no Firestore.** Firestore es la base de documentos; los
+     archivos van a Storage, el mismo bucket de Estudio (§3.4, plan Blaze,
+     US-EAST1), en una carpeta hermana `menu/` con los mismos nombres
+     (`menu/<id>.jpg`).
+   - **Lectura pública sólo para `menu/`**, a diferencia de `estudio/`. Así el
+     `<img src>` apunta directo a la URL de descarga y todo lo demás sigue
+     igual: la precarga del día (`menuWarmPhotos`), el cache de runtime del
+     service worker para cuando se cae el wifi, y el `menuToggleGuion` que no
+     redibuja la foto. Detrás del gate cada foto habría que bajarla con token
+     y armarla como Blob, y el token que vence cada hora obligaría al mismo
+     truco de URL lógica que usa Estudio para el cache. Se descartó porque
+     son fotos de platos: no hay datos de huéspedes ni recetas, y hoy ya son
+     públicas para quien tenga la URL del handbook.
+   - **Regla de Storage** a sumar SOBRE las vigentes (copiadas de la consola,
+     nunca de memoria — §4.3), dentro del mismo `match /b/{bucket}/o`:
+     `match /menu/{f} { allow read: if true; allow write: if false; }`.
+   - **Cambio de código:** un prefijo único (constante en STATE TOP) que
+     reemplace `assets/menu/` en cada `photo:`, y **abrirle el service worker
+     a ese origen**: hoy `sw.js` corta todo lo que no sea del propio origen
+     (`url.origin !== self.location.origin`), así que sin tocarlo las fotos
+     de Storage no se cachean y se pierden al caer el wifi. Abrirlo sólo
+     para el prefijo `menu/` del bucket, nunca para `estudio/` ni para
+     Firebase. Recién con las
+     fotos subidas y verificadas desde staging, borrar `assets/menu/` del
+     repo: sacarlo sólo alivia los deploys futuros (§12).
    Sin ImageMagick ni Pillow en el entorno, el redimensionado se hace con el
    Chrome headless que ya se usa para los screenshots: un canvas con recorte
    "cover" + punto focal por foto y `toDataURL('image/jpeg', q)`. Es el mismo
@@ -1288,6 +1317,10 @@ Hay decisiones conscientes de prototipo. Listarlas explícitas:
   y el header sigue comiendo de `/staffing`. Revivirla = borrar el atributo
   `hidden` del botón, nada más. Efecto lateral buscado: con cinco tabs la tira
   se acorta y deja de cruzarse con la isla flotante del selector de idioma.
+- **Fotos del menú en el repo, de paso.** `assets/menu/` pesa ~2 MB y
+  crecerá a ~4 MB con el almuerzo completo; cada deployment de Vercel lo copia
+  entero. Decidido mudarlas a Firebase Storage (`menu/`, lectura pública)
+  cuando estén todas — plan en §7, Receta 1b, regla 6.
 - **La sopa no entra al catálogo del Comande.** Con el buffet 2026 el almuerzo
   es autoservicio, así que la sopa la toma el viajero y nunca va en una comanda.
   Sólo afecta al almuerzo (`MENU_SOPAS` se mapea a `'Almuerzo'`); en cena ese
