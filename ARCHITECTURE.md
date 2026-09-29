@@ -1171,8 +1171,8 @@ Reglas duras al cargar la matriz:
    granos, proteína fría y cocida; faltan los hongos, que no salieron ese
    día), los cuatro principales y dos de los tres postres (falta el
    coulant): ~895 KB más entre las once. Después, los tres postres del
-   día 2 (~163 KB), y del día 4 tres principales y dos postres (~405 KB):
-   26 fotos y ~2 MB en total. Un ciclo
+   día 2 (~163 KB), y del día 4 la alcachofa del buffet, tres principales
+   y dos postres (~473 KB): 27 fotos y ~2 MB en total. Un ciclo
    completo con foto en todo —60 platos— serían unos 5 MB, casi el triple del
    repo: si se va para allá, decidir antes si las fotos siguen en el repo o
    pasan a un CDN.
