@@ -472,6 +472,16 @@ señal se cae: el doc se copia en `localStorage` (`ata.quincho.v1`) y la vista
 arranca desde ahí aunque Viajeros no cargue. Un movimiento que no se guardó se
 deshace en pantalla, con aviso.
 
+**La guía de servicio vive en el Checklist**, sección Quincho del equipo GEO
+(Antes · Recepción · En mesa · Show), sólo en español como todo lo operativo.
+Lo que se marca son tareas; el contexto de cada hito es la `nota` del momento
+(campo nuevo de la estructura, editable desde el editor con PIN), y `destaca`
+la pinta como la ventana ámbar del impreso. Para que la sección llegue a un doc
+de estructura ya editado por el supervisor se sumó `chkSumarFaltantes`: agrega
+por CLAVE lo que el seed tiene y el doc no, porque la `version` la sube cada
+guardado y ya no sirve para migrar. El Quincho del Bar (stock del bartender) no
+se tocó.
+
 **Privacidad.** Nombres con su habitación, igual que Viajeros y detrás del mismo
 gate. La planilla, los carteles y los JSON de roster están en `.gitignore`; el
 doc de la base y las copias locales se borran solos a los 2 días del evento.

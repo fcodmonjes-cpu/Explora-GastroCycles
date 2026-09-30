@@ -1895,6 +1895,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .chk-section-tab[data-divider-before]::before { content:''; position:absolute; left:-8px; top:20%; bottom:20%; width:0.5px; background:var(--border); }
 
 .chk-phase-chips { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1rem; }
+/* Nota del momento: contexto que no se marca. La destacada es la "ventana de
+   trabajo" del impreso del quincho: fondo y borde ámbar, sin color nuevo. */
+.chk-nota { font-size:13px; line-height:1.5; color:var(--text-secondary); border-left:1.5px solid var(--border-md);
+  padding:2px 0 2px 11px; margin:0 0 1rem; }
+.chk-nota.is-destaca { color:var(--text); background:var(--gold-light); border:1px solid var(--gold);
+  border-radius:var(--radius-md); padding:10px 12px; }
+.chk-struct-nota-input { display:block; width:100%; box-sizing:border-box; margin:6px 0 4px; resize:vertical;
+  background:var(--bg-secondary); border:0.5px solid var(--border-md); border-radius:var(--radius-md);
+  color:var(--text); font:inherit; font-size:12px; padding:7px 9px; }
+.chk-struct-dest { display:flex; align-items:center; gap:6px; font-family:'Courier Prime','Courier New',monospace;
+  font-size:10.5px; color:var(--text-tertiary); margin-bottom:6px; }
+.chk-struct-dest input { accent-color:var(--gold); }
 .chk-phase-chip { background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:999px; padding:8px 16px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.06em; color:var(--text-secondary); cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:8px; }
 .chk-phase-chip:hover { border-color:rgba(192,125,42,0.4); color:#c07d2a; }
 .chk-phase-chip.selected { background:rgba(192,125,42,0.12); border-color:rgba(192,125,42,0.6); color:#c07d2a; }
@@ -4333,6 +4345,20 @@ const CHK_STRUCTURE_SEED = {
         { key:'post_desayuno', label:'Post-Desayuno' },
         { key:'post_almuerzo', label:'Post-Almuerzo' },
         { key:'post_cena',     label:'Post-Cena'     } ] },
+    // Quincho (2026-09-30): la guía de servicio del quincho, del equipo GEO.
+    // Los momentos son los hitos de la guía; `nota` lleva el contexto que no se
+    // marca (la idea general, "se repite con cada grupo") y `destaca` la pinta
+    // como ventana — el recuadro ámbar del impreso. El Quincho del Bar es otra
+    // cosa: el stock y el inventario del bartender.
+    { key:'quincho', label:'Quincho', active:true, moments:[
+        { key:'antes',     label:'Antes',
+          nota:'La idea general. Dos cosas no las hacemos nosotros: la parrilla y el buffet de ensaladas son autoservicio, el viajero se sirve solo y no llevamos comida a la mesa. Una cosa es toda nuestra: los drinks. Nadie en la mesa se queda sin bebida. Recibir bien y sostener los drinks, eso es el servicio.' },
+        { key:'recepcion', label:'Recepción',
+          nota:'Se repite completa con cada grupo. Los viajeros llegan por oleadas: un primer grupo, después un segundo y posiblemente un tercero. Con cada grupo se hace lo mismo, entero, porque la experiencia de ser recibido tiene que ser igual para todos.' },
+        { key:'mesa',      label:'En mesa',
+          nota:'Ya sentados los viajeros, cada uno toma su plaza y se dedica a ofrecer vinos dentro de ella. Parrilla y buffet de ensaladas son autoservicio: el viajero va, nosotros no llevamos comida.' },
+        { key:'show',      label:'Show', destaca:true,
+          nota:'Ventana de trabajo. El show no es una pausa: es el momento en que trabajamos. Mientras los viajeros disfrutan la música y el baile, nosotros movemos todo en paralelo para llevar buen pulso del servicio.' } ] },
     { key:'repaso', label:'Repaso', active:false, moments:[] },
     { key:'bar', label:'Bar', active:true, moments:[
         { key:'apertura',    label:'Apertura'      },
@@ -4352,6 +4378,8 @@ function chkBuildSections(structure){
     const beh = CHK_SECTION_BEHAVIOR[s.key] || {};
     const moments = (s.moments || []).filter(m => !m.hidden).map(m => {
       const out = { key:m.key, label:m.label };
+      if (m.nota) out.nota = m.nota;
+      if (m.destaca) out.destaca = true;
       const win = beh.windows && beh.windows[m.key];
       if (win){ out.startMin = win.startMin; out.endMin = win.endMin; }
       // Stations (optional third level). Soft-deleted ones (hidden) drop out
@@ -4381,6 +4409,47 @@ function chkBuildSections(structure){
 // anything change?" via identity.
 function chkMigrateStructure(structure){
   if (!structure || !Array.isArray(structure.sections)) return structure;
+  const porVersion = chkMigrateStructureVersion(structure);
+  return chkSumarFaltantes(porVersion);
+}
+// Suma lo que el seed tiene y el doc guardado no, POR CLAVE y no por versión.
+// La versión no sirve para esto: chkSaveStructure la sube en cada guardado del
+// supervisor, así que un doc editado alguna vez ya está "por encima" del seed y
+// una sección nueva del seed no llegaría nunca (pasó al sumar Quincho, 2026-09-30).
+// Por clave es seguro porque lo built-in no se borra, sólo se oculta: si una
+// clave del seed no está en el doc, es que nunca estuvo. Las notas se copian
+// sólo a momentos que nunca tuvieron el campo — una nota vaciada a propósito
+// ('') se respeta. Devuelve la MISMA referencia si no hubo nada que sumar.
+function chkSumarFaltantes(structure){
+  let cambio = false;
+  const sections = structure.sections.map(s => Object.assign({}, s));
+  CHK_STRUCTURE_SEED.sections.forEach((seedSec, i) => {
+    let sec = sections.find(x => x.key === seedSec.key);
+    if (!sec){
+      // Va detrás de la sección del seed que la precede y sí está en el doc.
+      let pos = 0;
+      for (let j = i - 1; j >= 0; j--){
+        const k = sections.findIndex(x => x.key === CHK_STRUCTURE_SEED.sections[j].key);
+        if (k >= 0){ pos = k + 1; break; }
+      }
+      sections.splice(pos, 0, JSON.parse(JSON.stringify(seedSec)));
+      cambio = true;
+      return;
+    }
+    const moments = (sec.moments || []).slice();
+    (seedSec.moments || []).forEach(sm => {
+      const k = moments.findIndex(m => m.key === sm.key);
+      if (k < 0){ moments.push(JSON.parse(JSON.stringify(sm))); cambio = true; return; }
+      if (sm.nota && moments[k].nota === undefined){
+        moments[k] = Object.assign({}, moments[k], { nota: sm.nota }, sm.destaca ? { destaca: true } : {});
+        cambio = true;
+      }
+    });
+    sec.moments = moments;
+  });
+  return cambio ? Object.assign({}, structure, { sections }) : structure;
+}
+function chkMigrateStructureVersion(structure){
   if ((structure.version || 1) >= CHK_STRUCTURE_SEED.version) return structure;
   // 1) Reorder sections to the seed's key order.
   const order = {};
@@ -4814,6 +4883,8 @@ const UI = {
     chkStructOpen:'Secciones y momentos', chkStructBanner:'Gestiona las secciones y sus momentos. Renombra, reordena, oculta o agrega. Los cambios se guardan al confirmar.',
     chkStructSecPlaceholder:'Nombre de la sección', chkStructMomPlaceholder:'Nombre del momento', chkStructStPlaceholder:'Nombre de la estación',
     chkStructAddSection:'Añadir sección', chkStructAddMoment:'Añadir momento', chkStructAddStation:'Estación',
+    // Operativo: sólo ES (owner, 2026-09-30). t() cae aquí desde EN/PT.
+    chkStructNotaPh:'Nota del momento (opcional): el contexto que no se marca', chkStructDestaca:'destacar como ventana',
     chkStructHide:'Ocultar', chkStructShow:'Mostrar', chkStructDelete:'Eliminar',
     chkStructAutoNote:'Sección automática: el nombre se puede cambiar, pero su lógica de turnos y horarios es fija.',
     chkStructSaveError:'No se pudo guardar la estructura. Revisa las reglas de Firebase (checklist_structure).',
@@ -16927,6 +16998,12 @@ function chkStructFlushInputs(){
     (s.moments || []).forEach(m => {
       const mi = document.getElementById('chk-struct-mom-' + s.key + '-' + m.key);
       if (mi) m.label = mi.value;
+      const ni = document.getElementById('chk-struct-nota-' + s.key + '-' + m.key);
+      // Sin nota antes y sin texto ahora: el campo no se crea (un '' diría "la
+      // borraron a propósito" y frenaría la nota que el seed traiga después).
+      if (ni && (ni.value.trim() || m.nota !== undefined)) m.nota = ni.value;
+      const di = document.getElementById('chk-struct-dest-' + s.key + '-' + m.key);
+      if (di) m.destaca = di.checked;
       (m.stations || []).forEach(st => {
         const sti = document.getElementById('chk-struct-st-' + s.key + '-' + m.key + '-' + st.key);
         if (sti) st.label = sti.value;
@@ -17050,6 +17127,9 @@ async function chkStructSave(){
     s.moments = (s.moments || []).filter(m => !(m._new && !(m.label||'').trim()));
     s.moments.forEach(m => {
       m.label = (m.label || '').trim();
+      // '' se guarda tal cual: así la migración sabe que la vaciaron a propósito.
+      if (m.nota !== undefined) m.nota = (m.nota || '').trim();
+      if (!m.destaca) delete m.destaca;
       // Same lifecycle for stations: drop brand-new blanks, trim, clear _new.
       if (Array.isArray(m.stations)){
         m.stations = m.stations.filter(st => !(st._new && !(st.label||'').trim()));
@@ -17362,6 +17442,12 @@ function chkRender(){
     html += `<button class="chk-phase-chip ${isVisible ? 'selected' : ''}" onclick="chkSelectPhase('${m.key}')">${dot}${chkEscapeHtml(chkMomentLabel(m))}${tag}</button>`;
   });
   html += `</div>`;
+
+  // Nota del momento: el contexto que no se marca. `destaca` la vuelve ventana.
+  const momNota = chkMomentDef(section, visible);
+  if (momNota && momNota.nota){
+    html += `<div class="chk-nota${momNota.destaca ? ' is-destaca' : ''}">${chkEscapeHtml(momNota.nota)}</div>`;
+  }
 
   // Meta + progress
   const tpl = CHK_TEMPLATES[chkTplKey(section, visible)] || { tasks: [] };
@@ -17678,6 +17764,9 @@ function chkStructRender(){
           <button class="chk-struct-eye" onclick="chkStructToggleHideMoment('${s.key}','${m.key}')" title="${chkEscapeHtml(m.hidden?t('chkStructShow'):t('chkStructHide'))}">${m.hidden?'🚫':'👁'}</button>
           ${m._new ? `<button class="chk-edit-delete" onclick="chkStructDeleteMoment('${s.key}','${m.key}')" title="${chkEscapeHtml(t('chkStructDelete'))}">✕</button>` : ''}
         </div>`;
+      // Nota del momento (opcional) y si se pinta destacada.
+      html += `<textarea id="chk-struct-nota-${s.key}-${m.key}" class="chk-struct-nota-input" rows="2" placeholder="${chkEscapeHtml(t('chkStructNotaPh'))}">${chkEscapeHtml(m.nota||'')}</textarea>
+        <label class="chk-struct-dest"><input type="checkbox" id="chk-struct-dest-${s.key}-${m.key}" ${m.destaca ? 'checked' : ''}> ${chkEscapeHtml(t('chkStructDestaca'))}</label>`;
       // Stations (optional). A moment can hold none or several; the supervisor
       // adds them here. A moment with no stations renders flat in the app.
       const stations = m.stations || [];
@@ -17884,6 +17973,33 @@ const CHK_SEED = {
       'Asegurar servilletas suficientes listas para el servicio. Si no, ir a lavandería y priorizar la cantidad necesaria. Preparar litos para estación de vinos, servilletas para montaje y siguientes servicios. LAS SERVILLETAS EN BUEN ESTADO SON PARA MONTAJE; SEPARAR LAS NO PRESENTABLES PARA REPASO.',
       'Si quedan viajeros en servicio de cena, la persona asignada en montaje finaliza el servicio para luego desconchar esas mesas, idealmente antes de empezar montaje.',
       'Preparar en el mesón más corto del buffet la estación de vinos, copas, aguas con y sin gas, cubiertos para marcar/remontar y litos. Dejar también los menús de drinks y vinos. Dejar preparados los porta menús con menús de postres y niños si aplica, más vinos de la casa y premium, bebestibles y carta de bar.'
+    ]
+  },
+  // Quincho (equipo GEO): la guía de servicio del quincho, transcrita de
+  // quincho-guia.html (2026-09-30). Lo que se marca va acá; el contexto de cada
+  // hito es la `nota` del momento en CHK_STRUCTURE_SEED. Editable desde PIN.
+  // Único agregado a la guía: dónde buscar la mesa (PGO → Quincho).
+  quincho: {
+    antes: [
+      'Llevar todas las cosas de la lista y dejar el quincho montado antes de que llegue el primer grupo.'
+    ],
+    recepcion: [
+      'GEOs situados en la mitad del quincho, recibiendo.',
+      'Ofrecer las bandejas a medida que van llegando: empanadas vegetarianas, empanadas de carne y choripanes.',
+      'Ofrecer bebida de bienvenida: pisco sour, jugo o bebida.',
+      'Ubicar al grupo en su mesa. La mesa de cada viajero se busca en PGO → Quincho, por habitación o apellido.'
+    ],
+    mesa: [
+      'Lo nuestro son todos los drinks: copa de vino, agua, jugo, bebida, pisco sour. Nadie con la copa vacía.',
+      'Todo sale del bar, atendido por el bartender encargado del quincho: bebidas, pisco sour, jugos y también los vinos. Vamos al bar a buscar lo que pide el viajero.',
+      'Para el refill en mesa llevamos la botella con un lito, para limpiarla y servir sin gotear.'
+    ],
+    show: [
+      'Al empezar el show, comenzar a preparar el buffet de postres.',
+      'Desconchar y limpiar las mesas: retirar todos los platos sucios y dejar la mesa limpia antes del postre.',
+      'Cambiar el buffet de ensaladas por el de postres.',
+      'Invitar a pasar por el postre durante el show, no después de que termine.',
+      'El postre es autoservicio y suma café y té.'
     ]
   },
   // Bar: 5 sub-momentos (apertura, am, quincho, cierre, transversal).
