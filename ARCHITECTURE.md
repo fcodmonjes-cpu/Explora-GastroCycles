@@ -431,27 +431,33 @@ está listado; el Handbook lo corrigió el 2026-09-07); `apto_condicional` no tr
 el texto de la condición (hoy sale de las notas del Menú); el `LEEME` habla de
 "los tres del charqui" y sólo uno lleva charqui.
 
-### 3.5 Quincho: las mesas del evento (piloto, 2026-09-30)
+### 3.5 Quincho: las mesas del evento (piloto, armado en la página desde 2026-09-30)
 
 El quincho es periódico y tiene reparto de mesas. Hasta el 21-09 se armaba con
 una carpeta fuera del repo: el Reporte Geos transcrito de un PDF, un optimizador
-con los viajeros escritos a mano y tres generadores. Hoy son dos piezas:
+con los viajeros escritos a mano y tres generadores. Desde el 2026-09-30 **todo
+vive en la página**, en PGO → Quincho (tercera vista, siempre presente):
 
-**Afuera de la app, dentro del repo: `scripts/quincho.py`.** Lee el roster de
-`/viajeros/current` (con `historia` y `exp`, §4.1) y propone el reparto; escribe
-la **planilla** (.xlsx) y los **carteles** (HTML A4 plegable). La planilla es la
-fuente: lo que alguien cambia a mano queda **fijo** al recalcular (`rehacer`), y
-el recálculo mueve lo mínimo — avisa qué carteles reimprimir. El salón también
-se edita ahí (sumar mesas, reservar mesas unidas para un grupo). Quien no usa el
-Handbook tiene todo con la planilla y los carteles. Pasos y opciones en la
-cabecera del script.
+| Paso | Quién | Qué pasa |
+|---|---|---|
+| Armar | supervisor (PIN 9876, una vez por sesión) | noche, mesas, puestos, cabeceras; los grupos que no caben van unidos solos, cualquier familia puede pedir mesa propia → **Proponer** calcula sobre `/viajeros/current` y muestra un **borrador** |
+| Ajustar | supervisor | en el borrador se mueve gente sin escribir nada; **Ajustar salón** vuelve al formulario |
+| Publicar | supervisor | PUT de `/quincho/current`; desde ahí lo ven todos los teléfonos |
+| Servicio | cualquiera, sin PIN | buscar por hab, apellido, grupo o mesa; mover de mesa con su hab; marcar «no va» |
+| Recalcular | supervisor | entra quien llegó, sale quien se fue, lo movido a mano (`mov`) se respeta y el resto se queda salvo ganancia clara; dice qué carteles reimprimir |
+| Papel | cualquiera | **Carteles** (A4 plegable, logo como máscara de color elegible), **Listado** (por habitación + plano por mesa) y **Excel** (.xlsx generado en el navegador, sin dependencias: zip sin compresión + CRC32) |
 
-**Adentro de la app: la vista Quincho de PGO.** Tercera vista junto a Viajeros y
-Comedor, visible sólo con un quincho vigente (`publicar` → `/quincho/current`).
-Mismo buscador y numpad que Viajeros; tira del salón en orden físico, donde el
-ancho de cada casilla sigue a las mesas físicas unidas; cualquiera mueve a un
-viajero de mesa (sin PIN, decisión del owner) y `quincho.py bajar` trae esos
-cambios a la planilla. En la ficha de Viajeros aparece el chip «quincho · mesa N».
+El PC queda para una sola cosa, una sola vez: la regla `quincho` en la consola
+de Firebase. `scripts/quincho.py` queda de **respaldo** (mismo cálculo en
+Python, planilla y carteles desde la línea de comandos); el cálculo oficial es
+el de la página. Probado: con los mismos datos, las dos implementaciones dan
+las mismas mesas y las mismas métricas. Si divergen, manda la página.
+
+La vista usa el mismo buscador y numpad que Viajeros; la tira del salón va en
+orden físico y el ancho de cada casilla sigue a las mesas físicas unidas. En la
+ficha de Viajeros aparece el chip «quincho · mesa N». La nota de cada mesa («por
+qué están juntos») se escribe al publicar: después de un movimiento a mano
+puede quedar vieja hasta el próximo Recalcular.
 
 **El criterio, y cómo se calibró.** Afinidad = exploraciones compartidas con
 nombre, turno y día exactos (HOTEL no cuenta), con peso `1 + 2·½^días`; mismo

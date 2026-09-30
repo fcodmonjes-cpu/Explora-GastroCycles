@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-quincho.py — reparte a los viajeros en las mesas del quincho y produce lo que
-el servicio necesita: la planilla, los carteles y (piloto) la vista en el
-Handbook.
+quincho.py — RESPALDO. Desde el 2026-09-30 el quincho se arma, publica e
+imprime desde la página (PGO → Quincho, ARCHITECTURE §3.5), con el mismo
+cálculo portado a JavaScript. Este script queda para trabajar sin la app o
+desde la línea de comandos; si las dos versiones difieren, manda la página.
+
+Reparte a los viajeros en las mesas del quincho y produce lo que el servicio
+necesita: la planilla, los carteles y la publicación en el Handbook.
 
 El criterio es el del quincho del 21-09-2026: se sientan juntos los que
 compartieron exploraciones — misma exploración, mismo turno, mismo día —, y
