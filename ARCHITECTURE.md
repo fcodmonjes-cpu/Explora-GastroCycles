@@ -118,7 +118,7 @@ de tabs:
 │  Comedor Nicolás · Sebastián · Diego · Viviana              │
 │  Apoyo   Victor                                              │
 ├─────────────────────────────────────────────────────────────┤
-│ [Menú] [Vinos] [PGO] [Comande] [Café]                       │
+│ [Menú] [Vinos] [PGO] [Comande] [Café] [Checklist]           │
 └─────────────────────────────────────────────────────────────┘
                     (contenido de la tab activa)
 ```
@@ -137,6 +137,7 @@ un `innerHTML`— es el patrón **park/place** de §5.
 | **Café** | Manual de bebidas + modo servicio (mesero / barista) | Estático (`COFFEE_DATA`) + Firebase `/orders` | 555 (mesero) · 999 (barista) |
 | **E-Check** | Comandera por mesa. **Dos vistas, a propósito distintas:** ingresar (fila de asientos, sin mapa) y entregar (la comanda completa ES el mapa de la mesa) | Firebase `/comandas/{date}/{id}` | 666 |
 | **Viajeros** | Observaciones de dieta por hab, **transcritas verbatim** (los tags derivados quedan en la ficha, no en la portada) | Firebase `/viajeros/current` (read-only; escribe `scripts/sync_viajeros.py`) | — |
+| **Checklist** | Tareas pre-servicio del equipo GEO (Montaje · Pasillo · Quincho) y del Bar, con marca, comentario y fotos. Visible desde el 2026-09-30 como sexta tab, sin destacar; antes era un botón sobre la fila y estuvo oculto desde el 2026-08-01 | Firebase `checklist_*` | 9876 (editar) |
 
 Los datos del Café (módulo Service Mode) y los del E-Check tienen su
 propia capa de Firebase. Del header, **staffing** escribe/lee Firebase; la

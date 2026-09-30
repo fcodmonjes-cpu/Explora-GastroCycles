@@ -1102,8 +1102,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .tab.active { background: var(--gold); color: #15110d; border-color: var(--gold); font-weight: 500; }
 /* Override scopeado: las tabs principales son editoriales (underline), no tarjetas. */
 .main-tabs .tab { flex: 0 0 auto; background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0; /* 13px->10px de padding lateral: con 13 la tira medía 377px contra 358 de
-     ancho y se volvía scroller. Con 10 entra en UNA fila en los tres idiomas
-     hasta 390px, y el wrap cubre lo que venga. */ padding: 11px 10px 9px; font-family: 'Courier Prime','Courier New',monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-secondary); white-space: nowrap; }
+     ancho y se volvía scroller. Con 10 entraba en UNA fila hasta 390px.
+     (2026-09-30) Con Checklist como sexta tab medía 381px: 10->7px y el
+     tracking 0,10->0,08em la dejan en ~338px, UNA fila desde 375px. El wrap
+     cubre lo más angosto. */ padding: 11px 7px 9px; font-family: 'Courier Prime','Courier New',monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); white-space: nowrap; }
 .main-tabs .tab:hover { background: none; color: #c07d2a; }
 .main-tabs .tab.active { background: none; border-color: transparent; border-bottom-color: #c07d2a; color: #c07d2a; font-weight: 400; box-shadow: none; }
 /* (2026-06-09) Las clases .tab-pairings / .tab-premium quedaron sin uso al
@@ -1769,25 +1771,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cf-btn-primary { background:rgba(192,125,42,0.85); color:#fff; } .cf-btn-primary:hover { background:rgba(192,125,42,1); }
 .cf-btn-ghost { background:none; border:0.5px solid var(--border); color:var(--text-secondary); } .cf-btn-ghost:hover { border-color:rgba(192,125,42,0.4); color:#c07d2a; }
 
-/* ── Checklist & Protocolos: feature button above the main tabs row ───── */
-/* Sits between the ops-strip (staffing + desserts) and .main-tabs. Reads as
-   the operational entry-point for the GEO team — distinct enough from the
-   reference tabs (menu, wines, cocktails…) that it doesn't get lost in the
-   row, but coherent with the program's palette (gold accent, monospace) so
-   it doesn't feel pasted in. */
-/* Acceso al Checklist & Protocolos: oculto POR DEFECTO (evita cualquier
-   flash en producción) y revelado solo en hosts de desarrollo —staging,
-   previews de Vercel y local— vía la clase body.chk-access-on que pone el
-   boot (ver el gate por host más abajo). En producción (los dominios de
-   main: gastrocycles.vercel.app / .company) queda oculto y el módulo sigue
-   latente e inalcanzable. Cuando el módulo esté listo para el staff,
-   publicar = borrar el gate de host del boot y dejarlo siempre visible. */
-/* 2026-08-01 — OCULTO EN TODOS LOS ENTORNOS. Antes se revelaba en hosts de
-   desarrollo vía body.chk-access-on; ese destape se retiró para que staging
-   modele main tal cual. El módulo sigue latente: para volver a publicarlo,
-   restaurar la regla `body.chk-access-on #tab-btn-checklist { display:flex; }`
-   (el boot todavía pone la clase) o dejarlo visible sin gate. */
-#tab-btn-checklist { display:none; }
+
 
 /* ── Banner PGO (home) ────────────────────────────────────────────────────
    Deliberadamente NO son las tarjetas de la tab: acá manda la ops-strip, así
@@ -1854,32 +1838,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 }
 /* Guardado tras hover:hover — en iOS el hover se queda pegado tras el tap. */
 
-.checklist-feature-btn {
-  display:flex; align-items:center; justify-content:center; gap:10px;
-  width:100%; box-sizing:border-box;
-  margin:0 0 14px; padding:12px 18px;
-  background:rgba(192,125,42,0.045);
-  border:0.5px solid rgba(192,125,42,0.24);
-  border-radius:10px;
-  font-family:'Courier Prime','Courier New',monospace;
-  font-size:12px; letter-spacing:0.14em; text-transform:uppercase;
-  color:#b3884f;
-  cursor:pointer;
-  transition:background .18s, border-color .18s, color .18s, transform .12s;
-}
-.checklist-feature-btn:hover {
-  background:rgba(192,125,42,0.09);
-  border-color:rgba(192,125,42,0.42);
-  color:#cc9a5c;
-}
-.checklist-feature-btn:active { transform:translateY(1px); }
-.checklist-feature-btn.active {
-  background:rgba(192,125,42,0.13);
-  border-color:rgba(192,125,42,0.55);
-  color:#d6a464;
-}
-.checklist-feature-icon { font-size:14px; opacity:0.7; line-height:1; }
-.checklist-feature-label { font-weight:500; }
+
 
 /* ── Checklist module ────────────────────────────────────────────────── */
 .chk-root { padding:8px 0 24px; }
@@ -2791,14 +2750,7 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
     </div>
   </div>
 
-  <!-- Checklist & Protocolos: lives above the main tabs row, as a destacado.
-       It is still wired via setTab('checklist'), but visually separated so it
-       reads as the operational entry-point for the GEO team rather than just
-       another reference tab. -->
-  <button class="checklist-feature-btn" id="tab-btn-checklist" onclick="setTab('checklist',this)">
-    <span class="checklist-feature-icon" aria-hidden="true">◇</span>
-    <span class="checklist-feature-label">Checklist &amp; Protocolos</span>
-  </button>
+  
 
   <!-- Banner PGO — ocupa el lugar que dejó el botón de Checklist. Una sola
        línea mono, sin cajas: el mismo lenguaje de la ops-strip, no las
@@ -2832,6 +2784,10 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
          cruzarse con la isla flotante del selector de idioma. -->
     <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol" hidden>Rol</button>
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
+    <!-- Checklist (2026-09-30): una tab más, al final de la fila. Antes era un
+         botón destacado sobre las tabs y estuvo oculto desde el 2026-08-01;
+         el owner lo quiso visible pero sin destacar, junto a Café. -->
+    <button class="tab" onclick="setTab('checklist',this)" id="tab-btn-checklist">Checklist</button>
   </div>
 
   <!-- MENÚS TAB — desde el cambio de menú 2026 la vista corta primero por
@@ -4332,6 +4288,7 @@ const CHK_SECTION_BEHAVIOR = {
 // stations once, preserving supervisor edits.
 const CHK_STRUCTURE_SEED = {
   version: 3,
+  migraciones: ['2026-09-30-repaso-oculto'],
   sections: [
     { key:'montaje', label:'Montaje', active:true, moments:[
         { key:'desayuno', label:'Desayuno', stations:[
@@ -4359,7 +4316,9 @@ const CHK_STRUCTURE_SEED = {
           nota:'Ya sentados los viajeros, cada uno toma su plaza y se dedica a ofrecer vinos dentro de ella. Parrilla y buffet de ensaladas son autoservicio: el viajero va, nosotros no llevamos comida.' },
         { key:'show',      label:'Show', destaca:true,
           nota:'Ventana de trabajo. El show no es una pausa: es el momento en que trabajamos. Mientras los viajeros disfrutan la música y el baile, nosotros movemos todo en paralelo para llevar buen pulso del servicio.' } ] },
-    { key:'repaso', label:'Repaso', active:false, moments:[] },
+    // Repaso: oculto desde el 2026-09-30 (placeholder vacío que partía la fila
+    // de secciones en dos). Oculto, no borrado: el 👁 del editor lo devuelve.
+    { key:'repaso', label:'Repaso', active:false, moments:[], hidden:true },
     { key:'bar', label:'Bar', active:true, moments:[
         { key:'apertura',    label:'Apertura'      },
         { key:'am',          label:'AM / Almuerzo' },
@@ -4410,7 +4369,23 @@ function chkBuildSections(structure){
 function chkMigrateStructure(structure){
   if (!structure || !Array.isArray(structure.sections)) return structure;
   const porVersion = chkMigrateStructureVersion(structure);
-  return chkSumarFaltantes(porVersion);
+  return chkMigracionesPuntuales(chkSumarFaltantes(porVersion));
+}
+// Cambios de una sola vez sobre el doc guardado, cada uno con su id anotado en
+// `migraciones` para no repetirse. Sirve para lo que el supervisor puede
+// revertir (ocultar una sección): se aplica una vez y después manda él.
+const CHK_MIGRACIONES = [
+  { id:'2026-09-30-repaso-oculto',
+    aplicar: st => Object.assign({}, st, { sections: st.sections.map(sec =>
+      sec.key === 'repaso' ? Object.assign({}, sec, { hidden:true }) : sec) }) }
+];
+function chkMigracionesPuntuales(structure){
+  const hechas = Array.isArray(structure.migraciones) ? structure.migraciones : [];
+  const pendientes = CHK_MIGRACIONES.filter(m => hechas.indexOf(m.id) < 0);
+  if (!pendientes.length) return structure;
+  let out = structure;
+  pendientes.forEach(m => { out = m.aplicar(out); });
+  return Object.assign({}, out, { migraciones: hechas.concat(pendientes.map(m => m.id)) });
 }
 // Suma lo que el seed tiene y el doc guardado no, POR CLAVE y no por versión.
 // La versión no sirve para esto: chkSaveStructure la sube en cada guardado del
@@ -4853,7 +4828,7 @@ const UI = {
     cmdAddSeat:'Agregar comensal', cmdRemoveSeat:'Quitar comensal', cmdSwapSeat:'Cambiar de puesto', cmdSwapPick:'tocá el asiento destino', cmdModoOtro:'Fuera de carta', cmdTapSeat:'Tocá un asiento para tomar su pedido',
     cmdServiceUnit:'D', /* short for cycle day */
     // Checklist module
-    tabChecklist:'Checklist & Protocolos',
+    tabChecklist:'Checklist',
     chkSectionPasillo:'Pasillo', chkSectionMontaje:'Montaje', chkSectionRepaso:'Repaso', chkSectionBar:'Bar',
     chkSectionComingTag:'próx.',
     chkPhaseDesayuno:'Post-Desayuno', chkPhaseAlmuerzo:'Post-Almuerzo', chkPhaseCena:'Post-Cena',
@@ -5100,7 +5075,6 @@ const UI = {
     cmdAddSeat:'Add guest', cmdRemoveSeat:'Remove guest', cmdSwapSeat:'Change seat', cmdSwapPick:'tap the destination seat', cmdModoOtro:'Off menu', cmdTapSeat:'Tap a seat to take its order',
     cmdServiceUnit:'D',
     // Checklist module
-    tabChecklist:'Checklist & Protocols',
     chkSectionPasillo:'Hallway', chkSectionMontaje:'Setup', chkSectionRepaso:'Final pass', chkSectionBar:'Bar',
     chkSectionComingTag:'soon',
     chkPhaseDesayuno:'After Breakfast', chkPhaseAlmuerzo:'After Lunch', chkPhaseCena:'After Dinner',
@@ -5327,7 +5301,6 @@ const UI = {
     cmdAddSeat:'Adicionar hóspede', cmdRemoveSeat:'Remover hóspede', cmdSwapSeat:'Trocar de lugar', cmdSwapPick:'toque no assento de destino', cmdModoOtro:'Fora do menu', cmdTapSeat:'Toque num assento para fazer o pedido',
     cmdServiceUnit:'D',
     // Checklist module
-    tabChecklist:'Checklist & Protocolos',
     chkSectionPasillo:'Corredor', chkSectionMontaje:'Montagem', chkSectionRepaso:'Revisão', chkSectionBar:'Bar',
     chkSectionComingTag:'em breve',
     chkPhaseDesayuno:'Pós-Café', chkPhaseAlmuerzo:'Pós-Almoço', chkPhaseCena:'Pós-Jantar',
@@ -5799,11 +5772,8 @@ function setLang(lang, el) {
   if (rolBtn) rolBtn.textContent = t('tabRol');
   const vjBtn = document.getElementById('tab-btn-viajeros');
   if (vjBtn) vjBtn.textContent = t('tabViajeros');
-  // The Checklist button has internal structure (icon + label spans), so we
-  // can't just overwrite its textContent — that would drop the icon. Update
-  // the .checklist-feature-label span instead.
-  const chkBtnLabel = document.querySelector('#tab-btn-checklist .checklist-feature-label');
-  if (chkBtnLabel) chkBtnLabel.textContent = t('tabChecklist');
+  const chkBtn = document.getElementById('tab-btn-checklist');
+  if (chkBtn) chkBtn.textContent = t('tabChecklist');
   const mn = document.getElementById('momentos-notice-text');
   if (mn) mn.textContent = t('momentNotice');
   // Fire i18n hooks — modules that need to re-render their labels in the
@@ -5828,12 +5798,7 @@ function setTab(tab, el) {
   }
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
-  // The Checklist & Protocolos button lives outside .main-tabs (see HTML
-  // comment near tab-btn-checklist), so its active state must be managed
-  // explicitly here instead of by the selector above.
-  const chkBtn = document.getElementById('tab-btn-checklist');
-  if (chkBtn) chkBtn.classList.toggle('active', tab === 'checklist');
-  if (el && el !== chkBtn) el.classList.add('active');
+  if (el) el.classList.add('active');
   // D · Collapse the ops-strip (staffing + desserts) when the user is in
   // Checklist — the operator wants the task list above the fold, not the
   // staffing roster that they already know.
@@ -7524,23 +7489,7 @@ function openWineFromGuion(wid) {
 // the explicit render calls that used to live here.
 setLang(currentLang, document.querySelectorAll('.lang-btn')[['es','en','pt'].indexOf(currentLang)]);
 
-// Acceso al Checklist & Protocolos: visible solo en hosts de DESARROLLO
-// mientras el módulo está en construcción. Allowlist estricto (no blocklist):
-// se muestra únicamente en local, en la URL de staging y en deploys por
-// branch de Vercel. Cualquier otro host —incluida producción, sea cual sea
-// su dominio— queda OCULTO. Así el módulo sin terminar nunca se filtra a
-// prod aunque el dominio de producción cambie. Publicar = quitar este gate.
-(function(){
-  const h = location.hostname;
-  const CHK_DEV_HOSTS = [
-    'localhost', '127.0.0.1',
-    'explora-gastro-cycles-q2o3.vercel.app'   // staging (QA iPhone de Bruno)
-  ];
-  const isDev = h === '' || h.endsWith('.local')
-             || CHK_DEV_HOSTS.includes(h)
-             || /-git-/.test(h);              // deploys por branch de Vercel (feature/fix/staging)
-  if (isDev) document.body.classList.add('chk-access-on');
-})();
+
 
 // Día actual del ciclo de menú: lo SELECCIONA automáticamente al entrar
 // (acción proactiva, no solo sugerencia) y le deja una marca persistente
