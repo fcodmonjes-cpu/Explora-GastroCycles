@@ -2351,6 +2351,11 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .qn-acciones { display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin:16px 0 4px;
   padding-top:12px; border-top:0.5px solid var(--border); }
 .qn-acc-sep { flex:1 1 auto; }
+.qn-swap-btn { flex:0 0 auto; width:38px; height:38px; background:var(--bg-secondary); border:0.5px solid var(--border-md);
+  border-radius:var(--radius-md); color:var(--text-secondary); font-size:17px; cursor:pointer; touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent; }
+.qn-swap-btn.on { color:var(--gold); border-color:var(--gold); background:var(--gold-light); }
+.qn-swap { margin:4px 0 8px; padding-bottom:8px; border-bottom:0.5px dotted var(--border-md); }
 .qn-mover-nova { font-family:'Courier Prime',monospace; font-size:11px; padding:0 10px; color:var(--text-tertiary); }
 .qn-per.is-nova .qn-per-nom { color:var(--text-tertiary); text-decoration:line-through; }
 .qn-m.is-nova { background:var(--bg-secondary); color:var(--text-tertiary); }
@@ -4675,6 +4680,8 @@ let QN_MOVER    = null;   // pid con el selector de mesa abierto (uno a la vez)
 let QN_CON_HAB  = true;   // mover a toda la hab junta (lo normal: una pareja no se separa)
 let QN_FIRMA_DOC = '';    // firma del doc: el polling sólo repinta si algo cambió
 let QN_SUPER    = false;  // PIN de supervisor ya tecleado en esta sesión (armar/publicar)
+let QN_SWAP     = null;   // mesa con el selector de "intercambiar con…" abierto
+let QN_LOGO     = '';     // logo como data URL, precargado: los carteles lo llevan adentro
 let QN_ARMADO   = null;   // { modo:'nuevo'|'recalcular', paso:'pin'|'form'|'calc'|'borrador'|'error', pin, cfg, borrador, resumen, error }
 
 // ── Ventanas de servicio (para el conteo por hora) ──────────────────────────
@@ -4970,6 +4977,7 @@ const UI = {
     qnCambios:'{c} cambian de mesa · carteles a reimprimir: mesa {l}', qnSinCambios:'Nadie cambia de mesa.',
     qnCarteles:'Carteles', qnListado:'Listado', qnExcel:'Excel',
     qnNoVa:'no va', qnNoVan:'No van',
+    qnIntercambiar:'Intercambiar mesa', qnIntercambiarCon:'Toda la mesa {n} cambia de lugar con la mesa…',
     qnPopup:'El navegador bloqueó la ventana: permití ventanas emergentes para imprimir',
     qnErrPublicar:'La base no aceptó la publicación (HTTP {s}). Si es 401, falta la regla «quincho» en Firebase.',
     qnErrBloque:'No hay {k} mesas seguidas libres para {g}: sumá mesas.',
@@ -11235,6 +11243,55 @@ async function qnMoverA(pid, n){
   }
 }
 
+// Intercambiar dos mesas completas: los de la A pasan a la B y viceversa. Con
+// la gente viajan su título, su nota y su marca de grupo (describen a las
+// personas); los puestos y las mesas físicas se quedan, son del salón. Si un
+// grupo de 14 cae en una mesa de 6, se permite y el conteo lo muestra.
+function qnAbrirSwap(n){ QN_SWAP = (QN_SWAP === n) ? null : n; QN_MOVER = null; vjRenderBody(); }
+async function qnIntercambiar(a, b){
+  QN_SWAP = null;
+  if (a === b){ vjRenderBody(); return; }
+  const d = qnDoc();
+  const asig = d.asig || {};
+  const ts = Date.now();
+  const cambios = {}, antes = [];
+  Object.keys(asig).forEach(pid => {
+    const v = asig[pid];
+    if (!v || (v.m !== a && v.m !== b)) return;
+    antes.push([pid, v.m, v.mov]);
+    v.m = (v.m === a) ? b : a; v.mov = ts;
+    cambios[`asig/${pid}/m`] = v.m; cambios[`asig/${pid}/mov`] = ts;
+  });
+  const ma = d.mesas && d.mesas[a], mb = d.mesas && d.mesas[b];
+  const CAMPOS = ['titulo', 'nota', 'grupo', 'reservada'];
+  const previo = {};
+  if (ma && mb) CAMPOS.forEach(k => {
+    previo[k] = [ma[k], mb[k]];
+    const va = ma[k], vb = mb[k];
+    ma[k] = vb; mb[k] = va;
+    const def = k === 'grupo' ? false : '';
+    cambios[`mesas/${a}/${k}`] = (ma[k] == null) ? def : ma[k];
+    cambios[`mesas/${b}/${k}`] = (mb[k] == null) ? def : mb[k];
+  });
+  QN_MESA = b;
+  vjSetSearchValSilencioso('');
+  vjRenderBody();
+  if (qnEsBorrador()) return;
+  try {
+    const resp = await fetch(qnUrl(), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cambios)
+    });
+    const out = await resp.json().catch(() => null);
+    if (!resp.ok || !out || out.error) throw new Error('HTTP ' + resp.status);
+    qnGuardarLocal(QN_DATA);
+  } catch(e){
+    antes.forEach(([pid, m, mov]) => { asig[pid].m = m; if (mov) asig[pid].mov = mov; else delete asig[pid].mov; });
+    if (ma && mb) CAMPOS.forEach(k => { ma[k] = previo[k][0]; mb[k] = previo[k][1]; });
+    vjRenderBody();
+    comandaAvisoSinGuardar('qnSinGuardar');
+  }
+}
+
 // ══ El cálculo (port de scripts/quincho.py) ═══════════════════════════════
 const QN_OPT = {
   parcial:     0.35,  // misma exploración y turno en otro vehículo (Astronomia vs Astronomia-2)
@@ -11751,6 +11808,19 @@ async function qnPublicar(){
 }
 
 // ══ Papel: carteles, listado y Excel ══════════════════════════════════════
+// El logo va DENTRO del html como data URL. Hasta el 2026-09-30 se pedía por
+// URL a /logo-explora-white.png, que el .gitignore (*.png) dejaba fuera del
+// deploy: en local salía, en staging no. assets/ sí se versiona.
+const QN_LOGO_SRC = 'assets/logo-explora-mascara.png';
+let QN_LOGO_PIDIENDO = false;
+function qnPrecargarLogo(){
+  if (QN_LOGO || QN_LOGO_PIDIENDO) return;
+  QN_LOGO_PIDIENDO = true;
+  fetch(QN_LOGO_SRC).then(r => r.ok ? r.blob() : Promise.reject(r.status)).then(b => new Promise(ok => {
+    const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.readAsDataURL(b);
+  })).then(u => { QN_LOGO = u; }).catch(() => {}).finally(() => { QN_LOGO_PIDIENDO = false; });
+}
+function qnLogoUrl(){ return QN_LOGO || (location.origin + '/' + QN_LOGO_SRC); }
 function qnAbrirHtml(html){
   const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
   const w = window.open(url, '_blank');
@@ -11785,7 +11855,7 @@ function qnCarteles(){
   };
   const paginas = usadas.map(m => `<section class="hoja"><div class="mitad invertida">${cara(m)}</div>
     <div class="pliegue"></div><div class="mitad">${cara(m)}</div></section>`).join('');
-  const logo = location.origin + '/logo-explora-white.png';
+  const logo = qnLogoUrl();
   qnAbrirHtml(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Carteles · Quincho ${qnFechaTxt(doc.fecha)}</title>
@@ -11813,7 +11883,7 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:30pt
 .cara.grande h1{font-size:52pt;letter-spacing:.01em}
 .grupo{font-size:14pt;color:var(--suave)}
 .habs{font-size:10.5pt;color:var(--ambar);font-weight:600;margin-top:2.5mm;letter-spacing:.02em}
-.logo{width:15mm;height:15mm;margin:11mm auto 0;background:var(--logo);-webkit-mask:url(${logo}) center/contain no-repeat;mask:url(${logo}) center/contain no-repeat}
+.logo{width:15mm;height:15mm;margin:11mm auto 0;background:var(--logo);-webkit-mask:url("${logo}") center/contain no-repeat;mask:url("${logo}") center/contain no-repeat}
 .cara.grande .logo{width:17mm;height:17mm;margin-top:14mm}
 .lista{display:inline-block;text-align:left}
 .u{display:flex;gap:4mm;padding:1.1mm 0;font-size:11.5pt;line-height:1.25}
@@ -11868,12 +11938,15 @@ td.h{width:14mm;font-weight:700;color:#B5832B} td.m{width:16mm;font-weight:700;f
 .cab .n{font-weight:700;font-size:13pt;color:#B5832B} .cab .c{margin-left:auto;color:#7A7267}
 .u{font-size:9.5pt;padding:.5mm 0} .u .h{display:inline-block;width:12mm;font-weight:700;color:#B5832B}
 .nota{font-size:8.5pt;color:#7A7267;font-style:italic;margin-top:1mm}
-.imp{position:fixed;top:10px;right:10px;padding:7px 14px;background:#B5832B;color:#fff;border:0;border-radius:4px;font:inherit;cursor:pointer}
+.imp{position:fixed;bottom:12px;right:12px;padding:9px 16px;background:#B5832B;color:#fff;border:0;border-radius:4px;font:inherit;cursor:pointer;box-shadow:0 2px 8px #0003}
+.cabeza{display:flex;align-items:flex-start;justify-content:space-between;gap:6mm}
+.cabeza img{width:14mm;height:auto;flex:0 0 auto}
 @media print{.imp{display:none}} h2.plano-t{break-before:page}
 </style></head><body>
 <button class="imp" onclick="window.print()">Imprimir</button>
-<h1>Quincho · ${qnFechaTxt(doc.fecha)}</h1>
-<div class="sub">${qnTodos().filter(p => p.m).length} viajeros · salón de izquierda a derecha: ${orden}</div>
+<div class="cabeza"><div><h1>Quincho · ${qnFechaTxt(doc.fecha)}</h1>
+<div class="sub">${qnTodos().filter(p => p.m).length} viajeros · salón de izquierda a derecha: ${orden}</div></div>
+<img src="${qnLogoUrl()}" alt="explora"></div>
 <h2>Por habitación</h2><table><tr><th>Hab</th><th>Viajero</th><th>Mesa</th></tr>${filas}</table>
 <h2 class="plano-t">Por mesa</h2><div class="plano">${plano}</div>
 </body></html>`);
@@ -12034,7 +12107,14 @@ function qnTarjetaMesa(m){
           <div class="qn-mesa-tit">${vjEsc(qnTitulo(m.n)) || '—'}</div>
           <div class="qn-mesa-sub">${gente.length}/${m.puestos} · ${vjEsc(qnPosTxt(m))}${m.fisicas > 1 ? ' · ' + t('qnUnidas').replace('{n}', m.fisicas) : ''}</div>
         </div>
+        ${gente.length ? `<button type="button" class="qn-swap-btn${QN_SWAP === m.n ? ' on' : ''}" onclick="qnAbrirSwap(${m.n})"
+          aria-label="${vjEsc(t('qnIntercambiar'))}" title="${vjEsc(t('qnIntercambiar'))}">⇄</button>` : ''}
       </div>
+      ${QN_SWAP === m.n ? `<div class="qn-mover qn-swap">
+        <div class="qn-mover-lbl">${t('qnIntercambiarCon').replace('{n}', m.n)}</div>
+        <div class="qn-mover-mesas">${qnMesas().filter(x => x.n !== m.n).map(x => `
+          <button type="button" class="qn-mover-m" onclick="qnIntercambiar(${m.n},${x.n})">${x.n}</button>`).join('')}</div>
+      </div>` : ''}
       ${gente.map(p => qnFilaPersona(p, false)).join('') || `<div class="qn-libre">${t('qnLibre')}</div>`}
       ${m.nota ? `<div class="qn-nota">${vjEsc(m.nota)}</div>` : ''}
     </div>`;
@@ -12118,6 +12198,7 @@ function qnRenderBorradorHead(){
   </div>`;
 }
 function qnRender(){
+  qnPrecargarLogo();
   const A = QN_ARMADO;
   if (A && A.paso === 'pin')  return qnRenderPin();
   if (A && A.paso === 'form') return qnRenderForm();

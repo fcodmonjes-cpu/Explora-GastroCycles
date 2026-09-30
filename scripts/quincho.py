@@ -737,7 +737,7 @@ def leer_planilla(ruta):
 
 # ── Carteles ──────────────────────────────────────────────────────────────────
 def logo_data_uri():
-    ruta = os.path.join(REPO, "logo-explora-white.png")
+    ruta = os.path.join(REPO, "assets", "logo-explora-mascara.png")   # versionado; el de la raíz lo ignora *.png
     with open(ruta, "rb") as f:
         return "data:image/png;base64," + base64.b64encode(f.read()).decode()
 
