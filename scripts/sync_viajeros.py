@@ -2860,7 +2860,11 @@ _RX_EXP_CORTE = re.compile(r"(?=(?:%s)(?:\s|$))" % "|".join(_TURNOS))
 _RX_EXP_TURNO = re.compile(r"^(%s)(?:\s|$)" % "|".join(_TURNOS))
 # Cada entrada del histórico termina en "(TURNO DD-MM)". El nombre es todo lo
 # que va antes, sin comerse el paréntesis anterior: por eso el no-codicioso.
-_RX_HIST_ITEM = re.compile(r"([^()]+?)\s*\(\s*(AM|PM)\s+(\d{1,2}-\d{1,2})\s*\)", re.I)
+# Los turnos son los mismos de _TURNOS. Hasta el 2026-09-30 esta regex decía
+# sólo AM|PM y las entradas NOC y FULL se perdían SIN aviso: como algo del
+# histórico sí parseaba, tampoco caía a historiaTxt. Al viajero de la hab 44
+# le quedaban 2 de 5 exploraciones, y se le borraba justo la Astronomía.
+_RX_HIST_ITEM = re.compile(r"([^()]+?)\s*\(\s*(%s)\s+(\d{1,2}-\d{1,2})\s*\)" % "|".join(_TURNOS), re.I)
 
 
 def parse_exp(texto):
