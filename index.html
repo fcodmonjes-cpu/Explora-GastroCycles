@@ -2284,6 +2284,65 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
   text-transform:uppercase; color:var(--text-tertiary); border-bottom:1.5px solid transparent;
   -webkit-tap-highlight-color:transparent; }
 .vj-vista.on { color:var(--gold); border-bottom-color:var(--gold); }
+/* ── Quincho (piloto 2026-09-30) ── Sólo variables de la paleta: la mesa de
+   grupo se distingue por el ANCHO (sigue a las mesas físicas unidas) y por un
+   borde doble, no por un color nuevo. */
+.qn-head { font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em;
+  color:var(--text-secondary); margin:0 0 0.8rem; }
+.qn-offline { margin-left:8px; color:var(--coral); }
+.qn-salon-lbl { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--text-tertiary); margin-bottom:5px; }
+.qn-tira { display:flex; gap:3px; margin:0 0 1rem; }
+.qn-casilla { flex:1 1 0; min-width:0; padding:7px 0 5px; background:var(--bg-secondary);
+  border:0.5px solid var(--border-md); border-radius:6px; cursor:pointer; text-align:center;
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.qn-casilla.is-grupo { border:1.5px double rgba(186,117,23,0.55); }
+.qn-casilla.on { background:var(--gold); border-color:var(--gold); }
+.qn-casilla-n { display:block; font-family:'Cormorant Garamond',serif; font-size:19px; line-height:1; color:var(--text); }
+/* Cifras de caja alta: las de estilo antiguo de Cormorant hacen que el 1 se lea como una I. */
+.qn-casilla-n, .qn-m, .qn-mover-m { font-variant-numeric:lining-nums; font-feature-settings:'lnum' 1; }
+.qn-casilla-c { display:block; font-family:'Courier Prime',monospace; font-size:9px; color:var(--text-tertiary); margin-top:3px; }
+.qn-casilla-c.is-lleno { color:var(--coral); }
+.qn-casilla.on .qn-casilla-n, .qn-casilla.on .qn-casilla-c { color:#15110d; }
+.qn-m { flex:0 0 auto; width:42px; height:42px; border-radius:var(--radius-md); background:var(--gold);
+  color:#15110d; display:flex; align-items:center; justify-content:center;
+  font-family:'Cormorant Garamond',serif; font-size:26px; line-height:1; }
+.qn-m.is-grupo { background:var(--gold-light); color:var(--gold); border:1.5px double var(--gold); }
+.qn-per { display:flex; align-items:flex-start; gap:11px; background:var(--surface); border:0.5px solid var(--border);
+  border-radius:var(--radius-md); padding:10px 12px; margin-bottom:8px; cursor:pointer; }
+.qn-per.is-abierto { border-color:var(--gold); }
+.qn-per-main { flex:1; min-width:0; }
+.qn-per-nom { font-size:15px; color:var(--text); line-height:1.25; }
+.qn-per-sub { font-family:'Courier Prime',monospace; font-size:11px; color:var(--gold); margin-top:3px; }
+.qn-per-con { font-family:'Courier Prime',monospace; font-size:10.5px; color:var(--text-tertiary); margin-top:4px; line-height:1.45; }
+.qn-per-hab { flex:0 0 40px; font-family:'Courier Prime',monospace; font-size:12px; font-weight:700; color:var(--gold); padding-top:1px; }
+.qn-mesa .qn-per { background:none; border:none; border-bottom:0.5px dotted var(--border-md);
+  border-radius:0; padding:7px 0; margin:0; }
+.qn-mesa .qn-per.is-abierto { border-bottom-color:var(--gold); }
+.qn-mesa .qn-per-nom { font-size:14px; }
+.qn-mesa { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md);
+  padding:11px 12px 9px; margin-bottom:10px; }
+.qn-mesa-head { display:flex; align-items:center; gap:11px; margin-bottom:6px; }
+.qn-mesa-main { flex:1; min-width:0; }
+.qn-mesa-tit { font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--text); line-height:1.15; }
+.qn-mesa-sub { font-family:'Courier Prime',monospace; font-size:10.5px; color:var(--text-tertiary); margin-top:2px; }
+.qn-nota { font-family:'Courier Prime',monospace; font-size:10.5px; color:var(--text-tertiary); margin-top:8px; line-height:1.45; }
+.qn-libre { font-family:'Courier Prime',monospace; font-size:11px; color:var(--text-tertiary); padding:6px 0; }
+.qn-mover { margin-top:9px; cursor:default; }
+.qn-mover-lbl { font-family:'Courier Prime',monospace; font-size:9.5px; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--text-tertiary); margin-bottom:6px; }
+.qn-mover-mesas { display:flex; flex-wrap:wrap; gap:6px; }
+.qn-mover-m { min-width:42px; height:40px; background:var(--bg-secondary); border:0.5px solid var(--border-md);
+  border-radius:var(--radius-md); color:var(--text); font-family:'Cormorant Garamond',serif; font-size:19px;
+  cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.qn-mover-m.on { border-color:var(--gold); color:var(--gold); background:var(--gold-light); }
+.qn-mover-m:active { background:var(--gold); color:#15110d; }
+.qn-mover-hab { display:flex; align-items:center; gap:7px; margin-top:9px; font-family:'Courier Prime',monospace;
+  font-size:11px; color:var(--text-secondary); }
+.qn-mover-hab input { accent-color:var(--gold); width:16px; height:16px; }
+.vj-qn-chip { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px;
+  letter-spacing:0.06em; padding:2px 7px; border-radius:999px; margin-right:5px; cursor:pointer;
+  color:var(--gold); border:0.5px solid rgba(186,117,23,0.45); }
 .cmd-srv-t { display:block; font-family:'Courier Prime',monospace; font-size:8px;
   letter-spacing:0.08em; color:var(--coral); margin-top:2px; }
 .cmd-cap { border:0.5px solid var(--border); border-radius:var(--radius-md);
@@ -4516,6 +4575,19 @@ let VJ_NOTA_BUF            = '';     // lo tipeado, para que un re-render no lo 
 // una lista pre-armada hay que mantenerla cada vez que entra alguien nuevo.
 let VJ_FIRMA               = '';
 
+// ── Quincho (piloto, 2026-09-30) ────────────────────────────────────────────
+// Las mesas del quincho, publicadas por scripts/quincho.py en /quincho/current.
+// Viven como una tercera vista de PGO que sólo aparece con un quincho vigente.
+// STATE TOP porque viajerosRender (registrado en onI18nChange) las lee (§5).
+const QN_PATH   = 'quincho/current';
+const QN_LS     = 'ata.quincho.v1';   // copia local: en el quincho la señal se cae
+let QN_DATA     = null;   // { fecha, updatedAt, mesas:{n:{n,pos,puestos,fisicas,grupo,titulo,nota}}, asig:{pid:{m,hab,nombre,grupo}} }
+let QN_OFFLINE  = false;  // lo que está en pantalla es la copia local, no la base
+let QN_MESA     = null;   // mesa tocada en la tira del salón
+let QN_MOVER    = null;   // pid con el selector de mesa abierto (uno a la vez)
+let QN_CON_HAB  = true;   // mover a toda la hab junta (lo normal: una pareja no se separa)
+let QN_FIRMA_DOC = '';    // firma del doc: el polling sólo repinta si algo cambió
+
 // ── Ventanas de servicio (para el conteo por hora) ──────────────────────────
 // Un viajero cuenta para un servicio si ESTABA EN EL LODGE mientras el servicio
 // ocurría — no si "está hoy". Con las horas reales de PGO (inAt/outAt, que son
@@ -4788,6 +4860,13 @@ const UI = {
     cmdDiaDudoso:'El detalle por grupo no cuadra con los cubiertos de hoy que informa PGO: puede ser de otro día. Los totales de arriba sí son de hoy.',
     vjSyncOtherDay:'NO ES DE HOY · actualizando',
     vjVista_viajeros:'viajeros', vjVista_comedor:'comedor',
+    // Quincho (piloto, 2026-09-30) — EN/PT propuestas, a revisar.
+    vjVista_quincho:'quincho', qnTitulo:'quincho', qnSalon:'salón · de izquierda a derecha',
+    qnSearchPh:'hab, apellido, grupo o mesa…', qnPos:'{n}ª desde la izquierda', qnMesa:'Mesa',
+    qnChip:'quincho · mesa', qnCon:'con', qnMoverA:'mover a la mesa', qnConHab:'con toda la hab {hab} ({n})',
+    qnUnidas:'{n} mesas unidas', qnLibre:'mesa libre', qnNoHay:'No hay un quincho publicado',
+    qnSinResultados:'Nada para «{q}». Probá con el apellido o la habitación.',
+    qnOffline:'sin señal · copia guardada', qnSinGuardar:'El cambio de mesa NO se guardó — revisá la conexión',
     cmdOcupacion:'ocupación', cmdTurno:'Turno', cmdTurnos:'turnos',
     cmdEntraUno:'Entra en un solo montaje · quedan {n} lugares',
     cmdRemonte:'No entra de una vez · {n} montajes',
@@ -5015,6 +5094,12 @@ const UI = {
     cmdDiaDudoso:"The per-group breakdown doesn't match today's covers reported by PGO: it may be from another day. The totals above are today's.",
     vjSyncOtherDay:'NOT TODAY’S · refreshing',
     vjVista_viajeros:'guests', vjVista_comedor:'dining room',
+    vjVista_quincho:'quincho', qnTitulo:'quincho', qnSalon:'layout · left to right',
+    qnSearchPh:'room, surname, group or table…', qnPos:'no. {n} from the left', qnMesa:'Table',
+    qnChip:'quincho · table', qnCon:'with', qnMoverA:'move to table', qnConHab:'whole room {hab} ({n})',
+    qnUnidas:'{n} tables joined', qnLibre:'free table', qnNoHay:'No quincho published',
+    qnSinResultados:'Nothing for «{q}». Try the surname or the room number.',
+    qnOffline:'offline · saved copy', qnSinGuardar:'The table change was NOT saved — check the connection',
     cmdOcupacion:'occupancy', cmdTurno:'Seating', cmdTurnos:'seatings',
     cmdEntraUno:'Fits in one seating · {n} seats left',
     cmdRemonte:'Needs {n} seatings',
@@ -5242,6 +5327,12 @@ const UI = {
     cmdDiaDudoso:'O detalhe por grupo não bate com os talheres de hoje informados pelo PGO: pode ser de outro dia. Os totais acima são de hoje.',
     vjSyncOtherDay:'NÃO É DE HOJE · atualizando',
     vjVista_viajeros:'viajantes', vjVista_comedor:'salão',
+    vjVista_quincho:'quincho', qnTitulo:'quincho', qnSalon:'salão · da esquerda para a direita',
+    qnSearchPh:'quarto, sobrenome, grupo ou mesa…', qnPos:'{n}ª a partir da esquerda', qnMesa:'Mesa',
+    qnChip:'quincho · mesa', qnCon:'com', qnMoverA:'mover para a mesa', qnConHab:'com todo o quarto {hab} ({n})',
+    qnUnidas:'{n} mesas unidas', qnLibre:'mesa livre', qnNoHay:'Nenhum quincho publicado',
+    qnSinResultados:'Nada para «{q}». Tente o sobrenome ou o quarto.',
+    qnOffline:'sem sinal · cópia salva', qnSinGuardar:'A mudança de mesa NÃO foi salva — verifique a conexão',
     cmdOcupacion:'ocupação', cmdTurno:'Turno', cmdTurnos:'turnos',
     cmdEntraUno:'Cabe em uma montagem · restam {n} lugares',
     cmdRemonte:'Precisa de {n} montagens',
@@ -9666,7 +9757,7 @@ async function viajerosFetch(){
     VIAJEROS_LOAD_ERROR = true;
   }
   VIAJEROS_FETCHED_AT = Date.now();
-  await vjNotasFetch();   // el dato flexible, en su propio path
+  await Promise.all([vjNotasFetch(), qnFetch()]);   // el dato flexible y el quincho, en sus propios paths
   viajerosRender();
   pgoBannerRender();
 }
@@ -9899,6 +9990,9 @@ function vjStartTick(){
   VIAJEROS_TICK = setInterval(() => {
     if (currentTab !== 'viajeros') return vjStopTick();
     vjPaintUpdated();
+    // Con la vista Quincho abierta, lo que movió otro teléfono llega solo.
+    // No con el selector de mesa abierto: el repintado se lo cerraría en la mano.
+    if (VIAJEROS_VISTA === 'quincho' && !QN_MOVER) qnFetch().then(qnRepintarSiCambio);
   }, 30000);
 }
 function vjStopTick(){
@@ -10387,7 +10481,12 @@ function vjRenderComedor(){
 function viajerosRender(){
   const root = document.getElementById('vj-root');
   if (!root) return;
-  if (!VIAJEROS_DATA){
+  // Sin un quincho vigente la vista no existe; sin viajeros (sin señal al
+  // abrir) el quincho igual se muestra desde su copia local — es el caso que
+  // la copia existe para cubrir.
+  if (VIAJEROS_VISTA === 'quincho' && !qnActivo()) VIAJEROS_VISTA = 'viajeros';
+  if (!VIAJEROS_DATA && qnActivo()) VIAJEROS_VISTA = 'quincho';
+  if (!VIAJEROS_DATA && !qnActivo()){
     root.innerHTML = `<div class="vj-empty">${t(VIAJEROS_LOAD_ERROR ? 'vjError' : 'vjEmpty')}</div>`;
     return;
   }
@@ -10400,6 +10499,7 @@ function viajerosRender(){
         <div class="vj-vistas">
           <button type="button" class="vj-vista" id="vj-vista-viajeros" onclick="vjSetVista('viajeros')"></button>
           <button type="button" class="vj-vista" id="vj-vista-comedor"  onclick="vjSetVista('comedor')"></button>
+          <button type="button" class="vj-vista" id="vj-vista-quincho"  onclick="vjSetVista('quincho')" hidden></button>
         </div>
         <div class="vj-stats" id="vj-stats"></div>
         <div class="search-bar vj-search-bar">
@@ -10421,24 +10521,33 @@ function viajerosRender(){
   document.getElementById('vj-search').placeholder   = t('vjSearchPh');
   vjSyncNumpad();
   const esCom = VIAJEROS_VISTA === 'comedor';
+  const esQn  = VIAJEROS_VISTA === 'quincho';
   // Buscador, numpad y chips son del corcho de viajeros: en Comedor no aplican
-  // y se ocultan en vez de quedar inertes ocupando pantalla.
+  // y se ocultan en vez de quedar inertes ocupando pantalla. El Quincho SÍ usa
+  // el buscador y el numpad — es el mismo gesto: "¿dónde va la 22?".
   const barra = document.querySelector('.vj-search-bar');
   if (barra) barra.hidden = esCom;
   document.getElementById('vj-numpad').hidden = esCom || !VIAJEROS_NUMPAD_OPEN;
-  document.getElementById('vj-obs').hidden    = esCom;
+  document.getElementById('vj-obs').hidden    = esCom || esQn;
   // Las celdas de servicio de Viajeros y las del Comedor son la MISMA idea con
   // números distintos (presencia real vs cubiertos de PGO). Mostrarlas juntas
   // daba dos filas casi iguales en la misma pantalla, que es justo lo que
   // veníamos corrigiendo. En Comedor manda la del Comedor.
-  document.getElementById('vj-stats').hidden = esCom;
-  ['viajeros','comedor'].forEach(v => {
+  document.getElementById('vj-stats').hidden = esCom || esQn;
+  ['viajeros','comedor','quincho'].forEach(v => {
     const b = document.getElementById('vj-vista-' + v);
     if (b){ b.textContent = t('vjVista_' + v); b.classList.toggle('on', VIAJEROS_VISTA === v); }
   });
-  vjRenderStats();
+  // Quincho aparece sólo con uno vigente; viajeros y comedor, sólo con datos de PGO.
+  document.getElementById('vj-vista-quincho').hidden  = !qnActivo();
+  document.getElementById('vj-vista-viajeros').hidden = !VIAJEROS_DATA;
+  document.getElementById('vj-vista-comedor').hidden  = !VIAJEROS_DATA;
+  if (esQn) document.getElementById('vj-search').placeholder = t('qnSearchPh');
+  if (!esQn) vjRenderStats();
   if (esCom){
     document.getElementById('vj-body').innerHTML = vjRenderComedor();
+  } else if (esQn){
+    vjRenderBody();
   } else {
     vjRenderObs(); vjRenderBody();
   }
@@ -10745,7 +10854,7 @@ function vjTravelerRow(tr, today, opts){
         <div class="vj-detail-name">${vjEsc(tr.nombre)}${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
         <div class="vj-detail-meta">${tr.edad ?? '—'} ${t('vjYears')} · ${vjEsc(vjNacTexto(tr))} · <span class="vj-meta-mov">IN ${vjShortDate(tr.in)}${hIn ? ' ' + hIn : ''}</span> → <span class="vj-meta-mov ${outCls}">OUT ${vjShortDate(tr.out)}${hOut ? ' ' + hOut : ''}${tr.out === today ? ` · ${t('vjSaleHoy')}` : ''}</span>${inToday}</div>
         ${vjExpHtml(tr)}
-        <div class="vj-detail-tags">${vjCumpleChip(tr)}${vjTagChips(tr)}</div>
+        <div class="vj-detail-tags">${qnChip(tr)}${vjCumpleChip(tr)}${vjTagChips(tr)}</div>
         ${(tr.obs || '').trim() ? `<div class="vj-detail-obs">${vjEsc(tr.obs)}</div>` : ''}
         ${verHist ? vjHistHtml(tr) : ''}
         ${vjNotasBloque(tr)}
@@ -10762,6 +10871,7 @@ function vjRenderBody(){
   // nada era editable.
   const foco = document.activeElement;
   if (foco && foco.classList && foco.classList.contains('vj-nota-input')) return;
+  if (VIAJEROS_VISTA === 'quincho'){ el.innerHTML = qnRender(); QN_FIRMA_DOC = qnFirma(); return; }
   const filtered = VIAJEROS_FILTER || VIAJEROS_SEARCH.trim();
   let html = filtered ? vjRenderPersonas() : vjRenderHabs();
   if (VIAJEROS_HAB_OPEN) html += vjRenderHabModal();
@@ -10838,7 +10948,7 @@ function vjRenderPersonas(){
       ${vjFlag(tr.nac) ? `<span class="vj-person-flag">${vjFlag(tr.nac)}</span>` : vjAvatarEl(tr)}
       <div class="vj-person-main">
         <div class="vj-person-name">${vjEsc(tr.nombre)}<span class="vj-age">${tr.edad ?? ''}</span>${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
-        <div class="vj-person-tags">${vjCumpleChip(tr)}${vjTagChips(tr)}${vjOutChip(tr)}</div>
+        <div class="vj-person-tags">${qnChip(tr)}${vjCumpleChip(tr)}${vjTagChips(tr)}${vjOutChip(tr)}</div>
         ${(() => {
           // Si el resultado salió por una nota y no por el nombre, se muestra
           // cuál: si no, la persona aparece en la lista sin motivo visible.
@@ -10870,6 +10980,255 @@ function vjRenderHabModal(){
         ${rows}
       </div>
     </div>`;
+}
+
+// ── Quincho (piloto, 2026-09-30) ────────────────────────────────────────────
+// Las mesas del quincho: una tercera vista de PGO que existe sólo mientras hay
+// un quincho vigente (desde que se publica hasta el día siguiente).
+// Path:  /quincho/current — lo escribe scripts/quincho.py (`publicar`), un doc
+//        por evento, sobrescrito por el siguiente.
+// Shape: { fecha:'YYYY-MM-DD', updatedAt, mesas:{ n:{n,pos,puestos,fisicas,grupo,titulo,nota} },
+//          asig:{ pid:{ m, hab, nombre, grupo, mov? } } }
+// `asig` va por pid: el mismo ancla que las notas del equipo, así la mesa se
+// cruza con la ficha de Viajeros sin depender de la habitación.
+// Cualquiera mueve a un viajero de mesa (decisión del owner, 2026-09-30): sin
+// PIN, y lo ven los demás teléfonos en el próximo polling. La planilla del
+// script trae esos cambios de vuelta con `quincho.py bajar`.
+// SIN RED: copia en localStorage (QN_LS). La señal en el quincho se cae y el
+// service worker no cachea Firebase a propósito; la copia es sólo de este doc.
+// PRIVACIDAD: son nombres con su habitación. La app borra el doc de la base y
+// la copia local a los dos días del evento (purga eventual, como §4).
+// Mesas en Firebase: con claves 1..N la base las devuelve como ARRAY con un
+// null en el 0 — por eso qnMesas() filtra.
+
+function qnUrl(sufijo){ return `${CF_FIREBASE_CONFIG.databaseURL}/${QN_PATH}${sufijo || ''}.json${fbQS()}`; }
+function qnDiasAtras(n){ return vjIsoLocal(new Date(Date.now() - n * 86400000)); }
+// Vigente desde que se publica hasta el día siguiente: el quincho termina
+// pasada la medianoche y el equipo sigue consultando al cerrar.
+function qnActivo(){ return !!(QN_DATA && QN_DATA.asig && QN_DATA.fecha && QN_DATA.fecha >= qnDiasAtras(1)); }
+function qnCaducado(doc){ return !!(doc && doc.fecha && doc.fecha < qnDiasAtras(2)); }
+function qnGuardarLocal(doc){
+  try { doc ? localStorage.setItem(QN_LS, JSON.stringify(doc)) : localStorage.removeItem(QN_LS); } catch(e){}
+}
+function qnLeerLocal(){
+  try {
+    const doc = JSON.parse(localStorage.getItem(QN_LS) || 'null');
+    if (qnCaducado(doc)){ localStorage.removeItem(QN_LS); return null; }
+    return (doc && doc.asig) ? doc : null;
+  } catch(e){ return null; }
+}
+async function qnFetch(){
+  try {
+    const raw = await fbGetJson(() => qnUrl(), { cache: 'no-store' });
+    if (qnCaducado(raw)){
+      // El primero que abre la app después del evento borra los nombres.
+      fetch(qnUrl(), { method: 'DELETE' }).catch(() => {});
+      QN_DATA = null;
+    } else {
+      QN_DATA = (raw && raw.asig) ? raw : null;
+    }
+    QN_OFFLINE = false;
+    qnGuardarLocal(QN_DATA);
+  } catch(e){
+    // Sin red o sin permiso: se sigue con lo que hay, y si no hay nada, con la copia.
+    if (!QN_DATA){ QN_DATA = qnLeerLocal(); }
+    QN_OFFLINE = !!QN_DATA;
+  }
+}
+function qnFirma(){ return QN_DATA ? JSON.stringify(QN_DATA.asig) + '|' + (QN_DATA.updatedAt || '') : ''; }
+function qnRepintarSiCambio(){
+  if (VIAJEROS_VISTA !== 'quincho') return;
+  if (!qnActivo()){ viajerosRender(); return; }
+  if (qnFirma() !== QN_FIRMA_DOC) vjRenderBody();
+}
+
+// ── Datos derivados ──
+function qnMesas(){
+  const m = (QN_DATA && QN_DATA.mesas) || {};
+  return Object.values(m).filter(Boolean).sort((a, b) => (a.pos || a.n) - (b.pos || b.n));
+}
+function qnMesa(n){ return qnMesas().find(m => m.n === n) || null; }
+function qnHabCmp(a, b){ return String(a).localeCompare(String(b), undefined, { numeric: true }); }
+function qnGente(n){
+  return Object.entries((QN_DATA && QN_DATA.asig) || {})
+    .filter(([, v]) => v && v.m === n)
+    .map(([pid, v]) => Object.assign({ pid }, v))
+    .sort((a, b) => qnHabCmp(a.hab, b.hab) || String(a.nombre).localeCompare(String(b.nombre)));
+}
+function qnApellido(nombre){ const p = String(nombre || '').trim().split(/\s+/); return p[p.length - 1] || ''; }
+function qnTitulo(n){
+  // Se recalcula de la gente que HAY en la mesa, no del título publicado: un
+  // movimiento desde la app lo dejaría mintiendo. Salvo en las mesas de grupo.
+  const m = qnMesa(n);
+  if (m && m.grupo && m.titulo) return m.titulo;
+  const cuenta = {};
+  qnGente(n).forEach(p => {
+    const k = p.grupo ? p.grupo.charAt(0).toUpperCase() + p.grupo.slice(1).toLowerCase() : qnApellido(p.nombre);
+    cuenta[k] = (cuenta[k] || 0) + 1;
+  });
+  return Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a]).join(' · ');
+}
+function qnPosTxt(m){ return t('qnPos').replace('{n}', m.pos || m.n); }
+function qnHabDe(p){ return String(p.hab || ''); }
+// "7" encuentra la 07 y la 11-12 no: se compara número contra número.
+function qnHabCalza(hab, num){
+  return String(hab).split(/[-\s]/).some(x => x && parseInt(x, 10) === parseInt(num, 10));
+}
+
+// Chip en la ficha de Viajeros: la mesa como un dato más del viajero.
+function qnChip(tr){
+  if (!qnActivo() || !tr || !tr.pid) return '';
+  const a = QN_DATA.asig[tr.pid];
+  if (!a || !a.m) return '';
+  return `<span class="vj-qn-chip" onclick="event.stopPropagation();qnIrA('${vjEsc(tr.hab)}')">${t('qnChip')} ${a.m}</span>`;
+}
+function qnIrA(hab){
+  VIAJEROS_HAB_OPEN = null;
+  VIAJEROS_VISTA = 'quincho';
+  QN_MESA = null; QN_MOVER = null;
+  vjSetSearchValSilencioso(hab);
+  viajerosRender();
+}
+function vjSetSearchValSilencioso(v){
+  VIAJEROS_SEARCH = v;
+  const inp = document.getElementById('vj-search');
+  if (inp) inp.value = v;
+}
+
+// ── Interacción ──
+function qnTocarMesa(n){
+  QN_MESA = (QN_MESA === n && !VIAJEROS_SEARCH.trim()) ? null : n;
+  QN_MOVER = null;
+  vjSetSearchValSilencioso('');
+  vjRenderBody();
+}
+function qnAbrirMover(pid){ QN_MOVER = (QN_MOVER === pid) ? null : pid; vjRenderBody(); }
+function qnToggleConHab(){ QN_CON_HAB = !QN_CON_HAB; vjRenderBody(); }
+async function qnMoverA(pid, n){
+  const asig = QN_DATA && QN_DATA.asig;
+  const yo = asig && asig[pid];
+  if (!yo || yo.m === n){ QN_MOVER = null; vjRenderBody(); return; }
+  // Con su hab: los de la MISMA hab que estaban en la MISMA mesa. Una pareja
+  // que alguien ya separó a propósito no se vuelve a juntar sola.
+  const quienes = Object.keys(asig).filter(k => k === pid ||
+    (QN_CON_HAB && asig[k] && asig[k].hab === yo.hab && asig[k].m === yo.m));
+  const antes = {};
+  const cambios = {};
+  const ts = Date.now();
+  quienes.forEach(k => {
+    antes[k] = asig[k].m;
+    asig[k].m = n; asig[k].mov = ts;          // optimista: el tap se ve al instante
+    cambios[k + '/m'] = n; cambios[k + '/mov'] = ts;
+  });
+  QN_MOVER = null;
+  vjRenderBody();
+  try {
+    const resp = await fetch(qnUrl('/asig'), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cambios)
+    });
+    const out = await resp.json().catch(() => null);
+    if (!resp.ok || !out || out.error) throw new Error('HTTP ' + resp.status);
+    qnGuardarLocal(QN_DATA);
+  } catch(e){
+    // NO se guardó: se deshace en pantalla. Creer que se movió y que los demás
+    // teléfonos sigan viendo la mesa vieja es el peor de los dos mundos.
+    quienes.forEach(k => { asig[k].m = antes[k]; delete asig[k].mov; });
+    vjRenderBody();
+    comandaAvisoSinGuardar('qnSinGuardar');
+  }
+}
+
+// ── Render ──
+function qnTira(resaltar){
+  return `<div class="qn-tira">${qnMesas().map(m => {
+    const n = qnGente(m.n).length;
+    const lleno = n > (m.puestos || 0);
+    // El ancho sigue a las mesas físicas: una mesa unida ocupa lo que ocupa en el salón.
+    return `<button type="button" class="qn-casilla${m.grupo ? ' is-grupo' : ''}${resaltar.has(m.n) ? ' on' : ''}"
+      style="flex-grow:${m.fisicas || 1}" onclick="qnTocarMesa(${m.n})" aria-label="${vjEsc(t('qnMesa'))} ${m.n}">
+      <span class="qn-casilla-n">${m.n}</span>
+      <span class="qn-casilla-c${lleno ? ' is-lleno' : ''}">${n}</span></button>`;
+  }).join('')}</div>`;
+}
+function qnFilaPersona(p, conMesa){
+  const m = qnMesa(p.m);
+  const abierto = QN_MOVER === p.pid;
+  const otros = qnGente(p.m).filter(x => x.pid !== p.pid).map(x => vjFirstName(x.nombre));
+  const mismaHab = Object.values(QN_DATA.asig).filter(x => x && x.hab === p.hab && x.m === p.m).length;
+  const mover = abierto ? `
+    <div class="qn-mover" onclick="event.stopPropagation()">
+      <div class="qn-mover-lbl">${t('qnMoverA')}</div>
+      <div class="qn-mover-mesas">${qnMesas().map(x => `
+        <button type="button" class="qn-mover-m${x.n === p.m ? ' on' : ''}" onclick="qnMoverA('${vjEsc(p.pid)}',${x.n})">${x.n}</button>`).join('')}</div>
+      ${mismaHab > 1 ? `<label class="qn-mover-hab"><input type="checkbox" ${QN_CON_HAB ? 'checked' : ''} onchange="qnToggleConHab()">
+        ${t('qnConHab').replace('{hab}', vjEsc(p.hab)).replace('{n}', mismaHab)}</label>` : ''}
+    </div>` : '';
+  return `
+    <div class="qn-per${abierto ? ' is-abierto' : ''}" onclick="qnAbrirMover('${vjEsc(p.pid)}')">
+      ${conMesa ? `<span class="qn-m${m && m.grupo ? ' is-grupo' : ''}">${p.m}</span>` : `<span class="qn-per-hab">${vjEsc(qnHabDe(p))}</span>`}
+      <div class="qn-per-main">
+        <div class="qn-per-nom">${vjEsc(p.nombre)}</div>
+        ${conMesa ? `<div class="qn-per-sub">${t('vjHab')} ${vjEsc(qnHabDe(p))}${m ? ' · ' + vjEsc(qnPosTxt(m)) : ''}</div>
+        ${otros.length ? `<div class="qn-per-con">${t('qnCon')} ${vjEsc(otros.join(' · '))}</div>` : ''}` : ''}
+        ${mover}
+      </div>
+    </div>`;
+}
+function qnTarjetaMesa(m){
+  const gente = qnGente(m.n);
+  return `
+    <div class="qn-mesa${m.grupo ? ' is-grupo' : ''}">
+      <div class="qn-mesa-head">
+        <span class="qn-m${m.grupo ? ' is-grupo' : ''}">${m.n}</span>
+        <div class="qn-mesa-main">
+          <div class="qn-mesa-tit">${vjEsc(qnTitulo(m.n)) || '—'}</div>
+          <div class="qn-mesa-sub">${gente.length}/${m.puestos} · ${vjEsc(qnPosTxt(m))}${m.fisicas > 1 ? ' · ' + t('qnUnidas').replace('{n}', m.fisicas) : ''}</div>
+        </div>
+      </div>
+      ${gente.map(p => qnFilaPersona(p, false)).join('') || `<div class="qn-libre">${t('qnLibre')}</div>`}
+      ${m.nota ? `<div class="qn-nota">${vjEsc(m.nota)}</div>` : ''}
+    </div>`;
+}
+function qnRender(){
+  if (!qnActivo()) return `<div class="vj-empty">${t('qnNoHay')}</div>`;
+  const q = vjFold(VIAJEROS_SEARCH.trim());
+  const todos = Object.entries(QN_DATA.asig).filter(([, v]) => v && v.m)
+    .map(([pid, v]) => Object.assign({ pid }, v));
+  const resaltar = new Set();
+  let cuerpo = '';
+  if (q){
+    // ¿Un número? Habitación primero (es lo que pregunta el viajero en la
+    // puerta), y además la mesa con ese número. "mesa 7" es sólo la mesa.
+    // "11-12" (una familia en dos habs) busca las dos.
+    const num = q.match(/^(mesa\s*|table\s*)?(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/);
+    let personas = [], mesas = [];
+    if (num){
+      const nums = num[2].split(/\s*[-,]\s*/);
+      if (!num[1]) personas = todos.filter(p => nums.some(x => qnHabCalza(p.hab, x)));
+      const m = nums.length === 1 ? qnMesa(parseInt(nums[0], 10)) : null;
+      if (m) mesas.push(m);
+    } else {
+      personas = todos.filter(p => vjFold(p.nombre).indexOf(q) >= 0 || vjFold(p.grupo).indexOf(q) >= 0);
+      if (!personas.length) mesas = qnMesas().filter(m => vjFold(qnTitulo(m.n)).indexOf(q) >= 0);
+    }
+    personas.sort((a, b) => qnHabCmp(a.hab, b.hab));
+    personas.forEach(p => resaltar.add(p.m));
+    mesas.forEach(m => resaltar.add(m.n));
+    cuerpo = personas.map(p => qnFilaPersona(p, true)).join('') + mesas.map(qnTarjetaMesa).join('');
+    if (!cuerpo) cuerpo = `<div class="vj-empty">${t('qnSinResultados').replace('{q}', vjEsc(VIAJEROS_SEARCH.trim()))}</div>`;
+  } else if (QN_MESA && qnMesa(QN_MESA)){
+    resaltar.add(QN_MESA);
+    cuerpo = qnTarjetaMesa(qnMesa(QN_MESA));
+  } else {
+    cuerpo = qnMesas().filter(m => qnGente(m.n).length).map(qnTarjetaMesa).join('');
+  }
+  const [y, mo, d] = String(QN_DATA.fecha).split('-');
+  return `
+    <div class="qn-head">${t('qnTitulo')} · ${d}-${mo} · ${todos.length} ${t('vjStatViajeros')}${
+      QN_OFFLINE ? `<span class="qn-offline">${t('qnOffline')}</span>` : ''}</div>
+    <div class="qn-salon-lbl">${t('qnSalon')}</div>
+    ${qnTira(resaltar)}
+    <div class="qn-lista">${cuerpo}</div>`;
 }
 
 onI18nChange(viajerosRender);

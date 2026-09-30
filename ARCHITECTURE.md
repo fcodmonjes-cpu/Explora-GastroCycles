@@ -430,6 +430,52 @@ está listado; el Handbook lo corrigió el 2026-09-07); `apto_condicional` no tr
 el texto de la condición (hoy sale de las notas del Menú); el `LEEME` habla de
 "los tres del charqui" y sólo uno lleva charqui.
 
+### 3.5 Quincho: las mesas del evento (piloto, 2026-09-30)
+
+El quincho es periódico y tiene reparto de mesas. Hasta el 21-09 se armaba con
+una carpeta fuera del repo: el Reporte Geos transcrito de un PDF, un optimizador
+con los viajeros escritos a mano y tres generadores. Hoy son dos piezas:
+
+**Afuera de la app, dentro del repo: `scripts/quincho.py`.** Lee el roster de
+`/viajeros/current` (con `historia` y `exp`, §4.1) y propone el reparto; escribe
+la **planilla** (.xlsx) y los **carteles** (HTML A4 plegable). La planilla es la
+fuente: lo que alguien cambia a mano queda **fijo** al recalcular (`rehacer`), y
+el recálculo mueve lo mínimo — avisa qué carteles reimprimir. El salón también
+se edita ahí (sumar mesas, reservar mesas unidas para un grupo). Quien no usa el
+Handbook tiene todo con la planilla y los carteles. Pasos y opciones en la
+cabecera del script.
+
+**Adentro de la app: la vista Quincho de PGO.** Tercera vista junto a Viajeros y
+Comedor, visible sólo con un quincho vigente (`publicar` → `/quincho/current`).
+Mismo buscador y numpad que Viajeros; tira del salón en orden físico, donde el
+ancho de cada casilla sigue a las mesas físicas unidas; cualquiera mueve a un
+viajero de mesa (sin PIN, decisión del owner) y `quincho.py bajar` trae esos
+cambios a la planilla. En la ficha de Viajeros aparece el chip «quincho · mesa N».
+
+**El criterio, y cómo se calibró.** Afinidad = exploraciones compartidas con
+nombre, turno y día exactos (HOTEL no cuenta), con peso `1 + 2·½^días`; mismo
+lugar y turno en otro vehículo (`Astronomia` vs `Astronomia-2`) cuenta a 0,35.
+Se probó contra el reparto hecho a mano del 21-09, y eso corrigió dos veces el
+objetivo:
+
+1. Idioma y edad pesaban demasiado y el cálculo cambiaba vínculos por idioma:
+   salía con MENOS afinidad que el reparto a mano. Ahora sólo desempatan.
+2. Sumando afinidad parejo, juntaba todos los vínculos en pocas mesas. Cada
+   unidad suma ahora la **raíz** de lo que comparte con su mesa: pasar de nada a
+   algo vale más que de mucho a más. Resultado: 8 unidades sin nadie con quien
+   compartió algo, contra 10 del reparto a mano, con las mismas mesas sin vínculo.
+
+El óptimo es estable: mismas mesas con cualquier semilla y de 300 a 3000 intentos.
+
+**Sin red.** El service worker no cachea Firebase (§2.1), y en el quincho la
+señal se cae: el doc se copia en `localStorage` (`ata.quincho.v1`) y la vista
+arranca desde ahí aunque Viajeros no cargue. Un movimiento que no se guardó se
+deshace en pantalla, con aviso.
+
+**Privacidad.** Nombres con su habitación, igual que Viajeros y detrás del mismo
+gate. La planilla, los carteles y los JSON de roster están en `.gitignore`; el
+doc de la base y las copias locales se borran solos a los 2 días del evento.
+
 ---
 
 ## 4. Arquitectura de datos en Firebase
@@ -470,11 +516,19 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
 │       └── {auto-id} → { …, completedAt, prepMs }
 │       (auto-purge >30 días)
 │
-└── comandas/                      ← E-Check: comandas por mesa
-    └── {YYYY-MM-DD}/
-        └── {auto-id} → { mesa, diners, openedAt, closedAt,
-                          timerStartedAt, items[] }
-        (auto-close >12h sin actividad, auto-purge >30 días)
+├── comandas/                      ← E-Check: comandas por mesa
+│   └── {YYYY-MM-DD}/
+│       └── {auto-id} → { mesa, diners, openedAt, closedAt,
+│                         timerStartedAt, items[] }
+│       (auto-close >12h sin actividad, auto-purge >30 días)
+│
+└── quincho/                       ← mesas del quincho (piloto, §3.5)
+    └── current → { fecha, updatedAt, fuente,
+                    mesas: { n: { n, pos, puestos, fisicas, grupo, titulo, nota } },
+                    asig:  { pid: { m, hab, nombre, grupo, mov? } } }
+        (lo escribe scripts/quincho.py `publicar`; la app sólo PATCHea
+         asig/{pid}/m al mover. Un doc por evento; la app lo borra a los
+         2 días de la fecha. Regla: la misma condición que viajeros_notas)
 ```
 
 **Reglas de Firebase.** Cerradas desde el 2026-08-17: los 13 paths exigen
