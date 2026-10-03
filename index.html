@@ -2341,10 +2341,6 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .qn-arm-res.is-mal, .qn-arm-error { color:var(--coral); }
 .qn-arm-error { font-family:'Courier Prime',monospace; font-size:11.5px; line-height:1.45; margin:8px 0; }
 .qn-arm-acc { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px; }
-.qn-pin-dots { display:flex; gap:12px; justify-content:center; margin:6px 0 14px; }
-.qn-pin-dot { width:12px; height:12px; border-radius:50%; border:1px solid var(--gold); }
-.qn-pin-dot.on { background:var(--gold); }
-.qn-pin-pad { margin:0; }
 .qn-borrador { border:1px solid var(--gold); background:var(--gold-light); border-radius:var(--radius-md); padding:11px 12px; margin-bottom:14px; }
 .qn-bor-tit { font-family:'Courier Prime',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); }
 .qn-bor-res { font-size:13px; line-height:1.45; color:var(--text); margin-top:5px; }
@@ -11142,7 +11138,7 @@ function qnDoc(){ return (QN_ARMADO && QN_ARMADO.borrador) || QN_DATA; }
 function qnEsBorrador(){ return !!(QN_ARMADO && QN_ARMADO.borrador); }
 // ¿Se están mostrando mesas (y por lo tanto sirve el buscador)?
 function qnMostrandoMesas(){
-  if (QN_ARMADO) return qnEsBorrador();
+  if (QN_ARMADO && QN_ARMADO.paso !== 'pin') return qnEsBorrador();
   return qnActivo();
 }
 
@@ -11671,22 +11667,60 @@ function qnArmar(modo){
 }
 function qnArmadoCerrar(){ QN_ARMADO = null; QN_MOVER = null; viajerosRender(); }
 function qnPinTecla(d){
-  if (!QN_ARMADO || QN_ARMADO.pin.length >= 4) return;
-  QN_ARMADO.pin += d;
-  QN_ARMADO.error = '';
-  if (QN_ARMADO.pin.length === 4){
-    if (QN_ARMADO.pin === CHK_SUPERVISOR_PIN){
+  const A = QN_ARMADO;
+  if (!A || A.pin.length >= 4 || A.error) return;
+  A.pin += d;
+  if (A.pin.length === 4){
+    if (A.pin === CHK_SUPERVISOR_PIN){
       QN_SUPER = true;
-      QN_ARMADO.paso = QN_ARMADO.modo === 'borrar' ? 'borrar' : 'form';
-      if (QN_ARMADO.modo === 'recalcular') return qnRecalcular();
-    } else {
-      QN_ARMADO.pin = '';
-      QN_ARMADO.error = t('qnPinMal');
+      A.pin = '';
+      A.paso = A.modo === 'borrar' ? 'borrar' : 'form';
+      if (A.modo === 'recalcular') return qnRecalcular();
+      viajerosRender();   // entero: con la clave aceptada cambia qué se muestra arriba
+      return;
     }
+    A.error = t('qnPinMal');
+    qnPinSync();
+    setTimeout(() => { if (QN_ARMADO === A){ A.pin = ''; A.error = ''; qnPinSync(); } }, 800);
+    return;
   }
-  viajerosRender();   // entero: con la clave aceptada cambia qué se muestra arriba
+  qnPinSync();
 }
-function qnPinBorrar(){ if (QN_ARMADO){ QN_ARMADO.pin = QN_ARMADO.pin.slice(0, -1); vjRenderBody(); } }
+function qnPinBorrar(){ if (QN_ARMADO && !QN_ARMADO.error){ QN_ARMADO.pin = QN_ARMADO.pin.slice(0, -1); qnPinSync(); } }
+function qnPinLimpiar(){ if (QN_ARMADO){ QN_ARMADO.pin = ''; QN_ARMADO.error = ''; qnPinSync(); } }
+// La clave se pide con el MISMO modal que el editor del Checklist (sus clases
+// chk-pin-*: grilla de 3, C · 0 · ⌫, puntos ámbar). Se monta en el body —un
+// ancestro con transform rompería el position:fixed— y se crea UNA vez, para
+// que la animación de entrada no se repita con cada tecla: después sólo se
+// actualizan los puntos y el error. Mismo patrón que chkSyncBodyOverlays.
+function qnPinSync(){
+  const A = QN_ARMADO;
+  let el = document.getElementById('qn-pin-body-overlay');
+  if (!(A && A.paso === 'pin')){ if (el) el.remove(); return; }
+  if (!el){
+    const sub = t({ recalcular: 'qnRecalcular', borrar: 'qnBorrar' }[A.modo] || 'qnArmar');
+    el = document.createElement('div');
+    el.id = 'qn-pin-body-overlay';
+    el.innerHTML = `<div class="chk-pin-overlay" onclick="qnArmadoCerrar()">
+      <div class="chk-pin-modal" onclick="event.stopPropagation()">
+        <button class="chk-pin-close" onclick="qnArmadoCerrar()" aria-label="${vjEsc(t('qnCancelar'))}">×</button>
+        <div class="chk-pin-title">${vjEsc(t('qnPinTit'))}</div>
+        <div class="chk-pin-sub">${vjEsc(sub)}</div>
+        <div class="chk-pin-display">${[0, 1, 2, 3].map(() => '<span class="chk-pin-dot"></span>').join('')}</div>
+        <div class="chk-pin-pad">
+          ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button class="chk-pin-key" onclick="qnPinTecla('${n}')">${n}</button>`).join('')}
+          <button class="chk-pin-key action" onclick="qnPinLimpiar()">C</button>
+          <button class="chk-pin-key" onclick="qnPinTecla('0')">0</button>
+          <button class="chk-pin-key action" onclick="qnPinBorrar()" aria-label="${vjEsc(t('vjDelete'))}">⌫</button>
+        </div>
+        <div class="chk-pin-error"></div>
+      </div>
+    </div>`;
+    document.body.appendChild(el);
+  }
+  el.querySelectorAll('.chk-pin-dot').forEach((d, i) => d.classList.toggle('filled', i < A.pin.length));
+  el.querySelector('.chk-pin-error').textContent = A.error || '';
+}
 function qnCfgSet(k, v){ if (QN_ARMADO){ QN_ARMADO.cfg[k] = v; QN_ARMADO.error = ''; vjRenderBody(); } }
 function qnCfgPaso(k, d){
   if (!QN_ARMADO) return;
@@ -12173,23 +12207,7 @@ function qnBotonesPapel(){
     <button type="button" class="cmd-btn" onclick="qnListado()">${t('qnListado')}</button>
     <button type="button" class="cmd-btn" onclick="qnExcel()">${t('qnExcel')}</button>`;
 }
-// ── Armado: clave, formulario, borrador ──
-function qnRenderPin(){
-  const A = QN_ARMADO;
-  const dots = [0, 1, 2, 3].map(i => `<span class="qn-pin-dot${i < A.pin.length ? ' on' : ''}"></span>`).join('');
-  return `<div class="qn-armado">
-    <div class="qn-arm-tit">${t({ recalcular: 'qnRecalcular', borrar: 'qnBorrar' }[A.modo] || 'qnArmar')}</div>
-    <div class="qn-arm-ayuda">${t('qnPinTit')}</div>
-    <div class="qn-pin-dots">${dots}</div>
-    <div class="vj-numpad qn-pin-pad">
-      ${['1','2','3','4','5'].map(d => `<button type="button" class="vj-num-key" onclick="qnPinTecla('${d}')">${d}</button>`).join('')}
-      <button type="button" class="vj-num-key action" onclick="qnPinBorrar()" aria-label="${t('vjDelete')}">⌫</button>
-      ${['6','7','8','9','0'].map(d => `<button type="button" class="vj-num-key" onclick="qnPinTecla('${d}')">${d}</button>`).join('')}
-      <button type="button" class="vj-num-key action" onclick="qnArmadoCerrar()" aria-label="${t('qnCancelar')}">✕</button>
-    </div>
-    ${A.error ? `<div class="qn-arm-error">${vjEsc(A.error)}</div>` : ''}
-  </div>`;
-}
+// ── Armado: formulario y borrador (la clave es un modal: qnPinSync) ──
 function qnRenderForm(){
   const A = QN_ARMADO, cfg = A.cfg;
   const grupos = qnGruposDeLaNoche(cfg);
@@ -12247,9 +12265,15 @@ function qnRenderBorradorHead(){
   </div>`;
 }
 function qnRender(){
+  const html = qnRenderVista();
+  qnPinSync();
+  return html;
+}
+function qnRenderVista(){
   qnPrecargarLogo();
   const A = QN_ARMADO;
-  if (A && A.paso === 'pin')  return qnRenderPin();
+  // Pidiendo la clave: detrás del modal queda la vista tal como estaba.
+  if (A && A.paso === 'pin'){ QN_ARMADO = null; try { return qnRenderVista(); } finally { QN_ARMADO = A; } }
   if (A && A.paso === 'form') return qnRenderForm();
   if (A && A.paso === 'borrar') return qnRenderBorrar();
   if (A && A.paso === 'calc') return `<div class="vj-empty">${t('qnCalculando')}</div>`;
