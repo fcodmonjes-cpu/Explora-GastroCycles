@@ -444,6 +444,7 @@ vive en la página**, en PGO → Quincho (tercera vista, siempre presente):
 | Ajustar | supervisor | en el borrador se mueve gente sin escribir nada; **Ajustar salón** vuelve al formulario |
 | Publicar | supervisor | PUT de `/quincho/current`; desde ahí lo ven todos los teléfonos |
 | Servicio | cualquiera, sin PIN | buscar por hab, apellido, grupo o mesa; mover de mesa con su hab; marcar «no va» |
+| Borrar | supervisor | **Borrar quincho**: clave + confirmación (ofrece bajar el Excel antes); DELETE de `/quincho/current`, la copia local de cada teléfono cae en su próximo fetch. Sin esto, la purga lo borra a los 2 días de la fecha |
 | Recalcular | supervisor | entra quien llegó, sale quien se fue, lo movido a mano (`mov`) se respeta y el resto se queda salvo ganancia clara; dice qué carteles reimprimir |
 | Papel | cualquiera | **Carteles** (A4 plegable, logo como máscara de color elegible), **Listado** (por habitación + plano por mesa) y **Excel** (.xlsx generado en el navegador, sin dependencias: zip sin compresión + CRC32) |
 

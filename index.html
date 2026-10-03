@@ -2351,6 +2351,9 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .qn-acciones { display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin:16px 0 4px;
   padding-top:12px; border-top:0.5px solid var(--border); }
 .qn-acc-sep { flex:1 1 auto; }
+.qn-borrar-btn { color:var(--coral); border-color:rgba(216,90,48,0.45); }
+.qn-borrar-ok { color:var(--coral); border-color:var(--coral); }
+.qn-borrar-ok:not(:disabled):active { background:var(--coral-light); border-color:var(--coral); color:var(--coral); }
 .qn-swap-btn { flex:0 0 auto; width:38px; height:38px; background:var(--bg-secondary); border:0.5px solid var(--border-md);
   border-radius:var(--radius-md); color:var(--text-secondary); font-size:17px; cursor:pointer; touch-action:manipulation;
   -webkit-tap-highlight-color:transparent; }
@@ -4977,6 +4980,9 @@ const UI = {
     qnCambios:'{c} cambian de mesa · carteles a reimprimir: mesa {l}', qnSinCambios:'Nadie cambia de mesa.',
     qnCarteles:'Carteles', qnListado:'Listado', qnExcel:'Excel',
     qnNoVa:'no va', qnNoVan:'No van',
+    qnBorrar:'Borrar quincho', qnBorrando:'Borrando…', qnBorrarPregunta:'¿Borrar el quincho del {f}?',
+    qnBorrarAyuda:'Se borra para todos los teléfonos y no se puede deshacer. Si quieres guardar las mesas, descarga antes el Excel.',
+    qnErrBorrar:'La base no aceptó el borrado (HTTP {s}).',
     qnIntercambiar:'Intercambiar mesa', qnIntercambiarCon:'Toda la mesa {n} cambia de lugar con la mesa…',
     qnPopup:'El navegador bloqueó la ventana: permití ventanas emergentes para imprimir',
     qnErrPublicar:'La base no aceptó la publicación (HTTP {s}). Si es 401, falta la regla «quincho» en Firebase.',
@@ -11660,6 +11666,7 @@ function qnArmar(modo){
   QN_MESA = null; QN_MOVER = null;
   vjSetSearchValSilencioso('');
   if (QN_SUPER && modo === 'recalcular') return qnRecalcular();
+  if (QN_SUPER && modo === 'borrar') QN_ARMADO.paso = 'borrar';
   viajerosRender();
 }
 function qnArmadoCerrar(){ QN_ARMADO = null; QN_MOVER = null; viajerosRender(); }
@@ -11670,7 +11677,7 @@ function qnPinTecla(d){
   if (QN_ARMADO.pin.length === 4){
     if (QN_ARMADO.pin === CHK_SUPERVISOR_PIN){
       QN_SUPER = true;
-      QN_ARMADO.paso = 'form';
+      QN_ARMADO.paso = QN_ARMADO.modo === 'borrar' ? 'borrar' : 'form';
       if (QN_ARMADO.modo === 'recalcular') return qnRecalcular();
     } else {
       QN_ARMADO.pin = '';
@@ -11805,6 +11812,48 @@ async function qnPublicar(){
     A.error = t('qnErrPublicar').replace('{s}', e.message);
     vjRenderBody();
   }
+}
+
+// Borrar el quincho publicado, antes de que la purga de los dos días lo haga
+// sola: un quincho de prueba, uno armado para la fecha equivocada. Clave de
+// supervisor + confirmación, porque se borra para todos y no se recupera.
+async function qnBorrarPublicado(){
+  const A = QN_ARMADO;
+  if (!A) return;
+  A.borrando = true; A.error = '';
+  vjRenderBody();
+  try {
+    await fbAuthInit();
+    const resp = await fetch(qnUrl(), { method: 'DELETE' });
+    const out = await resp.json().catch(() => null);
+    if (!resp.ok || (out && out.error)) throw new Error(String(resp.status));
+    QN_DATA = null;
+    QN_OFFLINE = false;
+    qnGuardarLocal(null);
+    QN_ARMADO = null; QN_MESA = null; QN_MOVER = null; QN_SWAP = null;
+    vjSetSearchValSilencioso('');
+    viajerosRender();
+  } catch(e){
+    A.borrando = false;
+    A.error = t('qnErrBorrar').replace('{s}', e.message);
+    vjRenderBody();
+  }
+}
+function qnRenderBorrar(){
+  const A = QN_ARMADO;
+  const f = QN_DATA && QN_DATA.fecha ? qnFechaTxt(QN_DATA.fecha) : '';
+  return `<div class="qn-armado">
+    <div class="qn-arm-tit">${t('qnBorrar')}</div>
+    <div class="qn-bor-res">${vjEsc(t('qnBorrarPregunta').replace('{f}', f))}</div>
+    <div class="qn-arm-ayuda">${t('qnBorrarAyuda')}</div>
+    ${A.error ? `<div class="qn-arm-error">${vjEsc(A.error)}</div>` : ''}
+    <div class="qn-arm-acc">
+      <button type="button" class="cmd-btn" onclick="qnExcel()">${t('qnExcel')}</button>
+      <span class="qn-acc-sep"></span>
+      <button type="button" class="cmd-btn" onclick="qnArmadoCerrar()">${t('qnCancelar')}</button>
+      <button type="button" class="cmd-btn qn-borrar-ok" onclick="qnBorrarPublicado()" ${A.borrando ? 'disabled' : ''}>${t(A.borrando ? 'qnBorrando' : 'qnBorrar')}</button>
+    </div>
+  </div>`;
 }
 
 // ══ Papel: carteles, listado y Excel ══════════════════════════════════════
@@ -12129,7 +12178,7 @@ function qnRenderPin(){
   const A = QN_ARMADO;
   const dots = [0, 1, 2, 3].map(i => `<span class="qn-pin-dot${i < A.pin.length ? ' on' : ''}"></span>`).join('');
   return `<div class="qn-armado">
-    <div class="qn-arm-tit">${t(A.modo === 'recalcular' ? 'qnRecalcular' : 'qnArmar')}</div>
+    <div class="qn-arm-tit">${t({ recalcular: 'qnRecalcular', borrar: 'qnBorrar' }[A.modo] || 'qnArmar')}</div>
     <div class="qn-arm-ayuda">${t('qnPinTit')}</div>
     <div class="qn-pin-dots">${dots}</div>
     <div class="vj-numpad qn-pin-pad">
@@ -12202,6 +12251,7 @@ function qnRender(){
   const A = QN_ARMADO;
   if (A && A.paso === 'pin')  return qnRenderPin();
   if (A && A.paso === 'form') return qnRenderForm();
+  if (A && A.paso === 'borrar') return qnRenderBorrar();
   if (A && A.paso === 'calc') return `<div class="vj-empty">${t('qnCalculando')}</div>`;
   if (A && A.paso === 'error') return `<div class="qn-armado"><div class="qn-arm-error">${vjEsc(A.error)}</div>
     <div class="qn-arm-acc"><button type="button" class="cmd-btn" onclick="qnArmadoCerrar()">${t('qnCancelar')}</button></div></div>`;
@@ -12248,7 +12298,8 @@ function qnRender(){
   const acciones = A ? '' : `<div class="qn-acciones">${qnBotonesPapel()}
       <span class="qn-acc-sep"></span>
       <button type="button" class="cmd-btn" onclick="qnArmar('recalcular')">${t('qnRecalcular')}</button>
-      <button type="button" class="cmd-btn" onclick="qnArmar('nuevo')">${t('qnArmarNuevo')}</button></div>`;
+      <button type="button" class="cmd-btn" onclick="qnArmar('nuevo')">${t('qnArmarNuevo')}</button>
+      <button type="button" class="cmd-btn qn-borrar-btn" onclick="qnArmar('borrar')">${t('qnBorrar')}</button></div>`;
   return `${A ? qnRenderBorradorHead() : ''}
     <div class="qn-head">${t('qnTitulo')} · ${d}-${mo} · ${todos.filter(p => p.m).length} ${t('vjStatViajeros')}${
       !A && QN_OFFLINE ? `<span class="qn-offline">${t('qnOffline')}</span>` : ''}</div>
