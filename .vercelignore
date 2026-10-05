@@ -41,3 +41,8 @@ __pycache__/
 # Estudio de menús: la copia local de QA (los audios reales viven en Firebase
 # Storage). Segunda barrera por si alguien la saca del .gitignore.
 estudio-local/
+
+# Recepción: la copia local de QA (el contenido real vive en Firebase Storage,
+# detrás del gate). Segunda barrera por si alguien la saca del .gitignore.
+recepcion-local/
+recepcion/

@@ -2670,6 +2670,162 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .vj-nota-btn.on { border-color:var(--gold); color:var(--gold); }
 
 .vj-empty { font-family:'Courier Prime','Courier New',monospace; font-size:12px; color:var(--text-tertiary); text-align:center; padding:2.5rem 1rem; line-height:1.8; }
+/* ═══ RECEPCIÓN — guía de procedimientos (2026-10) ═══════════════════════════
+   Paleta existente, sin colores nuevos: ámbar = acción/activo, coral = "ojo"
+   (alerta, como la ráfaga fuerte), punteado = lo no confirmado (el "sin dato"
+   del Menú). Los pendientes NUNCA se ven como un paso. */
+/* En Recepción la ops-strip se colapsa igual que en Checklist: el clima y el
+   reparto del salón no le sirven a la recepción. */
+body.in-recepcion .winetips { display:none; }
+body.in-recepcion .wx { display:none; }
+body.in-recepcion .staffing-panel { margin-bottom:0; }
+body.in-recepcion .staffing-panel .staffing-row { display:none; }
+body.in-recepcion .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
+.rc-search-bar { margin-bottom:0.9rem; }
+/* Tres segmentos en el ancho de un iPhone SE: tracking más corto que en Menú. */
+.rc-seg .mn-svc-btn { letter-spacing:0.07em; padding:9px 2px; min-width:0; }
+.rc-root { overflow-wrap:anywhere; }
+.rc-root code { font-family:'Courier Prime','Courier New',monospace; font-size:0.9em; background:rgba(255,255,255,0.06); border:0.5px solid var(--border); border-radius:4px; padding:0 4px; color:var(--text); }
+.rc-root strong { font-weight:600; color:var(--text); }
+.rc-msg { padding:1.25rem 1rem; text-align:center; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:16px; line-height:1.45; color:var(--text-tertiary); border:0.5px dashed var(--border); border-radius:10px; }
+.rc-reintentar { display:block; margin:10px auto 0; padding:7px 16px; border-radius:999px; border:0.5px solid rgba(192,125,42,0.5); background:none; color:#c07d2a; font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; font-style:normal; cursor:pointer; }
+.rc-interno { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); margin:-0.35rem 0 0.7rem; }
+.rc-estado { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:var(--text-tertiary); text-align:center; margin:1.4rem 0 0; min-height:1.4em; }
+.rc-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:0.9rem; }
+.rc-chip { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.06em; padding:6px 11px; border-radius:999px; border:0.5px solid var(--border-md); background:rgba(255,255,255,0.02); color:var(--text-secondary); cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; transition:border-color .15s, color .15s, background .15s; }
+.rc-chip:hover { border-color:rgba(192,125,42,0.4); color:#c07d2a; }
+.rc-chip.on { background:rgba(192,125,42,0.12); border-color:rgba(192,125,42,0.6); color:#c07d2a; }
+/* Inicio */
+.rc-lista { display:flex; flex-direction:column; gap:6px; }
+.rc-proc { display:flex; align-items:flex-start; gap:11px; width:100%; text-align:left; padding:11px 12px; background:var(--surface); border:0.5px solid var(--border-md); border-radius:10px; color:var(--text); font:inherit; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; transition:border-color .15s; }
+.rc-proc:hover { border-color:rgba(192,125,42,0.45); }
+.rc-proc-n { flex:0 0 1.5em; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:22px; line-height:1.05; color:#c07d2a; text-align:right; }
+.rc-proc-main { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.rc-proc-tit { font-size:15px; font-weight:500; line-height:1.3; }
+.rc-proc-cuando { font-size:12.5px; line-height:1.4; color:var(--text-secondary); }
+.rc-proc-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:5px; }
+.rc-tag { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
+.rc-tag-prelim { color:#c07d2a; border:0.5px dashed rgba(192,125,42,0.6); border-radius:4px; padding:0 5px; }
+.rc-tag-prog { color:var(--text-secondary); }
+/* Resultados */
+.rc-res-head { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; color:var(--text-tertiary); margin:0 0 6px 2px; }
+.rc-res { display:flex; flex-direction:column; gap:5px; }
+.rc-res-it { display:block; width:100%; text-align:left; padding:9px 12px; background:var(--surface); border:0.5px solid var(--border); border-radius:8px; color:var(--text); font:inherit; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.rc-res-it:hover { border-color:rgba(192,125,42,0.45); }
+.rc-res-donde { display:block; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:#c07d2a; margin-bottom:3px; }
+.rc-res-extra { color:var(--text-secondary); }
+.rc-res-txt { display:block; font-size:13.5px; line-height:1.45; color:var(--text-secondary); }
+.rc-res-txt mark { background:rgba(192,125,42,0.22); color:var(--text); border-radius:2px; padding:0 1px; }
+.rc-res-ojo .rc-res-extra { color:var(--coral); }
+.rc-res-pend { background:transparent; border-style:dashed; border-color:rgba(255,255,255,0.18); }
+.rc-res-pend .rc-res-donde, .rc-res-pend .rc-res-extra { color:var(--text-tertiary); }
+.rc-res-pend .rc-res-txt { font-style:italic; }
+/* Procedimiento */
+.rc-volver { background:none; border:none; padding:4px 0 8px; color:var(--text-secondary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.rc-volver:hover { color:#c07d2a; }
+.rc-eyebrow { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); }
+.rc-h { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:27px; line-height:1.12; color:var(--text); margin:2px 0 6px; }
+.rc-cuando { font-size:14px; line-height:1.5; color:var(--text-secondary); margin:0 0 4px; }
+.rc-fuente { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.04em; color:var(--text-tertiary); margin:0 0 10px; }
+.rc-prelim-aviso { margin:10px 0 12px; padding:10px 12px; border:0.5px dashed rgba(192,125,42,0.6); border-radius:8px; background:rgba(192,125,42,0.05); font-size:13px; line-height:1.5; color:var(--text-secondary); }
+.rc-intro { font-size:14.5px; line-height:1.6; margin:8px 0; color:var(--text); }
+.rc-sec-head { display:flex; align-items:center; gap:9px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); padding:18px 2px 9px; }
+.rc-rule { flex:1 1 auto; height:0.5px; background:var(--gold); opacity:0.3; }
+.rc-prog { font-size:9.5px; letter-spacing:0.08em; color:var(--text-tertiary); }
+.rc-reiniciar { background:none; border:0.5px solid var(--border-md); border-radius:999px; padding:4px 10px; color:var(--text-secondary); font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; touch-action:manipulation; }
+.rc-reiniciar:hover:not(:disabled) { border-color:rgba(192,125,42,0.5); color:#c07d2a; }
+.rc-reiniciar:disabled { opacity:0.35; cursor:default; }
+.rc-pasos, .rc-ojo, .rc-pend { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; }
+.rc-pasos { gap:2px; }
+.rc-paso { display:flex; gap:11px; padding:10px 10px 10px 6px; border-radius:10px; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; transition:background .15s; outline:none; }
+.rc-paso:hover { background:rgba(255,255,255,0.02); }
+.rc-paso:focus-visible { box-shadow:0 0 0 1px rgba(192,125,42,0.5) inset; }
+.rc-paso-n { flex:0 0 auto; width:28px; height:28px; margin-top:-2px; border-radius:50%; border:1px solid var(--border-md); display:flex; align-items:center; justify-content:center; font-family:'Courier Prime','Courier New',monospace; font-size:12px; color:var(--text-secondary); transition:background .15s, border-color .15s; }
+.rc-paso-ok { display:none; width:15px; height:15px; }
+.rc-paso.hecho .rc-paso-n { background:var(--gold); border-color:var(--gold); color:#15110d; }
+.rc-paso.hecho .rc-paso-num { display:none; }
+.rc-paso.hecho .rc-paso-ok { display:block; }
+.rc-paso.hecho .rc-it-txt, .rc-paso.hecho .rc-sub { color:var(--text-tertiary); }
+.rc-paso-cuerpo, .rc-it { flex:1 1 auto; min-width:0; }
+.rc-it-txt { font-size:15px; line-height:1.55; color:var(--text); }
+.rc-sub { margin:5px 0 0; padding-left:1.15em; font-size:14px; line-height:1.5; color:var(--text-secondary); }
+.rc-sub li { margin:2px 0; }
+.rc-sub li::marker { color:var(--text-tertiary); }
+.rc-sec-ojo { color:var(--coral); }
+.rc-sec-ojo .rc-rule { background:var(--coral); }
+.rc-ojo { gap:6px; }
+.rc-ojo-it { display:flex; gap:10px; padding:9px 11px 9px 10px; border-left:2px solid var(--coral); background:rgba(216,90,48,0.06); border-radius:0 8px 8px 0; }
+.rc-ojo-mark { flex:0 0 auto; font-family:'Courier Prime','Courier New',monospace; font-weight:700; font-size:14px; line-height:1.5; color:var(--coral); width:10px; text-align:center; }
+.rc-ojo-it .rc-it-txt { font-size:14.5px; }
+.rc-sec-pend { color:var(--text-tertiary); }
+.rc-sec-pend .rc-rule { background:var(--text-tertiary); }
+.rc-sec-nota { font-size:9px; letter-spacing:0.08em; text-transform:none; color:var(--text-tertiary); }
+.rc-pend { gap:6px; }
+.rc-pend-it { display:flex; gap:10px; padding:9px 11px; border:0.5px dashed rgba(255,255,255,0.22); border-radius:8px; background:transparent; }
+.rc-pend-mark { flex:0 0 auto; width:18px; height:18px; margin-top:2px; border-radius:50%; border:0.5px dashed var(--text-tertiary); display:flex; align-items:center; justify-content:center; font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-tertiary); }
+.rc-pend-it .rc-it-txt { font-size:14px; font-style:italic; color:var(--text-secondary); }
+.rc-pend-it .rc-sub { font-style:italic; }
+/* Capturas: el hueco se reserva con las medidas guardadas (aspect-ratio). */
+.rc-fig { margin:10px 0 2px; }
+.rc-img { display:block; position:relative; width:100%; min-height:72px; padding:0; border:0.5px solid var(--border-md); border-radius:6px; background:rgba(255,255,255,0.03); overflow:hidden; cursor:zoom-in; -webkit-tap-highlight-color:transparent; }
+.rc-img[style*="aspect-ratio"] { min-height:0; }
+.rc-img img { display:block; width:100%; height:100%; object-fit:contain; }
+.rc-img-ph { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
+.rc-img.cargada .rc-img-ph { display:none; }
+.rc-fig figcaption { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.03em; color:var(--text-tertiary); margin-top:4px; }
+/* Llegada desde el buscador */
+.rc-target { background:rgba(192,125,42,0.08) !important; box-shadow:0 0 0 1px rgba(192,125,42,0.6) inset; animation:rcPulso 1.8s ease-out 1; }
+@keyframes rcPulso { 0% { background:rgba(192,125,42,0.3); } 100% { background:rgba(192,125,42,0.08); } }
+/* Referencia */
+.rc-ref-indice { margin-bottom:0.4rem; }
+.rc-tb { scroll-margin-top:12px; }
+.rc-tb-nota { font-size:13px; line-height:1.5; color:var(--text-secondary); margin:0 0 8px; }
+.rc-tabla { width:100%; border-collapse:collapse; font-size:13.5px; line-height:1.45; }
+.rc-tabla th { text-align:left; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.12em; text-transform:uppercase; font-weight:400; color:var(--text-tertiary); padding:6px 8px; border-bottom:0.5px solid var(--border-md); }
+.rc-tabla td { padding:7px 8px; border-bottom:0.5px solid var(--border); vertical-align:top; color:var(--text-secondary); }
+.rc-tabla td:first-child { color:var(--text); font-weight:500; }
+/* Teléfono: cada fila es una tarjeta "columna: valor". Sin scroll lateral. */
+@media (max-width:640px){
+  .rc-tabla, .rc-tabla tbody, .rc-tabla tr, .rc-tabla td { display:block; width:100%; }
+  .rc-tabla thead { display:none; }
+  .rc-tabla tr { border:0.5px solid var(--border); border-radius:8px; padding:7px 10px; margin-bottom:6px; background:var(--surface); }
+  .rc-tabla td { padding:3px 0; border:none; }
+  .rc-tabla td::before { content:attr(data-col); display:block; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; font-weight:400; color:var(--text-tertiary); }
+}
+/* Plantillas */
+.rc-pl-campos { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
+@media (min-width:700px){ .rc-pl-campos { grid-template-columns:repeat(4, minmax(0,1fr)); } }
+.rc-pl-campo span { display:block; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:3px; }
+.rc-pl-campo input { width:100%; font-size:16px; padding:7px 10px; border:0.5px solid var(--border-md); border-radius:var(--radius-md); background:var(--surface); color:var(--text); outline:none; }
+.rc-pl-campo input:focus { border-color:rgba(192,125,42,0.5); }
+.rc-pl-nota { font-size:12px; line-height:1.45; color:var(--text-tertiary); margin:6px 0 14px; }
+.rc-pl { background:var(--surface); border:0.5px solid var(--border-md); border-radius:12px; padding:12px 13px 4px; margin-bottom:12px; }
+.rc-pl-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; margin-bottom:8px; }
+.rc-pl-tema { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:19px; line-height:1.2; color:var(--text); }
+.rc-pl-dest { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:#c07d2a; }
+.rc-pl-tabs { display:flex; gap:4px; margin-bottom:8px; }
+.rc-pl-tab { min-width:44px; padding:6px 10px; border-radius:6px; border:0.5px solid var(--border); background:none; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.1em; cursor:pointer; touch-action:manipulation; }
+.rc-pl-tab.on { background:rgba(192,125,42,0.14); color:#f3b572; border-color:rgba(192,125,42,0.45); }
+.rc-pl-lbl { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); margin:4px 0 3px; }
+.rc-pl-caja { font-size:14px; line-height:1.55; white-space:pre-wrap; color:var(--text); background:rgba(0,0,0,0.18); border:0.5px solid var(--border); border-radius:8px; padding:9px 11px; -webkit-user-select:text; user-select:text; }
+.rc-ph { color:#f3b572; background:rgba(192,125,42,0.12); border:0.5px dashed rgba(192,125,42,0.55); border-radius:3px; padding:0 3px; font-family:'Courier Prime','Courier New',monospace; font-size:0.9em; }
+.rc-ph.lleno { color:var(--text); font-family:inherit; font-size:inherit; border-style:solid; border-color:rgba(192,125,42,0.3); }
+.rc-pl-copy { min-width:168px; margin:8px 0 12px; padding:8px 14px; border-radius:999px; border:0.5px solid rgba(192,125,42,0.5); background:rgba(192,125,42,0.1); color:#f3b572; font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; transition:background .15s, color .15s; }
+.rc-pl-copy.ok { background:var(--gold); border-color:var(--gold); color:#15110d; }
+/* Visor a pantalla completa. Los controles abajo: se alcanzan con una mano. */
+html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
+.rc-visor { position:fixed; inset:0; z-index:9999; display:flex; flex-direction:column; background:#0c0b0a; animation:chkModalFadeIn 0.15s ease-out; }
+.rc-visor-scroll { flex:1 1 auto; min-height:0; overflow:auto; display:flex; align-items:center; justify-content:center; padding:calc(10px + env(safe-area-inset-top)) 10px 10px; -webkit-overflow-scrolling:touch; }
+.rc-visor-scroll img { display:block; max-width:100%; max-height:100%; object-fit:contain; border-radius:4px; cursor:zoom-in; }
+/* En tamaño real, margin:auto centra la captura si es más chica que el visor
+   y se vuelve 0 si es más grande: nunca recorta el borde izquierdo, cosa que
+   sí haría justify-content:center con desborde. */
+.rc-visor.real .rc-visor-scroll { justify-content:flex-start; align-items:flex-start; }
+.rc-visor.real .rc-visor-scroll img { flex:0 0 auto; margin:auto; max-width:none; max-height:none; cursor:zoom-out; }
+.rc-visor-bar { flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); border-top:0.5px solid rgba(255,255,255,0.12); }
+.rc-visor-alt { flex:1 1 auto; min-width:0; font-family:'Courier Prime','Courier New',monospace; font-size:11px; line-height:1.35; color:rgba(255,255,255,0.7); }
+.rc-visor-btn { flex:0 0 auto; padding:8px 14px; border-radius:999px; border:0.5px solid rgba(192,125,42,0.5); background:rgba(192,125,42,0.1); color:#f3b572; font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; }
+.rc-visor-x { flex:0 0 auto; width:40px; height:40px; border-radius:50%; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; font-size:24px; line-height:1; padding:0 0 3px; cursor:pointer; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -2835,6 +2991,11 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
          botón destacado sobre las tabs y estuvo oculto desde el 2026-08-01;
          el owner lo quiso visible pero sin destacar, junto a Café. -->
     <button class="tab" onclick="setTab('checklist',this)" id="tab-btn-checklist">Checklist</button>
+    <!-- Recepción (2026-10): primera área fuera de A&B. Séptima tab, al final.
+         Si el aparato la dejó abierta, el arranque vuelve a ella (el PC de
+         recepción abre directo en la guía). Cuando llegue otra área, esto se
+         promueve a un selector de área. -->
+    <button class="tab" onclick="setTab('recepcion',this)" id="tab-btn-recepcion">Recepción</button>
   </div>
 
   <!-- MENÚS TAB — desde el cambio de menú 2026 la vista corta primero por
@@ -2952,6 +3113,19 @@ body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
       <button class="chk-search-clear" id="chk-search-clear" onclick="chkSearchClear()" aria-label="Limpiar búsqueda">×</button>
     </div>
     <div class="chk-root" id="chk-root"></div>
+  </div>
+
+  <!-- RECEPCIÓN TAB — guía de procedimientos (contenido en Firebase Storage,
+       detrás del gate; ver el bloque RECEPCIÓN del script). El buscador vive
+       acá, estático y fuera de #rc-root, para no perder el foco cuando la
+       vista se repinta — el mismo patrón que Menú y Checklist. -->
+  <div id="tab-recepcion" class="hidden">
+    <div class="search-bar chk-search-bar rc-search-bar" id="rc-search-bar">
+      <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+      <input type="text" id="rc-search" placeholder="Buscar paso, código o plantilla…" oninput="rcBuscarInput()" onkeydown="rcBuscarTecla(event)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+      <button class="chk-search-clear" onclick="rcBuscarLimpiar()" aria-label="Limpiar búsqueda">×</button>
+    </div>
+    <div class="rc-root" id="rc-root"></div>
   </div>
 
 <footer style="margin-top:3rem;padding:1.25rem 0 0.5rem;border-top:0.5px solid var(--border);text-align:center;">
@@ -4066,6 +4240,39 @@ const EST_ICON_AUD   = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColo
 const EST_ICON_PLAY  = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.6 8z" fill="currentColor"/></svg>';
 const EST_ICON_PAUSE = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="3.2" width="2.8" height="9.6" rx="0.6" fill="currentColor"/><rect x="9.2" y="3.2" width="2.8" height="9.6" rx="0.6" fill="currentColor"/></svg>';
 
+// --- Recepción: guía de procedimientos (ver el bloque RECEPCIÓN, al final) --
+// Séptima tab. Contenido en Firebase Storage (recepcion/), detrás del gate: el
+// repo es público y Vercel sirve los estáticos sin sesión. Válvula de
+// publicación: en false, fuera de localhost no se pide nada a la red.
+const RC_STORAGE_ON = true;
+const RC_BUCKET     = EST_BUCKET;
+const RC_LOCAL      = EST_LOCAL;              // localhost → /recepcion-local/
+const RC_CACHE      = 'ata-recepcion-v1';     // Cache API propio; sw.js no lo borra
+const RC_LS_PASOS   = 'ata.recepcion.pasos.'; // + id del procedimiento (personal)
+const RC_LS_ABIERTA = 'ata.recepcion.abierta';
+const RC_LS_DIMS    = 'ata.recepcion.dims';   // medidas de las capturas (reservar el hueco)
+const RC_TURNOS = ['PM', 'Llegadas', 'Viernes', 'Noche', 'Todo turno', 'Inicio, mitad y fin de mes'];
+let RC_IDX        = null;   // indice.json parseado (una vez por carga)
+let RC_IDX_PROM   = null;   // carga en curso — nunca dos a la vez
+let RC_IDX_ERR    = '';     // '' | 'nopub' | 'sesion' | 'red' | 'formato'
+let RC_IDX_ORIGEN = null;   // 'red' | 'cache'
+let RC_BUSQ       = null;   // índice plano de búsqueda
+let RC_RES        = [];     // últimos resultados (se abren por posición)
+let RC_PL_GRUPOS  = [];     // plantillas agrupadas por tema + destinatario
+let RC_VIEW       = 'inicio';   // 'inicio' | 'proc' | 'ref' | 'plant'
+let RC_PROC       = null;   // id del procedimiento abierto
+let RC_TURNO      = '';     // chip de turno activo
+let RC_Q          = '';     // consulta del buscador
+let RC_TARGET     = null;   // a dónde llevar después del render (paso, fila…)
+let RC_SEGUIR     = null;   // elemento buscado que se sostiene en pantalla mientras cargan capturas
+let RC_PL_IDIOMA  = {};     // grupo de plantilla → 'ES' | 'PT' | 'EN'
+let RC_PL_CAMPOS  = { crs:'', party:'', nombre:'', fecha:'' };
+let RC_IMG_URLS   = {};     // src → object URL
+let RC_IMG_PROM   = {};     // src → carga en curso
+let RC_IMG_OBS    = null;   // IntersectionObserver de la carga diferida
+let RC_DIMS       = null;   // cache en memoria de RC_LS_DIMS
+let RC_PRECARGA   = null;   // {total, ok, corriendo}
+
 // ════════════════════════════════════════════════════════════════════════════
 // STATE TOP — module-level let/const declarations
 // ════════════════════════════════════════════════════════════════════════════
@@ -4888,6 +5095,30 @@ const UI = {
     chkLastDoneToday:'Última vez: hoy', chkLastDoneYesterday:'Última vez: ayer', chkLastDoneDaysAgo:'Última vez: hace {n} días', chkLastDoneNone:'Sin registro en los últimos 30 días', chkImageRefAlt:'Imagen de referencia', chkImageClose:'Cerrar', chkImageAdd:'Foto', chkImageRemove:'Quitar foto', chkImageError:'No se pudo procesar la imagen. Intenta con otra foto.',
     chkActiveTag:'en curso',
     chkProgress:'completadas',
+    // Recepción (2026-10) — sólo ES: herramienta interna; t() cae al español
+    // desde EN/PT sin error (misma regla que Estudio y lo operativo).
+    tabRecepcion:'Recepción', rcSearch:'Buscar paso, código o plantilla…',
+    rcSegInicio:'Inicio', rcSegRef:'Referencia', rcSegPlant:'Plantillas',
+    rcInterno:'Uso interno · guía preliminar, se corrige turno a turno',
+    rcCargando:'Cargando la guía…', rcReintentar:'Reintentar',
+    rcErrNoPub:'La guía de recepción todavía no está publicada.',
+    rcErrSesion:'Este aparato todavía no entró con la clave del Handbook, y la guía queda detrás de ella.',
+    rcErrRed:'Sin red y sin copia guardada en este aparato. Hace falta abrir Recepción una vez con conexión.',
+    rcErrFormato:'El índice de la guía no tiene el formato esperado (revisar gen_indice.py).',
+    rcCopiaGuardada:'Sin conexión con la guía: copia guardada en este aparato',
+    rcGuardando:'Guardando para usar sin red · {n}/{t}', rcSinRedOk:'Disponible sin red en este aparato',
+    rcSinRedParcial:'Sin red: {n}/{t} capturas guardadas',
+    rcPreliminar:'Preliminar',
+    rcPrelimAviso:'Este procedimiento todavía se está armando: puede estar incompleto o cambiar. Ante la duda, confirmar con el supervisor.',
+    rcSinResultados:'Sin resultados para', rcSinFilas:'Ninguna fila coincide con', rcSinPlantillas:'Ninguna plantilla coincide con',
+    rcResultado:'resultado', rcResultados:'resultados', rcPrimeros:'primeros',
+    rcVolver:'Procedimientos', rcVolverRes:'Resultados', rcFuente:'Fuente',
+    rcPasos:'Pasos', rcReiniciar:'Reiniciar', rcOjo:'Ojo', rcPendientes:'Pendientes', rcPendNota:'dudas abiertas · no son reglas',
+    rcAsunto:'Asunto', rcTexto:'Texto', rcCopiarAsunto:'Copiar asunto', rcCopiarTexto:'Copiar texto',
+    rcCopiado:'Copiado ✓', rcSeleccionado:'Seleccionado · copiar a mano',
+    rcCampoNombre:'Nombre', rcCampoFecha:'Fecha',
+    rcPlNota:'Los campos reemplazan los marcadores en las tres versiones. Los que quedan vacíos se ven entre corchetes.',
+    rcCaptura:'Captura', rcTamanoReal:'Tamaño real', rcAjustar:'Ajustar', rcCerrar:'Cerrar',
     chkMetaPrefix:'Servicio',
     chkCarryoverTitle:'Pendientes del momento anterior',
     chkCarryoverEmpty:'Nada pendiente del momento anterior · turno limpio.',
@@ -5851,6 +6082,8 @@ function setLang(lang, el) {
   if (vjBtn) vjBtn.textContent = t('tabViajeros');
   const chkBtn = document.getElementById('tab-btn-checklist');
   if (chkBtn) chkBtn.textContent = t('tabChecklist');
+  const rcBtn = document.getElementById('tab-btn-recepcion');
+  if (rcBtn) rcBtn.textContent = t('tabRecepcion');
   const mn = document.getElementById('momentos-notice-text');
   if (mn) mn.textContent = t('momentNotice');
   // Fire i18n hooks — modules that need to re-render their labels in the
@@ -5873,6 +6106,7 @@ function setTab(tab, el) {
     MENU_BAR_VIEW = 'tragos';
     return setTab('menus', document.querySelector('.main-tabs .tab'));
   }
+  const rcPrev = currentTab;
   currentTab = tab;
   document.querySelectorAll('.main-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
@@ -5880,15 +6114,23 @@ function setTab(tab, el) {
   // Checklist — the operator wants the task list above the fold, not the
   // staffing roster that they already know.
   document.body.classList.toggle('in-checklist', tab === 'checklist');
+  // Recepción colapsa la ops-strip igual que Checklist. Para que la tira de
+  // tabs no salte bajo el dedo al entrar o salir, se compensa el scroll.
+  const rcTabs = document.querySelector('.main-tabs');
+  const rcY0 = rcTabs ? rcTabs.getBoundingClientRect().top : 0;
+  document.body.classList.toggle('in-recepcion', tab === 'recepcion');
+  if (rcTabs){ const d = rcTabs.getBoundingClientRect().top - rcY0; if (d) window.scrollBy(0, d); }
   // #tab-cocktails NO está en esta lista: vive dentro de #tab-menus y su
   // visibilidad la controla renderDishes() según el segmento BAR › Tragos.
-  ['menus','vinos','cafe','comandera','rol','viajeros','checklist'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  ['menus','vinos','cafe','comandera','rol','viajeros','checklist','recepcion'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
   if (tab === 'menus') renderDishes();
   if (tab === 'cafe') renderCafeTab();
   if (tab === 'comandera') comandaEnter();
   if (tab === 'rol') rolEnter();
   if (tab === 'viajeros') viajerosEnter();
   else vjStopTick();   // el chip de frescura sólo se refresca con la tab a la vista
+  if (tab === 'recepcion') rcEnter();
+  else if (rcPrev === 'recepcion') rcSalir();
   if (tab === 'checklist') chkEnter();
   else {
     // The checklist PIN/image overlays live on <body> (not inside chk-root),
@@ -9016,6 +9258,8 @@ function fbAuthInit(){
             console.info('[auth] token tardío: reintentando la carga');
             try { viajerosFetch(); } catch(e){}
             try { staffingFetch(); } catch(e){}
+            // Recepción también lee de Storage con este token.
+            try { if (currentTab === 'recepcion' && !RC_IDX) rcReintentar(); } catch(e){}
           }
         }).catch(() => fin(null));
       });
@@ -19115,6 +19359,878 @@ const CHK_SEED = {
     ]
   }
 };
+
+// ════════════════════════════════════════════════════════════════════════════
+// RECEPCIÓN — guía de procedimientos del turno (2026-10)
+// ════════════════════════════════════════════════════════════════════════════
+// Primera área fuera de A&B. Se consulta de pie en pleno check-in, con una
+// mano, o en el PC al lado de Opera Cloud: cada consulta tiene que resolverse
+// en segundos. Por eso manda el buscador — de "tax type" o "HTLND" al paso
+// exacto, con scroll y resaltado — y todo lo demás es secundario.
+//
+// ORIGEN — nada en RTDB: es contenido estático que cambia cuando el owner
+//   regenera el índice (gen_indice.py, fuera del repo), no estado compartido.
+//   Firebase Storage, carpeta recepcion/ del mismo bucket que Estudio:
+//     recepcion/indice.json      procedimientos, tablas y plantillas
+//     recepcion/img/*.webp       capturas de Opera y PGO, ya tapadas
+//   NO va en el repo: el repo de GitHub es público y Vercel sirve los
+//   estáticos sin sesión, y esto trae procedimientos de garantía, códigos
+//   internos, correos del personal y capturas del sistema. Storage lo deja
+//   detrás del gate: las reglas piden auth y cada pedido lleva el token. En
+//   localhost se lee la misma estructura desde /recepcion-local/ (fuera de git
+//   y de Vercel). Válvula: RC_STORAGE_ON (STATE TOP).
+//
+// OFFLINE — la primera vez que se abre el módulo se guarda TODO (≈1,6 MB) en
+//   el Cache API (RC_CACHE): en recepción la red también se cae. sw.js no lo
+//   ve (Storage es otro origen) y sólo aprendió a no borrar este bucket.
+//
+// ACTUALIZAR — el índice se pide siempre primero a la red (no-store) y el
+//   cache es el respaldo. Si el texto cambió respecto del guardado, las
+//   imágenes se vuelven a bajar en segundo plano. Reemplazar indice.json en
+//   Storage alcanza: la próxima carga lo ve, sin borrar datos del navegador.
+//
+// SEGURIDAD — html / intro / nota / celdas los escribe gen_indice.py ya
+//   escapados y con sólo <strong> <em> <code>. Igual pasan por rcHtml(), que
+//   reconstruye el HTML con esa lista blanca y sin atributos. Todo lo demás
+//   (títulos, alt, columnas, plantillas…) entra como texto, con rcEsc().
+//
+// CHECKLIST — las marcas de los pasos son personales: localStorage por
+//   procedimiento, nunca Firebase. Cada marca guarda la huella del texto del
+//   paso, así que si el owner lo corrige esa marca cae sola.
+//
+// PENDIENTES — son dudas abiertas, no instrucciones, y nunca se dibujan como
+//   un paso: borde punteado (el "sin dato" del programa) y la leyenda "no son
+//   reglas". Un pendiente leído como regla termina en un error frente a un
+//   viajero o en facturación.
+//
+// Sin cruce con PGO/Viajeros: este módulo no lee ni muestra datos de viajeros.
+// ════════════════════════════════════════════════════════════════════════════
+
+// --- Utilidades --------------------------------------------------------------
+function rcEsc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+// La MISMA regla que normalizar() de gen_indice.py: minúsculas, sin tildes, sin
+// marcas de markdown, espacios simples. La consulta y el campo `busqueda` se
+// comparan en el mismo idioma; una regla distinta acá perdería aciertos.
+function rcNorm(s){
+  return String(s || '').toLowerCase().normalize('NFD').replace(/\p{Mn}/gu, '')
+    .replace(/[*`_#>\[\]()!|]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+// Lista blanca: sólo <strong> <em> <code>, sin atributos. Cualquier otra
+// etiqueta se descarta y queda su texto. El <template> es inerte: nada de lo
+// que se parsea ahí corre ni carga.
+const RC_TAGS_OK = { STRONG:'strong', EM:'em', CODE:'code' };
+function rcHtml(s){
+  const tpl = document.createElement('template');
+  tpl.innerHTML = String(s || '');
+  const walk = n => {
+    let out = '';
+    n.childNodes.forEach(c => {
+      if (c.nodeType === 3) out += rcEsc(c.nodeValue);
+      else if (c.nodeType === 1){
+        const tag = RC_TAGS_OK[c.tagName];
+        out += tag ? `<${tag}>${walk(c)}</${tag}>` : walk(c);
+      }
+    });
+    return out;
+  };
+  return walk(tpl.content);
+}
+// Texto plano de un campo html (para los extractos de la búsqueda).
+function rcTextoDeHtml(s){
+  const tpl = document.createElement('template');
+  tpl.innerHTML = String(s || '');
+  return tpl.content.textContent || '';
+}
+// Texto plano de un campo `texto` (markdown mínimo: **negrita**, *cursiva*, `código`).
+function rcPlano(s){ return String(s || '').replace(/\*\*|`/g, '').replace(/(^|[^\w*])\*([^*\n]+)\*/g, '$1$2'); }
+function rcHash(s){
+  let h = 5381; s = String(s || '');
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+function rcPunteroFino(){ try { return matchMedia('(pointer: fine)').matches; } catch(e){ return false; } }
+// Turno del procedimiento contra un chip: "Viernes, víspera de feriado" cae en Viernes.
+function rcTurnoEs(p, chip){
+  const tu = String(p.turno || '');
+  return tu === chip || tu.startsWith(chip + ',');
+}
+
+// --- Origen: Storage (deploys) o /recepcion-local/ (QA) ------------------------
+function rcOrigenActivo(){ return RC_LOCAL || RC_STORAGE_ON; }
+function rcUrl(path){
+  return RC_LOCAL ? '/recepcion-local/' + path
+    : `https://firebasestorage.googleapis.com/v0/b/${RC_BUCKET}/o/${encodeURIComponent('recepcion/' + path)}?alt=media`;
+}
+async function rcHeaders(forzar){
+  if (RC_LOCAL) return {};
+  try { await fbAuthInit(); } catch(e){}
+  const tk = await fbTokenRefrescar(!!forzar);
+  return tk ? { Authorization: 'Firebase ' + tk } : {};
+}
+async function rcFetch(path){
+  let r = await fetch(rcUrl(path), { headers: await rcHeaders(false), cache: 'no-store' });
+  // Token vencido (la PWA estuvo suspendida horas, §4.5): renovar y reintentar UNA vez.
+  if (!RC_LOCAL && (r.status === 401 || r.status === 403))
+    r = await fetch(rcUrl(path), { headers: await rcHeaders(true), cache: 'no-store' });
+  return r;
+}
+function rcHaySesion(){
+  try { return !!(typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser); } catch(e){ return false; }
+}
+// Sólo rutas de img/ con nombre simple: el índice no puede pedir otra cosa.
+function rcSrcOk(src){ return /^img\/[\w.-]+\.(webp|png|jpe?g)$/i.test(String(src || '')); }
+
+// --- Cache API -----------------------------------------------------------------
+// La clave es una URL lógica del propio origen, no la de Storage: el token
+// cambia cada hora y no puede formar parte de la clave (igual que Estudio).
+function rcCacheKey(path){ return location.origin + '/recepcion/' + path; }
+async function rcCacheGet(path){
+  try { return (await (await caches.open(RC_CACHE)).match(rcCacheKey(path))) || null; }
+  catch(e){ return null; }   // sin Cache API (http por IP de la LAN): se trabaja sin copia
+}
+async function rcCachePut(path, resp){
+  try { await (await caches.open(RC_CACHE)).put(rcCacheKey(path), resp); return true; }
+  catch(e){ return false; }
+}
+async function rcCacheTexto(path){
+  const r = await rcCacheGet(path);
+  try { return r ? await r.text() : null; } catch(e){ return null; }
+}
+
+// --- Índice: una vez por carga de página ----------------------------------------
+function rcValidar(txt){
+  try {
+    const d = JSON.parse(txt);
+    if (!d || !Array.isArray(d.procedimientos) || !Array.isArray(d.referencia) || !Array.isArray(d.plantillas)) return null;
+    d.procedimientos.forEach(p => { ['intro','pasos','ojo','pendientes'].forEach(k => { if (!Array.isArray(p[k])) p[k] = []; }); });
+    d.procedimientos.sort((a, b) => (Number(a.orden) || 99) - (Number(b.orden) || 99));
+    return d;
+  } catch(e){ return null; }
+}
+async function rcCargarIndice(){
+  if (RC_IDX) return RC_IDX;
+  if (RC_IDX_PROM) return RC_IDX_PROM;
+  RC_IDX_PROM = (async () => {
+    let txt = null, err = '';
+    if (!rcOrigenActivo()) err = 'nopub';
+    else if (navigator.onLine === false) err = 'red';
+    else {
+      try {
+        const r = await rcFetch('indice.json');
+        if (r.ok) txt = await r.text();
+        // 403 con sesión = las reglas de Storage todavía no abren recepcion/
+        // (no publicado); 403 sin sesión = falta la clave del gate.
+        else err = r.status === 404 ? 'nopub' : (r.status === 401 || r.status === 403) ? (rcHaySesion() ? 'nopub' : 'sesion') : 'red';
+      } catch(e){ err = 'red'; }
+    }
+    let data = txt ? rcValidar(txt) : null;
+    if (txt && !data) err = 'formato';
+    const guardado = await rcCacheTexto('indice.json');
+    let cambio = false;
+    if (data){
+      RC_IDX_ORIGEN = 'red';
+      if (guardado !== txt){
+        // Versión nueva (o primera): se guarda, y si había una anterior las
+        // imágenes se vuelven a pedir — una captura pudo cambiar con el mismo nombre.
+        cambio = guardado !== null;
+        await rcCachePut('indice.json', new Response(txt, { headers: { 'Content-Type': 'application/json' } }));
+      }
+    } else if (guardado){
+      data = rcValidar(guardado);
+      if (data) RC_IDX_ORIGEN = 'cache';
+    }
+    RC_IDX = data;
+    RC_IDX_ERR = data ? '' : (err || 'red');
+    RC_IDX_PROM = null;
+    if (data){
+      rcIndexar();
+      rcPrecargar(cambio);
+    }
+    return data;
+  })();
+  return RC_IDX_PROM;
+}
+function rcReintentar(){
+  RC_IDX_ERR = '';
+  rcRender();
+  rcCargarIndice().then(() => { if (currentTab === 'recepcion') rcRender(); });
+}
+
+// --- Búsqueda: un índice plano, armado una vez --------------------------------
+// Pasos, ojo, pendientes, filas de tablas y plantillas a la vez. Pasos, filas y
+// plantillas traen `busqueda` del generador; ojo y pendientes no, y se
+// normalizan acá con la misma regla (si no, "luna de miel" no aparecería).
+const RC_PESO = { proc:6, paso:5, fila:4, ojo:3, pend:2, plant:1 };
+function rcIndexar(){
+  const L = [];
+  const subTxt = it => (it.sub || []).map(s => s.texto || '').join(' ');
+  RC_IDX.procedimientos.forEach((p, pi) => {
+    L.push({ tipo:'proc', pi, b: rcNorm(p.titulo), donde: p.titulo, extra: 'procedimiento', snip: p.cuando || '' });
+    p.pasos.forEach(s => L.push({ tipo:'paso', pi, n: s.n, b: s.busqueda || rcNorm(s.texto + ' ' + subTxt(s)),
+      donde: p.titulo, extra: 'paso ' + s.n, snip: rcPlano((s.texto || '') + ' ' + subTxt(s)) }));
+    p.ojo.forEach((it, i) => L.push({ tipo:'ojo', pi, i, b: rcNorm(it.texto + ' ' + subTxt(it)),
+      donde: p.titulo, extra: 'ojo', snip: rcPlano((it.texto || '') + ' ' + subTxt(it)) }));
+    p.pendientes.forEach((it, i) => L.push({ tipo:'pend', pi, i, b: rcNorm(it.texto + ' ' + subTxt(it)),
+      donde: p.titulo, extra: 'pendiente · no es regla', snip: rcPlano((it.texto || '') + ' ' + subTxt(it)) }));
+  });
+  RC_IDX.referencia.forEach((tb, ti) => (tb.filas || []).forEach((f, i) => L.push({ tipo:'fila', ti, i,
+    b: (tb.busqueda_filas || [])[i] || rcNorm(tb.titulo + ' ' + f.map(rcTextoDeHtml).join(' ')),
+    donde: 'Referencia', extra: tb.titulo, snip: f.map(rcTextoDeHtml).join(' · ') })));
+  RC_IDX.plantillas.forEach((pl, li) => L.push({ tipo:'plant', li, b: pl.busqueda || rcNorm(pl.titulo + ' ' + pl.texto),
+    donde: 'Plantilla', extra: pl.titulo, snip: (pl.asunto ? pl.asunto + ' — ' : '') + (pl.texto || '') }));
+  RC_BUSQ = L;
+  // Plantillas agrupadas por tema y destinatario; las versiones por idioma.
+  const G = [], porClave = {};
+  RC_IDX.plantillas.forEach((pl, li) => {
+    const k = (pl.tema || pl.titulo) + '·' + (pl.destinatario || '');
+    if (!porClave[k]){ porClave[k] = { k, tema: pl.tema || pl.titulo, dest: pl.destinatario || '', v: {}, li: {} }; G.push(porClave[k]); }
+    const lang = String(pl.idioma || 'ES').toUpperCase();
+    porClave[k].v[lang] = pl; porClave[k].li[lang] = li;
+  });
+  RC_PL_GRUPOS = G;
+}
+function rcBuscar(qn){
+  const terms = qn.split(' ').filter(Boolean);
+  if (!terms.length || !RC_BUSQ) return (RC_RES = []);
+  const out = [];
+  RC_BUSQ.forEach((it, orden) => {
+    if (!terms.every(tm => it.b.includes(tm))) return;
+    out.push(Object.assign({ score: (it.b.includes(qn) ? 10 : 0) + RC_PESO[it.tipo], orden }, it));
+  });
+  out.sort((a, b) => (b.score - a.score) || (a.orden - b.orden));
+  return (RC_RES = out);
+}
+// Plegado con mapa al texto original: permite resaltar "garantia" dentro de
+// "garantía" sin tocar el texto que se muestra.
+function rcFoldMap(s){
+  let f = ''; const map = [];
+  for (let i = 0; i < s.length; i++){
+    const c = s[i].toLowerCase().normalize('NFD').replace(/\p{Mn}/gu, '');
+    for (let j = 0; j < c.length; j++){ f += c[j]; map.push(i); }
+  }
+  return { f, map };
+}
+function rcResaltar(texto, qn, largo){
+  const s = String(texto || ''); largo = largo || 220;
+  const terms = qn.split(' ').filter(tm => tm.length >= 2);
+  const fm = rcFoldMap(s);
+  const marcas = new Uint8Array(s.length);
+  let primero = -1;
+  terms.forEach(tm => {
+    let k = fm.f.indexOf(tm);
+    while (k >= 0){
+      const o = fm.map[k];
+      if (primero < 0 || o < primero) primero = o;
+      for (let j = k; j < k + tm.length && j < fm.map.length; j++) marcas[fm.map[j]] = 1;
+      k = fm.f.indexOf(tm, k + tm.length);
+    }
+  });
+  let a = 0, b = s.length;
+  if (s.length > largo){
+    a = primero > 70 ? primero - 60 : 0;
+    b = Math.min(s.length, a + largo);
+  }
+  let out = a > 0 ? '…' : '', on = false;
+  for (let i = a; i < b; i++){
+    if (!!marcas[i] !== on){ out += marcas[i] ? '<mark>' : '</mark>'; on = !!marcas[i]; }
+    out += rcEsc(s[i]);
+  }
+  if (on) out += '</mark>';
+  return out + (b < s.length ? '…' : '');
+}
+
+// --- Imágenes: carga diferida, desde el cache o la red --------------------------
+function rcTodasLasImgs(){
+  const set = new Set();
+  if (RC_IDX) RC_IDX.procedimientos.forEach(p => ['pasos','ojo','pendientes'].forEach(g =>
+    p[g].forEach(it => (it.imgs || []).forEach(im => { if (rcSrcOk(im.src)) set.add(im.src); }))));
+  return [...set];
+}
+async function rcImgRed(src){
+  if (!rcOrigenActivo() || navigator.onLine === false) return null;
+  try {
+    const r = await rcFetch(src);
+    if (!r.ok) return null;
+    const b = await r.blob();
+    await rcCachePut(src, new Response(b, { headers: { 'Content-Type': b.type || 'image/webp' } }));
+    return b;
+  } catch(e){ return null; }
+}
+async function rcImgBlob(src, red){
+  if (!red){
+    const c = await rcCacheGet(src);
+    if (c){ try { return await c.blob(); } catch(e){} }
+    return rcImgRed(src);
+  }
+  const b = await rcImgRed(src);
+  if (b) return b;
+  const c = await rcCacheGet(src);
+  try { return c ? await c.blob() : null; } catch(e){ return null; }
+}
+function rcImgUrl(src){
+  if (RC_IMG_URLS[src]) return Promise.resolve(RC_IMG_URLS[src]);
+  if (RC_IMG_PROM[src]) return RC_IMG_PROM[src];
+  return (RC_IMG_PROM[src] = (async () => {
+    const b = await rcImgBlob(src, false);
+    delete RC_IMG_PROM[src];
+    if (!b) return null;
+    return (RC_IMG_URLS[src] = URL.createObjectURL(b));
+  })());
+}
+// Medidas de cada captura, guardadas: con ellas el hueco de la imagen se
+// reserva antes de que llegue y nada se mueve bajo el dedo al cargar.
+function rcDims(){
+  if (!RC_DIMS){ try { RC_DIMS = JSON.parse(localStorage.getItem(RC_LS_DIMS) || '{}') || {}; } catch(e){ RC_DIMS = {}; } }
+  return RC_DIMS;
+}
+function rcDim(src){ const d = rcDims()[src]; return (Array.isArray(d) && d[0] > 0 && d[1] > 0) ? d : null; }
+function rcDimGuardar(src, w, h){
+  if (!(w > 0 && h > 0)) return;
+  const d = rcDims(); const v = d[src];
+  if (v && v[0] === w && v[1] === h) return;
+  d[src] = [w, h];
+  try { localStorage.setItem(RC_LS_DIMS, JSON.stringify(d)); } catch(e){}
+}
+async function rcDimDeBlob(src, b){
+  try {
+    if (!b || typeof createImageBitmap !== 'function') return;
+    const bm = await createImageBitmap(b);
+    rcDimGuardar(src, bm.width, bm.height);
+    if (bm.close) bm.close();
+  } catch(e){}
+}
+// La primera vez que se abre el módulo se guarda todo para usar sin red. Con
+// `forzar` (índice nuevo) se vuelve a pedir cada imagen a la red.
+async function rcPrecargar(forzar){
+  if (RC_PRECARGA && RC_PRECARGA.corriendo) return;
+  const srcs = rcTodasLasImgs();
+  RC_PRECARGA = { total: srcs.length, ok: 0, corriendo: true };
+  rcPatchEstado();
+  let i = 0;
+  const trabajador = async () => {
+    while (i < srcs.length){
+      const src = srcs[i++];
+      let b = null;
+      if (!forzar){ const c = await rcCacheGet(src); if (c){ try { b = await c.blob(); } catch(e){} } }
+      if (!b){
+        b = await rcImgRed(src);
+        if (b && forzar && RC_IMG_URLS[src]){ try { URL.revokeObjectURL(RC_IMG_URLS[src]); } catch(e){} delete RC_IMG_URLS[src]; }
+      }
+      if (b){ RC_PRECARGA.ok++; if (!rcDim(src) || forzar) await rcDimDeBlob(src, b); }
+      if (RC_PRECARGA.ok % 8 === 0) rcPatchEstado();
+    }
+  };
+  await Promise.all([trabajador(), trabajador(), trabajador(), trabajador()]);
+  RC_PRECARGA.corriendo = false;
+  rcPatchEstado();
+}
+function rcImgsHtml(imgs){
+  return (imgs || []).filter(im => im && rcSrcOk(im.src)).map(im => {
+    const d = rcDim(im.src);
+    const st = d ? ` style="width:min(100%, ${d[0]}px);aspect-ratio:${d[0]} / ${d[1]}"` : '';
+    const alt = String(im.alt || '');
+    return `<figure class="rc-fig"><button type="button" class="rc-img" data-src="${rcEsc(im.src)}" data-alt="${rcEsc(alt)}"${st}`
+      + ` onclick="rcVisorAbrir(this)" aria-label="${rcEsc('Ampliar captura' + (alt ? ': ' + alt : ''))}">`
+      + `<span class="rc-img-ph">captura</span></button>${alt ? `<figcaption>${rcEsc(alt)}</figcaption>` : ''}</figure>`;
+  }).join('');
+}
+function rcObservarImgs(){
+  if (RC_IMG_OBS){ RC_IMG_OBS.disconnect(); RC_IMG_OBS = null; }
+  const els = document.querySelectorAll('#rc-root .rc-img[data-src]:not(.cargada)');
+  if (!els.length) return;
+  if (!('IntersectionObserver' in window)){ els.forEach(rcImgCargar); return; }
+  RC_IMG_OBS = new IntersectionObserver(ents => ents.forEach(e => {
+    if (e.isIntersecting){ RC_IMG_OBS.unobserve(e.target); rcImgCargar(e.target); }
+  }), { rootMargin: '500px 0px' });
+  els.forEach(el => RC_IMG_OBS.observe(el));
+}
+async function rcImgCargar(el){
+  const src = el.dataset.src;
+  const url = await rcImgUrl(src);
+  if (!el.isConnected) return;
+  if (!url){ el.classList.add('falla'); const ph = el.querySelector('.rc-img-ph'); if (ph) ph.textContent = 'captura no disponible sin red'; return; }
+  const img = document.createElement('img');
+  img.alt = el.dataset.alt || '';
+  img.decoding = 'async';
+  img.onload = () => {
+    const w = img.naturalWidth, h = img.naturalHeight;
+    rcDimGuardar(src, w, h);
+    el.style.width = `min(100%, ${w}px)`;
+    el.style.aspectRatio = `${w} / ${h}`;
+    el.classList.add('cargada');
+    // Llegando desde el buscador: mientras cargan las capturas de arriba, el
+    // paso buscado se mantiene donde se lo dejó (hasta que el usuario toca).
+    if (RC_SEGUIR) rcAnclarA(RC_SEGUIR);
+  };
+  el.appendChild(img);
+  img.src = url;
+}
+
+// --- Marcas de los pasos (personales, localStorage) -----------------------------
+function rcMarcas(p){
+  try { const m = JSON.parse(localStorage.getItem(RC_LS_PASOS + p.id) || '{}'); return (m && typeof m === 'object') ? m : {}; }
+  catch(e){ return {}; }
+}
+function rcMarcasGuardar(p, m){
+  try {
+    if (Object.keys(m).length) localStorage.setItem(RC_LS_PASOS + p.id, JSON.stringify(m));
+    else localStorage.removeItem(RC_LS_PASOS + p.id);
+  } catch(e){}
+}
+function rcHecho(m, s){ return m[s.n] === rcHash(s.texto); }
+function rcHechos(p, m){ return p.pasos.filter(s => rcHecho(m, s)).length; }
+function rcProcActual(){ return RC_IDX && RC_PROC ? RC_IDX.procedimientos.find(p => p.id === RC_PROC) || null : null; }
+
+// --- Render -----------------------------------------------------------------
+function rcEnter(){
+  try { localStorage.setItem(RC_LS_ABIERTA, '1'); } catch(e){}
+  rcRender();
+  if (!RC_IDX) rcCargarIndice().then(() => { if (currentTab === 'recepcion') rcRender(); });
+  // El foco listo sólo con teclado físico: en el teléfono abriría el teclado
+  // del sistema encima de la lista.
+  if (rcPunteroFino()){ const inp = document.getElementById('rc-search'); if (inp) try { inp.focus({ preventScroll: true }); } catch(e){} }
+}
+function rcSalir(){
+  try { localStorage.removeItem(RC_LS_ABIERTA); } catch(e){}
+  rcVisorCerrar();
+  RC_SEGUIR = null;
+}
+function rcRender(){
+  const root = document.getElementById('rc-root');
+  if (!root) return;
+  const inp = document.getElementById('rc-search');
+  if (inp) inp.placeholder = t('rcSearch');
+  const bar = document.getElementById('rc-search-bar');
+  if (bar) bar.classList.toggle('has-query', !!RC_Q);
+  let h = rcSegHtml();
+  if (!RC_IDX){
+    root.innerHTML = h + rcCargaHtml();
+    return;
+  }
+  const qn = rcNorm(RC_Q);
+  const p = RC_VIEW === 'proc' ? rcProcActual() : null;
+  if (p) h += rcProcHtml(p);
+  else if (RC_VIEW === 'ref') h += rcRefHtml(qn);
+  else if (RC_VIEW === 'plant') h += rcPlantHtml(qn);
+  else h += qn ? rcResultadosHtml(qn) : rcInicioHtml();
+  if (RC_VIEW !== 'proc' || !p) h += `<p class="rc-estado" id="rc-estado">${rcEsc(rcEstadoTexto())}</p>`;
+  root.innerHTML = h;
+  rcObservarImgs();
+  if (RC_TARGET) rcIrAlTarget();
+}
+function rcSegHtml(){
+  const v = RC_VIEW === 'ref' ? 'ref' : RC_VIEW === 'plant' ? 'plant' : 'inicio';
+  const b = (k, lbl) => `<button class="mn-svc-btn${v === k ? ' active' : ''}" onclick="rcSetView('${k}')">${rcEsc(t(lbl))}</button>`;
+  return `<div class="mn-svc rc-seg">${b('inicio', 'rcSegInicio')}${b('ref', 'rcSegRef')}${b('plant', 'rcSegPlant')}</div>`;
+}
+function rcCargaHtml(){
+  if (!RC_IDX_ERR) return `<div class="rc-msg">${rcEsc(t('rcCargando'))}</div>`;
+  const k = { nopub:'rcErrNoPub', sesion:'rcErrSesion', formato:'rcErrFormato' }[RC_IDX_ERR] || 'rcErrRed';
+  return `<div class="rc-msg">${rcEsc(t(k))}<button class="rc-reintentar" onclick="rcReintentar()">${rcEsc(t('rcReintentar'))}</button></div>`;
+}
+function rcEstadoTexto(){
+  const pc = RC_PRECARGA;
+  const parcial = pc && pc.total && !pc.corriendo && pc.ok < pc.total
+    ? t('rcSinRedParcial').replace('{n}', pc.ok).replace('{t}', pc.total) : '';
+  // Trabajando con la copia: eso es lo que importa decir (y si le faltan capturas).
+  if (RC_IDX_ORIGEN === 'cache') return [t('rcCopiaGuardada'), parcial].filter(Boolean).join(' · ');
+  if (!pc || !pc.total) return '';
+  if (pc.corriendo) return t('rcGuardando').replace('{n}', pc.ok).replace('{t}', pc.total);
+  return parcial || t('rcSinRedOk');
+}
+function rcPatchEstado(){
+  const el = document.getElementById('rc-estado');
+  if (el) el.textContent = rcEstadoTexto();
+}
+
+// Vista 1 — Inicio: chips de turno + lista por `orden`.
+function rcInicioHtml(){
+  const procs = RC_IDX.procedimientos;
+  const chips = RC_TURNOS.map((tu, i) => procs.some(p => rcTurnoEs(p, tu))
+    ? `<button class="rc-chip${RC_TURNO === tu ? ' on' : ''}" onclick="rcSetTurno(${i})">${rcEsc(tu)}</button>` : '').join('');
+  const lista = procs.map((p, pi) => {
+    if (RC_TURNO && !rcTurnoEs(p, RC_TURNO)) return '';
+    const m = rcMarcas(p), hechos = rcHechos(p, m);
+    return `<button class="rc-proc" onclick="rcAbrirProc(${pi})">
+      <span class="rc-proc-n">${rcEsc(p.orden)}</span>
+      <span class="rc-proc-main">
+        <span class="rc-proc-tit">${rcEsc(p.titulo)}</span>
+        <span class="rc-proc-cuando">${rcEsc(p.cuando)}</span>
+        <span class="rc-proc-meta"><span class="rc-tag">${rcEsc(p.turno)}</span>${p.estado === 'preliminar' ? `<span class="rc-tag rc-tag-prelim">${rcEsc(t('rcPreliminar'))}</span>` : ''}${hechos ? `<span class="rc-tag rc-tag-prog">${hechos}/${p.pasos.length}</span>` : ''}</span>
+      </span></button>`;
+  }).join('');
+  return `<p class="rc-interno">${rcEsc(t('rcInterno'))}</p>
+    <div class="rc-chips">${chips}</div>
+    <div class="rc-lista">${lista}</div>`;
+}
+function rcResultadosHtml(qn){
+  const res = rcBuscar(qn);
+  if (!res.length) return `<div class="rc-msg">${rcEsc(t('rcSinResultados'))} «${rcEsc(RC_Q.trim())}»</div>`;
+  const tope = Math.min(res.length, 60);
+  let h = `<div class="rc-res-head">${res.length} ${rcEsc(t(res.length === 1 ? 'rcResultado' : 'rcResultados'))}${res.length > tope ? ' · ' + tope + ' ' + rcEsc(t('rcPrimeros')) : ''}</div><div class="rc-res">`;
+  for (let k = 0; k < tope; k++){
+    const r = res[k];
+    h += `<button class="rc-res-it rc-res-${r.tipo}" onclick="rcAbrirRes(${k})">
+      <span class="rc-res-donde">${rcEsc(r.donde)}<span class="rc-res-extra"> · ${rcEsc(r.extra)}</span></span>
+      <span class="rc-res-txt">${rcResaltar(r.snip, qn)}</span></button>`;
+  }
+  return h + '</div>';
+}
+
+// Vista 2 — Procedimiento.
+function rcItemHtml(it){
+  const sub = (it.sub && it.sub.length) ? `<ul class="rc-sub">${it.sub.map(s => `<li>${rcHtml(s.html)}</li>`).join('')}</ul>` : '';
+  return `<div class="rc-it-txt">${rcHtml(it.html)}</div>${sub}${rcImgsHtml(it.imgs)}`;
+}
+function rcProcHtml(p){
+  const m = rcMarcas(p), hechos = rcHechos(p, m);
+  const volver = rcNorm(RC_Q) ? t('rcVolverRes') : t('rcVolver');
+  let h = `<button class="rc-volver" onclick="rcVolver()">← ${rcEsc(volver)}</button>
+    <div class="rc-eyebrow">${rcEsc(p.turno)}</div>
+    <h2 class="rc-h">${rcEsc(p.titulo)}</h2>
+    <p class="rc-cuando">${rcEsc(p.cuando)}</p>
+    <p class="rc-fuente">${rcEsc(t('rcFuente'))} · ${rcEsc(p.fuente)}</p>`;
+  if (p.estado === 'preliminar')
+    h += `<div class="rc-prelim-aviso"><span class="rc-tag rc-tag-prelim">${rcEsc(t('rcPreliminar'))}</span> ${rcEsc(t('rcPrelimAviso'))}</div>`;
+  h += p.intro.map(x => `<p class="rc-intro">${rcHtml(x)}</p>`).join('');
+  if (p.pasos.length){
+    h += `<div class="rc-sec-head"><span>${rcEsc(t('rcPasos'))}</span><span class="rc-rule"></span>
+      <span class="rc-prog" id="rc-prog">${hechos}/${p.pasos.length}</span>
+      <button class="rc-reiniciar" id="rc-reiniciar" onclick="rcReiniciar()"${hechos ? '' : ' disabled'}>${rcEsc(t('rcReiniciar'))}</button></div>
+      <ol class="rc-pasos">${p.pasos.map(s => {
+        const ok = rcHecho(m, s);
+        return `<li class="rc-paso${ok ? ' hecho' : ''}" id="rc-paso-${s.n}" role="checkbox" aria-checked="${ok}" tabindex="0"
+          onclick="rcPasoTap(event, ${s.n})" onkeydown="rcPasoTecla(event, ${s.n})">
+          <span class="rc-paso-n" aria-hidden="true"><span class="rc-paso-num">${s.n}</span><svg class="rc-paso-ok" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div class="rc-paso-cuerpo">${rcItemHtml(s)}</div></li>`;
+      }).join('')}</ol>`;
+  }
+  if (p.ojo.length){
+    h += `<div class="rc-sec-head rc-sec-ojo"><span>${rcEsc(t('rcOjo'))}</span><span class="rc-rule"></span></div>
+      <ul class="rc-ojo">${p.ojo.map((it, i) => `<li class="rc-ojo-it" id="rc-ojo-${i}"><span class="rc-ojo-mark" aria-hidden="true">!</span><div class="rc-it">${rcItemHtml(it)}</div></li>`).join('')}</ul>`;
+  }
+  if (p.pendientes.length){
+    h += `<div class="rc-sec-head rc-sec-pend"><span>${rcEsc(t('rcPendientes'))}</span><span class="rc-rule"></span><span class="rc-sec-nota">${rcEsc(t('rcPendNota'))}</span></div>
+      <ul class="rc-pend">${p.pendientes.map((it, i) => `<li class="rc-pend-it" id="rc-pend-${i}"><span class="rc-pend-mark" aria-hidden="true">?</span><div class="rc-it">${rcItemHtml(it)}</div></li>`).join('')}</ul>`;
+  }
+  return h;
+}
+
+// Vista 3 — Referencia. Bajo 640 px cada fila es una tarjeta "columna: valor"
+// (CSS): ninguna tabla genera scroll horizontal en el teléfono.
+function rcRefHtml(qn){
+  const terms = qn ? qn.split(' ') : [];
+  const tablas = RC_IDX.referencia.map((tb, ti) => {
+    const filas = (tb.filas || []).map((f, i) => ({ f, i }))
+      .filter(x => !terms.length || terms.every(tm => ((tb.busqueda_filas || [])[x.i] || '').includes(tm)));
+    return { tb, ti, filas };
+  }).filter(x => x.filas.length);
+  if (!tablas.length) return `<div class="rc-msg">${rcEsc(t('rcSinFilas'))} «${rcEsc(RC_Q.trim())}»</div>`;
+  const indice = tablas.map(x => `<button class="rc-chip" onclick="rcIrTabla(${x.ti})">${rcEsc(x.tb.titulo)}</button>`).join('');
+  return `<div class="rc-chips rc-ref-indice">${indice}</div>` + tablas.map(({ tb, ti, filas }) => {
+    const cols = Array.isArray(tb.columnas) ? tb.columnas : [];
+    const total = (tb.filas || []).length;
+    return `<section class="rc-tb" id="rc-t-${ti}">
+      <div class="rc-sec-head"><span>${rcEsc(tb.titulo)}</span><span class="rc-rule"></span><span class="rc-prog">${filas.length < total ? filas.length + '/' + total : total}</span></div>
+      ${tb.nota ? `<p class="rc-tb-nota">${rcHtml(tb.nota)}</p>` : ''}
+      <table class="rc-tabla"><thead><tr>${cols.map(c => `<th>${rcEsc(c)}</th>`).join('')}</tr></thead>
+      <tbody>${filas.map(({ f, i }) => `<tr id="rc-f-${ti}-${i}">${f.map((c, ci) => `<td data-col="${rcEsc(cols[ci] || '')}">${rcHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    </section>`;
+  }).join('');
+}
+
+// Vista 4 — Plantillas. Los campos reemplazan los marcadores en TODAS las
+// versiones; los vacíos quedan como marcador, resaltados.
+const RC_PH = { CRS:'crs', PARTY:'party', NOMBRE:'nombre', NOME:'nombre', NAME:'nombre', FECHA:'fecha', DATA:'fecha', DATE:'fecha' };
+const RC_PL_IDIOMAS = ['ES', 'PT', 'EN'];
+function rcPlValor(k){ const c = RC_PH[k]; return c ? String(RC_PL_CAMPOS[c] || '').trim() : ''; }
+function rcPlRellenar(s){ return String(s || '').replace(/\[([A-Z]+)\]/g, (m, k) => rcPlValor(k) || m); }
+function rcPlPintar(s){
+  return String(s || '').split(/(\[[A-Z]+\])/g).map(parte => {
+    const m = /^\[([A-Z]+)\]$/.exec(parte);
+    if (!m) return rcEsc(parte);
+    const v = rcPlValor(m[1]);
+    return v ? `<span class="rc-ph lleno">${rcEsc(v)}</span>` : `<span class="rc-ph">${rcEsc(parte)}</span>`;
+  }).join('');
+}
+function rcPlSel(g){
+  const s = RC_PL_IDIOMA[g.k];
+  if (s && g.v[s]) return s;
+  return RC_PL_IDIOMAS.find(l => g.v[l]) || Object.keys(g.v)[0];
+}
+function rcPlCuerpoHtml(g, gi){
+  const pl = g.v[rcPlSel(g)];
+  if (!pl) return '';
+  return (pl.asunto ? `<div class="rc-pl-lbl">${rcEsc(t('rcAsunto'))}</div>
+      <div class="rc-pl-caja" id="rc-pl-as-${gi}">${rcPlPintar(pl.asunto)}</div>
+      <button class="rc-pl-copy" onclick="rcPlCopiar(${gi}, 'asunto', this)">${rcEsc(t('rcCopiarAsunto'))}</button>` : '')
+    + `<div class="rc-pl-lbl">${rcEsc(t('rcTexto'))}</div>
+      <div class="rc-pl-caja rc-pl-texto" id="rc-pl-tx-${gi}">${rcPlPintar(pl.texto)}</div>
+      <button class="rc-pl-copy" onclick="rcPlCopiar(${gi}, 'texto', this)">${rcEsc(t('rcCopiarTexto'))}</button>`;
+}
+function rcPlantHtml(qn){
+  const terms = qn ? qn.split(' ') : [];
+  const campos = [['crs', 'CRS', '123456'], ['party', 'Party', 'Pérez'], ['nombre', t('rcCampoNombre'), ''], ['fecha', t('rcCampoFecha'), '']]
+    .map(([k, lbl, ph]) => `<label class="rc-pl-campo"><span>${rcEsc(lbl)}</span>
+      <input type="text" id="rc-pl-${k}" value="${rcEsc(RC_PL_CAMPOS[k])}" placeholder="${rcEsc(ph)}" oninput="rcPlCampo('${k}', this.value)" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join('');
+  const grupos = RC_PL_GRUPOS.map((g, gi) => ({ g, gi }))
+    .filter(({ g }) => !terms.length || Object.values(g.v).some(pl => terms.every(tm => (pl.busqueda || '').includes(tm))));
+  const lista = grupos.length ? grupos.map(({ g, gi }) => {
+    const sel = rcPlSel(g);
+    const tabs = RC_PL_IDIOMAS.filter(l => g.v[l]).concat(Object.keys(g.v).filter(l => !RC_PL_IDIOMAS.includes(l)))
+      .map(l => `<button class="rc-pl-tab${l === sel ? ' on' : ''}" onclick="rcPlIdioma(${gi}, '${rcEsc(l).replace(/[^A-Z]/g, '')}')">${rcEsc(l)}</button>`).join('');
+    return `<article class="rc-pl" id="rc-pl-${gi}">
+      <div class="rc-pl-head"><span class="rc-pl-tema">${rcEsc(g.tema)}</span><span class="rc-pl-dest">${rcEsc(g.dest)}</span></div>
+      <div class="rc-pl-tabs">${tabs}</div>
+      <div class="rc-pl-cuerpo" id="rc-pl-cu-${gi}">${rcPlCuerpoHtml(g, gi)}</div></article>`;
+  }).join('') : `<div class="rc-msg">${rcEsc(t('rcSinPlantillas'))} «${rcEsc(RC_Q.trim())}»</div>`;
+  return `<div class="rc-pl-campos">${campos}</div>
+    <p class="rc-pl-nota">${rcEsc(t('rcPlNota'))}</p>${lista}`;
+}
+// Se parchan las cajas, no la vista: re-renderizar en cada tecla le robaría el
+// foco al campo que se está escribiendo.
+function rcPlCampo(k, v){
+  RC_PL_CAMPOS[k] = v;
+  RC_PL_GRUPOS.forEach((g, gi) => {
+    const pl = g.v[rcPlSel(g)]; if (!pl) return;
+    const as = document.getElementById('rc-pl-as-' + gi); if (as) as.innerHTML = rcPlPintar(pl.asunto);
+    const tx = document.getElementById('rc-pl-tx-' + gi); if (tx) tx.innerHTML = rcPlPintar(pl.texto);
+  });
+}
+function rcPlIdioma(gi, l){
+  const g = RC_PL_GRUPOS[gi]; if (!g || !g.v[l]) return;
+  RC_PL_IDIOMA[g.k] = l;
+  const art = document.getElementById('rc-pl-' + gi);
+  if (art) art.querySelectorAll('.rc-pl-tab').forEach(b => b.classList.toggle('on', b.textContent === l));
+  const cu = document.getElementById('rc-pl-cu-' + gi);
+  if (cu) cu.innerHTML = rcPlCuerpoHtml(g, gi);
+}
+async function rcPlCopiar(gi, campo, btn){
+  const g = RC_PL_GRUPOS[gi]; if (!g) return;
+  const pl = g.v[rcPlSel(g)]; if (!pl) return;
+  const txt = rcPlRellenar(pl[campo]);
+  let ok = false;
+  try {
+    // Con tope: si el navegador deja la promesa colgada esperando un permiso,
+    // a los 1,5 s se pasa al plan B en vez de no contestar nada.
+    if (navigator.clipboard && window.isSecureContext)
+      ok = await Promise.race([navigator.clipboard.writeText(txt).then(() => true),
+                               new Promise(r => setTimeout(() => r(false), 1500))]);
+  } catch(e){ ok = false; }
+  if (ok){ rcFlash(btn, t('rcCopiado'), true); return; }
+  // Plan B: seleccionar la caja (ya trae los valores, sin HTML) e intentar el
+  // copiado clásico. Si tampoco se puede, queda seleccionado para copiar a mano.
+  const el = document.getElementById((campo === 'asunto' ? 'rc-pl-as-' : 'rc-pl-tx-') + gi);
+  let ok2 = false;
+  if (el){
+    try { const r = document.createRange(); r.selectNodeContents(el); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); } catch(e){}
+    try { ok2 = !!(document.execCommand && document.execCommand('copy')); } catch(e){ ok2 = false; }
+    if (ok2) try { window.getSelection().removeAllRanges(); } catch(e){}
+  }
+  rcFlash(btn, t(ok2 ? 'rcCopiado' : 'rcSeleccionado'), ok2);
+}
+function rcFlash(btn, txt, ok){
+  if (!btn) return;
+  if (!btn.dataset.lbl) btn.dataset.lbl = btn.textContent;
+  btn.textContent = txt;
+  btn.classList.toggle('ok', !!ok);
+  clearTimeout(btn._rcT);
+  btn._rcT = setTimeout(() => { btn.textContent = btn.dataset.lbl; btn.classList.remove('ok'); }, 1800);
+}
+
+// --- Navegación ---------------------------------------------------------------
+function rcSetView(v){
+  RC_VIEW = v; RC_PROC = null; RC_TARGET = null; RC_SEGUIR = null;
+  rcRender();
+  rcSubirAlModulo();
+}
+function rcSetTurno(i){
+  const tu = RC_TURNOS[i];
+  RC_TURNO = RC_TURNO === tu ? '' : tu;
+  rcRender();
+}
+function rcAbrirProc(pi, target){
+  const p = RC_IDX && RC_IDX.procedimientos[pi]; if (!p) return;
+  RC_VIEW = 'proc'; RC_PROC = p.id; RC_TARGET = target || null; RC_SEGUIR = null;
+  if (!rcPunteroFino()){ const inp = document.getElementById('rc-search'); if (inp) inp.blur(); }
+  rcRender();
+  if (!target) rcSubirAlModulo();
+}
+function rcAbrirRes(k){
+  const r = RC_RES && RC_RES[k]; if (!r) return;
+  if (r.tipo === 'fila'){ RC_VIEW = 'ref'; RC_PROC = null; RC_TARGET = { tipo:'fila', ti:r.ti, i:r.i }; }
+  else if (r.tipo === 'plant'){
+    const pl = RC_IDX.plantillas[r.li];
+    const gi = RC_PL_GRUPOS.findIndex(g => g.li[String(pl.idioma || 'ES').toUpperCase()] === r.li);
+    if (gi >= 0) RC_PL_IDIOMA[RC_PL_GRUPOS[gi].k] = String(pl.idioma || 'ES').toUpperCase();
+    RC_VIEW = 'plant'; RC_PROC = null; RC_TARGET = { tipo:'plant', gi };
+  }
+  else if (r.tipo === 'proc') return rcAbrirProc(r.pi);
+  else return rcAbrirProc(r.pi, r.tipo === 'paso' ? { tipo:'paso', n:r.n } : { tipo:r.tipo, i:r.i });
+  if (!rcPunteroFino()){ const inp = document.getElementById('rc-search'); if (inp) inp.blur(); }
+  rcRender();
+}
+function rcVolver(){
+  RC_VIEW = 'inicio'; RC_PROC = null; RC_TARGET = null; RC_SEGUIR = null;
+  rcRender();
+  rcSubirAlModulo();
+}
+function rcIrTabla(ti){
+  const el = document.getElementById('rc-t-' + ti);
+  if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+// Si el comienzo del módulo quedó arriba de la pantalla, se vuelve a él.
+function rcSubirAlModulo(){
+  const bar = document.getElementById('rc-search-bar');
+  if (!bar) return;
+  const y = bar.getBoundingClientRect().top + window.scrollY - 8;
+  if (window.scrollY > y) window.scrollTo(0, y);
+}
+// El elemento buscado queda a un quinto del alto de la pantalla, no centrado:
+// así su propio crecimiento (la captura que carga debajo) no lo mueve.
+function rcAnclarA(el){
+  if (!el || !el.isConnected){ RC_SEGUIR = null; return; }
+  window.scrollTo(0, Math.max(0, el.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.2));
+}
+function rcIrAlTarget(){
+  const tg = RC_TARGET; RC_TARGET = null;
+  if (!tg) return;
+  const id = tg.tipo === 'paso' ? 'rc-paso-' + tg.n
+    : tg.tipo === 'ojo' ? 'rc-ojo-' + tg.i
+    : tg.tipo === 'pend' ? 'rc-pend-' + tg.i
+    : tg.tipo === 'fila' ? `rc-f-${tg.ti}-${tg.i}`
+    : tg.tipo === 'plant' ? 'rc-pl-' + tg.gi : '';
+  const el = id && document.getElementById(id);
+  if (!el) return;
+  el.classList.add('rc-target');
+  rcAnclarA(el);
+  RC_SEGUIR = el;
+}
+
+// --- Buscador -------------------------------------------------------------------
+function rcBuscarInput(){
+  const inp = document.getElementById('rc-search');
+  RC_Q = inp ? inp.value : '';
+  // Escribir desde un procedimiento abierto vuelve a los resultados: el
+  // buscador salta todos los niveles, no busca sólo adentro de la página.
+  if (RC_VIEW === 'proc'){ RC_VIEW = 'inicio'; RC_PROC = null; }
+  RC_TARGET = null; RC_SEGUIR = null;
+  rcRender();
+  rcSubirAlModulo();
+}
+function rcBuscarTecla(ev){
+  if (ev.key === 'Enter'){
+    // Enter abre el primer resultado: en el PC, de la consulta al paso sin mouse.
+    if ((RC_VIEW === 'inicio' || RC_VIEW === 'proc') && rcNorm(RC_Q) && RC_RES && RC_RES.length){ ev.preventDefault(); rcAbrirRes(0); }
+  } else if (ev.key === 'Escape'){ ev.preventDefault(); rcBuscarLimpiar(); }
+}
+function rcBuscarLimpiar(){
+  const inp = document.getElementById('rc-search');
+  if (inp) inp.value = '';
+  RC_Q = ''; RC_TARGET = null; RC_SEGUIR = null;
+  if (RC_VIEW === 'proc'){ RC_VIEW = 'inicio'; RC_PROC = null; }
+  rcRender();
+  if (inp && rcPunteroFino()) inp.focus();
+}
+
+// --- Checklist de pasos (parcha en sitio, no re-renderiza) ----------------------
+function rcPasoTap(ev, n){
+  if (ev && ev.target && ev.target.closest && ev.target.closest('.rc-img, a, button')) return;
+  // Seleccionar texto para copiar un código no marca el paso.
+  try { if (String(window.getSelection() || '')) return; } catch(e){}
+  rcTogglePaso(n);
+}
+function rcPasoTecla(ev, n){
+  if (ev.target !== ev.currentTarget) return;
+  if (ev.key === ' ' || ev.key === 'Enter'){ ev.preventDefault(); rcTogglePaso(n); }
+}
+function rcTogglePaso(n){
+  const p = rcProcActual(); if (!p) return;
+  const s = p.pasos.find(x => x.n === n); if (!s) return;
+  const m = rcMarcas(p);
+  if (rcHecho(m, s)) delete m[n]; else m[n] = rcHash(s.texto);
+  rcMarcasGuardar(p, m);
+  const li = document.getElementById('rc-paso-' + n);
+  const ok = rcHecho(m, s);
+  if (li){ li.classList.toggle('hecho', ok); li.setAttribute('aria-checked', String(ok)); }
+  rcPatchProgreso(p, m);
+}
+function rcReiniciar(){
+  const p = rcProcActual(); if (!p) return;
+  rcMarcasGuardar(p, {});
+  document.querySelectorAll('#rc-root .rc-paso.hecho').forEach(li => { li.classList.remove('hecho'); li.setAttribute('aria-checked', 'false'); });
+  rcPatchProgreso(p, {});
+}
+function rcPatchProgreso(p, m){
+  const n = rcHechos(p, m);
+  const pr = document.getElementById('rc-prog'); if (pr) pr.textContent = `${n}/${p.pasos.length}`;
+  const re = document.getElementById('rc-reiniciar'); if (re) re.disabled = !n;
+}
+
+// --- Visor a pantalla completa ----------------------------------------------------
+// Ajustado a la pantalla al abrir; un toque en la imagen la pasa a TAMAÑO REAL
+// (la captura de Opera a sus píxeles: se lee "HOU" y "0.00") y se recorre con el
+// dedo dentro del visor. El pellizco nativo del navegador sigue funcionando.
+function rcVisorAbrir(btn){
+  const src = btn && btn.dataset.src; if (!src) return;
+  const alt = btn.dataset.alt || '';
+  rcVisorCerrar();
+  const v = document.createElement('div');
+  v.className = 'rc-visor'; v.id = 'rc-visor';
+  v.setAttribute('role', 'dialog'); v.setAttribute('aria-modal', 'true'); v.setAttribute('aria-label', alt || t('rcCaptura'));
+  v.innerHTML = `<div class="rc-visor-scroll" id="rc-visor-scroll"><img id="rc-visor-img" alt="${rcEsc(alt)}"></div>
+    <div class="rc-visor-bar"><span class="rc-visor-alt">${rcEsc(alt)}</span>
+      <button class="rc-visor-btn" id="rc-visor-zoom" onclick="rcVisorZoom()">${rcEsc(t('rcTamanoReal'))}</button>
+      <button class="rc-visor-x" onclick="rcVisorCerrar()" aria-label="${rcEsc(t('rcCerrar'))}">×</button></div>`;
+  document.body.appendChild(v);
+  document.documentElement.classList.add('rc-visor-on');
+  const img = v.querySelector('img');
+  img.addEventListener('click', ev => { ev.stopPropagation(); rcVisorZoom(ev); });
+  v.querySelector('.rc-visor-scroll').addEventListener('click', ev => { if (ev.target === ev.currentTarget && !v.classList.contains('real')) rcVisorCerrar(); });
+  document.addEventListener('keydown', rcVisorTecla);
+  rcImgUrl(src).then(u => { if (u && img.isConnected) img.src = u; });
+}
+function rcVisorZoom(ev){
+  const v = document.getElementById('rc-visor'); if (!v) return;
+  const sc = document.getElementById('rc-visor-scroll'), img = document.getElementById('rc-visor-img');
+  if (!sc || !img || !img.naturalWidth) return;
+  let fx = 0.5, fy = 0.5;
+  if (ev && ev.clientX != null){
+    const r = img.getBoundingClientRect();
+    if (r.width && r.height){ fx = (ev.clientX - r.left) / r.width; fy = (ev.clientY - r.top) / r.height; }
+  }
+  const real = !v.classList.contains('real');
+  v.classList.toggle('real', real);
+  const b = document.getElementById('rc-visor-zoom');
+  if (b) b.textContent = t(real ? 'rcAjustar' : 'rcTamanoReal');
+  // Al ampliar, el punto tocado queda al centro del visor. Leer offsetWidth
+  // fuerza el layout nuevo: no hace falta esperar un frame.
+  if (real){
+    sc.scrollLeft = fx * img.offsetWidth - sc.clientWidth / 2;
+    sc.scrollTop  = fy * img.offsetHeight - sc.clientHeight / 2;
+  }
+}
+function rcVisorTecla(ev){ if (ev.key === 'Escape') rcVisorCerrar(); }
+function rcVisorCerrar(){
+  const v = document.getElementById('rc-visor');
+  if (v) v.remove();
+  document.documentElement.classList.remove('rc-visor-on');
+  document.removeEventListener('keydown', rcVisorTecla);
+}
+
+// --- Registro --------------------------------------------------------------------
+onI18nChange(() => { if (currentTab === 'recepcion') rcRender(); });
+// Un gesto del usuario suelta el ancla al elemento buscado.
+['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(ev =>
+  window.addEventListener(ev, () => { RC_SEGUIR = null; }, { passive: true, capture: true }));
+window.addEventListener('online', () => { if (currentTab === 'recepcion' && !RC_IDX) rcReintentar(); });
+// Arranque: si este aparato dejó Recepción abierta, vuelve ahí. Es el caso del
+// PC de recepción: abre directo en la guía, sin tocar nada.
+try {
+  if (localStorage.getItem(RC_LS_ABIERTA) === '1') setTab('recepcion', document.getElementById('tab-btn-recepcion'));
+} catch(e){}
 </script>
 
 <!-- ESCÁNER DE DESBORDE LATERAL — se activa SOLO con ?overflow en la URL.

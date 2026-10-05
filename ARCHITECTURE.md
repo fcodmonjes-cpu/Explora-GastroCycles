@@ -27,6 +27,8 @@ que es operacional (turnos, postres, pedidos, comandas).
 - Ventana viva de tips de vino, intercalada en el listado de platos
 - Corcho digital de viajeros: dietas, alergias y restricciones por
   habitación, con filtros y contadores (módulo `viajeros`)
+- Guía de Recepción: procedimientos del turno, tablas de consulta y
+  plantillas de correo, con buscador transversal y uso sin red (§3.6)
 
 **Lo que la hace diferente de una "página web informativa".**
 
@@ -118,7 +120,7 @@ de tabs:
 │  Comedor Nicolás · Sebastián · Diego · Viviana              │
 │  Apoyo   Victor                                              │
 ├─────────────────────────────────────────────────────────────┤
-│ [Menú] [Vinos] [PGO] [Comande] [Café] [Checklist]           │
+│ [Menú] [Vinos] [PGO] [Comande] [Café] [Checklist] [Recepción]│
 └─────────────────────────────────────────────────────────────┘
                     (contenido de la tab activa)
 ```
@@ -138,6 +140,7 @@ un `innerHTML`— es el patrón **park/place** de §5.
 | **E-Check** | Comandera por mesa. **Dos vistas, a propósito distintas:** ingresar (fila de asientos, sin mapa) y entregar (la comanda completa ES el mapa de la mesa) | Firebase `/comandas/{date}/{id}` | 666 |
 | **Viajeros** | Observaciones de dieta por hab, **transcritas verbatim** (los tags derivados quedan en la ficha, no en la portada) | Firebase `/viajeros/current` (read-only; escribe `scripts/sync_viajeros.py`) | — |
 | **Checklist** | Tareas pre-servicio del equipo GEO (Montaje · Pasillo · Quincho) y del Bar, con marca, comentario y fotos. Visible desde el 2026-09-30 como sexta tab, sin destacar; antes era un botón sobre la fila y estuvo oculto desde el 2026-08-01 | Firebase `checklist_*` | 9876 (editar) |
+| **Recepción** | Guía de procedimientos del turno de recepción (primera área fuera de A&B): buscador transversal, checklist personal por procedimiento, tablas y plantillas. Séptima tab desde el 2026-10 (§3.6) | Firebase **Storage** `recepcion/` (estático, detrás del gate) · marcas en `localStorage` | — |
 
 Los datos del Café (módulo Service Mode) y los del E-Check tienen su
 propia capa de Firebase. Del header, **staffing** escribe/lee Firebase; la
@@ -493,6 +496,143 @@ se tocó.
 **Privacidad.** Nombres con su habitación, igual que Viajeros y detrás del mismo
 gate. La planilla, los carteles y los JSON de roster están en `.gitignore`; el
 doc de la base y las copias locales se borran solos a los 2 días del evento.
+
+
+### 3.6 Recepción: la guía de procedimientos del turno (2026-10)
+
+**La primera área fuera de A&B.** Desde octubre de 2026 el owner también
+trabaja en recepción, y la guía —diez procedimientos, once tablas de consulta,
+seis plantillas de correo— se consulta de pie en pleno check-in, con una mano, o
+en el PC al lado de Opera Cloud. Cada consulta tiene que resolverse en segundos,
+así que el módulo se ordena alrededor del **buscador**: de "tax type" o "HTLND"
+al paso exacto, con scroll y resaltado. Enter abre el primer resultado.
+
+**Dónde vive: séptima tab, al final.** Se evaluó un selector de área (A&B ·
+Recepción) que cambie toda la tira; escala mejor, pero hoy sumaría un control
+visible para todo el equipo A&B por un área que usa una sola persona. Cuando
+llegue una segunda área, esto se promueve a selector. Dos detalles:
+
+- **El aparato recuerda si quedó en Recepción** (`ata.recepcion.abierta`): el PC
+  de recepción abre directo en la guía. Salir a otra tab lo olvida.
+- **La ops-strip se colapsa como en Checklist** (clima y reparto del salón no le
+  sirven a la recepción), y `setTab` compensa el scroll para que la tira de tabs
+  no salte bajo el dedo. Desde el tope de la página no hay scroll que compensar:
+  ahí sube 34 px, igual que al entrar a Checklist.
+- **Costo conocido:** con siete tabs la tira ya no entra en una fila a 375 px
+  (con seis medía 338 de 343): en el teléfono RECEPCIÓN cae sola a una segunda
+  fila. Comprimir para que entre exigiría un padding de ~2 px por tab.
+
+**Cuatro vistas.** Inicio (chips de turno + lista por `orden`, con la marca de
+preliminar y el avance del checklist) · Procedimiento · Referencia · Plantillas.
+Un solo buscador estático arriba, fuera de `#rc-root` (no pierde el foco), que
+cambia de alcance con la vista: en Inicio busca en todo a la vez; en
+Referencia filtra filas; en Plantillas filtra grupos. Escribir con un
+procedimiento abierto vuelve a los resultados: el buscador salta niveles.
+
+**El contenido NO está en el repo, y es deliberado.** Son procedimientos de
+garantías en Transbank, códigos internos, los correos del personal del reporte
+semanal y 91 capturas de Opera/PGO. El repo de GitHub es **público** y Vercel
+sirve los estáticos **sin sesión** (medido: `ARCHITECTURE.md` responde 200 en
+producción), así que cualquier archivo del repo es público. Va en **Firebase
+Storage**, igual que los audios de Estudio (§3.4), detrás de reglas que piden
+auth: cada pedido lleva el token del gate. No va en RTDB: es contenido estático
+que cambia cuando el owner regenera el índice, no estado compartido.
+
+```
+recepcion/indice.json      procedimientos, tablas y plantillas (~156 KB)
+recepcion/img/*.webp       91 capturas, con los datos de viajeros tapados (~1,6 MB)
+```
+
+La fuente (`procedimientos/*.md`, `referencia.md`, `plantillas.md`) y
+`gen_indice.py` viven **fuera del repo**, en la máquina del owner. `.gitignore`
+y `.vercelignore` cierran `recepcion/` y `recepcion-local/` por si alguien los
+copia a la raíz. En `localhost` el módulo lee la misma estructura desde
+`/recepcion-local/` (ignorada): QA con el contenido real sin subirlo.
+
+**Publicar (una vez):** en la consola de Firebase → Storage → *Rules*, sobre las
+reglas vigentes —copiadas de la consola, nunca de memoria (§4.3)— agregar junto
+al bloque de `estudio/`:
+
+```
+match /recepcion/{todo=**} {
+  allow read: if request.auth != null;
+  allow write: if false;                  // se sube desde la consola
+}
+```
+
+El CORS del bucket ya cubre todo el bucket (§3.4, paso 3). Después, en *Files*,
+crear la carpeta `recepcion/`, subir `indice.json`, y adentro `img/` con las 91
+capturas. Comprobación desde afuera, sin sesión: `recepcion/indice.json` debe dar
+**403**. Válvula `RC_STORAGE_ON` (STATE TOP): en `false`, fuera de localhost el
+módulo no pide nada y dice "todavía no está publicada".
+
+**Actualizar el contenido (seguido):** regenerar `indice.json` y subirlo encima
+con el mismo nombre (y las capturas nuevas). No se toca código. El índice se pide
+**siempre primero a la red** (`no-store`) y el Cache API es el respaldo; si el
+texto cambió respecto del guardado, las capturas se vuelven a bajar en segundo
+plano (una pudo cambiar con el mismo nombre). Una recarga normal ya muestra la
+versión nueva, sin borrar datos del navegador. Verificado: cambiar un paso,
+regenerar y recargar → texto nuevo, cache actualizado, 91 capturas re-pedidas.
+
+**Offline: precache completo, no descarga explícita.** A diferencia de Estudio
+(38 MB de audio → botón por servicio), acá son ~1,8 MB: la primera vez que se
+abre el módulo se guarda todo en `ata-recepcion-v1`, en paralelo y sin bloquear
+nada, con una línea al pie que dice cuánto queda guardado. El service worker no
+lo ve (Storage es otro origen) y sólo aprendió a no borrar `ata-recepcion-*` al
+activarse. Verificado cortando el servidor: índice desde el cache, búsqueda y las
+31 capturas de Night Audit funcionando.
+
+**Seguridad del render.** `gen_indice.py` escribe `html`, `intro`, `nota` y las
+celdas de las tablas ya escapados y con sólo `<strong> <em> <code>` (ojo: no sólo
+`html`, también esos tres). Igual pasan por `rcHtml()`, que reconstruye el HTML
+desde un `<template>` inerte con esa lista blanca y **sin atributos**. Todo lo
+demás —títulos, `alt`, columnas, plantillas— entra con `rcEsc()`. Probado con
+`<b>`, `<img onerror>`, `<a href="javascript:">` y `<script>` en cada tipo de
+campo: los de texto se ven literales y no se ejecuta nada.
+
+**La búsqueda usa la normalización del generador, no otra.** `rcNorm()` replica
+`normalizar()` de `gen_indice.py` (minúsculas, NFD sin `Mn`, sin marcas de
+markdown, espacios simples) y los términos se cruzan con AND. Pasos, filas y
+plantillas traen `busqueda`; **ojo y pendientes no**, y se normalizan en el
+cliente con esa misma regla — sin eso "luna de miel" no aparece (vive en un Ojo).
+
+**Checklist de pasos: personal, nunca Firebase.** `localStorage` por
+procedimiento (`ata.recepcion.pasos.{id}`). Cada marca guarda la **huella del
+texto** del paso: si el owner corrige un paso, esa marca cae sola y las demás
+quedan. Se parcha en sitio, sin re-render.
+
+**Pendientes ≠ pasos, a la vista.** Los pasos son números en círculo; *Ojo* es
+una franja coral sólida; *Pendientes* es borde punteado, itálica, un "?" y la
+leyenda "dudas abiertas · no son reglas" (el punteado es el "sin dato" del
+programa, §3.1). En los resultados de búsqueda un pendiente también sale
+punteado. Un pendiente leído como regla termina en un error frente al viajero.
+
+**Capturas.** Carga diferida (`IntersectionObserver`) desde el cache o la red,
+como blob (Storage pide el header de auth: no sirve un `<img src>` directo). Se
+muestran a su ancho natural, nunca agrandadas. Las medidas se guardan
+(`ata.recepcion.dims`) para reservar el hueco con `aspect-ratio` y que nada se
+mueva al cargar; llegando desde el buscador, el elemento buscado se sostiene a un
+quinto de la pantalla hasta que el usuario toca. **Visor**: ajustado al abrir; un
+toque pasa a tamaño real con el punto tocado al centro (en `pm-11` se lee "Rate
+Code HOU" y "0.00" en un 375 px) y se recorre dentro del visor, sin scroll
+lateral de página. Controles abajo, al alcance del pulgar.
+
+**PC ancho: una sola columna, a propósito.** `.app` mide 960 px como máximo:
+partirla en pasos + captura dejaría las capturas de Opera a ~400 px, ilegibles.
+En una columna van a su ancho natural hasta ~900 px, y en el PC el Handbook
+comparte pantalla con Opera, así que ese es el ancho real.
+
+**Idioma: sólo ES, marcado como interno.** Mismo criterio que Estudio y todo lo
+operativo: claves `rc*` sólo en `UI.es`, `t()` cae a ellas desde EN/PT.
+
+**Sin cruce con PGO/Viajeros.** El módulo no lee ni muestra datos de viajeros.
+
+**Pendiente del generador (fuera del repo):** `inline_html` usa
+`\*\*([^*]+)\*\*` para la negrita, que falla cuando la negrita lleva una cursiva
+adentro: 21 pasos de *PM y extensión* y *Night Audit* salen con `**` literales (y
+en uno pone la negrita donde no va). Arreglo de una línea, verificado sobre una
+copia (corrige esos 21 campos, no cambia ningún otro):
+`re.sub(r"\*\*((?:[^*]|\*[^*]+\*)+?)\*\*", r"<strong>\1</strong>", t)`.
 
 ---
 
@@ -1431,6 +1571,7 @@ Mapa de regiones aproximadas (los rangos cambian a medida que crece;
 | Módulo Viajeros | ~5260-5525 (+ CSS ~1377, STATE TOP ~2500, UI ~2682) | Corcho de dietas por hab: stats/chips filtrantes, búsqueda con teclado numérico plegable, grilla con roster (primer nombre + bandera `VJ_NAC` en vez de esferas de iniciales), modal por hab. Read-only `/viajeros/current` |
 | Módulo Rol | 5500-6260 | PIN gate + lectura semanal del roster |
 | Módulo Checklist | 6260-6940 | Sub-secciones + fases + carry-over + edit mode supervisor |
+| Módulo Recepción | al final del script (+ CSS al final del `<style>`, STATE TOP tras Estudio, UI `rc*` sólo en `es`) | Guía de recepción: `rcCargarIndice` (Storage / `/recepcion-local/` + Cache API), `rcIndexar`/`rcBuscar`, vistas Inicio · Procedimiento · Referencia · Plantillas, visor de capturas. Ver §3.6 |
 | Boot | dispersos | setLang(currentLang) + fetches iniciales |
 
 Los módulos están agrupados, no entrelazados. Si vas a tocar el café,

@@ -31,10 +31,13 @@ self.addEventListener('install', e => {
 // Los buckets 'ata-estudio-*' NO son de este service worker: son los audios
 // que el garzón descargó a mano desde Estudio para escuchar sin señal (la
 // página los escribe con Cache API). Un deploy nuevo no puede borrárselos.
+// Lo mismo 'ata-recepcion-*': la guía de Recepción (índice + capturas) que la
+// página guarda para trabajar sin red.
+const AJENOS = ['ata-estudio', 'ata-recepcion'];
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE && !k.startsWith('ata-estudio')).map(k => caches.delete(k))))
+      .then(ks => Promise.all(ks.filter(k => k !== CACHE && !AJENOS.some(p => k.startsWith(p))).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -48,6 +51,8 @@ self.addEventListener('fetch', e => {
   // La copia local de audios para QA (sólo existe en localhost) no entra al
   // cache del core: son decenas de MB que no son parte de la app.
   if (url.pathname.startsWith('/estudio-local/')) return;
+  // Igual la copia local de QA de Recepción: su cache lo maneja la página.
+  if (url.pathname.startsWith('/recepcion-local/')) return;
   e.respondWith(
     fetch(req)
       .then(resp => {

@@ -39,3 +39,10 @@ __pycache__/
 # scripts/quincho.py y no se versionan nunca.
 quincho-*-carteles.html
 quincho-*.json
+
+# Recepción: copia LOCAL del contenido (indice.json + img/) para QA en
+# localhost. En los deploys el módulo lee de Firebase Storage, detrás del gate
+# (ARCHITECTURE.md §3.6): el repo es público y esto es documentación interna
+# con capturas de Opera. No se versiona NUNCA — tampoco la carpeta fuente.
+/recepcion-local/
+/recepcion/
