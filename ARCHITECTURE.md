@@ -563,7 +563,10 @@ match /recepcion/{todo=**} {
 El CORS del bucket ya cubre todo el bucket (§3.4, paso 3). Después, en *Files*,
 crear la carpeta `recepcion/`, subir `indice.json`, y adentro `img/` con las 91
 capturas. Comprobación desde afuera, sin sesión: `recepcion/indice.json` debe dar
-**403**. Válvula `RC_STORAGE_ON` (STATE TOP): en `false`, fuera de localhost el
+**403**.
+**Publicado el 2026-10-05:** regla aplicada, `indice.json` + 91 capturas subidas;
+verificado sin sesión (403 en índice, captura y listado) y con sesión en staging
+(lista y capturas cargan). Válvula `RC_STORAGE_ON` (STATE TOP): en `false`, fuera de localhost el
 módulo no pide nada y dice "todavía no está publicada".
 
 **Actualizar el contenido (seguido):** regenerar `indice.json` y subirlo encima
