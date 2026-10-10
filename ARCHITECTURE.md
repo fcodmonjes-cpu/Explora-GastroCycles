@@ -1527,6 +1527,14 @@ sueltas) y recortar la sombra del piso al ancho del cuerpo. La foto de origen
 tiene que ser de estudio, sobre fondo claro y parejo; el blanco de la etiqueta
 queda a salvo porque está rodeado de vidrio.
 
+**Todas inclinadas 20°, cuello a la izquierda** (decisión del owner,
+2026-10-10). Cada botella se ENDEREZA primero (eje largo de la silueta por PCA,
+cuello arriba) y recién después se gira 20°: así la serie queda pareja aunque
+las fotos lleguen derechas o torcidas en ángulos distintos. El borde se alisa
+después del giro, trabajando a 3x (desenfoque + umbral) y reduciendo la máscara
+por separado: las fotos con transparencia de paleta (casi binaria) traen
+escalones que sin esto se ven en el teléfono.
+
 ### Receta 2: Agregar una familia de productos al E-Check
 
 Por ejemplo, jugos del bar.
