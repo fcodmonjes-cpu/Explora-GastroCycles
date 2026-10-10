@@ -1533,7 +1533,11 @@ cuello arriba) y recién después se gira 20°: así la serie queda pareja aunqu
 las fotos lleguen derechas o torcidas en ángulos distintos. El borde se alisa
 después del giro, trabajando a 3x (desenfoque + umbral) y reduciendo la máscara
 por separado: las fotos con transparencia de paleta (casi binaria) traen
-escalones que sin esto se ven en el teléfono.
+escalones que sin esto se ven en el teléfono. Desde ese día los 17 vinos de la
+carta tienen botella (~25 KB cada una, ~435 KB en total); las fotos de origen
+las mandó el owner y algunas venían a medio recortar (blanco opaco alrededor,
+sombra de piso, marca de agua de Vivino sobre la base), todo resuelto en el
+recorte.
 
 ### Receta 2: Agregar una familia de productos al E-Check
 
