@@ -27,6 +27,8 @@ que es operacional (turnos, postres, pedidos, comandas).
 - Ventana viva de tips de vino, intercalada en el listado de platos
 - Corcho digital de viajeros: dietas, alergias y restricciones por
   habitación, con filtros y contadores (módulo `viajeros`)
+- Carta editable por el equipo: textos, matriz, maridaje, foto, día y orden
+  de cada plato, más vinos, tragos y rótulos, sin tocar código (módulo `med`, §3.6)
 
 **Lo que la hace diferente de una "página web informativa".**
 
@@ -132,8 +134,8 @@ un `innerHTML`— es el patrón **park/place** de §5.
 
 | Tab | Propósito | Datos | PIN |
 |---|---|---|---|
-| **Menú** | Servicio del día (Almuerzo · Cena · Bar) con matriz de restricciones por plato, y **Estudio**: el menú en audio + buscador del ciclo + alérgenos (§3.4) | Estático en el JS (`DISHES`, `BAR_DISHES`) · Estudio: Firebase Storage `estudio/` | — |
-| **Vinos** | Ficha por vino + sub-vista "Maridajes generales" | Estático (`WINES`, `GUIONES`) | — |
+| **Menú** | Servicio del día (Almuerzo · Cena · Bar) con matriz de restricciones por plato, y **Estudio**: el menú en audio + buscador del ciclo + alérgenos (§3.4) | Original en el JS (`DISHES`, `BAR_DISHES`) + ediciones en Firebase `/menu_ediciones` (§3.6) · Estudio: Firebase Storage `estudio/` | — |
+| **Vinos** | Ficha por vino + sub-vista "Maridajes generales" | Original en el JS (`WINES`, `GUIONES`) + ediciones en `/menu_ediciones` | — |
 | **Café** | Manual de bebidas + modo servicio (mesero / barista) | Estático (`COFFEE_DATA`) + Firebase `/orders` | 555 (mesero) · 999 (barista) |
 | **E-Check** | Comandera por mesa. **Dos vistas, a propósito distintas:** ingresar (fila de asientos, sin mapa) y entregar (la comanda completa ES el mapa de la mesa) | Firebase `/comandas/{date}/{id}` | 666 |
 | **Viajeros** | Observaciones de dieta por hab, **transcritas verbatim** (los tags derivados quedan en la ficha, no en la portada) | Firebase `/viajeros/current` (read-only; escribe `scripts/sync_viajeros.py`) | — |
@@ -494,6 +496,90 @@ se tocó.
 gate. La planilla, los carteles y los JSON de roster están en `.gitignore`; el
 doc de la base y las copias locales se borran solos a los 2 días del evento.
 
+### 3.6 La carta editable (módulo `med`, 2026-10-10)
+
+**Qué resuelve.** Hasta acá cambiar un nombre, un guion o una ✓ de la matriz era
+un commit. Ahora el equipo lo corrige desde la ficha: **✎ Editar** al pie de cada
+plato abierto (almuerzo, cena, bar), en la ficha expandida de cada vino y en la
+esquina de cada trago. Sin PIN propio: quien pasó el gate (§4.4) edita. Es
+decisión del owner, y explícita: el material del asesor trae errores, así que la
+matriz ✓/✗ también se edita, sin fricción.
+
+**Qué se edita.**
+
+| Dónde | Campos |
+|---|---|
+| Plato (ES/EN/PT) | nombre, nombre corto, guion breve y extendido (o la descripción de los platos antiguos), nota de cada `✓*`, "por qué" de cada maridaje |
+| Plato (sin idioma) | matriz de 9 ejes (`✓ · ✓* · ✗ · ?`), vinos del maridaje, foto, alérgenos en prosa (platos sin matriz), día y posición |
+| Rótulos (ES/EN/PT) | nombre de la bandeja/familia y título de la sección, desde la ficha de cualquier plato que los use. Valen para todos los días |
+| Vino | identidad, terroir, viña, estilo, frase corta, desarrollo (por idioma) · nombre, valle, tipo |
+| Trago | método, vaso, hielo, garnish (por idioma) · nombre, ingredientes |
+
+**El original vive en el código; Firebase guarda sólo lo editado.** Es la misma
+idea que el overlay de traducciones (§5) llevada a la base:
+
+```
+menu_ediciones/
+├── campos/{col}/{id}/{lang}/{campo…} = valor     col: platos · vinos · tragos · rotulos
+│                                                  lang: es · en · pt · x (sin idioma)
+├── fotos/{id}  = data URL JPEG (~60-120 KB)       se pide recién al abrir esa ficha
+└── meta/updatedAt
+```
+
+Se eligió así, y no copiar los ~140 platos a la base, por tres razones: si la
+base no contesta el menú se sigue viendo entero; no hubo que escribir de una
+vez el catálogo en la base de producción; y **"Restaurar original" es un
+DELETE** (campo por campo con `↺ original`, o el ítem entero con dos toques).
+Un campo que vuelve a su valor original se borra de la base, no se guarda dos
+veces.
+
+**Se aplica mutando los objetos de siempre.** `medAplicar()` restaura primero la
+foto del original (`MED_SEED`, tomada una vez al arrancar) y encima aplica las
+ediciones sobre `DISHES`, `BAR_DISHES`, `DISH_TRANS`, `WINES`, `WINE_TRANS`,
+los tragos y `UI`. Por eso el buscador (en los tres idiomas), el Comande, los
+hermanos 💡, Estudio y los maridajes ven lo editado sin saber que el módulo
+existe. Los platos 2026 copian el guion breve en `desc` (`menuToDish`): si se
+edita el guion, la copia lo sigue.
+
+**Ciclo de vida.** Al arrancar se aplica la copia local (`ata.menued.v1`) y se
+pide `/menu_ediciones/campos`; se vuelve a pedir en cada revalidación al
+despertar (`pwaRevalidar`). Guardar es **optimista**: se aplica y se cierra al
+instante, y si la base rechaza se deshace en pantalla con aviso. Un solo PATCH
+multi-ruta por guardado — la foto nueva viaja en el mismo PATCH que su marca
+(`photo: 'fb:{ts}'`), así nunca queda una marca apuntando a una foto que no llegó.
+Dos personas editando el mismo plato pisan campo por campo: gana el último
+guardado de ese campo, no el del plato entero.
+
+**Valores especiales**, porque Firebase borra los nulos y los arrays vacíos:
+`'-'` en `diet.{eje}` = sin dato (la regla de oro de §3.1 sigue: sin dato nunca
+se pinta apto) · `'-'` en `photo` = sin foto · `''` en `wines`/`ingredients` =
+lista vacía.
+
+**Día y posición.** En las bandejas fijas (buffet, principales y postres de
+almuerzo) la posición es la bandeja: si está ocupada, **los dos platos se
+intercambian**. En las listas (cena, sopa, bar, postres antiguos) se inserta y
+se renumera `orden` de toda la lista; sin edición el orden es el del array
+(`menuOrden`). Si por cualquier camino dos platos quedaran en la misma bandeja,
+se dibujan los dos (`menuSlotTiles`): un plato nunca desaparece de la vista.
+Restaurar un plato movido devuelve también a su lugar al que había ocupado su
+bandeja.
+
+**Texto, nunca marcado.** Vinos, tragos, rótulos, descripciones antiguas y el
+"por qué" se pintan como HTML crudo en sus renders; lo editado pasa por
+`medEsc` (escapado + saltos de línea). Lo demás ya pasaba por `vjEsc`.
+
+**Los tragos no traían id**: `medId` se deriva del nombre ORIGINAL al arrancar
+(`c-`/`m-`/`mo-` + slug), así renombrar un trago no le cambia la identidad.
+
+**Pendiente del owner, una vez:** la regla de `menu_ediciones` en la consola
+(§4.3). Sin ella la app lee y muestra el original igual, y al guardar dice "No
+se guardó…" y deshace.
+
+**Lo que NO cubre todavía:** agregar o borrar platos (se editan los que existen),
+los guiones de "Maridajes generales" y los tips de vino. Estudio cruza índice ↔
+Menú por posición **y nombre**: renombrar un plato a algo muy distinto hace que
+ese cruce falle cerrado (sin matriz prestada), que es el comportamiento seguro.
+
 ---
 
 ## 4. Arquitectura de datos en Firebase
@@ -540,6 +626,11 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
 │                         timerStartedAt, items[] }
 │       (auto-close >12h sin actividad, auto-purge >30 días)
 │
+├── menu_ediciones/                ← carta editable por el equipo (§3.6)
+│   ├── campos/{col}/{id}/{lang}/{campo…}  (sólo lo editado; el original está en el JS)
+│   ├── fotos/{id} → data URL     (se pide al abrir la ficha)
+│   └── meta/updatedAt
+│
 └── quincho/                       ← mesas del quincho (piloto, §3.5)
     └── current → { fecha, updatedAt, fuente,
                     mesas: { n: { n, pos, puestos, fisicas, grupo, titulo, nota } },
@@ -549,7 +640,7 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
          2 días de la fecha. Regla: la misma condición que viajeros_notas)
 ```
 
-**Reglas de Firebase.** Cerradas desde el 2026-08-17: los 13 paths exigen
+**Reglas de Firebase.** Cerradas desde el 2026-08-17: los 14 paths (13 + `menu_ediciones` desde el 2026-10-10) exigen
 `auth != null` para leer y escribir. Ver §4.3.
 
 **Auto-purga.** Todo módulo que escribe datos temporales tiene su propia
@@ -764,17 +855,27 @@ rompería:**
 | Carrera del token | `fbAuthInit` corta a los 8 s para no bloquear el arranque en redes lentas. Si el token llega después, los fetch ya salieron sin auth → 401 y **pantalla vacía**, sin nada que reintente. Se resuelve reintentando desde `onIdTokenChanged`. |
 | Reglas escritas de memoria | Una propuesta que no listaba `checklist_templates/_runs/_summaries/_structure`, `roster` ni `meta` habría dejado esos seis paths en la denegación por defecto: **Checklist muerto**. Las reglas se escriben SOBRE las vigentes, copiadas de la consola, nunca de memoria. |
 
+**`menu_ediciones` (2026-10-10)** se suma a las reglas vigentes —copiadas de la
+consola, nunca de memoria— con la misma condición que los demás:
+
+```json
+"menu_ediciones": { ".read": "auth != null", ".write": "auth != null" }
+```
+
+Cuando las reglas cierren por uid (§4.4, paso 4), pasa a `auth.uid === '<uid>'`
+como el resto.
+
 **Y una lección de método:** durante el diagnóstico se dio por cerrada la
 escritura porque un `PUT` de prueba devolvía 401 — pero el path probado no
 existía en las reglas, y por eso caía a la denegación por defecto. Los paths
 reales sí tenían `.write: true`. **Probar contra un path inventado no prueba
 nada**; hay que probar contra los que están en las reglas.
 
-Comprobación desde afuera, sin credencial (los 13 deben dar 401):
+Comprobación desde afuera, sin credencial (los 14 deben dar 401):
 
 ```bash
 DB=https://explora-cafe-orders-default-rtdb.firebaseio.com
-for p in viajeros staffing comandas orders orders_history desserts eightysix          roster meta checklist_runs checklist_templates checklist_structure          checklist_summaries; do
+for p in viajeros staffing comandas orders orders_history desserts eightysix          roster meta checklist_runs checklist_templates checklist_structure          checklist_summaries menu_ediciones; do
   printf "%-22s %s
 " "$p" "$(curl -s -o /dev/null -w '%{http_code}' "$DB/$p.json?shallow=true")"
 done
@@ -1375,10 +1476,10 @@ Hay decisiones conscientes de prototipo. Listarlas explícitas:
   espacio para `waiter` pero no se llena.
 - **Sin backups automáticos.** El export de Firebase es manual desde
   consola.
-- **Catálogos hardcoded en JS.** Platos, vinos y cocktails viven en
-  el script. Update mensual → commit + push. No hay panel admin para
-  no-desarrolladores. (Excepción: postres del servicio y staffing
-  ya están en Firebase con upload via JSON paste / form.)
+- ~~**Catálogos hardcoded en JS.**~~ **Saldado en buena parte el
+  2026-10-10** (§3.6): platos, vinos, tragos y rótulos se editan desde la app.
+  El catálogo *original* sigue en el script y agregar o borrar platos sigue
+  siendo un commit.
 - **No hay tests.** El programa se valida con uso real y commits
   reversibles. Para un solo desarrollador iterando rápido, el costo
   de tests automatizados todavía supera el beneficio.
@@ -1427,6 +1528,7 @@ Mapa de regiones aproximadas (los rangos cambian a medida que crece;
 | Módulo Desserts / 86 | 3800-3900 | Strip + form de postres/86 — **latente** desde 2026-06-22 (markup en `<template id="latent-postres-86">`, activadores JS comentados) |
 | Módulo Wine tips | — | `winetips`: rota `WINE_TIPS` (68, trilingüe, estático) cada 15s en orden barajado; reemplazó a Postres/86. **Ya no vive en la ops-strip**: desde 2026-08-16 se aloja en el listado de platos vía park/place (`winetipsSlot`/`Park`/`Place`, §5), con casa oculta en `#winetips-home` |
 | Módulo Clima (`wx`) | tras `winetips` | Ráfagas de la ventana de almuerzo + altitud, en una línea sobre las tabs. `wxUrl`/`wxPeakGust`/`wxFetch`/`wxRender` + cache `localStorage`. Open-Meteo, sin Firebase — ver §3.2 |
+| Edición de la carta (`med`) | antes de `COFFEE MODULE DATA` (+ CSS tras `.mn-meta`, STATE TOP `MED_*`, UI `med*`) | Overlay de ediciones sobre platos/vinos/tragos/rótulos, editor en hoja inferior, fotos subidas. `medArrancar()` corre al final del script principal — ver §3.6 |
 | Módulo Comandera | 3900-4200 | Gate + home + new + active + drag + history |
 | Módulo Viajeros | ~5260-5525 (+ CSS ~1377, STATE TOP ~2500, UI ~2682) | Corcho de dietas por hab: stats/chips filtrantes, búsqueda con teclado numérico plegable, grilla con roster (primer nombre + bandera `VJ_NAC` en vez de esferas de iniciales), modal por hab. Read-only `/viajeros/current` |
 | Módulo Rol | 5500-6260 | PIN gate + lectura semanal del roster |
