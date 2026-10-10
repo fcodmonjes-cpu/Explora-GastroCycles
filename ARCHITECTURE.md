@@ -1508,6 +1508,25 @@ Reglas duras al cargar la matriz:
    truco que el módulo Checklist usa en el teléfono del supervisor.
 4. **El cruce se valida a máquina, no a ojo.** Ver §12.
 
+### Receta 1c: Agregar un vino (con su botella)
+
+Una entrada más en `WINES` con los campos de siempre (`identity`, `terroir`,
+`winery`, `style`, `shortpitch`, `pitch`) y su overlay en `WINE_TRANS.en/.pt`.
+Si falta un idioma, la ficha cae al español. Desde 2026-10-10 entra
+automáticamente como chip en el Maridaje del editor de platos (§3.7).
+
+**La botella (`bottle`) es opcional** y va **recortada al contorno**: WebP con
+alfa en `assets/vinos/<id>.webp`, 720 px de alto, ~15 KB. Nunca una foto
+cuadrada con fondo: la sombra la pone `drop-shadow` en CSS, que sigue la
+silueta. Un vino sin `bottle` se dibuja exactamente como antes. El recorte se
+hace con PIL + numpy fuera del repo (en el entorno de la sesión, no en el PC del
+owner): fondo = lo conectado al borde de la foto y parecido a los colores claros
+que dominan ese borde (puede haber más de uno), quedarse con la pieza que
+contiene el centro de la botella (la costura entre dos fondos deja líneas
+sueltas) y recortar la sombra del piso al ancho del cuerpo. La foto de origen
+tiene que ser de estudio, sobre fondo claro y parejo; el blanco de la etiqueta
+queda a salvo porque está rodeado de vidrio.
+
 ### Receta 2: Agregar una familia de productos al E-Check
 
 Por ejemplo, jugos del bar.
