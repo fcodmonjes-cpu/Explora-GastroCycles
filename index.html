@@ -1385,6 +1385,63 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 @media (prefers-reduced-motion: reduce){ .mn-more:not(.open) { animation:none; } }
 .mn-meta { margin-top:11px; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
 
+/* ── Edición de la carta (módulo med) ──────────────────────────────────────
+   El acceso es un rótulo discreto dentro de la ficha ABIERTA: no suma nada a la
+   grilla cerrada, que es la vista más cargada del programa. Sin colores nuevos:
+   ámbar para la acción, coral para el ✗, gris para el "sin dato" — los mismos
+   de la ficha. Sin verde para el ✓, igual que en los veredictos. */
+.med-edit { display:inline-flex; align-items:center; gap:6px; margin-top:10px; padding:6px 0; background:none; border:0; color:rgba(192,125,42,0.62); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.med-edit:active { color:#cfa14a; }
+.cocktail-card { position:relative; }
+.med-edit-mini { position:absolute; top:8px; right:8px; margin:0; padding:6px 8px; font-size:13px; letter-spacing:0; color:rgba(192,125,42,0.45); }
+.med-panel { max-height:92vh; padding-top:0; }
+.med-head { position:sticky; top:0; z-index:2; display:flex; align-items:flex-start; gap:10px; margin:0 -1.25rem; padding:1rem 1.25rem 0.7rem; background:var(--bg-primary,#1a1a1a); border-bottom:0.5px solid var(--border); }
+.med-head-txt { flex:1; min-width:0; }
+.med-kicker { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--text-tertiary); }
+.med-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:20px; line-height:1.15; color:var(--gold); overflow-wrap:anywhere; }
+.med-x { flex:0 0 auto; background:none; border:0; color:var(--text-secondary); font-size:22px; line-height:1; padding:4px 6px; cursor:pointer; }
+.med-langs { display:flex; gap:6px; margin-top:12px; }
+.med-lang { flex:1; padding:7px 0; border-radius:999px; border:0.5px solid var(--border-md); background:none; color:var(--text-secondary); font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.14em; cursor:pointer; }
+.med-lang.on { background:var(--gold); border-color:var(--gold); color:#15110d; font-weight:700; }
+.med-hint { margin-top:6px; font-size:11.5px; line-height:1.45; color:var(--text-tertiary); }
+.med-sec { display:flex; align-items:center; gap:9px; margin-top:20px; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); }
+.med-sec::after { content:''; flex:1 1 auto; height:0.5px; background:var(--gold); opacity:0.3; }
+.med-f { display:block; margin-top:10px; min-width:0; }
+.med-lbl { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); }
+.med-orig { margin-left:auto; background:none; border:0; padding:0 2px; color:#cfa14a; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.08em; text-transform:lowercase; cursor:pointer; }
+.med-in { min-height:0; padding:8px 11px; }
+textarea.med-in { min-height:84px; line-height:1.45; }
+select.med-in { min-height:40px; }
+.med-diet { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin-top:8px; }
+.med-diet-lbl { flex:1 1 130px; min-width:0; font-size:13px; color:var(--text-secondary); }
+.med-seg { display:flex; gap:4px; }
+.med-seg button { min-width:42px; min-height:34px; padding:5px 8px; border-radius:7px; border:0.5px solid var(--border-md); background:none; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:12px; cursor:pointer; touch-action:manipulation; }
+.med-seg button.on { border-color:rgba(192,125,42,0.7); background:rgba(192,125,42,0.14); }
+.med-seg button.on.v1 { color:var(--text); }
+.med-seg button.on.vc { color:#cfa14a; }
+.med-seg button.on.v0 { color:#e08663; }
+.med-seg button.on.vn { color:var(--text-secondary); }
+.med-note { flex-basis:100%; }
+.med-note .med-f { margin-top:2px; }
+.med-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.med-chip { padding:5px 11px; border-radius:999px; border:0.5px solid var(--border-md); background:none; color:var(--text-secondary); font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:14px; cursor:pointer; }
+.med-chip.on { border-color:rgba(192,125,42,0.7); background:rgba(192,125,42,0.12); color:var(--text); }
+.med-foto { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:10px; }
+.med-foto img { width:104px; aspect-ratio:4/3; object-fit:cover; border-radius:6px; border:0.5px solid var(--border); background:var(--surface); }
+.med-btn { display:inline-flex; align-items:center; justify-content:center; min-height:36px; padding:8px 12px; border-radius:8px; border:0.5px solid var(--border-md); background:none; color:var(--text-secondary); font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; }
+.med-btn input[type=file] { display:none; }
+.med-add { margin-top:10px; }
+.med-row2 { display:flex; gap:10px; }
+.med-row2 > * { flex:1 1 0; }
+.med-ing { display:flex; align-items:center; gap:6px; margin-top:7px; }
+.med-ing .med-in:first-child { flex:2 1 0; min-width:0; }
+.med-ing .med-in:nth-child(2) { flex:1 1 0; min-width:0; }
+.med-foot { position:sticky; bottom:-1.25rem; z-index:2; display:flex; align-items:center; gap:8px; margin:22px -1.25rem -1.25rem; padding:12px 1.25rem calc(12px + env(safe-area-inset-bottom)); background:var(--bg-primary,#1a1a1a); border-top:0.5px solid var(--border); }
+.med-reset { margin-right:auto; background:none; border:0; padding:8px 0; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; text-align:left; }
+.med-reset.armed { color:#e08663; }
+.med-save { min-height:38px; padding:9px 18px; border-radius:9px; border:0; background:var(--gold); color:#15110d; font-family:'Courier Prime','Courier New',monospace; font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; }
+.med-save[disabled] { opacity:0.6; }
+
 /* Veredictos de restricción. Coral = no apto · dorado = apto con condición
    (siempre con su nota, nunca un asterisco suelto) · gris = sin dato. */
 .mn-verdicts { margin-top:12px; display:flex; flex-direction:column; gap:6px; }
@@ -4919,6 +4976,19 @@ const WX_CACHE_TTL_MS = 8 * 60 * 1000;        // cache local: sobrevive recargas
 let   WX_DATA  = null;   // { tempC, windKmh, gustKmh, peak:{gustKmh,hour,tomorrow}|null } | null
 let   WX_ERROR = false;
 
+// ── Edición de la carta (módulo med) ───────────────────────────────────────
+// Platos, vinos, tragos y rótulos del Menú editables por el equipo. Lo del
+// código es el original; /menu_ediciones guarda sólo lo editado. Ver el bloque
+// EDICIÓN DE LA CARTA, antes de COFFEE MODULE DATA.
+const MED_PATH   = 'menu_ediciones';
+const MED_LS_KEY = 'ata.menued.v1';      // copia local de las ediciones (sin red, primer paint)
+let MED_CAMPOS = {};                     // /menu_ediciones/campos tal cual: {col:{id:{lang:{campo}}}}
+let MED_SEED   = null;                   // foto del original, tomada una vez al arrancar
+let MED_OBJ    = null;                   // id → objeto vivo (DISHES/BAR_DISHES, WINES, tragos)
+let MED_FOTOS  = {};                     // 'id|fb:ts' → data URL de una foto subida
+let MED_FOTOS_PIDIENDO = {};             // pedidos de foto en curso
+let MED_ED     = null;                   // editor abierto: {col, id, lang, vals, base, …}
+
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
 // ════════════════════════════════════════════════════════════════════════════
@@ -4986,6 +5056,21 @@ const UI = {
     svcBar:'Bar', barFixed:'Carta fija · todos los días',
     barFood:'Comida', barDrinks:'Tragos', barSalado:'Salado', barDulce:'Dulce',
     barDraft:'Ficha pendiente', recipeDayLabel:'Receta día',
+    // Edición de la carta (módulo med)
+    medEdit:'Editar', medTitlePlato:'Editar plato', medTitleVino:'Editar vino', medTitleTrago:'Editar trago',
+    medLangHint:'Cada idioma se edita por separado. Lo que no toques queda como está.',
+    medTexts:'Textos', medName:'Nombre', medShort:'Nombre corto', medBrief:'Guion breve', medExtended:'Guion extendido',
+    medDesc:'Descripción', medDiet:'Restricciones', medDietNote:'Condición', medAllergens:'Alérgenos (separados por coma)',
+    medPairing:'Maridaje', medWhy:'Por qué', medPhoto:'Foto', medPhotoAdd:'Agregar foto', medPhotoChange:'Cambiar foto',
+    medPhotoRemove:'Quitar foto', medPhotoError:'No se pudo leer la foto', medPlace:'Ubicación', medDay:'Día', medPos:'Posición',
+    medSwapHint:'Si la posición está ocupada, los dos platos se intercambian.',
+    medLabels:'Rótulos', medSlotLabel:'Bandeja / familia', medSecLabel:'Sección',
+    medLabelsHint:'Los rótulos cambian para todos los días.',
+    medData:'Datos', medValley:'Valle', medType:'Tipo', medMethod:'Método',
+    medIngName:'Ingrediente', medIngAmount:'Cantidad', medIngAdd:'+ Ingrediente',
+    medRestoreField:'original', medRestoreAll:'Restaurar original', medRestoreConfirm:'¿Seguro? Toca otra vez',
+    medCancel:'Cancelar', medSave:'Guardar', medSaving:'Guardando…',
+    medNotSaved:'No se guardó: sin conexión o sin permiso en la base (menu_ediciones)',
     allergens:'Alérgenos', pairings:'Maridajes sugeridos',
     identity:'Identidad', terroir:'Terroir', winery:'Viña y filosofía', style:'Estilo en copa',
     salesScript:'Guion de venta', shortPitch:'Frase corta:', development:'Desarrollo:',
@@ -5285,6 +5370,21 @@ const UI = {
     svcBar:'Bar', barFixed:'Fixed menu · every day',
     barFood:'Food', barDrinks:'Drinks', barSalado:'Savoury', barDulce:'Sweet',
     barDraft:'Recipe pending', recipeDayLabel:'Recipe day',
+    // Menu editing (med module) — EN pending owner review
+    medEdit:'Edit', medTitlePlato:'Edit dish', medTitleVino:'Edit wine', medTitleTrago:'Edit drink',
+    medLangHint:'Each language is edited separately. Anything you don\'t touch stays as it is.',
+    medTexts:'Texts', medName:'Name', medShort:'Short name', medBrief:'Short script', medExtended:'Full script',
+    medDesc:'Description', medDiet:'Restrictions', medDietNote:'Condition', medAllergens:'Allergens (comma separated)',
+    medPairing:'Pairing', medWhy:'Why', medPhoto:'Photo', medPhotoAdd:'Add photo', medPhotoChange:'Change photo',
+    medPhotoRemove:'Remove photo', medPhotoError:'Could not read the photo', medPlace:'Placement', medDay:'Day', medPos:'Position',
+    medSwapHint:'If the position is taken, the two dishes swap places.',
+    medLabels:'Labels', medSlotLabel:'Tray / family', medSecLabel:'Section',
+    medLabelsHint:'Labels change for every day.',
+    medData:'Details', medValley:'Valley', medType:'Type', medMethod:'Method',
+    medIngName:'Ingredient', medIngAmount:'Amount', medIngAdd:'+ Ingredient',
+    medRestoreField:'original', medRestoreAll:'Restore original', medRestoreConfirm:'Sure? Tap again',
+    medCancel:'Cancel', medSave:'Save', medSaving:'Saving…',
+    medNotSaved:'Not saved: no connection or no permission in the database (menu_ediciones)',
     allergens:'Allergens', pairings:'Suggested pairings',
     identity:'Identity', terroir:'Terroir', winery:'Winery & philosophy', style:'Style in glass',
     salesScript:'Sales script', shortPitch:'Short pitch:', development:'Development:',
@@ -5511,6 +5611,21 @@ const UI = {
     svcBar:'Bar', barFixed:'Carta fixa · todos os dias',
     barFood:'Comida', barDrinks:'Drinks', barSalado:'Salgado', barDulce:'Doce',
     barDraft:'Ficha pendente', recipeDayLabel:'Receita dia',
+    // Edição do cardápio (módulo med) — PT pendente de revisão do owner
+    medEdit:'Editar', medTitlePlato:'Editar prato', medTitleVino:'Editar vinho', medTitleTrago:'Editar drinque',
+    medLangHint:'Cada idioma é editado separadamente. O que você não tocar fica como está.',
+    medTexts:'Textos', medName:'Nome', medShort:'Nome curto', medBrief:'Roteiro breve', medExtended:'Roteiro completo',
+    medDesc:'Descrição', medDiet:'Restrições', medDietNote:'Condição', medAllergens:'Alérgenos (separados por vírgula)',
+    medPairing:'Harmonização', medWhy:'Por quê', medPhoto:'Foto', medPhotoAdd:'Adicionar foto', medPhotoChange:'Trocar foto',
+    medPhotoRemove:'Remover foto', medPhotoError:'Não foi possível ler a foto', medPlace:'Posição no cardápio', medDay:'Dia', medPos:'Posição',
+    medSwapHint:'Se a posição estiver ocupada, os dois pratos trocam de lugar.',
+    medLabels:'Rótulos', medSlotLabel:'Bandeja / família', medSecLabel:'Seção',
+    medLabelsHint:'Os rótulos mudam para todos os dias.',
+    medData:'Dados', medValley:'Vale', medType:'Tipo', medMethod:'Método',
+    medIngName:'Ingrediente', medIngAmount:'Quantidade', medIngAdd:'+ Ingrediente',
+    medRestoreField:'original', medRestoreAll:'Restaurar original', medRestoreConfirm:'Certeza? Toque de novo',
+    medCancel:'Cancelar', medSave:'Salvar', medSaving:'Salvando…',
+    medNotSaved:'Não foi salvo: sem conexão ou sem permissão na base (menu_ediciones)',
     allergens:'Alérgenos', pairings:'Harmonizações sugeridas',
     identity:'Identidade', terroir:'Terroir', winery:'Adega e filosofia', style:'Estilo na taça',
     salesScript:'Roteiro de venda', shortPitch:'Frase curta:', development:'Desenvolvimento:',
@@ -6301,7 +6416,7 @@ function menuTile(d, slotLabel, wide){
       return `<div class="wine-chip ${typeChipClass(w)}" data-wid="${wid}" onclick="event.stopPropagation();openWineFromDish('${wid}')"><div class="wine-chip-name">${w.name}</div><div class="wine-chip-why">${(tr.why||{})[wid]||''}</div></div>`;
     }).join('');
     body = `<div class="mn-open">
-      ${d.photo ? `<img class="mn-photo" src="${d.photo}" alt="" decoding="async">` : ''}
+      ${d.photo ? (src => `<img class="mn-photo"${src ? ` src="${src}"` : ''} data-med-foto="${d.id}" alt="" decoding="async">`)(medFotoSrc(d)) : ''}
       ${d.brief ? `<div class="mn-quote">${vjEsc(tr.brief || d.brief)}</div>` : `<div class="mn-quote">${tr.desc || ''}</div>`}
       ${d.extended ? `<button class="mn-more${extOpen ? ' open' : ''}" onclick="event.stopPropagation();menuToggleGuion('${d.id}')"><span>${extOpen ? t('guionLess') : t('guionMore')}</span><span class="mn-more-ch">▾</span></button>` : ''}
       ${extOpen && d.extended ? `<div class="mn-ext">${vjEsc(tr.extended || d.extended)}</div>` : ''}
@@ -6311,6 +6426,7 @@ function menuTile(d, slotLabel, wide){
       ${wines ? `<div class="detail-section" style="margin-top:12px"><h3>${t('pairings')}</h3><div class="wine-suggestions">${wines}</div></div>` : ''}
       ${twin ? `<div class="mn-twin" onclick="event.stopPropagation();menuJumpTwin('${twin.id}')">💡 ${d.barTwin ? t('barTwin') : t('lunchTwin')} · ${vjEsc((tw => tw.short || tw.name)(getDishTr(twin)))}</div>` : ''}
       ${d.recipeDay ? `<div class="mn-meta">${t('recipeDayLabel')} ${d.recipeDay}</div>` : ''}
+      <button class="med-edit" onclick="event.stopPropagation();medAbrir('platos','${d.id}')">✎ ${t('medEdit')}</button>
     </div>`;
   }
   return `<div class="${cls}" data-dish-id="${d.id}" onclick="selectDish('${d.id}')">
@@ -6358,12 +6474,15 @@ function menuVisible(list){
 const MENU_PHOTOS_WARMED = new Set();
 
 function menuPhotosForView(){
-  if (MENU_SERVICE === 'bar') return BAR_DISHES.filter(d => d.photo).map(d => d.photo);
   const day   = (currentDay === 'all') ? menuTodayCycleDay() : currentDay;
   const match = (d) => MENU_SERVICE === 'cena'
     ? (d.service === 'Cena'     || d.service === 'Almuerzo y Cena')
     : (d.service === 'Almuerzo' || d.service === 'Almuerzo y Cena');
-  return DISHES.filter(d => d.photo && d.day === day && match(d)).map(d => d.photo);
+  const list = MENU_SERVICE === 'bar' ? BAR_DISHES.filter(d => d.photo)
+             : DISHES.filter(d => d.photo && d.day === day && match(d));
+  // Las fotos subidas desde el editor (photo 'fb:…') viven en la base, no en
+  // una URL: medFotoSrc las pide y las deja en memoria.
+  return list.filter(d => d.photo.indexOf('fb:') !== 0 || (medFotoSrc(d), false)).map(d => d.photo);
 }
 
 function menuWarmPhotos(){
@@ -6428,32 +6547,20 @@ function renderDishes(){
 // --- Almuerzo: buffet (6 bandejas) + sopa + principales + postres ----------
 function menuRenderAlmuerzo(){
   const day = (currentDay === 'all') ? menuTodayCycleDay() : currentDay;
-  const of  = (course) => DISHES.filter(d => d.day === day && d.course === course &&
-                                             (d.service === 'Almuerzo' || d.service === 'Almuerzo y Cena'));
+  const of  = (course) => menuOrden(DISHES.filter(d => d.day === day && d.course === course &&
+                                             (d.service === 'Almuerzo' || d.service === 'Almuerzo y Cena')));
   const buffet = of('Buffet'), sopa = of('Sopa'), mains = of('Plato principal'), postres = of('Postre');
 
   // El buffet se dibuja por SLOT, no por el orden del array: la bandeja es
   // fija y lo que rota es el plato que la ocupa.
-  const buffetTiles = BUFFET_SLOTS.map(s => {
-    const d = buffet.find(x => x.slot === s.key);
-    if (!d || (MENU_ONLY_FIT && MENU_DIET_LENS.length && menuFails(d))) return '';
-    return menuTile(d, t(s.uiKey), false);
-  }).join('');
+  const buffetTiles = menuSlotTiles(buffet, BUFFET_SLOTS);
 
   // Los principales nuevos van por POSICIÓN FIJA, igual que las bandejas: la
   // categoría (vegana · de mar · ave-cerdo · res) no cambia nunca, sólo rota el
   // plato que la ocupa.
-  const mainTiles = PRINCIPAL_SLOTS.map(s => {
-    const d = mains.find(x => x.slot === s.key);
-    if (!d || (MENU_ONLY_FIT && MENU_DIET_LENS.length && menuFails(d))) return '';
-    return menuTile(d, t(s.uiKey), false);
-  }).join('');
+  const mainTiles = menuSlotTiles(mains, PRINCIPAL_SLOTS);
 
-  const postreTiles = POSTRE_SLOTS.map(s => {
-    const d = postres.find(x => x.slot === s.key);
-    if (!d || (MENU_ONLY_FIT && MENU_DIET_LENS.length && menuFails(d))) return '';
-    return menuTile(d, t(s.uiKey), false);
-  }).join('');
+  const postreTiles = menuSlotTiles(postres, POSTRE_SLOTS);
 
   let html = '';
   if (buffet.length)  html += menuSection('secBuffet', buffetTiles, 1, t('trayCount'));
@@ -6471,19 +6578,15 @@ function menuRenderAlmuerzo(){
 // --- Cena: se mantiene tal cual hasta que llegue su documento --------------
 function menuRenderCena(){
   const day = (currentDay === 'all') ? menuTodayCycleDay() : currentDay;
-  const of  = (course) => DISHES.filter(d => d.day === day && d.course === course &&
-                                             (d.service === 'Cena' || d.service === 'Almuerzo y Cena'));
+  const of  = (course) => menuOrden(DISHES.filter(d => d.day === day && d.course === course &&
+                                             (d.service === 'Cena' || d.service === 'Almuerzo y Cena')));
   const starters = of('Entrada'), mains = of('Plato principal'), postres = of('Postre');
   let html = '';
   if (starters.length) html += menuSection('starter', menuVisible(starters).map(d => menuTile(d, '', false)).join(''), starters.length);
   html += winetipsSlot();      // sobre los principales, igual que en Almuerzo
   if (mains.length)    html += menuSection('secMains', menuVisible(mains).map(d => menuTile(d, '', false)).join(''), mains.length);
   if (postres.length){
-    const tiles = POSTRE_SLOTS.map(s => {
-      const d = postres.find(x => x.slot === s.key);
-      if (!d || (MENU_ONLY_FIT && MENU_DIET_LENS.length && menuFails(d))) return '';
-      return menuTile(d, t(s.uiKey), false);
-    }).join('');
+    const tiles = menuSlotTiles(postres, POSTRE_SLOTS);
     html += menuSection('secDesserts', postres.some(p => p.slot) ? tiles : menuVisible(postres).map(d => menuTile(d, '', false)).join(''), postres.length);
   }
   return html || `<div class="empty-state">${t('noDishes')}</div>`;
@@ -6491,8 +6594,8 @@ function menuRenderCena(){
 
 // --- Bar: carta fija, sin ciclo de días ------------------------------------
 function menuRenderBar(){
-  const salado = menuVisible(BAR_DISHES.filter(d => d.cat === 'Salado'));
-  const dulce  = menuVisible(BAR_DISHES.filter(d => d.cat === 'Dulce'));
+  const salado = menuVisible(menuOrden(BAR_DISHES.filter(d => d.cat === 'Salado')));
+  const dulce  = menuVisible(menuOrden(BAR_DISHES.filter(d => d.cat === 'Dulce')));
   return menuSection('barSalado', salado.map(d => menuTile(d, '', false)).join(''), salado.length)
        + menuSection('barDulce',  dulce .map(d => menuTile(d, '', false)).join(''), dulce.length);
 }
@@ -7740,8 +7843,9 @@ function renderWines() {
           </div>
         </div>
         <div class="wine-section"><h3>${t('pairedDishes')} (${pairedDishes.length})</h3>
-          <div class="paired-dishes">${pairedDishes.map(d=>{const dtr=getDishTr(d);return`<div class="paired-dish">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)} — ${dtr.name}</div>`;}).join('')}</div>
+          <div class="paired-dishes">${pairedDishes.map(d=>{const dtr=getDishTr(d);return`<div class="paired-dish">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)} — ${vjEsc(dtr.name)}</div>`;}).join('')}</div>
         </div>
+        <button class="med-edit" onclick="event.stopPropagation();medAbrir('vinos','${w.id}')">✎ ${t('medEdit')}</button>
       </div>`;
     }
     return `<div class="wine-card${isSelected?' selected':''}" data-wine-id="${w.id}" onclick="selectWine('${w.id}')">
@@ -8289,6 +8393,7 @@ function buildDrinkCard(c, lang, ui, isMocktail) {
   const tr = v => typeof v === 'object' ? v[lang] : v;
   return `
     <div class="cocktail-card${isMocktail ? ' cocktail-mocktail' : ''}">
+      ${c.medId ? `<button class="med-edit med-edit-mini" onclick="medAbrir('tragos','${c.medId}')" aria-label="${t('medEdit')}">✎</button>` : ''}
       <div class="cocktail-name">${c.name}</div>
       <div class="cocktail-method">${c.method[lang]}</div>
       <div class="cocktail-meta-row">
@@ -8370,6 +8475,753 @@ function renderMomentos() {
   document.getElementById('momentos-content').innerHTML = html || `<p class="empty-state">${ui.noDishes||''}</p>`;
   const mn = document.getElementById('momentos-notice-text');
   if (mn) mn.textContent = t('momentNotice');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// EDICIÓN DE LA CARTA (módulo `med`) — 2026-10-10
+// ════════════════════════════════════════════════════════════════════════════
+// Contrato:
+//   /menu_ediciones/campos/{col}/{id}/{lang}/{campo…} = valor editado
+//   /menu_ediciones/fotos/{id}                         = data URL (foto subida)
+//   /menu_ediciones/meta/updatedAt
+//   col  ∈ platos · vinos · tragos · rotulos
+//   lang ∈ es · en · pt · x   (x = dato sin idioma: matriz, maridaje, día,
+//                              posición, foto, alérgenos, ingredientes…)
+//
+// Lo que está escrito en el código es el ORIGINAL; Firebase guarda SÓLO lo
+// que el equipo editó, campo por campo, y eso gana al aplicar. Borrar un campo
+// en Firebase es volver al original. Así, si la base no contesta o el wifi se
+// cae, el menú se sigue viendo entero (con la última edición que este teléfono
+// vio, guardada en localStorage), y "Restaurar original" es un DELETE.
+//
+// Se aplica MUTANDO los objetos de siempre (DISHES, BAR_DISHES, DISH_TRANS,
+// WINES, WINE_TRANS, COCKTAILS/MOCKTAILS/MOMENTOS, UI). Buscador, Comande,
+// hermanos 💡, Estudio y maridajes ven lo editado sin saber que este módulo
+// existe. Antes de cada aplicación se restaura la foto del original
+// (MED_SEED), así que aplicar es idempotente.
+//
+// Valores especiales: '-' en diet.{eje} = sin dato · '-' en photo = sin foto ·
+// 'fb:{ts}' en photo = la foto vive en /fotos/{id} · '' en wines o
+// ingredients = lista vacía (Firebase borra los arrays vacíos).
+//
+// Sin PIN propio: quien pasó el gate de entrada edita (§4.4). Estado en
+// STATE TOP (MED_*).
+
+const MED_CAMPOS_PLATO = ['name','short','brief','extended','desc','dietNotes','why','diet','day','slot','orden','wines','photo','allergens'];
+const MED_CAMPOS_VINO  = ['name','valley','type','identity','terroir','winery','style','shortpitch','pitch'];
+const MED_CAMPOS_TRAGO = ['name','method','glass','ice','garnish','ingredients'];
+const MED_TXT_VINO     = ['identity','terroir','winery','style','shortpitch','pitch'];
+const MED_TXT_TRAGO    = ['method','glass','ice','garnish'];
+const MED_LANGS        = ['es','en','pt'];
+
+function medClon(v){ return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); }
+// Para los campos que el render pinta como HTML crudo (vinos, tragos, rótulos,
+// descripciones antiguas, "por qué" del maridaje): lo que escribe el equipo es
+// texto, nunca marcado. El salto de línea se respeta.
+function medEsc(v){ return vjEsc(v).replace(/\n/g, '<br>'); }
+function medSlug(s){
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/<[^>]*>/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+function medGet(o, ruta){
+  return ruta.reduce((a, k) => (a == null ? undefined : a[k]), o);
+}
+function medSet(o, ruta, v){
+  let a = o;
+  for (let i = 0; i < ruta.length - 1; i++){
+    if (!a[ruta[i]] || typeof a[ruta[i]] !== 'object') a[ruta[i]] = {};
+    a = a[ruta[i]];
+  }
+  const k = ruta[ruta.length - 1];
+  if (v === undefined || v === null) delete a[k]; else a[k] = v;
+}
+// Hojas de un objeto de ediciones: [['dietNotes.veg', '…'], ['name', '…']].
+// Los arrays (wines, ingredients) son hojas: se guardan enteros.
+function medHojas(o, pre, out){
+  out = out || [];
+  Object.entries(o || {}).forEach(([k, v]) => {
+    const r = pre ? pre + '.' + k : k;
+    if (v && typeof v === 'object' && !Array.isArray(v)) medHojas(v, r, out);
+    else out.push([r, v]);
+  });
+  return out;
+}
+function medTragos(){ return COCKTAILS.concat(MOCKTAILS, MOMENTOS); }
+
+// Rótulos editables del Menú: bandejas, familias y títulos de sección.
+function medRotulosKeys(){
+  const k = BUFFET_SLOTS.concat(PRINCIPAL_SLOTS, POSTRE_SLOTS).map(s => s.uiKey);
+  return k.concat(['secBuffet','secSoup','secMains','secDesserts','starter','barSalado','barDulce']);
+}
+
+// --- La foto del original ---------------------------------------------------
+// Se toma UNA vez, con todo el bloque de datos ya armado (los postres legacy ya
+// reasignados a cena, los platos 2026 ya en DISHES).
+function medSeedTomar(){
+  if (MED_SEED) return;
+  const pick = (o, campos) => { const r = {}; campos.forEach(k => { if (o[k] !== undefined) r[k] = medClon(o[k]); }); return r; };
+  MED_SEED = { platos:{}, vinos:{}, tragos:{}, rotulos:{} };
+  MED_OBJ  = { platos:{}, vinos:{}, tragos:{} };
+  DISHES.concat(BAR_DISHES).forEach(d => {
+    MED_OBJ.platos[d.id] = d;
+    MED_SEED.platos[d.id] = { obj: pick(d, MED_CAMPOS_PLATO), en: medClon(DISH_TRANS.en[d.id]), pt: medClon(DISH_TRANS.pt[d.id]) };
+  });
+  WINES.forEach(w => {
+    MED_OBJ.vinos[w.id] = w;
+    MED_SEED.vinos[w.id] = { obj: pick(w, MED_CAMPOS_VINO), en: medClon(WINE_TRANS.en[w.id]), pt: medClon(WINE_TRANS.pt[w.id]) };
+  });
+  // Los tragos no traen id: se deriva del nombre ORIGINAL, así renombrar un
+  // trago no le cambia la identidad.
+  const usados = {};
+  [['c', COCKTAILS], ['m', MOCKTAILS], ['mo', MOMENTOS]].forEach(([p, arr]) => arr.forEach(c => {
+    let id = p + '-' + medSlug(c.name);
+    while (usados[id]) id += '-2';
+    usados[id] = true;
+    c.medId = id;
+    MED_OBJ.tragos[id] = c;
+    MED_SEED.tragos[id] = { obj: pick(c, MED_CAMPOS_TRAGO) };
+  }));
+  medRotulosKeys().forEach(k => { MED_SEED.rotulos[k] = { es: UI.es[k], en: UI.en[k], pt: UI.pt[k] }; });
+}
+
+function medRestaurarTodo(){
+  Object.entries(MED_SEED.platos).forEach(([id, s]) => {
+    const d = MED_OBJ.platos[id];
+    MED_CAMPOS_PLATO.forEach(k => { if (s.obj[k] === undefined) delete d[k]; else d[k] = medClon(s.obj[k]); });
+    ['en','pt'].forEach(l => { if (s[l]) DISH_TRANS[l][id] = medClon(s[l]); else delete DISH_TRANS[l][id]; });
+  });
+  Object.entries(MED_SEED.vinos).forEach(([id, s]) => {
+    const w = MED_OBJ.vinos[id];
+    MED_CAMPOS_VINO.forEach(k => { if (s.obj[k] === undefined) delete w[k]; else w[k] = medClon(s.obj[k]); });
+    ['en','pt'].forEach(l => { if (s[l]) WINE_TRANS[l][id] = medClon(s[l]); else delete WINE_TRANS[l][id]; });
+  });
+  Object.entries(MED_SEED.tragos).forEach(([id, s]) => {
+    const c = MED_OBJ.tragos[id];
+    MED_CAMPOS_TRAGO.forEach(k => { if (s.obj[k] === undefined) delete c[k]; else c[k] = medClon(s.obj[k]); });
+  });
+  Object.entries(MED_SEED.rotulos).forEach(([k, s]) => {
+    MED_LANGS.forEach(l => { if (s[l] === undefined) delete UI[l][k]; else UI[l][k] = s[l]; });
+  });
+}
+
+// Un ingrediente es [nombre, cantidad]; cada parte es string o {es,en,pt}.
+function medTri(v){
+  if (v && typeof v === 'object') return { es: v.es || '', en: v.en || '', pt: v.pt || '' };
+  const s = v == null ? '' : String(v);
+  return { es: s, en: s, pt: s };
+}
+
+function medAplicarPlato(d, lang, ruta, v){
+  const r = ruta.split('.');
+  if (lang === 'x'){
+    if (r[0] === 'diet'){ if (!d.diet) d.diet = {}; medSet(d.diet, [r[1]], v === '-' ? undefined : v); return; }
+    if (ruta === 'photo'){ if (!v || v === '-') delete d.photo; else d.photo = String(v); return; }
+    if (ruta === 'wines'){ d.wines = Array.isArray(v) ? v.slice() : []; return; }
+    if (ruta === 'allergens'){ d.allergens = String(v || '').split(',').map(s => s.trim()).filter(Boolean); return; }
+    if (ruta === 'orden'){ const n = Number(v); if (!isNaN(n)) d.orden = n; return; }
+    if (ruta === 'day' || ruta === 'slot'){ d[ruta] = String(v); return; }
+    return;
+  }
+  if (MED_LANGS.indexOf(lang) < 0) return;
+  // desc y "por qué" se pintan como HTML crudo; el resto pasa por vjEsc.
+  const val = (r[0] === 'desc' || r[0] === 'why') ? medEsc(v) : String(v == null ? '' : v);
+  if (lang === 'es'){
+    medSet(d, r, val);
+    // Los platos 2026 copian el guion breve en `desc` (menuToDish) para el
+    // buscador y el Comande: si se edita el guion, la copia lo sigue.
+    const s = MED_SEED.platos[d.id].obj;
+    if (ruta === 'brief' && s.desc === s.brief) d.desc = val;
+    return;
+  }
+  const tr = DISH_TRANS[lang][d.id] || (DISH_TRANS[lang][d.id] = {});
+  medSet(tr, r, val);
+}
+function medAplicarVino(w, lang, ruta, v){
+  if (lang === 'x'){
+    if (ruta === 'type') w.type = String(v);
+    else if (ruta === 'name' || ruta === 'valley') w[ruta] = medEsc(v);
+    return;
+  }
+  if (MED_TXT_VINO.indexOf(ruta) < 0) return;
+  if (lang === 'es') w[ruta] = medEsc(v);
+  else if (MED_LANGS.indexOf(lang) >= 0) (WINE_TRANS[lang][w.id] || (WINE_TRANS[lang][w.id] = {}))[ruta] = medEsc(v);
+}
+function medAplicarTrago(c, lang, ruta, v){
+  if (lang === 'x'){
+    if (ruta === 'name') c.name = medEsc(v);
+    else if (ruta === 'ingredients'){
+      c.ingredients = (Array.isArray(v) ? v : []).map(row => {
+        const n = medTri(row && row[0]), a = medTri(row && row[1]);
+        // Un idioma vacío toma el texto de otro: nunca un ingrediente en blanco.
+        const fill = o => { const b = o.es || o.en || o.pt; return { es: medEsc(o.es || b), en: medEsc(o.en || b), pt: medEsc(o.pt || b) }; };
+        return [fill(n), fill(a)];
+      });
+    }
+    return;
+  }
+  if (MED_TXT_TRAGO.indexOf(ruta) < 0 || MED_LANGS.indexOf(lang) < 0) return;
+  if (!c[ruta] || typeof c[ruta] !== 'object') c[ruta] = medTri(c[ruta]);
+  c[ruta][lang] = medEsc(v);
+}
+
+function medAplicar(){
+  if (!MED_SEED) return;
+  medRestaurarTodo();
+  const C = MED_CAMPOS || {};
+  const por = (col, fn) => Object.entries(C[col] || {}).forEach(([id, porLang]) => {
+    const o = col === 'rotulos' ? id : MED_OBJ[col][id];
+    if (!o || !porLang || typeof porLang !== 'object') return;
+    Object.entries(porLang).forEach(([lang, campos]) => {
+      if (col === 'rotulos'){ fn(o, lang, null, campos); return; }
+      medHojas(campos).forEach(([ruta, v]) => { try { fn(o, lang, ruta, v); } catch(e){ console.warn('[med] campo', col, id, ruta, e); } });
+    });
+  });
+  por('platos', medAplicarPlato);
+  por('vinos',  medAplicarVino);
+  por('tragos', medAplicarTrago);
+  por('rotulos', (k, lang, _r, v) => { if (MED_LANGS.indexOf(lang) >= 0 && typeof v === 'string' && MED_SEED.rotulos[k]) UI[lang][k] = medEsc(v); });
+}
+
+// Redibuja lo que pueda estar a la vista. Cada render por separado: uno roto
+// no arrastra a los otros.
+function medRepintar(){
+  [renderDishes, renderWines, renderGuiones, renderCocktails].forEach(fn => { try { fn(); } catch(e){} });
+  try { if (cocktailsShowingMomentos) renderMomentos(); } catch(e){}
+}
+
+function medUrl(suf){ return `${CF_FIREBASE_CONFIG.databaseURL}/${MED_PATH}${suf || ''}.json${fbQS()}`; }
+function medGuardarLocal(){ try { localStorage.setItem(MED_LS_KEY, JSON.stringify(MED_CAMPOS || {})); } catch(e){} }
+
+async function medFetch(){
+  try {
+    await fbAuthInit();
+    const raw = await fbGetJson(() => medUrl('/campos'), { cache: 'no-store' });
+    const nuevo = (raw && typeof raw === 'object') ? raw : {};
+    if (JSON.stringify(nuevo) === JSON.stringify(MED_CAMPOS)) return;
+    MED_CAMPOS = nuevo;
+    medGuardarLocal();
+    medAplicar();
+    medRepintar();
+  } catch(e){
+    // Sin red o sin permiso: se sigue con lo que hay (copia local u original).
+    console.warn('[med] fetch falló, se conserva lo que había:', e && e.message);
+  }
+}
+
+function medArrancar(){
+  try {
+    medSeedTomar();
+    try { MED_CAMPOS = JSON.parse(localStorage.getItem(MED_LS_KEY) || '{}') || {}; } catch(e){ MED_CAMPOS = {}; }
+    if (Object.keys(MED_CAMPOS).length){ medAplicar(); medRepintar(); }
+  } catch(e){ console.warn('[med] arranque', e); }
+  medFetch();
+}
+
+// --- Fotos subidas ------------------------------------------------------------
+// Pesan ~100 KB cada una, así que NO viajan con las ediciones: se piden recién
+// cuando alguien abre esa ficha (igual que las del repo, que no existen en el
+// DOM mientras la ficha está cerrada). Quedan en memoria por sesión.
+function medFotoSrc(d){
+  const p = d && d.photo;
+  if (!p) return '';
+  if (p.indexOf('fb:') !== 0) return p;
+  const k = d.id + '|' + p;
+  if (MED_FOTOS[k]) return MED_FOTOS[k];
+  medFotoPedir(d.id, p);
+  return '';
+}
+async function medFotoPedir(id, p){
+  const k = id + '|' + p;
+  if (MED_FOTOS[k] || MED_FOTOS_PIDIENDO[k]) return;
+  MED_FOTOS_PIDIENDO[k] = true;
+  try {
+    await fbAuthInit();
+    const v = await fbGetJson(() => medUrl('/fotos/' + encodeURIComponent(id)));
+    if (typeof v === 'string' && v.indexOf('data:image/') === 0){
+      MED_FOTOS[k] = v;
+      document.querySelectorAll('img[data-med-foto]').forEach(img => { if (img.dataset.medFoto === id) img.src = v; });
+    }
+  } catch(e){ console.warn('[med] foto', id, e && e.message); }
+  delete MED_FOTOS_PIDIENDO[k];
+}
+
+// --- Lectura para el editor ---------------------------------------------------
+// Todo valor del editor pasa por medNorm: así "sin dato" del original
+// (undefined) y "sin dato" elegido ('-') comparan igual, y lo que no se tocó
+// nunca se escribe.
+function medNorm(col, lang, ruta, v){
+  if (lang === 'x'){
+    if (col === 'platos'){
+      if (ruta.indexOf('diet.') === 0) return (v === undefined || v === null || v === '') ? '-' : v;
+      if (ruta === 'wines') return Array.isArray(v) ? v.slice() : [];
+      if (ruta === 'allergens') return Array.isArray(v) ? v.join(', ') : String(v || '');
+      if (ruta === 'photo') return v ? String(v) : '-';
+      return v;
+    }
+    if (col === 'tragos' && ruta === 'ingredients')
+      return (Array.isArray(v) ? v : []).map(row => [medTri(row && row[0]), medTri(row && row[1])]);
+  }
+  return v == null ? '' : v;
+}
+function medOriginal(col, id, lang, ruta){
+  const s = MED_SEED[col] && MED_SEED[col][id];
+  if (!s) return undefined;
+  if (col === 'rotulos') return s[lang];
+  const r = ruta.split('.');
+  if (col === 'tragos'){
+    if (lang === 'x') return medGet(s.obj, r);
+    const f = s.obj[ruta];
+    return (f && typeof f === 'object') ? f[lang] : f;
+  }
+  if (lang === 'x' || lang === 'es') return medGet(s.obj, r);
+  return medGet(s[lang] || {}, r);
+}
+function medOverride(col, id, lang, ruta){
+  return medGet(MED_CAMPOS, [col, id, lang].concat(col === 'rotulos' ? [] : ruta.split('.')));
+}
+function medValor(col, id, lang, ruta){
+  const ov = medOverride(col, id, lang, ruta);
+  return medNorm(col, lang, ruta, ov !== undefined ? ov : medOriginal(col, id, lang, ruta));
+}
+function medOrigN(col, id, lang, ruta){ return medNorm(col, lang, ruta, medOriginal(col, id, lang, ruta)); }
+function medIgual(a, b){ return JSON.stringify(a) === JSON.stringify(b); }
+
+// --- Orden y posición -----------------------------------------------------------
+// Las listas sin bandeja fija (cena, sopa, bar) se dibujan por `orden`; sin
+// edición, el orden es el del array, como siempre.
+function menuOrdenDe(d){
+  if (d.orden != null && !isNaN(d.orden)) return Number(d.orden);
+  const i = DISHES.indexOf(d);
+  return (i >= 0 ? i : 1000 + BAR_DISHES.indexOf(d)) * 10;
+}
+function menuOrden(list){ return list.slice().sort((a, b) => menuOrdenDe(a) - menuOrdenDe(b)); }
+// Fichas por bandeja fija. Si por una edición dos platos quedaran en la misma
+// bandeja, se dibujan los dos: un plato nunca desaparece de la vista.
+function menuSlotTiles(list, slots){
+  return slots.map(s => menuOrden(list.filter(x => x.slot === s.key))
+    .filter(d => !(MENU_ONLY_FIT && MENU_DIET_LENS.length && menuFails(d)))
+    .map(d => menuTile(d, t(s.uiKey), false)).join('')).join('');
+}
+function medSlotsDe(d){
+  if (!d || !d.slot) return null;
+  if (d.course === 'Buffet') return BUFFET_SLOTS;
+  if (d.course === 'Plato principal') return PRINCIPAL_SLOTS;
+  if (d.course === 'Postre') return POSTRE_SLOTS;
+  return null;
+}
+function medHermanos(d, day){
+  if (BAR_DISHES.indexOf(d) >= 0) return BAR_DISHES.filter(x => x.cat === d.cat);
+  return DISHES.filter(x => x.service === d.service && x.course === d.course && x.day === day);
+}
+function medSecKey(d){
+  if (BAR_DISHES.indexOf(d) >= 0) return d.cat === 'Dulce' ? 'barDulce' : 'barSalado';
+  return { 'Buffet':'secBuffet', 'Sopa':'secSoup', 'Entrada':'starter', 'Plato principal':'secMains', 'Postre':'secDesserts' }[d.course] || null;
+}
+// Posición actual de un plato en su lista: la clave de bandeja o el n° (1..n).
+function medPosDe(d){
+  if (medSlotsDe(d)) return d.slot;
+  return String(menuOrden(medHermanos(d, d.day)).indexOf(d) + 1);
+}
+// Qué escribir para dejar `d` en (día, posición). Si la bandeja está ocupada,
+// los dos platos se intercambian; en una lista, se inserta y se renumera.
+// Devuelve {id: {day?, slot?, orden?}}.
+function medPlanUbicacion(d, day, pos){
+  const out = {};
+  const put = (x, k, v) => { (out[x.id] = out[x.id] || {})[k] = v; };
+  const isBar = BAR_DISHES.indexOf(d) >= 0;
+  if (!isBar && !day) day = d.day;
+  if (medSlotsDe(d)){
+    if (day === d.day && pos === d.slot) return out;
+    DISHES.filter(x => x !== d && x.service === d.service && x.course === d.course && x.day === day && x.slot === pos)
+      .forEach(o => { if (day !== d.day) put(o, 'day', d.day); if (pos !== d.slot) put(o, 'slot', d.slot); });
+    if (day !== d.day) put(d, 'day', day);
+    if (pos !== d.slot) put(d, 'slot', pos);
+    return out;
+  }
+  const mismo = isBar || day === d.day;
+  if (mismo && String(pos) === medPosDe(d)) return out;
+  const lista = menuOrden(medHermanos(d, isBar ? null : day)).filter(x => x !== d);
+  const i = Math.max(0, Math.min(lista.length, (parseInt(pos, 10) || 1) - 1));
+  lista.splice(i, 0, d);
+  lista.forEach((x, n) => put(x, 'orden', n * 10));
+  if (!mismo) put(d, 'day', day);
+  return out;
+}
+
+// --- Editor -----------------------------------------------------------------------
+function medCamposEditor(col, id){
+  const txt = [], x = [];
+  if (col === 'platos'){
+    const s = MED_SEED.platos[id].obj;
+    txt.push('name', 'short');
+    if (s.brief !== undefined) txt.push('brief', 'extended'); else txt.push('desc');
+    DIET_AXES.forEach(a => { txt.push('dietNotes.' + a.key); x.push('diet.' + a.key); });
+    WINES.forEach(w => txt.push('why.' + w.id));
+    x.push('wines', 'photo', 'allergens');
+  } else if (col === 'vinos'){
+    txt.push(...MED_TXT_VINO); x.push('name', 'valley', 'type');
+  } else if (col === 'tragos'){
+    txt.push(...MED_TXT_TRAGO); x.push('name', 'ingredients');
+  }
+  return { txt, x };
+}
+
+function medAbrir(col, id){
+  medSeedTomar();
+  if (!MED_SEED[col] || !MED_SEED[col][id]) return;
+  const { txt, x } = medCamposEditor(col, id);
+  const vals = { es:{}, en:{}, pt:{}, x:{} };
+  MED_LANGS.forEach(l => txt.forEach(r => { vals[l][r] = medValor(col, id, l, r); }));
+  x.forEach(r => { vals.x[r] = medValor(col, id, 'x', r); });
+  const E = { col, id, lang: currentLang, vals, base: medClon(vals), foto: null, armado: false, guardando: false, rot: null, ubic: null };
+  if (col === 'platos'){
+    const d = MED_OBJ.platos[id];
+    const keys = [], lbls = [];
+    const sl = medSlotsDe(d);
+    if (sl){ const s = sl.find(z => z.key === d.slot); if (s){ keys.push(s.uiKey); lbls.push('medSlotLabel'); } }
+    const sk = medSecKey(d); if (sk){ keys.push(sk); lbls.push('medSecLabel'); }
+    E.rot = { keys, lbls, vals:{ es:{}, en:{}, pt:{} } };
+    MED_LANGS.forEach(l => keys.forEach(k => { E.rot.vals[l][k] = medValor('rotulos', k, l, ''); }));
+    E.rot.base = medClon(E.rot.vals);
+    E.ubic = { day: d.day || null, pos: medPosDe(d) };
+    E.ubicBase = medClon(E.ubic);
+  }
+  MED_ED = E;
+  medPintar(true);
+}
+function medCerrar(){
+  MED_ED = null;
+  const ov = document.getElementById('med-overlay');
+  if (ov) ov.remove();
+}
+
+function medTitulo(){
+  const E = MED_ED;
+  if (E.col === 'platos'){ const d = MED_OBJ.platos[E.id]; return E.vals.es.name || d.name; }
+  return E.vals.x.name || E.id;
+}
+
+function medBotonOriginal(lang, ruta, esRot){
+  const E = MED_ED;
+  const actual = esRot ? E.rot.vals[lang][ruta] : E.vals[lang][ruta];
+  const orig   = esRot ? medOrigN('rotulos', ruta, lang, '') : medOrigN(E.col, E.id, lang, ruta);
+  if (medIgual(actual, orig)) return '';
+  return `<button type="button" class="med-orig" onclick="event.preventDefault();medVolverCampo('${lang}','${ruta}',${esRot ? 1 : 0})">↺ ${t('medRestoreField')}</button>`;
+}
+function medFila(label, lang, ruta, area, esRot){
+  const E = MED_ED;
+  const v = (esRot ? E.rot.vals[lang][ruta] : E.vals[lang][ruta]) || '';
+  const attrs = `class="cmd-modal-input med-in" data-l="${lang}" data-r="${ruta}"${esRot ? ' data-rot="1"' : ''} oninput="medInput(this)"`;
+  return `<div class="med-f"><div class="med-lbl"><span>${label}</span>${medBotonOriginal(lang, ruta, esRot)}</div>
+    ${area ? `<textarea ${attrs} rows="3">${vjEsc(v)}</textarea>` : `<input ${attrs} value="${vjEsc(v)}">`}</div>`;
+}
+function medSec(key){ return `<div class="med-sec">${t(key)}</div>`; }
+
+function medCuerpoPlato(){
+  const E = MED_ED, L = E.lang, d = MED_OBJ.platos[E.id];
+  let h = medSec('medTexts');
+  h += medFila(t('medName'), L, 'name');
+  h += medFila(t('medShort'), L, 'short');
+  if ('brief' in E.vals[L]){
+    h += medFila(t('medBrief'), L, 'brief', true);
+    h += medFila(t('medExtended'), L, 'extended', true);
+  } else h += medFila(t('medDesc'), L, 'desc', true);
+
+  // Matriz: ✓ apto · ✓* con condición · ✗ no apto · ? sin dato. Sin verde,
+  // igual que en la ficha: el silencio no se pinta como apto.
+  h += medSec('medDiet');
+  const ops = [[1,'✓','v1'], ['*','✓*','vc'], [0,'✗','v0'], ['-','?','vn']];
+  DIET_AXES.forEach(a => {
+    const v = E.vals.x['diet.' + a.key];
+    h += `<div class="med-diet"><span class="med-diet-lbl">${t(a.uiKey)}</span><span class="med-seg">${ops.map(([val, sym, cls]) =>
+      `<button type="button" class="${cls}${medIgual(v, val) ? ' on' : ''}" onclick="medDiet('${a.key}','${val}')">${sym}</button>`).join('')}</span>
+      ${v === '*' ? `<div class="med-note">${medFila(t('medDietNote'), L, 'dietNotes.' + a.key)}</div>` : ''}</div>`;
+  });
+  if (!menuHasMatrix(d) || (MED_SEED.platos[E.id].obj.allergens || []).length || E.vals.x.allergens)
+    h += medFila(t('medAllergens'), 'x', 'allergens');
+
+  h += medSec('medPairing');
+  const sel = E.vals.x.wines;
+  h += `<div class="med-chips">${WINES.map(w => `<button type="button" class="med-chip${sel.indexOf(w.id) >= 0 ? ' on' : ''}" onclick="medVino('${w.id}')">${w.name}</button>`).join('')}</div>`;
+  sel.forEach(wid => { const w = getWine(wid); if (w) h += medFila(`${t('medWhy')} · ${w.name}`, L, 'why.' + wid); });
+
+  h += medSec('medPhoto');
+  const p = E.vals.x.photo;
+  const src = E.foto || (p && p !== '-' ? medFotoSrc({ id: E.id, photo: p }) : '');
+  h += `<div class="med-foto">${p !== '-' || E.foto ? `<img ${src ? `src="${src}"` : ''} data-med-foto="${E.id}" alt="">` : ''}
+    <label class="med-btn">${t(p !== '-' || E.foto ? 'medPhotoChange' : 'medPhotoAdd')}<input type="file" accept="image/*" onchange="medFotoElegir(this)"></label>
+    ${p !== '-' || E.foto ? `<button type="button" class="med-btn" onclick="medFotoQuitar()">${t('medPhotoRemove')}</button>` : ''}
+    ${medBotonFotoOriginal()}</div>`;
+
+  h += medSec('medPlace');
+  const isBar = BAR_DISHES.indexOf(d) >= 0;
+  const sl = medSlotsDe(d);
+  let posOpts;
+  if (sl){
+    posOpts = sl.map(s => {
+      const occ = DISHES.find(x => x !== d && x.service === d.service && x.course === d.course && x.day === E.ubic.day && x.slot === s.key);
+      return [s.key, t(s.uiKey) + (occ ? ' · ' + (getDishTr(occ).short || getDishTr(occ).name) : '')];
+    });
+  } else {
+    const n = medHermanos(d, isBar ? null : E.ubic.day).filter(x => x !== d).length + 1;
+    posOpts = Array.from({ length: n }, (_, i) => [String(i + 1), String(i + 1)]);
+  }
+  const opt = (arr, cur) => arr.map(([v, lbl]) => `<option value="${v}"${String(v) === String(cur) ? ' selected' : ''}>${vjEsc(lbl)}</option>`).join('');
+  h += `<div class="med-row2">
+    ${isBar ? '' : `<div class="med-f"><div class="med-lbl"><span>${t('medDay')}</span></div><select class="cmd-modal-input med-in" onchange="medUbic('day',this.value)">${opt(['1','2','3','4'].map(x => [x, t('day') + ' ' + x]), E.ubic.day)}</select></div>`}
+    <div class="med-f"><div class="med-lbl"><span>${t('medPos')}</span></div><select class="cmd-modal-input med-in" onchange="medUbic('pos',this.value)">${opt(posOpts, E.ubic.pos)}</select></div>
+  </div>`;
+  if (sl) h += `<div class="med-hint">${t('medSwapHint')}</div>`;
+
+  if (E.rot.keys.length){
+    h += medSec('medLabels');
+    E.rot.keys.forEach((k, i) => { h += medFila(t(E.rot.lbls[i]), L, k, false, true); });
+    h += `<div class="med-hint">${t('medLabelsHint')}</div>`;
+  }
+  return h;
+}
+function medBotonFotoOriginal(){
+  const E = MED_ED;
+  const orig = medOrigN('platos', E.id, 'x', 'photo');
+  if (!E.foto && medIgual(E.vals.x.photo, orig)) return '';
+  return `<button type="button" class="med-orig" onclick="medVolverCampo('x','photo',0)">↺ ${t('medRestoreField')}</button>`;
+}
+
+function medCuerpoVino(){
+  const E = MED_ED, L = E.lang;
+  let h = medSec('medTexts');
+  const lbl = { identity:'identity', terroir:'terroir', winery:'winery', style:'style', shortpitch:'shortPitch', pitch:'development' };
+  MED_TXT_VINO.forEach(r => { h += medFila(t(lbl[r]).replace(/:\s*$/, ''), L, r, true); });
+  h += medSec('medData');
+  h += medFila(t('medName'), 'x', 'name');
+  h += medFila(t('medValley'), 'x', 'valley');
+  const tipos = [];
+  Object.values(MED_SEED.vinos).forEach(s => { if (s.obj.type && tipos.indexOf(s.obj.type) < 0) tipos.push(s.obj.type); });
+  h += `<div class="med-f"><div class="med-lbl"><span>${t('medType')}</span>${medBotonOriginal('x', 'type')}</div><select class="cmd-modal-input med-in" data-l="x" data-r="type" onchange="medInput(this);medPintar()">${tipos.map(tp => `<option value="${tp}"${E.vals.x.type === tp ? ' selected' : ''}>${vjEsc(typeLabel(tp))}</option>`).join('')}</select></div>`;
+  return h;
+}
+
+function medCuerpoTrago(){
+  const E = MED_ED, L = E.lang;
+  let h = medSec('medTexts');
+  h += medFila(t('medName'), 'x', 'name');
+  h += medFila(t('medMethod'), L, 'method');
+  h += medFila(t('ctGlass'), L, 'glass');
+  h += medFila(t('ctIce'), L, 'ice');
+  h += medFila(t('ctGarnish'), L, 'garnish');
+  h += `<div class="med-sec">${t('ctIngredients')}</div>`;
+  if (!medIgual(E.vals.x.ingredients, medOrigN('tragos', E.id, 'x', 'ingredients')))
+    h += `<div class="med-lbl"><span></span><button type="button" class="med-orig" onclick="medVolverCampo('x','ingredients',0)">↺ ${t('medRestoreField')}</button></div>`;
+  E.vals.x.ingredients.forEach((row, i) => {
+    h += `<div class="med-ing">
+      <input class="cmd-modal-input med-in" placeholder="${t('medIngName')}" value="${vjEsc(row[0][L])}" oninput="medIng(${i},0,this.value)">
+      <input class="cmd-modal-input med-in" placeholder="${t('medIngAmount')}" value="${vjEsc(row[1][L])}" oninput="medIng(${i},1,this.value)">
+      <button type="button" class="med-x" onclick="medIngQuitar(${i})" aria-label="×">×</button></div>`;
+  });
+  h += `<button type="button" class="med-btn med-add" onclick="medIngAgregar()">${t('medIngAdd')}</button>`;
+  return h;
+}
+
+function medPintar(nuevo){
+  const E = MED_ED;
+  if (!E) return;
+  let ov = document.getElementById('med-overlay');
+  const prevScroll = ov ? ov.querySelector('.med-panel').scrollTop : 0;
+  if (!ov){
+    ov = document.createElement('div');
+    ov.id = 'med-overlay';
+    ov.className = 'cmd-modal-overlay';
+    ov.addEventListener('click', e => { if (e.target === ov) medCerrar(); });
+    document.body.appendChild(ov);
+  }
+  const titulo = { platos:'medTitlePlato', vinos:'medTitleVino', tragos:'medTitleTrago' }[E.col];
+  const cuerpo = E.col === 'platos' ? medCuerpoPlato() : E.col === 'vinos' ? medCuerpoVino() : medCuerpoTrago();
+  ov.innerHTML = `<div class="cmd-modal-panel med-panel" onclick="event.stopPropagation()">
+    <div class="med-head">
+      <div class="med-head-txt"><div class="med-kicker">${t(titulo)}</div><div class="med-title">${vjEsc(medTitulo())}</div></div>
+      <button type="button" class="med-x" onclick="medCerrar()" aria-label="×">×</button>
+    </div>
+    <div class="med-langs">${MED_LANGS.map(l => `<button type="button" class="med-lang${E.lang === l ? ' on' : ''}" onclick="medLang('${l}')">${l.toUpperCase()}</button>`).join('')}</div>
+    <div class="med-hint">${t('medLangHint')}</div>
+    ${cuerpo}
+    <div class="med-foot">
+      <button type="button" class="med-reset${E.armado ? ' armed' : ''}" onclick="medRestaurarItem()">${t(E.armado ? 'medRestoreConfirm' : 'medRestoreAll')}</button>
+      <button type="button" class="med-btn" onclick="medCerrar()">${t('medCancel')}</button>
+      <button type="button" class="med-save" onclick="medGuardar()"${E.guardando ? ' disabled' : ''}>${t(E.guardando ? 'medSaving' : 'medSave')}</button>
+    </div>
+  </div>`;
+  const panel = ov.querySelector('.med-panel');
+  if (!nuevo) panel.scrollTop = prevScroll;
+}
+
+function medInput(el){
+  const E = MED_ED; if (!E) return;
+  const l = el.dataset.l, r = el.dataset.r;
+  if (el.dataset.rot) E.rot.vals[l][r] = el.value;
+  else E.vals[l][r] = el.value;
+}
+function medLang(l){ if (!MED_ED) return; MED_ED.lang = l; medPintar(); }
+function medDiet(ax, val){
+  const E = MED_ED; if (!E) return;
+  E.vals.x['diet.' + ax] = (val === '1') ? 1 : (val === '0') ? 0 : val;
+  medPintar();
+}
+function medVino(wid){
+  const E = MED_ED; if (!E) return;
+  const a = E.vals.x.wines, i = a.indexOf(wid);
+  if (i >= 0) a.splice(i, 1); else a.push(wid);
+  medPintar();
+}
+function medUbic(k, v){
+  const E = MED_ED; if (!E) return;
+  E.ubic[k] = v;
+  // Cambiar de día en una lista sin bandejas: por defecto, al final de la nueva.
+  if (k === 'day'){
+    const d = MED_OBJ.platos[E.id];
+    if (!medSlotsDe(d)) E.ubic.pos = v === E.ubicBase.day ? E.ubicBase.pos
+      : String(medHermanos(d, v).filter(x => x !== d).length + 1);
+  }
+  medPintar();
+}
+function medIng(i, parte, v){ const E = MED_ED; if (E) E.vals.x.ingredients[i][parte][E.lang] = v; }
+function medIngAgregar(){
+  const E = MED_ED; if (!E) return;
+  E.vals.x.ingredients.push([medTri(''), medTri('')]);
+  medPintar();
+}
+function medIngQuitar(i){ const E = MED_ED; if (!E) return; E.vals.x.ingredients.splice(i, 1); medPintar(); }
+function medVolverCampo(lang, ruta, esRot){
+  const E = MED_ED; if (!E) return;
+  if (esRot) E.rot.vals[lang][ruta] = medOrigN('rotulos', ruta, lang, '');
+  else E.vals[lang][ruta] = medClon(medOrigN(E.col, E.id, lang, ruta));
+  if (ruta === 'photo') E.foto = null;
+  medPintar();
+}
+async function medFotoElegir(input){
+  const f = input.files && input.files[0];
+  if (!f || !MED_ED) return;
+  try {
+    MED_ED.foto = await chkCompressImage(f);
+    medPintar();
+  } catch(e){ comandaAvisoSinGuardar('medPhotoError'); }
+}
+function medFotoQuitar(){
+  const E = MED_ED; if (!E) return;
+  E.foto = null;
+  E.vals.x.photo = '-';
+  medPintar();
+}
+
+// Dos toques, sin confirm(): el primero arma, el segundo borra.
+function medRestaurarItem(){
+  const E = MED_ED; if (!E) return;
+  if (!E.armado){
+    E.armado = true; medPintar();
+    setTimeout(() => { if (MED_ED === E && E.armado){ E.armado = false; medPintar(); } }, 4000);
+    return;
+  }
+  const parche = {};
+  parche[`campos/${E.col}/${E.id}`] = null;
+  if (E.col === 'platos'){
+    parche[`fotos/${E.id}`] = null;
+    // Si el plato se había movido de bandeja, el que quedó en su lugar original
+    // vuelve también al suyo: si no, quedarían dos platos en la misma bandeja.
+    const d = MED_OBJ.platos[E.id], s = MED_SEED.platos[E.id].obj;
+    if (s.slot && (d.slot !== s.slot || d.day !== s.day)){
+      DISHES.filter(x => x !== d && x.service === d.service && x.course === d.course && x.day === s.day && x.slot === s.slot)
+        .forEach(o => ['day', 'slot'].forEach(k => {
+          if (medOverride('platos', o.id, 'x', k) !== undefined) parche[medRutaFb('platos', o.id, 'x', k)] = null;
+        }));
+    }
+  }
+  medEnviar(parche);
+}
+
+function medRutaFb(col, id, lang, ruta){
+  return ['campos', col, id, lang].concat(col === 'rotulos' ? [] : ruta.split('.')).join('/');
+}
+// Lo que se escribe: null si volvió al original (borra la edición), o el
+// valor en su forma de almacenamiento.
+function medAGuardar(col, id, lang, ruta, v){
+  if (medIgual(v, medOrigN(col, id, lang, ruta))) return null;
+  if (Array.isArray(v) && !v.length) return '';
+  return v;
+}
+
+function medGuardar(){
+  const E = MED_ED;
+  if (!E || E.guardando) return;
+  const parche = {};
+  ['es','en','pt','x'].forEach(l => Object.keys(E.vals[l]).forEach(r => {
+    if (r === 'photo') return;
+    if (medIgual(E.vals[l][r], E.base[l][r])) return;      // no se tocó
+    parche[medRutaFb(E.col, E.id, l, r)] = medAGuardar(E.col, E.id, l, r, E.vals[l][r]);
+  }));
+  if (E.col === 'platos'){
+    // Foto: la nueva sube en el MISMO PATCH que su marca, así nunca queda una
+    // marca apuntando a una foto que no llegó.
+    const rutaFoto = medRutaFb('platos', E.id, 'x', 'photo');
+    if (E.foto){
+      const marca = 'fb:' + Date.now();
+      parche[`fotos/${E.id}`] = E.foto;
+      parche[rutaFoto] = marca;
+      MED_FOTOS[E.id + '|' + marca] = E.foto;
+    } else if (!medIgual(E.vals.x.photo, E.base.x.photo)){
+      parche[rutaFoto] = medAGuardar('platos', E.id, 'x', 'photo', E.vals.x.photo);
+      if (String(E.base.x.photo).indexOf('fb:') === 0) parche[`fotos/${E.id}`] = null;
+    }
+    E.rot.keys.forEach(k => MED_LANGS.forEach(l => {
+      const v = E.rot.vals[l][k];
+      if (medIgual(v, E.rot.base[l][k])) return;
+      parche[medRutaFb('rotulos', k, l, '')] = medIgual(v, medOrigN('rotulos', k, l, '')) ? null : v;
+    }));
+    if (!medIgual(E.ubic, E.ubicBase)){
+      const plan = medPlanUbicacion(MED_OBJ.platos[E.id], E.ubic.day, E.ubic.pos);
+      Object.entries(plan).forEach(([oid, campos]) => Object.entries(campos).forEach(([k, v]) => {
+        parche[medRutaFb('platos', oid, 'x', k)] = medIgual(String(v), String(medOriginal('platos', oid, 'x', k))) ? null : v;
+      }));
+    }
+  }
+  if (!Object.keys(parche).length){ medCerrar(); return; }
+  medEnviar(parche);
+}
+
+// Optimista: se aplica y se cierra al instante; si la base rechaza, se deshace
+// en pantalla y se avisa. Creer que se guardó cuando no, es lo peor.
+async function medEnviar(parche){
+  const E = MED_ED;
+  if (E){ E.guardando = true; }
+  const antes = medClon(MED_CAMPOS || {});
+  Object.entries(parche).forEach(([k, v]) => {
+    if (k.indexOf('campos/') !== 0) return;
+    const ruta = k.slice(7).split('/');
+    medSet(MED_CAMPOS, ruta, v === null ? undefined : v);
+    // Podar ramas vacías, para que la copia local se parezca a la base.
+    for (let n = ruta.length - 1; n > 0; n--){
+      const p = medGet(MED_CAMPOS, ruta.slice(0, n));
+      if (p && typeof p === 'object' && !Object.keys(p).length) medSet(MED_CAMPOS, ruta.slice(0, n), undefined);
+      else break;
+    }
+  });
+  parche['meta/updatedAt'] = Date.now();
+  medAplicar();
+  medCerrar();
+  medRepintar();
+  try {
+    const resp = await comandaFetchAuth(() => medUrl(''), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parche)
+    });
+    const out = await resp.json().catch(() => null);
+    if (!resp.ok || !out || out.error) throw new Error('HTTP ' + resp.status);
+    medGuardarLocal();
+  } catch(e){
+    console.warn('[med] no se guardó:', e && e.message);
+    MED_CAMPOS = antes;
+    medAplicar();
+    medRepintar();
+    _CMD_AVISO_TS = 0;
+    comandaAvisoSinGuardar('medNotSaved');
+  }
 }
 
 // ── COFFEE MODULE DATA ───────────────────────────────────────────────────────
@@ -20231,6 +21083,9 @@ window.addEventListener('online', () => { if (currentTab === 'recepcion' && !RC_
 try {
   if (localStorage.getItem(RC_LS_ABIERTA) === '1') setTab('recepcion', document.getElementById('tab-btn-recepcion'));
 } catch(e){}
+// Ediciones de la carta (módulo med): acá, con TODOS los datos ya definidos
+// (los tragos y los postres legacy se arman más arriba que el boot de setLang).
+medArrancar();
 </script>
 
 <!-- ESCÁNER DE DESBORDE LATERAL — se activa SOLO con ?overflow en la URL.
@@ -20328,6 +21183,7 @@ function pwaRevalidar(motivo, forzar){
   try { tareas.push(viajerosFetch()); } catch(e){}
   try { tareas.push(staffingFetch()); } catch(e){}
   try { tareas.push(wxFetch(true)); }  catch(e){}
+  try { tareas.push(medFetch()); }     catch(e){}
   // Y de paso preguntar si hay una versión nueva del programa.
   if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistration){
     navigator.serviceWorker.getRegistration().then(r => { if (r) r.update(); }).catch(() => {});
