@@ -642,9 +642,19 @@ copia (corrige esos 21 campos, no cambia ningún otro):
 ### 3.7 La carta editable (módulo `med`, 2026-10-10)
 
 **Qué resuelve.** Hasta acá cambiar un nombre, un guion o una ✓ de la matriz era
-un commit. Ahora el equipo lo corrige desde la ficha: **✎ Editar** al pie de cada
-plato abierto (almuerzo, cena, bar), en la ficha expandida de cada vino y en la
-esquina de cada trago. Sin PIN propio: quien pasó el gate (§4.4) edita. Es
+un commit. Ahora el equipo lo corrige desde la ficha: **manteniendo presionada**
+(~½ s) cualquier ficha de plato (almuerzo, cena, bar, búsqueda), de vino o de
+trago aparece una burbuja **✎ Editar** sobre el dedo; en escritorio, con clic
+derecho. Sin botón a la vista, a pedido del owner: la ficha se ve igual que
+antes. Sin PIN propio: quien pasó el gate (§4.4) edita.
+
+La presión larga vive en listeners delegados sobre `document` que buscan
+`[data-med-id]` (`data-med-col` dice qué editor abrir), así que cualquier ficha
+nueva se vuelve editable sumando esos dos atributos. Moverse más de 10 px es
+scroll y cancela; el click que el sistema dispara al soltar se traga, para que
+la ficha no se abra o cierre por debajo; esas fichas llevan
+`-webkit-touch-callout:none` y `user-select:none`, así iOS no ofrece copiar ni
+abre la lupa. Es
 decisión del owner, y explícita: el material del asesor trae errores, así que la
 matriz ✓/✗ también se edita, sin fricción.
 

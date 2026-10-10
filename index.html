@@ -1390,10 +1390,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    grilla cerrada, que es la vista más cargada del programa. Sin colores nuevos:
    ámbar para la acción, coral para el ✗, gris para el "sin dato" — los mismos
    de la ficha. Sin verde para el ✓, igual que en los veredictos. */
-.med-edit { display:inline-flex; align-items:center; gap:6px; margin-top:10px; padding:6px 0; background:none; border:0; color:rgba(192,125,42,0.62); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
-.med-edit:active { color:#cfa14a; }
-.cocktail-card { position:relative; }
-.med-edit-mini { position:absolute; top:8px; right:8px; margin:0; padding:6px 8px; font-size:13px; letter-spacing:0; color:rgba(192,125,42,0.45); }
+/* Se entra manteniendo presionada la ficha: sin botón a la vista. Lo que
+   se puede presionar no abre el menú nativo de iOS ni selecciona texto. */
+[data-med-id] { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+.med-pop { position:fixed; z-index:999; transform:translate(-50%,-100%); display:flex; align-items:center; gap:7px; padding:10px 16px; border-radius:999px; background:var(--surface); border:0.5px solid rgba(192,125,42,0.7); box-shadow:0 8px 24px rgba(0,0,0,0.5); color:#cfa14a; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; cursor:pointer; white-space:nowrap; touch-action:manipulation; -webkit-tap-highlight-color:transparent; animation:medPop 0.16s ease-out both; }
+@keyframes medPop { from { opacity:0; transform:translate(-50%,-90%) scale(0.92); } to { opacity:1; transform:translate(-50%,-100%) scale(1); } }
 .med-panel { max-height:92vh; padding-top:0; }
 .med-head { position:sticky; top:0; z-index:2; display:flex; align-items:flex-start; gap:10px; margin:0 -1.25rem; padding:1rem 1.25rem 0.7rem; background:var(--bg-primary,#1a1a1a); border-bottom:0.5px solid var(--border); }
 .med-head-txt { flex:1; min-width:0; }
@@ -4988,6 +4989,8 @@ let MED_OBJ    = null;                   // id → objeto vivo (DISHES/BAR_DISHE
 let MED_FOTOS  = {};                     // 'id|fb:ts' → data URL de una foto subida
 let MED_FOTOS_PIDIENDO = {};             // pedidos de foto en curso
 let MED_ED     = null;                   // editor abierto: {col, id, lang, vals, base, …}
+let MED_LP     = null;                   // presión larga en curso: {timer, x, y, col, id}
+let MED_LP_HASTA = 0;                    // hasta cuándo se traga el click que sigue a la presión larga
 
 // ════════════════════════════════════════════════════════════════════════════
 // END STATE TOP
@@ -6426,10 +6429,9 @@ function menuTile(d, slotLabel, wide){
       ${wines ? `<div class="detail-section" style="margin-top:12px"><h3>${t('pairings')}</h3><div class="wine-suggestions">${wines}</div></div>` : ''}
       ${twin ? `<div class="mn-twin" onclick="event.stopPropagation();menuJumpTwin('${twin.id}')">💡 ${d.barTwin ? t('barTwin') : t('lunchTwin')} · ${vjEsc((tw => tw.short || tw.name)(getDishTr(twin)))}</div>` : ''}
       ${d.recipeDay ? `<div class="mn-meta">${t('recipeDayLabel')} ${d.recipeDay}</div>` : ''}
-      <button class="med-edit" onclick="event.stopPropagation();medAbrir('platos','${d.id}')">✎ ${t('medEdit')}</button>
     </div>`;
   }
-  return `<div class="${cls}" data-dish-id="${d.id}" onclick="selectDish('${d.id}')">
+  return `<div class="${cls}" data-dish-id="${d.id}" data-med-col="platos" data-med-id="${d.id}" onclick="selectDish('${d.id}')">
     ${slotLabel ? `<div class="mn-slot">${slotLabel}</div>` : ''}
     <div class="mn-name">${vjEsc(tr.name)}</div>
     ${open ? '' : menuExclStrip(d)}
@@ -7845,10 +7847,9 @@ function renderWines() {
         <div class="wine-section"><h3>${t('pairedDishes')} (${pairedDishes.length})</h3>
           <div class="paired-dishes">${pairedDishes.map(d=>{const dtr=getDishTr(d);return`<div class="paired-dish">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)} — ${vjEsc(dtr.name)}</div>`;}).join('')}</div>
         </div>
-        <button class="med-edit" onclick="event.stopPropagation();medAbrir('vinos','${w.id}')">✎ ${t('medEdit')}</button>
       </div>`;
     }
-    return `<div class="wine-card${isSelected?' selected':''}" data-wine-id="${w.id}" onclick="selectWine('${w.id}')">
+    return `<div class="wine-card${isSelected?' selected':''}" data-wine-id="${w.id}" data-med-col="vinos" data-med-id="${w.id}" onclick="selectWine('${w.id}')">
       <span class="wine-type-badge ${typeBadgeClass(w)}">${typeLabel(w.type)}</span>
       <div class="wine-name">${w.name}</div>
       <div class="wine-valley">${w.valley}</div>
@@ -8392,8 +8393,7 @@ const MOMENTOS = [
 function buildDrinkCard(c, lang, ui, isMocktail) {
   const tr = v => typeof v === 'object' ? v[lang] : v;
   return `
-    <div class="cocktail-card${isMocktail ? ' cocktail-mocktail' : ''}">
-      ${c.medId ? `<button class="med-edit med-edit-mini" onclick="medAbrir('tragos','${c.medId}')" aria-label="${t('medEdit')}">✎</button>` : ''}
+    <div class="cocktail-card${isMocktail ? ' cocktail-mocktail' : ''}"${c.medId ? ` data-med-col="tragos" data-med-id="${c.medId}"` : ''}>
       <div class="cocktail-name">${c.name}</div>
       <div class="cocktail-method">${c.method[lang]}</div>
       <div class="cocktail-meta-row">
@@ -8894,6 +8894,64 @@ function medCerrar(){
   const ov = document.getElementById('med-overlay');
   if (ov) ov.remove();
 }
+
+// --- Entrada: mantener presionado ------------------------------------------------
+// Sin botón a la vista: presionar ~½ s una ficha de plato, vino o trago (las
+// que llevan data-med-id) muestra una burbuja «Editar» sobre el dedo. En
+// escritorio, el clic derecho hace lo mismo. Un movimiento de más de 10 px es
+// scroll, no presión, y cancela. El click que el sistema dispara al levantar
+// el dedo se traga: si no, la ficha se abriría o cerraría por debajo.
+const MED_LP_MS = 500;
+function medLpCancelar(){ if (MED_LP){ clearTimeout(MED_LP.timer); MED_LP = null; } }
+function medPopCerrar(){ const n = document.getElementById('med-pop'); if (n) n.remove(); }
+function medPopAbrir(col, id, x, y){
+  medPopCerrar();
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.id = 'med-pop';
+  b.className = 'med-pop';
+  b.innerHTML = '✎ ' + t('medEdit');
+  // Arriba del dedo, para que el dedo no la tape ni la toque al soltar.
+  const m = 70;
+  b.style.left = Math.max(m, Math.min(window.innerWidth - m, x)) + 'px';
+  b.style.top  = Math.max(56, y - 18) + 'px';
+  b.addEventListener('click', e => { e.stopPropagation(); medPopCerrar(); medAbrir(col, id); });
+  document.body.appendChild(b);
+}
+document.addEventListener('pointerdown', e => {
+  if (!e.target.closest('#med-pop')) medPopCerrar();
+  if (e.button > 0 || MED_ED) return;
+  const el = e.target.closest('[data-med-id]');
+  if (!el) return;
+  medLpCancelar();
+  const col = el.dataset.medCol, id = el.dataset.medId, x = e.clientX, y = e.clientY;
+  MED_LP = { x, y, timer: setTimeout(() => {
+    MED_LP = null;
+    MED_LP_HASTA = Date.now() + 800;
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch(_){}
+    medPopAbrir(col, id, x, y);
+  }, MED_LP_MS) };
+}, { passive: true });
+document.addEventListener('pointermove', e => {
+  if (MED_LP && Math.hypot(e.clientX - MED_LP.x, e.clientY - MED_LP.y) > 10) medLpCancelar();
+}, { passive: true });
+['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, medLpCancelar, { passive: true }));
+window.addEventListener('scroll', () => { medLpCancelar(); medPopCerrar(); }, { passive: true, capture: true });
+document.addEventListener('click', e => {
+  if (Date.now() < MED_LP_HASTA && !e.target.closest('#med-pop')){
+    MED_LP_HASTA = 0;
+    e.preventDefault(); e.stopPropagation();
+  }
+}, true);
+// Android dispara contextmenu en la presión larga; escritorio, en el clic derecho.
+document.addEventListener('contextmenu', e => {
+  const el = e.target.closest('[data-med-id]');
+  if (!el || MED_ED) return;
+  e.preventDefault();
+  if (document.getElementById('med-pop')) return;   // ya la abrió el timer
+  medLpCancelar();
+  medPopAbrir(el.dataset.medCol, el.dataset.medId, e.clientX, e.clientY);
+});
 
 function medTitulo(){
   const E = MED_ED;
