@@ -1527,6 +1527,17 @@ sueltas) y recortar la sombra del piso al ancho del cuerpo. La foto de origen
 tiene que ser de estudio, sobre fondo claro y parejo; el blanco de la etiqueta
 queda a salvo porque está rodeado de vidrio.
 
+**Abrir un vino no redibuja la lista** (fix 2026-10-10). Con las botellas, el
+`innerHTML` completo de `renderWines` recreaba las 17 `<img>` en cada tap y en
+iOS todas parpadeaban en blanco al re-decodificarse, incluida la de la ficha
+que se abría. Ahora `selectWine` parchea sólo la ficha que se cierra y la que se
+abre (`wineExpandedHtml`), y `renderWines` reusa por clave cada ficha cuyo HTML
+no cambió (caché `grid._fichas`, que guarda también las que un filtro ocultó).
+Se verificó marcando cada `<img>` y comprobando que abrir, cerrar, buscar y
+borrar la búsqueda no crean ninguna nueva. Es el mismo criterio que
+`menuToggleGuion` en el Menú: **si la ficha tiene una imagen, no se rehace con
+`innerHTML`**.
+
 **Todas inclinadas 20°, cuello a la izquierda** (decisión del owner,
 2026-10-10). Cada botella se ENDEREZA primero (eje largo de la silueta por PCA,
 cuello arriba) y recién después se gira 20°: así la serie queda pareja aunque

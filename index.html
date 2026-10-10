@@ -7849,6 +7849,27 @@ function openWineFromDish(wid) {
   target.insertAdjacentHTML('beforeend', detailHTML);
 }
 
+// Ficha expandida de un vino. Aparte de renderWines para que selectWine pueda
+// parchear SÓLO la ficha que cambia (ver selectWine).
+function wineExpandedHtml(w) {
+  const wtr = getWineTr(w);
+  const pairedDishes = DISHES.filter(d => d.wines.includes(w.id));
+  return `<div class="wine-expanded" onclick="event.stopPropagation()">
+    <div class="wine-section"><h3>${t('identity')}</h3><p>${wtr.identity}</p></div>
+    <div class="wine-section"><h3>${t('terroir')}</h3><p>${wtr.terroir}</p></div>
+    <div class="wine-section"><h3>${t('winery')}</h3><p>${wtr.winery}</p></div>
+    <div class="wine-section"><h3>${t('salesScript')}</h3>
+      <div class="guion-box">
+        <p><span class="guion-label">${t('shortPitch')}</span> ${wtr.shortpitch}</p>
+        <p style="margin-top:8px;"><span class="guion-label">${t('development')}</span> ${wtr.pitch}</p>
+      </div>
+    </div>
+    <div class="wine-section"><h3>${t('pairedDishes')} (${pairedDishes.length})</h3>
+      <div class="paired-dishes">${pairedDishes.map(d=>{const dtr=getDishTr(d);return`<div class="paired-dish">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)} — ${vjEsc(dtr.name)}</div>`;}).join('')}</div>
+    </div>
+  </div>`;
+}
+
 function renderWines() {
   const q = (document.getElementById('wine-search').value||'').toLowerCase();
   const wines = WINES.filter(w => {
@@ -7856,27 +7877,32 @@ function renderWines() {
     const qOk = !q || w.name.toLowerCase().includes(q) || w.valley.toLowerCase().includes(q) || w.style.toLowerCase().includes(q);
     return typeOk && qOk;
   });
-  document.getElementById('wine-grid').innerHTML = wines.map(w => {
+  // Fichas por clave: una ficha cuyo HTML no cambió se REUSA (el mismo nodo,
+  // con su <img> ya decodificada) en vez de recrearse. Así filtrar o buscar no
+  // hace parpadear las botellas en iOS; sólo se crea lo que de verdad cambió
+  // (idioma, una edición, la ficha abierta).
+  const grid = document.getElementById('wine-grid');
+  // El caché vive en el grid y recuerda también las fichas que un filtro sacó
+  // de la vista: al borrar la búsqueda vuelven las mismas, sin recrearse.
+  const previas = grid._fichas || (grid._fichas = {});
+  const nodos = wines.map(w => {
+    const html = wineCardHtml(w);
+    const old = previas[w.id];
+    if (old && old._html === html) return old;
+    const tpl = document.createElement('template');
+    tpl.innerHTML = html.trim();
+    const n = tpl.content.firstElementChild;
+    n._html = html;
+    previas[w.id] = n;
+    return n;
+  });
+  grid.replaceChildren(...nodos);
+}
+
+function wineCardHtml(w) {
     const wtr = getWineTr(w);
     const isSelected = selectedWine === w.id;
-    let expanded = '';
-    if (isSelected) {
-      const pairedDishes = DISHES.filter(d => d.wines.includes(w.id));
-      expanded = `<div class="wine-expanded" onclick="event.stopPropagation()">
-        <div class="wine-section"><h3>${t('identity')}</h3><p>${wtr.identity}</p></div>
-        <div class="wine-section"><h3>${t('terroir')}</h3><p>${wtr.terroir}</p></div>
-        <div class="wine-section"><h3>${t('winery')}</h3><p>${wtr.winery}</p></div>
-        <div class="wine-section"><h3>${t('salesScript')}</h3>
-          <div class="guion-box">
-            <p><span class="guion-label">${t('shortPitch')}</span> ${wtr.shortpitch}</p>
-            <p style="margin-top:8px;"><span class="guion-label">${t('development')}</span> ${wtr.pitch}</p>
-          </div>
-        </div>
-        <div class="wine-section"><h3>${t('pairedDishes')} (${pairedDishes.length})</h3>
-          <div class="paired-dishes">${pairedDishes.map(d=>{const dtr=getDishTr(d);return`<div class="paired-dish">${t('day')} ${d.day} &middot; ${serviceLabel(d.service)} &middot; ${courseLabel(d.course)} — ${vjEsc(dtr.name)}</div>`;}).join('')}</div>
-        </div>
-      </div>`;
-    }
+    const expanded = isSelected ? wineExpandedHtml(w) : '';
     return `<div class="wine-card${isSelected?' selected':''}${w.bottle?' has-bottle':''}" data-wine-id="${w.id}" data-med-col="vinos" data-med-id="${w.id}" onclick="selectWine('${w.id}')">
       <div class="wine-head">
         ${w.bottle ? `<img class="wine-bottle" src="${w.bottle}" alt="" loading="lazy" decoding="async">` : ''}
@@ -7887,12 +7913,29 @@ function renderWines() {
       </div>
       ${expanded}
     </div>`;
-  }).join('');
 }
 
+// Abrir/cerrar un vino PARCHEA el DOM en vez de redibujar la lista: con las
+// botellas (2026-10-10), un innerHTML completo recreaba todas las <img> y en
+// iOS cada una parpadeaba en blanco al volver a decodificarse, incluida la de
+// la ficha que se abría. Sólo se tocan la ficha que se cierra y la que se abre;
+// las imágenes no se recrean. Mismo criterio que menuToggleGuion en el Menú.
 function selectWine(id) {
-  selectedWine = selectedWine === id ? null : id;
-  renderWines();
+  const prev = selectedWine;
+  selectedWine = prev === id ? null : id;
+  const grid = document.getElementById('wine-grid');
+  const card = wid => grid && grid.querySelector(`.wine-card[data-wine-id="${wid}"]`);
+  if (prev){
+    const c = card(prev);
+    if (c){ c.classList.remove('selected'); const ex = c.querySelector('.wine-expanded'); if (ex) ex.remove(); const pw = WINES.find(x => x.id === prev); c._html = pw ? wineCardHtml(pw) : null; }
+  }
+  if (selectedWine){
+    const c = card(selectedWine), w = WINES.find(x => x.id === selectedWine);
+    if (!c || !w){ renderWines(); return; }   // no está en la lista visible: render completo
+    c.classList.add('selected');
+    c.insertAdjacentHTML('beforeend', wineExpandedHtml(w));
+    c._html = wineCardHtml(w);                 // la firma sigue al estado: el próximo filtro la reusa
+  }
 }
 
 function renderGuiones() {
