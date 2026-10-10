@@ -142,7 +142,7 @@ un `innerHTML`— es el patrón **park/place** de §5.
 | **E-Check** | Comandera por mesa. **Dos vistas, a propósito distintas:** ingresar (fila de asientos, sin mapa) y entregar (la comanda completa ES el mapa de la mesa) | Firebase `/comandas/{date}/{id}` | 666 |
 | **Viajeros** | Observaciones de dieta por hab, **transcritas verbatim** (los tags derivados quedan en la ficha, no en la portada) | Firebase `/viajeros/current` (read-only; escribe `scripts/sync_viajeros.py`) | — |
 | **Checklist** | Tareas pre-servicio del equipo GEO (Montaje · Pasillo · Quincho) y del Bar, con marca, comentario y fotos. Visible desde el 2026-09-30 como sexta tab, sin destacar; antes era un botón sobre la fila y estuvo oculto desde el 2026-08-01 | Firebase `checklist_*` | 9876 (editar) |
-| **Recepción** | Guía de procedimientos del turno de recepción (primera área fuera de A&B): buscador transversal, checklist personal por procedimiento, tablas y plantillas. Séptima tab desde el 2026-10 (§3.6) | Firebase **Storage** `recepcion/` (estático, detrás del gate) · marcas en `localStorage` | — |
+| **Recepción** | Guía de procedimientos del turno de recepción (primera área fuera de A&B): buscador transversal, checklist personal por procedimiento, tablas y plantillas. Séptima tab desde el 2026-10 (§3.6); **acceso oculto desde el 2026-10-10** (`RC_TAB_ON = false` + `hidden` en el botón), módulo intacto | Firebase **Storage** `recepcion/` (estático, detrás del gate) · marcas en `localStorage` | — |
 
 Los datos del Café (módulo Service Mode) y los del E-Check tienen su
 propia capa de Firebase. Del header, **staffing** escribe/lee Firebase; la
@@ -1607,6 +1607,12 @@ hecha: falta que sobreviva a un reload.
 
 Hay decisiones conscientes de prototipo. Listarlas explícitas:
 
+- **Tab RECEPCIÓN oculta desde 2026-10-10**, a pedido del owner, el mismo día
+  que llegó a producción. Igual que Rol: se ocultó el **acceso**, no el módulo.
+  `RC_TAB_ON = false` además impide que el arranque la reabra en el aparato que
+  la dejó abierta (y le borra esa marca). Revivirla = `RC_TAB_ON = true` y
+  quitar el `hidden` de `#tab-btn-recepcion`. El contenido en Storage sigue
+  publicado y detrás del gate.
 - **Tab ROL oculta desde 2026-09-16.** No cumple función operativa: el turno
   activo ya se lee en el panel de staffing del header, así que el lector semanal
   duplicaba información sin agregar una decisión. Se ocultó el **acceso**, no el
