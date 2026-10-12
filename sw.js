@@ -17,7 +17,7 @@
 // Al cambiar un archivo del CORE hay que subir la versión del cache: 'activate'
 // borra todo bucket que no se llame igual, y sin ese bump los teléfonos que ya
 // tienen la app siguen sirviendo la copia vieja desde el cache.
-const CACHE = 'ata-handbook-v2';
+const CACHE = 'ata-handbook-v3';
 const CORE  = ['/', '/index.html', '/favicon.svg', '/manifest.webmanifest',
                '/assets/icon-180-v2.png', '/assets/icon-192-v2.png',
                '/assets/icon-512-v2.png', '/assets/icon-512-maskable-v2.png'];
