@@ -445,13 +445,18 @@ vive en la página**, en PGO → Quincho (tercera vista, siempre presente):
 
 | Paso | Quién | Qué pasa |
 |---|---|---|
-| Armar | supervisor (PIN 9876, una vez por sesión) | noche, mesas, puestos, cabeceras; los grupos que no caben van unidos solos, cualquier familia puede pedir mesa propia → **Proponer** calcula sobre `/viajeros/current` y muestra un **borrador** |
-| Ajustar | supervisor | en el borrador se mueve gente sin escribir nada; **Ajustar salón** vuelve al formulario |
-| Publicar | supervisor | PUT de `/quincho/current`; desde ahí lo ven todos los teléfonos |
-| Servicio | cualquiera, sin PIN | buscar por hab, apellido, grupo o mesa; mover de mesa con su hab; marcar «no va» |
-| Borrar | supervisor | **Borrar quincho**: clave + confirmación (ofrece bajar el Excel antes); DELETE de `/quincho/current`, la copia local de cada teléfono cae en su próximo fetch. Sin esto, la purga lo borra a los 2 días de la fecha |
-| Recalcular | supervisor | entra quien llegó, sale quien se fue, lo movido a mano (`mov`) se respeta y el resto se queda salvo ganancia clara; dice qué carteles reimprimir |
+| Armar | cualquiera, sin clave (desde 2026-10-12) | noche, mesas, puestos, cabeceras; los grupos que no caben van unidos solos, cualquier familia puede pedir mesa propia → **Proponer** calcula sobre `/viajeros/current` y muestra un **borrador** |
+| Ajustar | cualquiera | en el borrador se mueve gente sin escribir nada; **Ajustar salón** vuelve al formulario |
+| Publicar | cualquiera | PUT de `/quincho/current`; desde ahí lo ven todos los teléfonos |
+| Servicio | cualquiera | buscar por hab, apellido, grupo o mesa; mover de mesa con su hab; marcar «no va» |
+| Borrar | cualquiera | **Borrar quincho**: confirmación en pantalla (ofrece bajar el Excel antes); DELETE de `/quincho/current`, la copia local de cada teléfono cae en su próximo fetch. Sin esto, la purga lo borra a los 2 días de la fecha |
+| Recalcular | cualquiera | entra quien llegó, sale quien se fue, lo movido a mano (`mov`) se respeta y el resto se queda salvo ganancia clara; dice qué carteles reimprimir |
 | Papel | cualquiera | **Carteles** (A4 plegable, logo como máscara de color elegible), **Listado** (por habitación + plano por mesa) y **Excel** (.xlsx generado en el navegador, sin dependencias: zip sin compresión + CRC32) |
+
+**Sin clave desde el 2026-10-12.** Armar, recalcular y borrar pedían el PIN
+de supervisor (una vez por sesión); el owner lo quitó por fricción. La puerta
+que queda es el gate de entrada (§4.4), igual que para el resto de la app, y
+Borrar conserva su pantalla de confirmación.
 
 El PC queda para una sola cosa, una sola vez: la regla `quincho` en la consola
 de Firebase. `scripts/quincho.py` queda de **respaldo** (mismo cálculo en

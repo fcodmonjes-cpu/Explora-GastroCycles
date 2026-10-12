@@ -4963,10 +4963,9 @@ let QN_MESA     = null;   // mesa tocada en la tira del salón
 let QN_MOVER    = null;   // pid con el selector de mesa abierto (uno a la vez)
 let QN_CON_HAB  = true;   // mover a toda la hab junta (lo normal: una pareja no se separa)
 let QN_FIRMA_DOC = '';    // firma del doc: el polling sólo repinta si algo cambió
-let QN_SUPER    = false;  // PIN de supervisor ya tecleado en esta sesión (armar/publicar)
 let QN_SWAP     = null;   // mesa con el selector de "intercambiar con…" abierto
 let QN_LOGO     = '';     // logo como data URL, precargado: los carteles lo llevan adentro
-let QN_ARMADO   = null;   // { modo:'nuevo'|'recalcular', paso:'pin'|'form'|'calc'|'borrador'|'error', pin, cfg, borrador, resumen, error }
+let QN_ARMADO   = null;   // { modo:'nuevo'|'recalcular'|'borrar', paso:'form'|'calc'|'borrador'|'borrar'|'error', cfg, borrador, resumen, error }
 
 // ── Ventanas de servicio (para el conteo por hora) ──────────────────────────
 // Un viajero cuenta para un servicio si ESTABA EN EL LODGE mientras el servicio
@@ -5301,9 +5300,9 @@ const UI = {
     qnSearchPh:'hab, apellido, grupo o mesa…', qnPos:'{n}ª desde la izquierda', qnMesa:'Mesa',
     qnChip:'quincho · mesa', qnCon:'con', qnMoverA:'mover a la mesa', qnConHab:'con toda la hab {hab} ({n})',
     qnUnidas:'{n} mesas unidas', qnLibre:'mesa libre',
-    qnVacio:'No hay un quincho armado', qnVacioSub:'Se arma desde acá con los viajeros que trae PGO: la página propone las mesas, se ajustan y se publican. Armar pide la clave de supervisor.',
+    qnVacio:'No hay un quincho armado', qnVacioSub:'Se arma desde acá con los viajeros que trae PGO: la página propone las mesas, se ajustan y se publican.',
     qnArmar:'Armar quincho', qnArmarNuevo:'Armar de nuevo', qnRecalcular:'Recalcular',
-    qnPinTit:'Clave de supervisor', qnPinMal:'Clave incorrecta', qnCancelar:'Cancelar',
+    qnCancelar:'Cancelar',
     qnFecha:'Noche del quincho', qnRosterHoy:'Los viajeros son los que están hoy en el hotel: quien llega después todavía no aparece.',
     qnMesasLbl:'Mesas en el salón', qnPuestosLbl:'Puestos por mesa', qnPuntasLbl:'Cabeceras de una mesa unida',
     qnGruposLbl:'Grupos y familias', qnSinGrupos:'No hay grupos de 3 o más.', qnMesaPropia:'mesa propia',
@@ -12296,10 +12295,10 @@ function vjRenderHabModal(){
 }
 
 // ── Quincho (piloto 2026-09-30) ─────────────────────────────────────────────
-// Las mesas del quincho, de punta a punta en la página: se arman acá (PIN de
-// supervisor), se publican en /quincho/current, se consultan y se mueven en el
-// servicio, y de acá salen los carteles, el listado y el Excel. Es la tercera
-// vista de PGO y está SIEMPRE: sin un quincho vigente, ofrece armarlo.
+// Las mesas del quincho, de punta a punta en la página: se arman acá, se
+// publican en /quincho/current, se consultan y se mueven en el servicio, y
+// de acá salen los carteles, el listado y el Excel. Es la tercera vista de
+// PGO y está SIEMPRE: sin un quincho vigente, ofrece armarlo.
 //
 // Path:  /quincho/current — un doc por evento, sobrescrito por el siguiente.
 // Shape: { fecha:'YYYY-MM-DD', updatedAt, fuente, salon:{mesas,puestos,puntas},
@@ -12309,8 +12308,9 @@ function vjRenderHabModal(){
 //   al recalcular, lo movido a mano se respeta.
 // `asig` va por pid: el mismo ancla que las notas del equipo, así la mesa se
 // cruza con la ficha de Viajeros sin depender de la habitación.
-// Mover de mesa: cualquiera, sin PIN. Armar, recalcular y publicar: PIN de
-// supervisor (CHK_SUPERVISOR_PIN), una vez por sesión. Decisiones del owner.
+// Todo sin clave: armar, recalcular, publicar, borrar y mover de mesa. Hasta
+// el 2026-10-12 armar/recalcular/borrar pedían el PIN de supervisor; el owner
+// lo quitó (fricción). Borrar conserva su pantalla de confirmación.
 // El cálculo es el de scripts/quincho.py (que quedó de respaldo): afinidad por
 // exploraciones compartidas, más peso a lo reciente, raíz por unidad para
 // repartir parejo, idioma y edad sólo desempatan. Calibrado contra el reparto
@@ -12366,7 +12366,7 @@ function qnDoc(){ return (QN_ARMADO && QN_ARMADO.borrador) || QN_DATA; }
 function qnEsBorrador(){ return !!(QN_ARMADO && QN_ARMADO.borrador); }
 // ¿Se están mostrando mesas (y por lo tanto sirve el buscador)?
 function qnMostrandoMesas(){
-  if (QN_ARMADO && QN_ARMADO.paso !== 'pin') return qnEsBorrador();
+  if (QN_ARMADO) return qnEsBorrador();
   return qnActivo();
 }
 
@@ -12880,75 +12880,19 @@ function qnDocDe(fecha, personas, mesas, salon){
   return doc;
 }
 
-// ══ Armar, recalcular, publicar (PIN de supervisor) ═══════════════════════
+// ══ Armar, recalcular, publicar ═══════════════════════════════════════
 function qnCfgInicial(){
   const s = (QN_DATA && QN_DATA.salon) || {};
   return { fecha: vjTodayIso(), mesas: s.mesas || 12, puestos: s.puestos || 6, puntas: s.puntas != null ? s.puntas : 2, propias: [] };
 }
 function qnArmar(modo){
-  QN_ARMADO = { modo, paso: QN_SUPER ? 'form' : 'pin', pin: '', error: '', cfg: qnCfgInicial(), borrador: null, resumen: '' };
+  QN_ARMADO = { modo, paso: modo === 'borrar' ? 'borrar' : 'form', error: '', cfg: qnCfgInicial(), borrador: null, resumen: '' };
   QN_MESA = null; QN_MOVER = null;
   vjSetSearchValSilencioso('');
-  if (QN_SUPER && modo === 'recalcular') return qnRecalcular();
-  if (QN_SUPER && modo === 'borrar') QN_ARMADO.paso = 'borrar';
+  if (modo === 'recalcular') return qnRecalcular();
   viajerosRender();
 }
 function qnArmadoCerrar(){ QN_ARMADO = null; QN_MOVER = null; viajerosRender(); }
-function qnPinTecla(d){
-  const A = QN_ARMADO;
-  if (!A || A.pin.length >= 4 || A.error) return;
-  A.pin += d;
-  if (A.pin.length === 4){
-    if (A.pin === CHK_SUPERVISOR_PIN){
-      QN_SUPER = true;
-      A.pin = '';
-      A.paso = A.modo === 'borrar' ? 'borrar' : 'form';
-      if (A.modo === 'recalcular') return qnRecalcular();
-      viajerosRender();   // entero: con la clave aceptada cambia qué se muestra arriba
-      return;
-    }
-    A.error = t('qnPinMal');
-    qnPinSync();
-    setTimeout(() => { if (QN_ARMADO === A){ A.pin = ''; A.error = ''; qnPinSync(); } }, 800);
-    return;
-  }
-  qnPinSync();
-}
-function qnPinBorrar(){ if (QN_ARMADO && !QN_ARMADO.error){ QN_ARMADO.pin = QN_ARMADO.pin.slice(0, -1); qnPinSync(); } }
-function qnPinLimpiar(){ if (QN_ARMADO){ QN_ARMADO.pin = ''; QN_ARMADO.error = ''; qnPinSync(); } }
-// La clave se pide con el MISMO modal que el editor del Checklist (sus clases
-// chk-pin-*: grilla de 3, C · 0 · ⌫, puntos ámbar). Se monta en el body —un
-// ancestro con transform rompería el position:fixed— y se crea UNA vez, para
-// que la animación de entrada no se repita con cada tecla: después sólo se
-// actualizan los puntos y el error. Mismo patrón que chkSyncBodyOverlays.
-function qnPinSync(){
-  const A = QN_ARMADO;
-  let el = document.getElementById('qn-pin-body-overlay');
-  if (!(A && A.paso === 'pin')){ if (el) el.remove(); return; }
-  if (!el){
-    const sub = t({ recalcular: 'qnRecalcular', borrar: 'qnBorrar' }[A.modo] || 'qnArmar');
-    el = document.createElement('div');
-    el.id = 'qn-pin-body-overlay';
-    el.innerHTML = `<div class="chk-pin-overlay" onclick="qnArmadoCerrar()">
-      <div class="chk-pin-modal" onclick="event.stopPropagation()">
-        <button class="chk-pin-close" onclick="qnArmadoCerrar()" aria-label="${vjEsc(t('qnCancelar'))}">×</button>
-        <div class="chk-pin-title">${vjEsc(t('qnPinTit'))}</div>
-        <div class="chk-pin-sub">${vjEsc(sub)}</div>
-        <div class="chk-pin-display">${[0, 1, 2, 3].map(() => '<span class="chk-pin-dot"></span>').join('')}</div>
-        <div class="chk-pin-pad">
-          ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button class="chk-pin-key" onclick="qnPinTecla('${n}')">${n}</button>`).join('')}
-          <button class="chk-pin-key action" onclick="qnPinLimpiar()">C</button>
-          <button class="chk-pin-key" onclick="qnPinTecla('0')">0</button>
-          <button class="chk-pin-key action" onclick="qnPinBorrar()" aria-label="${vjEsc(t('vjDelete'))}">⌫</button>
-        </div>
-        <div class="chk-pin-error"></div>
-      </div>
-    </div>`;
-    document.body.appendChild(el);
-  }
-  el.querySelectorAll('.chk-pin-dot').forEach((d, i) => d.classList.toggle('filled', i < A.pin.length));
-  el.querySelector('.chk-pin-error').textContent = A.error || '';
-}
 function qnCfgSet(k, v){ if (QN_ARMADO){ QN_ARMADO.cfg[k] = v; QN_ARMADO.error = ''; vjRenderBody(); } }
 function qnCfgPaso(k, d){
   if (!QN_ARMADO) return;
@@ -13077,8 +13021,8 @@ async function qnPublicar(){
 }
 
 // Borrar el quincho publicado, antes de que la purga de los dos días lo haga
-// sola: un quincho de prueba, uno armado para la fecha equivocada. Clave de
-// supervisor + confirmación, porque se borra para todos y no se recupera.
+// sola: un quincho de prueba, uno armado para la fecha equivocada. Pide
+// confirmación, porque se borra para todos y no se recupera.
 async function qnBorrarPublicado(){
   const A = QN_ARMADO;
   if (!A) return;
@@ -13435,7 +13379,7 @@ function qnBotonesPapel(){
     <button type="button" class="cmd-btn" onclick="qnListado()">${t('qnListado')}</button>
     <button type="button" class="cmd-btn" onclick="qnExcel()">${t('qnExcel')}</button>`;
 }
-// ── Armado: formulario y borrador (la clave es un modal: qnPinSync) ──
+// ── Armado: formulario y borrador ──
 function qnRenderForm(){
   const A = QN_ARMADO, cfg = A.cfg;
   const grupos = qnGruposDeLaNoche(cfg);
@@ -13492,16 +13436,10 @@ function qnRenderBorradorHead(){
     </div>
   </div>`;
 }
-function qnRender(){
-  const html = qnRenderVista();
-  qnPinSync();
-  return html;
-}
+function qnRender(){ return qnRenderVista(); }
 function qnRenderVista(){
   qnPrecargarLogo();
   const A = QN_ARMADO;
-  // Pidiendo la clave: detrás del modal queda la vista tal como estaba.
-  if (A && A.paso === 'pin'){ QN_ARMADO = null; try { return qnRenderVista(); } finally { QN_ARMADO = A; } }
   if (A && A.paso === 'form') return qnRenderForm();
   if (A && A.paso === 'borrar') return qnRenderBorrar();
   if (A && A.paso === 'calc') return `<div class="vj-empty">${t('qnCalculando')}</div>`;
