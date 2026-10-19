@@ -4324,10 +4324,12 @@ const RC_LOCAL      = EST_LOCAL;              // localhost → /recepcion-local/
 const RC_CACHE      = 'ata-recepcion-v1';     // Cache API propio; sw.js no lo borra
 const RC_LS_PASOS   = 'ata.recepcion.pasos.'; // + id del procedimiento (personal)
 const RC_LS_ABIERTA = 'ata.recepcion.abierta';
-// Válvula de acceso. Oculta desde el 2026-10-10 a pedido del owner: se esconde
-// el ACCESO, no el módulo (mismo criterio que Rol). Revivir = true acá y quitar
-// el `hidden` de #tab-btn-recepcion.
-const RC_TAB_ON = false;
+// Válvula de acceso, por host (mismo criterio que tuvo el Checklist): visible en
+// staging y en local, oculta en producción. Se esconde el ACCESO, no el módulo.
+// Misma línea en main y staging: el comportamiento lo decide el dominio, así los
+// merges no divergen. Sesgo seguro: host no reconocido = oculta. Publicar en
+// producción = dejar esto en true (el arranque quita el `hidden` del botón).
+const RC_TAB_ON = EST_LOCAL || location.hostname === 'explora-gastro-cycles-q2o3.vercel.app';
 const RC_LS_DIMS    = 'ata.recepcion.dims';   // medidas de las capturas (reservar el hueco)
 const RC_TURNOS = ['PM', 'Llegadas', 'Viernes', 'Noche', 'Todo turno', 'Inicio, mitad y fin de mes'];
 let RC_IDX        = null;   // indice.json parseado (una vez por carga)
@@ -21152,6 +21154,7 @@ window.addEventListener('online', () => { if (currentTab === 'recepcion' && !RC_
 // PC de recepción: abre directo en la guía, sin tocar nada.
 // Con la tab oculta no se reabre, y se olvida la marca para que el aparato
 // arranque en el Menú como cualquier otro.
+if (RC_TAB_ON) document.getElementById('tab-btn-recepcion').hidden = false;
 try {
   if (!RC_TAB_ON) localStorage.removeItem(RC_LS_ABIERTA);
   else if (localStorage.getItem(RC_LS_ABIERTA) === '1') setTab('recepcion', document.getElementById('tab-btn-recepcion'));
