@@ -1892,6 +1892,12 @@ select.med-in { min-height:40px; }
    línea igual. El row-gap:4px ya estaba puesto de antes para exactamente esto.
    Sin colores nuevos: gris terciario en reposo, el gold de la paleta al girar. */
 .pgo-b-refresh { flex-basis:100%; justify-content:flex-end; flex-shrink:0; }
+/* Rush del desayuno (2026-10-28): renglón propio bajo los contadores, sólo en
+   el desayuno. Mismo lenguaje que la fila de arriba — rótulo gold como el del
+   servicio, horas apagadas, cifras en blanco. Sin colores nuevos. */
+.pgo-b-rush { flex-basis:100%; display:flex; align-items:baseline; gap:4px 8px; white-space:nowrap; }
+.pgo-b-rush-i { display:inline-flex; align-items:baseline; gap:5px; }
+.pgo-b-sep { font-size:10px; color:var(--text-tertiary); }
 /* Estado vacío: sin contadores que proteger, el aviso y el botón comparten la
    línea — el botón vuelve a flex-basis:auto y se va a la derecha con el auto. */
 .pgo-banner.is-vacio .pgo-b-refresh { flex-basis:auto; margin-left:auto; }
@@ -5274,6 +5280,8 @@ const UI = {
     // ícono: el garzón tiene que saber qué hace sin probarlo.
     pgoRefreshFail:'no se pudo actualizar',
     pgoNoData:'sin datos de PGO',
+    // Rush del desayuno: operativo, sólo en español (t() cae acá desde EN/PT).
+    pgoRush:'rush',
     pgoRefresh:'actualizar', pgoRefreshing:'actualizando', pgoRefreshNew:'versión nueva',
     pgoRefreshTitle:'Volver a pedir los datos de PGO, rol y clima',
     vjSearchPh:'Buscar viajero, hab o grupo...',
@@ -11107,6 +11115,47 @@ function pgoBannerCounts(){
            cumples: dentro.filter(tr => vjCumpleEn(tr) === 0).length,
            srv, enCurso: !!(act && act.enCurso) };
 }
+// ── Rush del desayuno (2026-10-28) ───────────────────────────────────────────
+// Cuántos pasan a desayunar en cada rango: los que tienen que estar FUERA del
+// hotel dentro de él, porque desayunan un rato antes de irse. La salida es la
+// más temprana entre la exploración AM (RDE) y el checkout de hoy (outAt, la
+// columna "CheckOut hotel" de Transporte). Por persona, así que el viajero de
+// travesía que sale a las 06:30 por las dos vías cuenta una sola vez.
+// Bordes (decisión del owner): la salida justo en el borde cuenta en el rango
+// ANTERIOR — el que sale a las 7:30 desayuna antes de las 7:30.
+// "HOTEL AM" no es una salida: se cuenta aparte, como tal.
+const PGO_RUSH = [['06:30','07:30'], ['07:30','08:30'], ['08:30','09:30']];
+function pgoEsHotelAm(n){ return /^\s*hotel\s+am\s*$/i.test(n || ''); }
+function pgoRushCounts(){
+  const dia = vjDiaOperativo();
+  const n = PGO_RUSH.map(() => 0);
+  let hotel = 0, hayRde = false;
+  vjAll().forEach(tr => {
+    const r = tr.rde;
+    if (r) hayRde = true;
+    const horas = [];
+    if (r && r.h && !pgoEsHotelAm(r.n)) horas.push(r.h);
+    if (tr.outAt && tr.outAt.length > 10 && tr.outAt.slice(0,10) === dia) horas.push(tr.outAt.slice(11,16));
+    const h = horas.sort()[0];
+    const i = h ? PGO_RUSH.findIndex(([a, b], j) => (j === 0 ? h >= a : h > a) && h <= b) : -1;
+    if (i >= 0) n[i]++;
+    // Se queda en la mañana, salvo que ya se haya ido antes del primer rango.
+    else if (r && pgoEsHotelAm(r.n) && !(h && h < PGO_RUSH[0][0])) hotel++;
+  });
+  // Sin RDE en el doc (el sync no lo pudo leer) no hay rush que mostrar: un
+  // "0 · 0 · 0" se leería como una mañana tranquila.
+  return hayRde ? { n, hotel } : null;
+}
+function pgoRushHtml(){
+  const r = pgoRushCounts();
+  if (!r) return '';
+  const sep = '<span class="pgo-b-sep">·</span>';
+  return `<div class="pgo-b-rush"><span class="pgo-b-srv">${t('pgoRush')}</span>` +
+    PGO_RUSH.map(([a], i) =>
+      `<span class="pgo-b-rush-i"><span class="pgo-b-label">${a.replace(/^0/, '')}</span><span class="pgo-b-num">${r.n[i]}</span></span>`
+    ).join(sep) + sep +
+    `<span class="pgo-b-rush-i"><span class="pgo-b-label">HOTEL AM</span><span class="pgo-b-num">${r.hotel}</span></span></div>`;
+}
 // El botón, aparte del render principal: lo dibujan los DOS estados del banner.
 function pgoRefreshBtn(){
   const etiqueta = PGO_SW_NUEVA    ? t('pgoRefreshNew')
@@ -11150,6 +11199,7 @@ function pgoBannerRender(){
       <span class="pgo-b-num ninos">${c.menores}</span><span class="pgo-b-label">${t('vjStatNinos')}</span></button>
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('dietas')">
       <span class="pgo-b-num dietas">${c.dietas}</span><span class="pgo-b-label">${t('vjStatRestric')}</span></button>
+    ${c.srv && c.srv.key === 'desayuno' ? pgoRushHtml() : ''}
     ${pgoRefreshBtn()}
 `;
   // El cumpleaños va en su PROPIA línea, centrada y sobre las estadísticas: no

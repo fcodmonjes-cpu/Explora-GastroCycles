@@ -762,7 +762,8 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
 ├── viajeros/                      ← dietas y restricciones por habitación
 │   └── current → { date, updatedAt, source,
 │                   habs: { "01": [ { id, nombre, edad, nac, grupo,
-│                                     in, out, tags[], obs, foto? } ] } }
+│                                     in, out, tags[], obs, foto?,
+│                                     rde? { h, n } } ] } }   ← rush desayuno
 │       (un solo doc sobrescrito por cada sync; lo escribe
 │        scripts/sync_viajeros.py --from-pgo, automático cada día 10:00 UTC
 │        (06:00 en Chile) vía .github/workflows/sync-viajeros.yml. El seed
@@ -842,6 +843,20 @@ de **Dietas lista el movimiento del día**, no a todos los in-house — el
 a una dieta conocida, para no ensuciar el campo visible), pero al 2026-07-30
 venía vacío. **Pendiente de QA:** contrastar a mano si faltan dietas de
 huéspedes que llegaron días antes.
+
+**Rush del desayuno (2026-10-28).** El sync también lee el **RDE** (`/RDE`,
+Reporte diario de exploración). De ahí saca la hora de salida de la exploración
+AM de cada viajero y la guarda como `rde: { h:'08:00', n:'OL Quebradas' }`. Es
+el único reporte que da la hora **por viajero**: la columna `exp` del Geos trae
+el turno, no la hora. El RDE trae sólo el primer nombre, así que el cruce es por
+habitación + comienzo del nombre (`rde_de`). Las filas que no cruzan se avisan en
+el log. La app (`pgoRushCounts`) cuenta, durante el desayuno, cuántos tienen que
+estar fuera del hotel en 6:30–7:30, 7:30–8:30 y 8:30–9:30. La salida de cada
+viajero es la más temprana entre el RDE y el checkout de hoy (`outAt`), contando
+**por persona**: el de travesía que sale a las 06:30 por las dos vías cuenta una
+sola vez. La salida justo en el borde va al rango **anterior** (decisión del
+owner: desayunan antes de irse). "HOTEL AM" se cuenta aparte. Sin `rde` en el
+doc no se dibuja nada: un 0 · 0 · 0 se leería como una mañana tranquila.
 
 **Para depurar sin adivinar:** el script imprime un *mapa de estructura* de la
 página (tablas, encabezados, contenedores repetidos, clases) cuando no
