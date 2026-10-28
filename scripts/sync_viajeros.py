@@ -927,7 +927,7 @@ def _pgo_structure_report(page):
               f"clase='{r['cls']}' 1er_hijo='{r['muestra']}'")
 
 
-def _pgo_extraer_tabla(page):
+def _pgo_extraer_tabla(page, dup=False):
     """La grilla que se esté mostrando → [{encabezado_normalizado: valor}].
 
     Es la segunda mitad de _pgo_read_report, separada para poder releer la
@@ -942,10 +942,22 @@ def _pgo_extraer_tabla(page):
         page.wait_for_timeout(1000)
     if not data or not data.get("rows"):
         return []
-    headers = [norm_key(h) for h in data["headers"]]
+    headers = _pgo_headers(data["headers"], dup)
     return [{headers[i]: fix_mojibake(cells[i])
              for i in range(min(len(headers), len(cells)))}
             for cells in data["rows"]]
+
+
+def _pgo_headers(crudos, dup=False):
+    """Encabezados normalizados; con `dup`, los repetidos van numerados."""
+    headers = [norm_key(h) for h in crudos]
+    if dup:
+        vistos = {}
+        for i, h in enumerate(headers):
+            vistos[h] = vistos.get(h, 0) + 1
+            if vistos[h] > 1:
+                headers[i] = f"{h} {vistos[h]}"
+    return headers
 
 
 def _pgo_read_report(page, path, fecha, dump_name=None, kind=None, date_iso=None,
@@ -985,13 +997,7 @@ def _pgo_read_report(page, path, fecha, dump_name=None, kind=None, date_iso=None
             "  Arriba va un mapa de la estructura de la página para ajustar el"
             " extractor (o fijá PGO_TABLE_SEL con el selector correcto)."
         )
-    headers = [norm_key(h) for h in data["headers"]]
-    if dup:
-        vistos = {}
-        for i, h in enumerate(headers):
-            vistos[h] = vistos.get(h, 0) + 1
-            if vistos[h] > 1:
-                headers[i] = f"{h} {vistos[h]}"
+    headers = _pgo_headers(data["headers"], dup)
     out = []
     for cells in data["rows"]:
         # fix_mojibake acá y no más abajo: es el ÚNICO punto por el que pasan
@@ -2723,7 +2729,13 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         try:
             filas_rde = _pgo_read_report(page, PGO_RDE_PATH, fecha,
                                          "rde" if dump else None, dup=True)
-            if not getattr(_pgo_read_report, "ultima_fecha_ok", True):
+            fecha_rde_ok = getattr(_pgo_read_report, "ultima_fecha_ok", True)
+            filas_rde = _pgo_rde_esperar(page, filas_rde)
+            if not any(_RX_HORA.search(str(r.get("am") or "")) for r in filas_rde):
+                filas_rde = _pgo_rde_switch(page, fecha_iso, filas_rde)
+            if dump:
+                _pgo_dump(page, "rde-final")
+            if not fecha_rde_ok:
                 # Mismo criterio que el comedor: las horas de otro día se verían
                 # perfectamente normales en el banner.
                 print("[sync-viajeros] RDE DESCARTADO: no se pudo confirmar la fecha.")
@@ -3039,6 +3051,65 @@ def parse_rde(rows):
     hotel = sum(1 for l in out.values() for _, d in l if es_hotel_am(d.get("n")))
     print(f"[sync-viajeros] RDE: {len(rows or [])} filas · {n} con hora AM · {hotel} HOTEL AM")
     return out
+
+
+def _pgo_rde_esperar(page, filas, tope_s=30, quieto_s=4):
+    """Relee el RDE hasta que la tabla deja de cambiar.
+
+    El 2026-10-28 el sync (y AUTOPRINT) leyeron 10 filas sin ninguna hora,
+    mientras la misma página abierta a mano mostraba 85 con hora. Los lectores
+    cortan apenas aparece la primera fila, y la sospecha es que el RDE arma la
+    tabla en etapas. Acá se espera a que quede QUIETA `quieto_s` segundos
+    (hasta `tope_s`), y se deja en el log cómo evolucionó.
+    """
+    def firma(fs):
+        return (len(fs), sum(1 for r in fs if _RX_HORA.search(str(r.get("am") or ""))))
+    ultima, quieto, evol = firma(filas), 0, [firma(filas)]
+    for _ in range(tope_s):
+        page.wait_for_timeout(1000)
+        nuevas = _pgo_extraer_tabla(page, dup=True) or filas
+        f = firma(nuevas)
+        if f != ultima:
+            ultima, quieto, filas = f, 0, nuevas
+            evol.append(f)
+        else:
+            filas = nuevas
+            quieto += 1
+            if quieto >= quieto_s and f[1]:
+                break
+    print("[sync-viajeros] RDE (filas, con hora): " + " → ".join(f"{n}/{h}" for n, h in evol))
+    return filas
+
+
+def _pgo_rde_switch(page, fecha_iso, filas):
+    """Plan B: el RDE tiene un interruptor junto a la fecha (`.switch-date`).
+
+    Si esperar no trajo ninguna hora, se prueba con el interruptor + Refrescar.
+    El resultado sólo se acepta si el título sigue diciendo la fecha pedida
+    ("Reporte diario de exploración (2026-10-28)"): un interruptor que cambie
+    el día daría horas de otro día con aspecto perfectamente normal.
+    """
+    try:
+        sw = page.query_selector(".switch-date")
+        if not sw:
+            print("[sync-viajeros] RDE: sin interruptor de fecha que probar.")
+            return filas
+        antes = sw.get_attribute("class") or ""
+        sw.click()
+        page.wait_for_timeout(800)
+        _pgo_click_text(page, "refrescar")
+        page.wait_for_load_state("networkidle", timeout=60000)
+        nuevas = _pgo_rde_esperar(page, _pgo_extraer_tabla(page, dup=True) or [])
+        titulo = page.evaluate(
+            "() => (document.querySelector('.page-title') || {}).innerText || ''")
+        print(f"[sync-viajeros] RDE plan B: interruptor {'is-checked' in antes}→"
+              f"{'is-checked' in (sw.get_attribute('class') or '')} · título «{titulo.strip()}»")
+        if fecha_iso and fecha_iso in titulo and nuevas:
+            return nuevas
+        print("[sync-viajeros] RDE plan B descartado (título sin la fecha pedida o sin filas).")
+    except Exception as e:
+        print(f"[sync-viajeros] RDE plan B falló ({type(e).__name__}: {e})")
+    return filas
 
 
 def es_hotel_am(exp):
