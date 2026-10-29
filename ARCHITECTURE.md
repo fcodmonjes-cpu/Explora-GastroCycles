@@ -987,6 +987,12 @@ cualquier listado ordenado por hora. **Cambiar de API a HTML no habría movido
 esa aguja**: las dos vías hacen el mismo login con la misma frecuencia, y el
 HTML es más ruidoso (cuatro navegaciones contra una llamada). Lo que la mueve
 es la frecuencia, el horario, y avisarle a quien administra PGO.
+**2026-10-29: el owner levantó esa restricción.** El cron pasó a cada hora todo
+el día (`:13`) más cada media hora entre las 18 y las 24 de Chile (`:43`). El
+motivo: GitHub entregaba sólo 4-5 de las 9 corridas diarias, con atrasos de
+hasta 4 h, y el rush nocturno (§4.1) necesita una corrida de tarde-noche antes
+de las 22:00. La app nunca muestra datos de otro día: si la corrida no llegó,
+no dibuja el rush.
 La introspección (`__schema`) es la llamada más delatora —ningún frontend la
 hace— y por eso vive sólo en `--explore`, nunca en el sync productivo.
 
