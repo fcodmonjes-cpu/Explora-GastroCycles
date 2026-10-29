@@ -40,8 +40,19 @@ on:
     # DOS casos: 09-23 UTC + 01 UTC ≈ 05:00-21:00 en invierno y 06:00-22:00 en
     # verano. La corrida de la 01 UTC es la que agarra el cierre de la cena.
     # Total: 9 corridas diarias en vez de 48.
-    - cron: "0 9-23/2 * * *"
-    - cron: "0 1 * * *"
+    #
+    # 2026-10-29: CADA HORA, TODO EL DÍA, y cada media hora en la noche. El
+    # owner levantó la preocupación por la huella ("ya no es una preocupación
+    # para mí"). Y el historial mostró que GitHub NO cumple el cron a la hora en
+    # punto: de 9 corridas programadas llegaban 4-5 por día, con atrasos de
+    # hasta 4 h (la de la 01 UTC corría a las 05:40). Con tan pocas corridas, el
+    # rush que la app muestra desde las 22:00 (RDE de mañana, que el script lee
+    # desde las 18 h de Chile) podía no llegar a tiempo.
+    # Dos remedios: minutos raros (:13 / :43), porque GitHub descarta más en
+    # el pico de las :00, y más intentos, para que alguno pase.
+    # La segunda línea cubre 18:00-24:00 de Chile en los DOS husos (21-03 UTC).
+    - cron: "13 * * * *"
+    - cron: "43 0-3,21-23 * * *"
   workflow_dispatch:
     inputs:
       date:
