@@ -1895,8 +1895,8 @@ select.med-in { min-height:40px; }
 /* Rush del desayuno (2026-10-28): renglón propio bajo los contadores, sólo en
    el desayuno. Mismo lenguaje que la fila de arriba — rótulo gold como el del
    servicio, horas apagadas, cifras en blanco. Sin colores nuevos. */
-.pgo-b-rush { flex-basis:100%; display:flex; align-items:baseline; gap:4px 8px; white-space:nowrap; }
-.pgo-b-rush-i { display:inline-flex; align-items:baseline; gap:5px; }
+.pgo-b-rush { flex-basis:100%; display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 5px; white-space:nowrap; }
+.pgo-b-rush-i { display:inline-flex; align-items:baseline; gap:4px; }
 .pgo-b-sep { font-size:10px; color:var(--text-tertiary); }
 /* Estado vacío: sin contadores que proteger, el aviso y el botón comparten la
    línea — el botón vuelve a flex-basis:auto y se va a la derecha con el auto. */
@@ -11124,18 +11124,37 @@ function pgoBannerCounts(){
 // Bordes (decisión del owner): la salida justo en el borde cuenta en el rango
 // ANTERIOR — el que sale a las 7:30 desayuna antes de las 7:30.
 // "HOTEL AM" no es una salida: se cuenta aparte, como tal.
+// Visible desde las 22:00 del día anterior hasta el fin del desayuno, con la
+// fecha a la que corresponde ("RUSH 29/10") — decisión del owner, 2026-10-29.
+// De noche el doc todavía es de hoy: el rush de mañana viaja en rdeM/outAtM
+// (las corridas de tarde-noche del sync) y se elige por la fecha `manana`.
 const PGO_RUSH = [['06:30','07:30'], ['07:30','08:30'], ['08:30','09:30']];
+const PGO_RUSH_DESDE = '22:00';
 function pgoEsHotelAm(n){ return /^\s*hotel\s+am\s*$/i.test(n || ''); }
+// ¿De qué día es el rush que toca mostrar ahora, y con qué campos? null = nada.
+function pgoRushDia(){
+  if (!VIAJEROS_DATA) return null;
+  const d = new Date();
+  const hhmm = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  const fin = (VJ_SERVICIOS.find(s => s.key === 'desayuno') || {}).to || '09:30';
+  const dia = hhmm >= PGO_RUSH_DESDE ? vjTomorrowIso() : hhmm <= fin ? vjTodayIso() : null;
+  if (!dia) return null;
+  if (dia === VIAJEROS_DATA.date)   return { dia, rde:'rde',  out:'outAt'  };
+  if (dia === VIAJEROS_DATA.manana) return { dia, rde:'rdeM', out:'outAtM' };
+  return null;
+}
 function pgoRushCounts(){
-  const dia = vjDiaOperativo();
+  const cual = pgoRushDia();
+  if (!cual) return null;
+  const dia = cual.dia;
   const n = PGO_RUSH.map(() => 0);
   let hotel = 0, hayRde = false;
   vjAll().forEach(tr => {
-    const r = tr.rde;
+    const r = tr[cual.rde], out = tr[cual.out];
     if (r) hayRde = true;
     const horas = [];
     if (r && r.h && !pgoEsHotelAm(r.n)) horas.push(r.h);
-    if (tr.outAt && tr.outAt.length > 10 && tr.outAt.slice(0,10) === dia) horas.push(tr.outAt.slice(11,16));
+    if (out && out.length > 10 && out.slice(0,10) === dia) horas.push(out.slice(11,16));
     const h = horas.sort()[0];
     const i = h ? PGO_RUSH.findIndex(([a, b], j) => (j === 0 ? h >= a : h > a) && h <= b) : -1;
     if (i >= 0) n[i]++;
@@ -11144,18 +11163,28 @@ function pgoRushCounts(){
   });
   // Sin RDE en el doc (el sync no lo pudo leer) no hay rush que mostrar: un
   // "0 · 0 · 0" se leería como una mañana tranquila.
-  return hayRde ? { n, hotel } : null;
+  return hayRde ? { n, hotel, dia } : null;
 }
 function pgoRushHtml(){
   const r = pgoRushCounts();
   if (!r) return '';
   const sep = '<span class="pgo-b-sep">·</span>';
-  return `<div class="pgo-b-rush"><span class="pgo-b-srv">${t('pgoRush')}</span>` +
+  return `<div class="pgo-b-rush"><span class="pgo-b-srv">${t('pgoRush')} ${r.dia.slice(8,10)}/${r.dia.slice(5,7)}</span>` +
     PGO_RUSH.map(([a], i) =>
       `<span class="pgo-b-rush-i"><span class="pgo-b-label">${a.replace(/^0/, '')}</span><span class="pgo-b-num">${r.n[i]}</span></span>`
     ).join(sep) + sep +
     `<span class="pgo-b-rush-i"><span class="pgo-b-label">HOTEL AM</span><span class="pgo-b-num">${r.hotel}</span></span></div>`;
 }
+// El banner no tiene tick propio: con la app abierta a las 22:00 (o al cerrar
+// el desayuno) se repinta sólo cuando cambia QUÉ rush corresponde, no cada
+// minuto — nada se mueve bajo el dedo sin motivo.
+let PGO_RUSH_CLAVE = null;
+setInterval(() => {
+  const c = pgoRushDia();
+  const k = c ? c.dia + c.rde : '';
+  if (PGO_RUSH_CLAVE !== null && k !== PGO_RUSH_CLAVE) pgoBannerRender();
+  PGO_RUSH_CLAVE = k;
+}, 60000);
 // El botón, aparte del render principal: lo dibujan los DOS estados del banner.
 function pgoRefreshBtn(){
   const etiqueta = PGO_SW_NUEVA    ? t('pgoRefreshNew')
@@ -11199,7 +11228,7 @@ function pgoBannerRender(){
       <span class="pgo-b-num ninos">${c.menores}</span><span class="pgo-b-label">${t('vjStatNinos')}</span></button>
     <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('dietas')">
       <span class="pgo-b-num dietas">${c.dietas}</span><span class="pgo-b-label">${t('vjStatRestric')}</span></button>
-    ${c.srv && c.srv.key === 'desayuno' ? pgoRushHtml() : ''}
+    ${pgoRushHtml()}
     ${pgoRefreshBtn()}
 `;
   // El cumpleaños va en su PROPIA línea, centrada y sobre las estadísticas: no

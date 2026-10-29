@@ -763,7 +763,8 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
 │   └── current → { date, updatedAt, source,
 │                   habs: { "01": [ { id, nombre, edad, nac, grupo,
 │                                     in, out, tags[], obs, foto?,
-│                                     rde? { h, n } } ] } }   ← rush desayuno
+│                                     rde? { h, n }, rdeM?, outAtM? } ] },  ← rush desayuno
+│                    manana? "YYYY-MM-DD" }                ← día de rdeM/outAtM
 │       (un solo doc sobrescrito por cada sync; lo escribe
 │        scripts/sync_viajeros.py --from-pgo, automático cada día 10:00 UTC
 │        (06:00 en Chile) vía .github/workflows/sync-viajeros.yml. El seed
@@ -857,6 +858,17 @@ viajero es la más temprana entre el RDE y el checkout de hoy (`outAt`), contand
 sola vez. La salida justo en el borde va al rango **anterior** (decisión del
 owner: desayunan antes de irse). "HOTEL AM" se cuenta aparte. Sin `rde` en el
 doc no se dibuja nada: un 0 · 0 · 0 se leería como una mañana tranquila.
+
+**Rush de la noche anterior (2026-10-29).** El rush se ve desde las **22:00 del
+día anterior** hasta el fin del desayuno, con su fecha ("RUSH 29/10"). A esa
+hora el doc todavía es de hoy, así que las corridas habituales de tarde-noche
+(hora de Chile ≥ 18, `RDE_MANANA_DESDE`) leen además el RDE de **mañana** y el
+`reportInOut` de mañana. Eso queda en `rdeM` / `outAtM` por viajero, más
+`manana: "YYYY-MM-DD"` en el doc. `pgoRushDia()` elige según el reloj del
+aparato: a las 22:00 o después toca el día siguiente, y hasta las 09:30 el de
+hoy. Ese día se compara con `date` (usa `rde`/`outAt`) o con `manana` (usa
+`rdeM`/`outAtM`). No se agregó ninguna corrida: el rush nocturno se refresca
+con las de 20 y 22 h, y desde las 6 h la corrida del día pasa a `rde`.
 
 **Para depurar sin adivinar:** el script imprime un *mapa de estructura* de la
 página (tablas, encabezados, contenedores repetidos, clases) cuando no

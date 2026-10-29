@@ -23,6 +23,7 @@ Escribe UN solo doc (sobrescrito por cada sync, como staffing):
 
   viajeros/current = {
     date: "YYYY-MM-DD",            ← fecha del reporte
+    manana: "YYYY-MM-DD"?,         ← día de rdeM/outAtM (sólo corridas de tarde-noche)
     updatedAt: <ms epoch>,
     source: "seed" | "excel",
     habs: { "01": [ { id, pid, nombre, edad, nac, nacName?, grupo,
@@ -30,6 +31,7 @@ Escribe UN solo doc (sobrescrito por cada sync, como staffing):
                       historia: [ {n, t, d} ]?,       ← lo que ya hizo (turno + DD-MM)
                       historiaTxt: "…"?,              ← crudo, si no se pudo parsear
                       rde: { h: "08:00", n }?,        ← salida AM del RDE (rush desayuno)
+                      rdeM: { h, n }?, outAtM?,      ← lo mismo para `manana` (rush desde las 22:00)
                       in: "YYYY-MM-DD", out: "YYYY-MM-DD",
                       tags: ["alergia-mariscos", ...],   ← taxonomía canónica
                       obs: "texto original del reporte",
@@ -368,9 +370,10 @@ def pid_de(nombre):
 
 
 def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None, cumples=None,
-              nacnames=None, expl=None, rde=None):
+              nacnames=None, expl=None, rde=None, manana=None):
     habs = {}
     rde_ok = set()
+    man = manana or {}
     # Homónimos simultáneos comparten notas. En un lodge de 90 personas es casi
     # imposible, pero "casi" no alcanza si alguien escribe una restricción: se
     # avisa para que se resuelva a mano en vez de fallar en silencio.
@@ -448,15 +451,28 @@ def build_doc(rows, date_str, source, horas=None, totales=None, comedor=None, cu
         if r:
             traveler["rde"] = r
             rde_ok.add(id(r))
+        # Lo mismo para MAÑANA (rush desde las 22:00): rdeM + la hora del
+        # checkout de mañana, sólo para quien efectivamente sale ese día.
+        r = rde_de(man.get("rde"), hab, nombre)
+        if r:
+            traveler["rdeM"] = r
+            rde_ok.add(id(r))
+        hm = (man.get("horas") or {}).get(hab) or {}
+        if out_d and out_d == man.get("date") and hm.get("outAt"):
+            traveler["outAtM"] = hm["outAt"]
         habs.setdefault(hab, []).append(traveler)
-    if rde:
-        sueltas = [(h, d) for h, l in rde.items() for _, d in l if id(d) not in rde_ok]
+    for dia, filas in ((date_str, rde), (man.get("date"), man.get("rde"))):
+        sueltas = [(h, d) for h, l in (filas or {}).items() for _, d in l if id(d) not in rde_ok]
         if sueltas:
             # Una fila sin dueño es un viajero que no entra al rush: se avisa
             # en vez de perderlo en silencio.
-            print(f"[sync-viajeros] ⚠ RDE: {len(sueltas)} filas sin cruzar con el roster: "
+            print(f"[sync-viajeros] ⚠ RDE {dia}: {len(sueltas)} filas sin cruzar con el roster: "
                   + ", ".join(f"hab {h} {d['h']}" for h, d in sueltas[:10]))
     doc_extra = {}
+    if man.get("rde"):
+        # Fecha a la que corresponden rdeM/outAtM. La app la compara con la
+        # suya; no la deduce de `date` + 1.
+        doc_extra["manana"] = man["date"]
     if comedor and comedor.get("grupos"):
         doc_extra["comedor"] = comedor
     if totales:
@@ -2725,26 +2741,24 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
             print(f"[sync-viajeros] Aviso: sin reporte de cumpleaños ({type(e).__name__}: {e})")
             cumples = {}
         # RDE: hora de salida de la exploración AM, para el rush del desayuno.
-        # Que falle no debe tumbar el sync: la app simplemente no dibuja el rush.
-        try:
-            filas_rde = _pgo_read_report(page, PGO_RDE_PATH, fecha,
-                                         "rde" if dump else None, dup=True)
-            fecha_rde_ok = getattr(_pgo_read_report, "ultima_fecha_ok", True)
-            filas_rde = _pgo_rde_esperar(page, filas_rde)
-            if not any(_RX_HORA.search(str(r.get("am") or "")) for r in filas_rde):
-                filas_rde = _pgo_rde_switch(page, fecha_iso, filas_rde)
-            if dump:
-                _pgo_dump(page, "rde-final")
-            if not fecha_rde_ok:
-                # Mismo criterio que el comedor: las horas de otro día se verían
-                # perfectamente normales en el banner.
-                print("[sync-viajeros] RDE DESCARTADO: no se pudo confirmar la fecha.")
-                rde = {}
-            else:
-                rde = parse_rde(filas_rde)
-        except Exception as e:
-            print(f"[sync-viajeros] Aviso: sin RDE ({type(e).__name__}: {e})")
-            rde = {}
+        rde = _pgo_rde_leer(page, fecha, fecha_iso, "rde" if dump else None)
+        # Y el de MAÑANA, en las corridas de la tarde-noche: la app muestra el
+        # rush del día siguiente desde las 22:00 (decisión del owner,
+        # 2026-10-29), cuando el doc todavía es de hoy. Va con el checkout de
+        # mañana, que el reportInOut de hoy no trae.
+        manana = None
+        dia = datetime.date.fromisoformat(fecha_iso or datetime.date.today().isoformat())
+        if _leer_rde_manana(dia):
+            m = dia + datetime.timedelta(days=1)
+            rde_m = _pgo_rde_leer(page, m.strftime(PGO_DATE_FMT), m.isoformat(),
+                                  "rde-manana" if dump else None)
+            if rde_m:
+                try:
+                    horas_m, _ = pgo_fetch_inout(page, m.isoformat())
+                except Exception as e:
+                    print(f"[sync-viajeros] Aviso: sin checkout de mañana ({type(e).__name__}: {e})")
+                    horas_m = {}
+                manana = {"date": m.isoformat(), "rde": rde_m, "horas": horas_m}
         browser.close()
 
     if trace_net and api_calls:
@@ -2752,7 +2766,7 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         for c in dict.fromkeys(api_calls):
             print("   ", c)
     return (geos, dietas, (fecha_iso or datetime.date.today().isoformat()),
-            horas, totales, comedor, cumples, roster_api, nacnames, rde)
+            horas, totales, comedor, cumples, roster_api, nacnames, rde, manana)
 
 
 # Mapeo encabezado de PGO (ya normalizado) → campo interno. Varios alias por si
@@ -3030,7 +3044,7 @@ def _hab_rde(v):
     return d.zfill(2) if d else s
 
 
-def parse_rde(rows):
+def parse_rde(rows, fecha_iso=None):
     """Filas del RDE → {hab: [(nombre_normalizado, {'h':'08:00', 'n':'HOTEL AM'})]}.
 
     Sólo entran las filas con hora AM. Las sin hora ("-") no salen en la mañana
@@ -3049,7 +3063,7 @@ def parse_rde(rows):
         out.setdefault(_hab_rde(r.get("hab")), []).append((norm_key(nombre), datos))
         n += 1
     hotel = sum(1 for l in out.values() for _, d in l if es_hotel_am(d.get("n")))
-    print(f"[sync-viajeros] RDE: {len(rows or [])} filas · {n} con hora AM · {hotel} HOTEL AM")
+    print(f"[sync-viajeros] RDE{' ' + fecha_iso if fecha_iso else ''}: {len(rows or [])} filas · {n} con hora AM · {hotel} HOTEL AM")
     return out
 
 
@@ -3110,6 +3124,47 @@ def _pgo_rde_switch(page, fecha_iso, filas):
     except Exception as e:
         print(f"[sync-viajeros] RDE plan B falló ({type(e).__name__}: {e})")
     return filas
+
+
+def _pgo_rde_leer(page, fecha, fecha_iso, dump_name=None):
+    """RDE de una fecha → parse_rde(…), o {} si no se pudo leer o confirmar.
+
+    Que falle no debe tumbar el sync: la app simplemente no dibuja el rush.
+    """
+    try:
+        filas = _pgo_read_report(page, PGO_RDE_PATH, fecha, dump_name, dup=True)
+        fecha_ok = getattr(_pgo_read_report, "ultima_fecha_ok", True)
+        filas = _pgo_rde_esperar(page, filas)
+        if not any(_RX_HORA.search(str(r.get("am") or "")) for r in filas):
+            filas = _pgo_rde_switch(page, fecha_iso, filas)
+        if dump_name:
+            _pgo_dump(page, dump_name + "-final")
+        if not fecha_ok:
+            # Mismo criterio que el comedor: las horas de otro día se verían
+            # perfectamente normales en el banner.
+            print(f"[sync-viajeros] RDE {fecha_iso} DESCARTADO: no se pudo confirmar la fecha.")
+            return {}
+        return parse_rde(filas, fecha_iso)
+    except Exception as e:
+        print(f"[sync-viajeros] Aviso: sin RDE {fecha_iso} ({type(e).__name__}: {e})")
+        return {}
+
+
+# Desde qué hora de Chile se lee también el RDE de mañana. Cubre las corridas
+# de 18, 20 y 22 (verano) o 19 y 21 (invierno) — las habituales, sin agregar
+# ninguna: el rush nocturno se refresca con cada una.
+RDE_MANANA_DESDE = 18
+
+
+def _leer_rde_manana(dia):
+    """¿Corresponde leer el RDE de dia+1? De tarde-noche, o si se está
+    corriendo un día que en Chile ya pasó (a mano, de madrugada)."""
+    try:
+        from zoneinfo import ZoneInfo
+        ahora = datetime.datetime.now(ZoneInfo("America/Santiago"))
+    except Exception:
+        ahora = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3)))
+    return ahora.hour >= RDE_MANANA_DESDE or ahora.date() > dia
 
 
 def es_hotel_am(exp):
@@ -3380,7 +3435,7 @@ def main():
         date_str = _arg_value("--date")   # None = usar el día que PGO ya muestra
         print("[sync-viajeros] PGO — login y lectura de reportes "
               f"({date_str or 'fecha por defecto de PGO'})...")
-        geos, dietas, date_str, horas, totales, comedor, cumples, roster_api, nacnames, rde = pgo_fetch(
+        geos, dietas, date_str, horas, totales, comedor, cumples, roster_api, nacnames, rde, manana = pgo_fetch(
             date_str,
             dump="--dump-html" in sys.argv,
             trace_net="--trace-net" in sys.argv)
@@ -3404,7 +3459,7 @@ def main():
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
         expl = exploraciones_por_nombre(geos)
         doc = build_doc(rows, date_str, "pgo", horas, totales, comedor, cumples, nacnames, expl,
-                        rde)
+                        rde, manana)
     else:
         doc = build_doc(SEED_ROWS, REPORT_DATE, "seed")
 
