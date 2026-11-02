@@ -957,6 +957,13 @@ hoy. Ese día se compara con `date` (usa `rde`/`outAt`) o con `manana` (usa
 `rdeM`/`outAtM`). No se agregó ninguna corrida: el rush nocturno se refresca
 con las de 20 y 22 h, y desde las 6 h la corrida del día pasa a `rde`.
 
+**Logo RUSH (2026-11-01).** El rótulo del renglón ya no es la palabra "rush" en
+10px: es un logo SVG inline (RUSH en itálica con dos rayos, 36px de alto) en
+rojo `#E5202A` sin fondo, el único color fuera de la paleta — lo eligió el owner
+(chiste reconocible). La fecha sigue al lado en el gold de siempre. El texto
+usa `textLength` para medir igual con Helvetica Neue (iOS) que con Arial, y la
+fila pasó a `align-items:center` porque un SVG no tiene línea base.
+
 **Para depurar sin adivinar:** el script imprime un *mapa de estructura* de la
 página (tablas, encabezados, contenedores repetidos, clases) cuando no
 encuentra la grilla — sólo metadatos, nunca datos de huéspedes. Los inputs

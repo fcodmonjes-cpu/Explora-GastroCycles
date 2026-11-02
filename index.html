@@ -1894,8 +1894,13 @@ select.med-in { min-height:40px; }
 .pgo-b-refresh { flex-basis:100%; justify-content:flex-end; flex-shrink:0; }
 /* Rush del desayuno (2026-10-28): renglón propio bajo los contadores, sólo en
    el desayuno. Mismo lenguaje que la fila de arriba — rótulo gold como el del
-   servicio, horas apagadas, cifras en blanco. Sin colores nuevos. */
-.pgo-b-rush { flex-basis:100%; display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 5px; white-space:nowrap; }
+   servicio, horas apagadas, cifras en blanco. Sin colores nuevos.
+   (2026-11-01) El rótulo "rush" pasó a ser el logo RUSH con rayos (el chiste
+   del owner), en rojo sin fondo y a 36px — único color fuera de la paleta,
+   aprobado por el owner en la variante B. align-items:center en vez de
+   baseline: un SVG no tiene línea base y se colgaría del borde inferior. */
+.pgo-b-rush { flex-basis:100%; display:flex; flex-wrap:wrap; align-items:center; gap:4px 5px; white-space:nowrap; }
+.pgo-b-rush-logo { height:36px; width:33px; flex:none; fill:#E5202A; }
 .pgo-b-rush-i { display:inline-flex; align-items:baseline; gap:4px; }
 .pgo-b-sep { font-size:10px; color:var(--text-tertiary); }
 /* Estado vacío: sin contadores que proteger, el aviso y el botón comparten la
@@ -5385,8 +5390,6 @@ const UI = {
     // ícono: el garzón tiene que saber qué hace sin probarlo.
     pgoRefreshFail:'no se pudo actualizar',
     pgoNoData:'sin datos de PGO',
-    // Rush del desayuno: operativo, sólo en español (t() cae acá desde EN/PT).
-    pgoRush:'rush',
     pgoRefresh:'actualizar', pgoRefreshing:'actualizando', pgoRefreshNew:'versión nueva',
     pgoRefreshTitle:'Volver a pedir los datos de PGO, rol y clima',
     vjSearchPh:'Buscar viajero, hab o grupo...',
@@ -11278,7 +11281,14 @@ function pgoRushHtml(){
   const r = pgoRushCounts();
   if (!r) return '';
   const sep = '<span class="pgo-b-sep">·</span>';
-  return `<div class="pgo-b-rush"><span class="pgo-b-srv">${t('pgoRush')} ${r.dia.slice(8,10)}/${r.dia.slice(5,7)}</span>` +
+  // Logo RUSH: rayo arriba a la derecha (sobre "SH") y abajo a la izquierda
+  // (bajo "RU"). textLength fija el ancho del texto, así mide igual con
+  // Helvetica Neue (iOS) que con Arial.
+  const logo = `<svg class="pgo-b-rush-logo" viewBox="88 55 474 520" role="img" aria-label="RUSH">` +
+    `<path d="M522,60 L340,188 L415,188 L350,236 L500,172 L425,172 Z"/>` +
+    `<path d="M180,400 L278,400 L242,448 L305,448 L128,568 L196,470 Z"/>` +
+    `<text x="95" y="385" textLength="460" lengthAdjust="spacingAndGlyphs" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700" font-style="italic" font-size="183">RUSH</text></svg>`;
+  return `<div class="pgo-b-rush">${logo}<span class="pgo-b-srv">${r.dia.slice(8,10)}/${r.dia.slice(5,7)}</span>` +
     PGO_RUSH.map(([a], i) =>
       `<span class="pgo-b-rush-i"><span class="pgo-b-label">${a.replace(/^0/, '')}</span><span class="pgo-b-num">${r.n[i]}</span></span>`
     ).join(sep) + sep +
