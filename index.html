@@ -2908,6 +2908,8 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
    Molde: la pauta de cena del Cockpit del owner (fases con ancla y frase para
    memorizar, modo Estudio / Servicio), con la paleta del Handbook: dorado =
    activo, teal = hecho. Sin colores nuevos. Los segmentos reusan .mn-svc. */
+/* Subtítulo del módulo: estático, arriba del buscador, igual en todo segmento. */
+.exp-lema { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:18px; line-height:1.25; color:var(--text-secondary); margin:0 0 0.8rem; }
 .exp-head { margin:0 0 0.8rem; }
 .exp-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:26px; line-height:1.1; color:var(--text); }
 .exp-sub { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); margin-top:4px; }
@@ -3269,6 +3271,7 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
        estático en el script; marcas personales en localStorage. El buscador
        vive acá, fuera de #exp-root, para no perder el foco al repintar. -->
   <div id="tab-experto" class="hidden">
+    <div class="exp-lema">Prepara tu prueba de Experto/a</div>
     <div class="search-bar chk-search-bar" id="exp-search-bar">
       <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
       <input type="text" id="exp-search" placeholder="Buscar estándar, tiempo o palabra…" oninput="expBuscarInput()" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
