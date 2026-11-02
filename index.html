@@ -2012,13 +2012,14 @@ select.med-in { min-height:40px; }
    desserts strip get hidden. The other tabs (Menú, Vinos, …) keep the full
    strip because they're reference-y and benefit from the roster.
    Click on the panel re-expands (handled in JS as a toggle, optional). */
-body.in-checklist .winetips { display:none; }
+body.in-checklist .winetips, body.in-experto .winetips { display:none; }
 /* El clima se colapsa igual que los tips: en Checklist manda la tarea, y el
-   viento ya se consultó al montar. Reaparece al volver a cualquier otra tab. */
-body.in-checklist .wx { display:none; }
-body.in-checklist .staffing-panel { margin-bottom:0; }
-body.in-checklist .staffing-panel .staffing-row { display:none; }
-body.in-checklist .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
+   viento ya se consultó al montar. Reaparece al volver a cualquier otra tab.
+   Experto (2026-11) colapsa igual: ahí manda el estándar, no el roster. */
+body.in-checklist .wx, body.in-experto .wx { display:none; }
+body.in-checklist .staffing-panel, body.in-experto .staffing-panel { margin-bottom:0; }
+body.in-checklist .staffing-panel .staffing-row, body.in-experto .staffing-panel .staffing-row { display:none; }
+body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 /* G · Language toggle visible; dict and setLang stay intact. */
 
 .chk-carryover { background:rgba(192,125,42,0.06); border:0.5px solid rgba(192,125,42,0.3); border-radius:10px; padding:12px 14px; margin-bottom:1.25rem; }
@@ -2902,6 +2903,72 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
 .rc-visor-alt { flex:1 1 auto; min-width:0; font-family:'Courier Prime','Courier New',monospace; font-size:11px; line-height:1.35; color:rgba(255,255,255,0.7); }
 .rc-visor-btn { flex:0 0 auto; padding:8px 14px; border-radius:999px; border:0.5px solid rgba(192,125,42,0.5); background:rgba(192,125,42,0.1); color:#f3b572; font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; }
 .rc-visor-x { flex:0 0 auto; width:40px; height:40px; border-radius:50%; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; font-size:24px; line-height:1; padding:0 0 3px; cursor:pointer; }
+
+/* ═══ EXPERTO — estándares de comedor (2026-11) ═══════════════════════════════
+   Molde: la pauta de cena del Cockpit del owner (fases con ancla y frase para
+   memorizar, modo Estudio / Servicio), con la paleta del Handbook: dorado =
+   activo, teal = hecho. Sin colores nuevos. Los segmentos reusan .mn-svc. */
+.exp-head { margin:0 0 0.8rem; }
+.exp-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:26px; line-height:1.1; color:var(--text); }
+.exp-sub { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); margin-top:4px; }
+.exp-modos { display:flex; gap:6px; margin:0 0 0.9rem; }
+.exp-modo { flex:1 1 0; padding:9px 8px; border-radius:var(--radius-md); border:0.5px solid var(--border-md); background:none; color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; user-select:none; }
+.exp-modo.active { background:rgba(192,125,42,0.14); border-color:rgba(192,125,42,0.45); color:#f3b572; }
+.exp-nota { font-family:'Courier Prime','Courier New',monospace; font-size:11px; line-height:1.6; letter-spacing:0.02em; color:var(--text-tertiary); margin:0 0 1rem; }
+.exp-nota b { color:#c8a06f; font-weight:400; }
+.exp-reset { background:none; border:0.5px dashed var(--border-md); border-radius:var(--radius-md); color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; padding:3px 10px; cursor:pointer; }
+.exp-mapa { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 1.1rem; }
+.exp-mapa-chip { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.04em; padding:5px 10px; border-radius:var(--radius-md); background:var(--bg-secondary); border:0.5px solid var(--border); color:var(--text-secondary); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.exp-mapa-chip b { color:#c8a06f; font-weight:700; }
+.exp-mapa-chip.hecha b { color:var(--teal); }
+.exp-fase { background:var(--bg-secondary); border:0.5px solid var(--border); border-radius:var(--radius-lg); margin-bottom:10px; overflow:hidden; scroll-margin-top:12px; }
+.exp-fase-head { display:flex; align-items:center; gap:12px; width:100%; padding:13px 14px; background:none; border:none; color:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; font:inherit; }
+.exp-num { flex:0 0 auto; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Courier Prime','Courier New',monospace; font-size:13px; font-weight:700; background:var(--gold-light); color:#f3b572; border:0.5px solid rgba(192,125,42,0.45); }
+.exp-fase.hecha .exp-num { background:var(--teal-light); color:var(--teal); border-color:var(--teal); }
+.exp-titulos { flex:1 1 auto; min-width:0; }
+.exp-fase-title, .exp-ancla, .exp-mnemo { display:block; }
+.exp-fase-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:600; font-size:19px; line-height:1.15; color:var(--text); }
+.exp-rol { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:9px; font-style:normal; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); border:0.5px solid var(--border-md); border-radius:20px; padding:1px 7px; margin-left:6px; vertical-align:3px; }
+.exp-ancla { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); margin-top:2px; }
+.exp-mnemo { font-size:12px; line-height:1.4; color:#c8a06f; margin-top:4px; }
+.exp-cuenta { flex:0 0 auto; font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-tertiary); }
+.exp-caret { flex:0 0 auto; font-size:11px; color:var(--text-tertiary); transition:transform .25s; }
+.exp-fase.open .exp-caret { transform:rotate(90deg); }
+.exp-fase-body { display:none; padding:0 14px 13px; }
+.exp-fase.open .exp-fase-body { display:block; }
+.exp-chk { display:flex; align-items:flex-start; gap:11px; padding:10px 0; border-top:0.5px solid var(--border); scroll-margin-top:80px; -webkit-tap-highlight-color:transparent; user-select:none; }
+.exp-servicio .exp-chk { cursor:pointer; }
+.exp-box { flex:0 0 auto; width:21px; height:21px; margin-top:1px; border-radius:6px; border:1.5px solid var(--border-md); display:flex; align-items:center; justify-content:center; transition:background .18s, border-color .18s; }
+.exp-box svg { opacity:0; transition:opacity .18s; }
+.exp-estudio .exp-box { opacity:0.35; }
+.exp-chk.ok .exp-box { background:var(--teal); border-color:var(--teal); }
+.exp-chk.ok .exp-box svg { opacity:1; }
+.exp-chk-text { flex:1 1 auto; min-width:0; font-size:14px; line-height:1.45; color:var(--text); transition:color .18s, filter .2s; }
+.exp-chk.ok .exp-chk-text { color:var(--text-tertiary); text-decoration:line-through; text-decoration-color:var(--text-tertiary); }
+.exp-fase.oculta .exp-chk-text { filter:blur(5px); }
+.exp-time { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.04em; color:#f3b572; background:var(--gold-light); padding:1px 7px; border-radius:20px; margin-right:6px; vertical-align:1px; white-space:nowrap; }
+.exp-cond { display:inline-block; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-tertiary); border:0.5px solid var(--border-md); padding:1px 6px; border-radius:20px; margin-left:6px; vertical-align:1px; white-space:nowrap; }
+.exp-revelar { width:100%; margin-top:10px; padding:8px; border-radius:var(--radius-md); background:none; border:0.5px dashed var(--border-md); color:var(--text-tertiary); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; }
+.exp-tip { margin:10px 0 2px; padding:11px 12px; background:var(--surface); border:0.5px solid var(--border); border-left:2px solid rgba(192,125,42,0.6); border-radius:var(--radius-md); scroll-margin-top:80px; }
+.exp-tip-label { font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:#c8a06f; margin-bottom:5px; }
+.exp-tip-label .exp-borr { color:var(--text-tertiary); }
+.exp-tip-body { font-size:13px; line-height:1.55; color:var(--text-secondary); }
+.exp-tip-body strong { color:var(--text); font-weight:600; }
+.exp-tip-guion { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:15px; line-height:1.5; color:var(--text); margin-top:6px; }
+.exp-tip-fila { margin-top:7px; font-size:12px; color:var(--text-secondary); }
+.exp-tip-fila > span { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); }
+.exp-pills { display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+.exp-pill { margin:0; cursor:pointer; text-transform:none; letter-spacing:0.02em; font-size:10.5px; padding:3px 9px; border-radius:999px; -webkit-tap-highlight-color:transparent; }
+.exp-plato { font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.02em; padding:3px 9px; border-radius:999px; background:rgba(255,255,255,0.03); border:0.5px solid var(--border-md); color:var(--text-secondary); cursor:pointer; text-align:left; -webkit-tap-highlight-color:transparent; }
+.exp-plato i { font-style:normal; color:var(--text-tertiary); margin-right:4px; }
+.exp-ir { display:inline-block; margin-top:9px; padding:5px 11px; border-radius:999px; border:0.5px solid rgba(192,125,42,0.4); background:none; color:#f3b572; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.exp-res { display:block; width:100%; text-align:left; background:none; border:none; border-top:0.5px solid var(--border); padding:11px 2px; color:inherit; font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.exp-res-ruta { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:3px; }
+.exp-res-ruta b { color:#c8a06f; font-weight:400; }
+.exp-res-txt { font-size:14px; line-height:1.45; color:var(--text); }
+.exp-res-cuenta { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; color:var(--text-tertiary); margin:0 0 6px; }
+.exp-chk.exp-pulso, .exp-tip.exp-pulso { animation:chkJumpPulse 2.2s ease-out; border-radius:6px; }
+.exp-pie { margin-top:1.6rem; text-align:center; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; color:var(--text-tertiary); line-height:1.7; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -3065,8 +3132,15 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
     <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
     <!-- Checklist (2026-09-30): una tab más, al final de la fila. Antes era un
          botón destacado sobre las tabs y estuvo oculto desde el 2026-08-01;
-         el owner lo quiso visible pero sin destacar, junto a Café. -->
-    <button class="tab" onclick="setTab('checklist',this)" id="tab-btn-checklist">Checklist</button>
+         el owner lo quiso visible pero sin destacar, junto a Café.
+         (2026-11) OCULTO otra vez: su lugar lo toma Experto. Se oculta el
+         ACCESO, no el módulo — chkEnter(), las plantillas en Firebase y la guía
+         del Quincho siguen intactas. Revivirla = borrar el atributo hidden. -->
+    <button class="tab" onclick="setTab('checklist',this)" id="tab-btn-checklist" hidden>Checklist</button>
+    <!-- Experto (2026-11): los estándares de comedor para estudiarlos y
+         practicarlos — el servicio de cada GEO por servicio, más lo general del
+         equipo y el salón. Ocupa el lugar de Checklist. -->
+    <button class="tab" onclick="setTab('experto',this)" id="tab-btn-experto">Experto</button>
     <!-- Recepción (2026-10): primera área fuera de A&B. Séptima tab, al final.
          Si el aparato la dejó abierta, el arranque vuelve a ella (el PC de
          recepción abre directo en la guía). Cuando llegue otra área, esto se
@@ -3189,6 +3263,18 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
       <button class="chk-search-clear" id="chk-search-clear" onclick="chkSearchClear()" aria-label="Limpiar búsqueda">×</button>
     </div>
     <div class="chk-root" id="chk-root"></div>
+  </div>
+
+  <!-- EXPERTO TAB — estándares de comedor (estudio + práctica). Contenido
+       estático en el script; marcas personales en localStorage. El buscador
+       vive acá, fuera de #exp-root, para no perder el foco al repintar. -->
+  <div id="tab-experto" class="hidden">
+    <div class="search-bar chk-search-bar" id="exp-search-bar">
+      <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+      <input type="text" id="exp-search" placeholder="Buscar estándar, tiempo o palabra…" oninput="expBuscarInput()" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+      <button class="chk-search-clear" onclick="expBuscarLimpiar()" aria-label="Limpiar búsqueda">×</button>
+    </div>
+    <div class="exp-root" id="exp-root"></div>
   </div>
 
   <!-- RECEPCIÓN TAB — guía de procedimientos (contenido en Firebase Storage,
@@ -4356,6 +4442,20 @@ let RC_IMG_PROM   = {};     // src → carga en curso
 let RC_IMG_OBS    = null;   // IntersectionObserver de la carga diferida
 let RC_DIMS       = null;   // cache en memoria de RC_LS_DIMS
 let RC_PRECARGA   = null;   // {total, ok, corriendo}
+
+// ── EXPERTO (2026-11) — estándares de comedor para estudiar y practicar ──────
+// Reemplazó a Checklist en la tira. Las marcas son personales: localStorage,
+// nunca Firebase. Ver el bloque EXPERTO del script.
+const EXP_LS     = 'ata.experto.v1';   // { modo, marcas:{ seg:{ ts, ids:{} } } }
+const EXP_MARCAS_TTL = 12 * 3600 * 1000;  // un servicio: pasado esto, arranca limpio
+let EXP_SEG      = null;      // 'desayuno' | 'almuerzo' | 'cena' | 'equipo' — null: por la hora
+let EXP_MODO     = 'estudio'; // 'estudio' | 'servicio'
+let EXP_MARCAS   = {};        // seg → { ts, ids:{ 'f2-3':1 } }
+let EXP_ABIERTAS = {};        // seg → { faseIdx:true } (sólo en memoria)
+let EXP_REVELADAS = {};       // seg → { faseIdx:true } (modo estudio; se olvida al volver)
+let EXP_Q        = '';        // consulta del buscador
+let EXP_BUSQ     = null;      // índice plano de búsqueda (se arma una vez)
+let EXP_CARGADO  = false;     // localStorage leído
 
 // ════════════════════════════════════════════════════════════════════════════
 // STATE TOP — module-level let/const declarations
@@ -6272,10 +6372,14 @@ function setTab(tab, el) {
   const rcTabs = document.querySelector('.main-tabs');
   const rcY0 = rcTabs ? rcTabs.getBoundingClientRect().top : 0;
   document.body.classList.toggle('in-recepcion', tab === 'recepcion');
+  // Experto colapsa igual (manda el estándar, no el roster), con la misma
+  // compensación de scroll.
+  document.body.classList.toggle('in-experto', tab === 'experto');
   if (rcTabs){ const d = rcTabs.getBoundingClientRect().top - rcY0; if (d) window.scrollBy(0, d); }
   // #tab-cocktails NO está en esta lista: vive dentro de #tab-menus y su
   // visibilidad la controla renderDishes() según el segmento BAR › Tragos.
-  ['menus','vinos','cafe','comandera','rol','viajeros','checklist','recepcion'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  ['menus','vinos','cafe','comandera','rol','viajeros','checklist','experto','recepcion'].forEach(t => document.getElementById('tab-'+t).classList.toggle('hidden', t !== tab));
+  if (tab === 'experto') expEnter();
   if (tab === 'menus') renderDishes();
   if (tab === 'cafe') renderCafeTab();
   if (tab === 'comandera') comandaEnter();
@@ -21235,6 +21339,690 @@ try {
   if (!RC_TAB_ON) localStorage.removeItem(RC_LS_ABIERTA);
   else if (localStorage.getItem(RC_LS_ABIERTA) === '1') setTab('recepcion', document.getElementById('tab-btn-recepcion'));
 } catch(e){}
+// ════════════════════════════════════════════════════════════════════════════
+// EXPERTO — estándares de comedor para estudiar y practicar (2026-11)
+// ════════════════════════════════════════════════════════════════════════════
+// Contrato:
+//   Fuente: "Pautas de observación GEO" (Excel del owner, hojas Desayuno ·
+//   Almuerzo · Cena). Los puntos se TRANSCRIBEN: mismo orden y mismo
+//   contenido. Sólo se pasan a afirmación, se corrigen tildes y el tiempo
+//   límite sale a la etiqueta ⏱; "si aplica" va a su etiqueta. Nada se agrega a
+//   la pauta. El cruce contra el Excel se hace a máquina (ARCHITECTURE §3.8).
+//   Segmentos: DESAYUNO · ALMUERZO · CENA = el servicio de un GEO, en fases con
+//   ancla (cuándo empieza) y frase para memorizar; la fase 0 es el arribo, que
+//   hace quien recibe. EQUIPO = presencia, salón y buffet: lo que la pauta
+//   repite en los tres servicios va UNA vez, y `src` apunta a cada fila de
+//   origen (d/a/c = hoja, número = fila dentro de la sección; b = buffet).
+//   Modos: Estudio (puntos tapados hasta revelar, con tips) · Servicio (se
+//   marcan con el pulgar). Marcas personales en localStorage (EXP_LS), por
+//   aparato, nunca Firebase; vencen a las 12 h — un servicio.
+//   Tips: los que nombran vinos o platos los toman de WINES/DISHES/GUIONES
+//   vivos; si un plato citado ya no existe, el tip no se muestra (falla
+//   cerrado). `borrador:true` = redactado por el asistente, pendiente de que
+//   el owner lo revise; se rotula así en pantalla.
+//   Idioma: sólo ES, como todo lo operativo.
+
+// Tips que se repiten entre servicios.
+const EXP_T_INCLUIDOS = { label:'Vinos incluidos', vinos:'incluidos',
+  body:'Toca uno para abrir su ficha y su guion.' };
+const EXP_T_PREMIUM = { label:'Carta premium', vinos:'premium',
+  body:'Se ofrece además de los incluidos: es el primer punto de esta fase.' };
+const EXP_T_SUGERIR = { label:'Sugerencias por tipo de plato',
+  body:'<strong>Mar</strong> (ceviche, tiradito, pulpo) → Talinay o Azur. <strong>Cremosos, gratinados, chupes</strong> → SOLdeSOL o Aquitania (Chardonnay). <strong>Carnes rojas y cordero</strong> → Pérez Cruz Carmenere o Pura Fe Cabernet; si es especiado, Syrah. <strong>Cerdo</strong> → Syrah o el rosado. <strong>Vegetales</strong> → Chardonnay o Glup Cinsault.',
+  wines:['talinay','azur','soldesol','aquitania','perez-cruz','cabernet','syrah','garage-rose','glup'] };
+const EXP_T_APELLIDO = { label:'El detalle que marca la diferencia',
+  body:'Despedir <strong>usando el apellido del viajero</strong> cierra el ciclo de personalización que abriste en la presentación. Es gratis y es lo último que el evaluador registra.' };
+const EXP_T_PGO = { label:'Antes de que llegue el GEO',
+  body:'Si la hab tiene una dieta o alergia registrada, la ficha de PGO la muestra: buscar la hab son dos toques, y el GEO llega a la mesa sabiéndolo.',
+  ir:{ tab:'viajeros', label:'Abrir PGO' }, borrador:true };
+
+// Fase 0: el arribo. Igual en los tres servicios salvo el punto 5 (qué se
+// explica camino a la mesa).
+function expArribo(orienta, tips){
+  return { title:'Arribo', rol:'quien recibe',
+    anchor:'Ancla: el viajero cruza la puerta del Comedor',
+    mnemo:'Saludo en 30 s · sonrío · elige · cuántos · oriento · siento en 30 s · mesa armada · silla · sobrantes · relevo',
+    checks:[
+      { t:'El viajero fue saludado o reconocido al ingresar al Comedor.', time:'máx 30 s de llegar' },
+      { t:'El viajero fue saludado de manera cortés y amigable, con contacto visual y sonrisa espontánea.' },
+      { t:'El GEM/GES/GEO invitó al viajero a elegir la mesa de su preferencia.' },
+      { t:'El GEM/GES/GEO confirmó el número de comensales.' },
+      { t:orienta },
+      { t:'El GEM/GES/GEO acompañó y sentó al viajero.', time:'máx 30 s de llegar' },
+      { t:'El GEM/GES/GEO sentó al viajero en una mesa completamente armada.' },
+      { t:'Se ofreció asistencia con la silla.', cond:'si aplica' },
+      { t:'El GEM/GES/GEO marcó las posiciones sobrantes.' },
+      { t:'El GEM/GES/GEO se despidió e informó que en un momento llegará el GEO a cargo de su servicio.', cond:'si aplica' }
+    ], tips };
+}
+const EXP_ORIENTA_MENU = 'El GEM/GES/GEO ofreció orientación del menú del día y sus opciones mientras acompañaba al viajero a la mesa.';
+
+// Puntos de entradas y fondos: idénticos en almuerzo y cena salvo matices de
+// la pauta, que se respetan (almuerzo "explica ingredientes", cena "breve
+// explicación"; cena no marca "si aplica" en derecha/izquierda).
+const EXP_COMPARTIR = 'Opciones para compartir: deja platos para cada viajero, las órdenes al medio, tenedor y cuchara.';
+
+const EXP_SEGS = [
+  { key:'desayuno', label:'Desayuno', titulo:'Servicio Desayuno', fuente:'Desayuno', fases:[
+    expArribo('El GEM/GES/GEO explicó el funcionamiento del servicio de desayuno y sus opciones mientras acompañaba al viajero a la mesa.', [
+      EXP_T_PGO,
+      { label:'El rush se ve venir', body:'Desde las 22:00 del día anterior, el banner <strong>RUSH</strong> de PGO muestra las salidas por franja horaria: el peak del desayuno se anticipa, no se sufre.',
+        ir:{ tab:'viajeros', label:'Abrir PGO' }, borrador:true }
+    ]),
+    { title:'Bienvenida', anchor:'Ancla: llegas a la mesa recién sentada',
+      mnemo:'Saludo · menú · café primero · posiciones',
+      checks:[
+        { t:'El GEO se presentó en la mesa y dio un saludo cálido.' },
+        { t:'El GEO presentó el menú de desayuno.' },
+        { t:'El GEO ofreció primero café o infusiones.', time:'máx 1 min sentados' },
+        { t:'El GEO removió o agregó cubiertos (posiciones) si era necesario.' }
+      ], tips:[
+        { label:'Café primero', body:'El minuto corre desde que el viajero se sienta: el café se ofrece antes que el resto. El manual de cada bebida y el pedido al barista están en la tab Café.',
+          ir:{ tab:'cafe', label:'Abrir Café' }, borrador:true }
+      ] },
+    { title:'Café', anchor:'Ancla: la orden de café ya está tomada',
+      mnemo:'Sirvo en 3 · confirmo',
+      checks:[
+        { t:'Se sirvió café o infusiones.', time:'máx 3 min de la orden' },
+        { t:'El GEO confirmó si todo estaba bien con las bebidas.' }
+      ] },
+    { title:'La orden', anchor:'Ancla: tienes la libreta en mano',
+      mnemo:'Conozco · niños primero · miro · apellido · acomodo · reconfirmo · completa',
+      checks:[
+        { t:'Al tomar la orden, el GEO demostró buen conocimiento del menú y sus ingredientes.' },
+        { t:'El GEO tomó la orden primero a los niños.', cond:'si aplica' },
+        { t:'El GEO mantuvo contacto visual con el viajero mientras tomaba la orden.' },
+        { t:'El GEO mencionó por lo menos una vez el apellido del viajero durante toda la interacción.' },
+        { t:'El GEO acomodó cualquier pedido razonable fuera del menú.' },
+        { t:'El GEO reconfirmó con el viajero la orden solicitada.' },
+        { t:'El GEO obtuvo las órdenes completas.' }
+      ], tips:[
+        { label:'El apellido', body:'Una vez como mínimo, en cualquier momento de la interacción. Si no lo sabes, la hab te lo da en PGO.',
+          ir:{ tab:'viajeros', label:'Abrir PGO' }, borrador:true }
+      ] },
+    { title:'En la mesa', anchor:'Ancla: sales de cocina con los platos',
+      mnemo:'10 min · caliente · correcta · repongo a 1/3 · pregunto',
+      checks:[
+        { t:'La orden del desayuno se sirvió.', time:'máx 10 min de la orden' },
+        { t:'El viajero fue advertido de que el plato estaba caliente.' },
+        { t:'La orden fue correcta y completa.' },
+        { t:'El GEO ofreció reposición de bebidas (jugos, café o infusiones).', time:'a 1/3 de acabarse' },
+        { t:'El GES/GEO visitó la mesa para preguntar si el servicio y la calidad de alimentos y bebidas eran satisfactorios.' }
+      ] },
+    { title:'Cierre', anchor:'Ancla: el viajero terminó de comer',
+      mnemo:'Retiro en 5 · despido · remonto en 5',
+      checks:[
+        { t:'Los platos fueron retirados.', time:'máx 5 min de terminar' },
+        { t:'Al salir del Comedor, el viajero fue despedido.' },
+        { t:'La mesa usada fue limpiada y remontada.', time:'máx 5 min desocupada' }
+      ], tips:[
+        { label:'Remontar en 5 minutos', body:'La mesa vuelve a quedar como pide <strong>Salón y mesas</strong> (Equipo): la próxima llegada tiene que sentarse en una mesa completamente armada.',
+          ir:{ seg:'equipo', fase:1, label:'Ver Salón y mesas' }, borrador:true },
+        EXP_T_APELLIDO
+      ] }
+  ] },
+
+  { key:'almuerzo', label:'Almuerzo', titulo:'Servicio Almuerzo', fuente:'Almuerzo', fases:[
+    expArribo(EXP_ORIENTA_MENU, [EXP_T_PGO]),
+    { title:'Presentación', anchor:'Ancla: te paras frente a la mesa',
+      mnemo:'Me presento · restricciones · pregunto · su hora · sugiero · propongo · peques',
+      checks:[
+        { t:'El GEO se presentó en la mesa, dio su nombre y anunció que será él/ella quien se encargue del servicio.' },
+        { t:'El GEO presentó el menú con una breve explicación, mencionando qué elementos tienen restricciones (gluten, lácteos, frutos secos, etc.).', cond:'si aplica' },
+        { t:'El GEO preguntó si alguien en la mesa tiene alguna restricción alimentaria (primera visita al Comedor); si ya la conocemos, solo corrobora la información.' },
+        { t:'El GEO consultó al viajero su hora de exploración y/o de check-out.' },
+        { t:'El GEO dio sugerencias de almuerzo de acuerdo al tiempo del viajero.' },
+        { t:'El GEO presentó el menú del día y el menú de vinos incluidos.', time:'máx 3 min sentados' },
+        { t:'De haber niños, el GEO explicó las alternativas de menú infantil, coordinando con los padres si se atiende primero a los niños.', cond:'si aplica' }
+      ], tips:[
+        { label:'El almuerzo en una frase', body:'Buffet de seis bandejas y sopa del día, que el viajero se sirve solo; cuatro principales que van a la mesa, y tres postres.',
+          hoy:{ svc:'Almuerzo', courses:['Plato principal'] }, borrador:true },
+        { label:'Restricciones: la matriz', body:'Cada ficha del almuerzo trae su matriz. <strong>✓*</strong> es apto con condición y dice qué sacar; el borde punteado es <strong>sin dato</strong>: se consulta a cocina, nunca se da por apto.',
+          ir:{ menu:'almuerzo', label:'Ver el almuerzo' }, borrador:true },
+        { label:'Su hora manda', body:'Pregunta la hora de exploración o de check-out antes de sugerir: el buffet y la sopa no esperan cocina, así que son la vía rápida para quien va justo.', borrador:true }
+      ] },
+    { title:'Líquidos', anchor:'Ancla: la mesa no tiene nada que beber',
+      mnemo:'Premium · agua · otras · traigo · sirvo',
+      checks:[
+        { t:'Además de los vinos incluidos, el GEO ofreció el menú de vinos premium.' },
+        { t:'El GEO ofreció y sirvió agua mineral con o sin gas y dejó la botella en la mesa.', time:'máx 2 min sentados' },
+        { t:'Además del agua, el GEO ofreció otras bebidas (con o sin alcohol).' },
+        { t:'El GEO trae y presenta las bebidas.', time:'máx 10 min de la orden' },
+        { t:'Las bebidas estaban correctamente servidas.' }
+      ], tips:[EXP_T_INCLUIDOS, EXP_T_PREMIUM] },
+    { title:'La orden', anchor:'Ancla: tienes la libreta en mano',
+      mnemo:'Remuevo · ordeno · sé · miro · armo (y copas)',
+      checks:[
+        { t:'El GEO removió posiciones si era necesario.' },
+        { t:'El GEO toma órdenes de comida, da sugerencias y repite la orden.' },
+        { t:'Al tomar la orden, el GEO demostró buen conocimiento del menú y sus ingredientes.' },
+        { t:'El GEO mantuvo contacto visual con el viajero que ordenaba.' },
+        { t:'El GEO arma la mesa tiempo por tiempo y coloca copas si hay servicio de vino.' }
+      ], tips:[EXP_T_SUGERIR] },
+    { title:'Entradas', anchor:'Ancla: sales de cocina con los primeros platos',
+      mnemo:'Simultáneo · repongo · entrada · comparto · caliente · correcto · pregunto · retiro',
+      checks:[
+        { t:'Todos los viajeros son atendidos simultáneamente, curso por curso.' },
+        { t:'El GEO ofreció reponer a tiempo agua, bebidas/aperitivos y vino.' },
+        { t:'El GEO trae y presenta los platos de entrada, explicando sus ingredientes.', time:'máx 15 min de la orden' },
+        { t:EXP_COMPARTIR, cond:'si aplica' },
+        { t:'El viajero fue advertido de que el plato estaba caliente.', cond:'si aplica' },
+        { t:'La orden fue correcta y completa; tomó medidas de corrección si fue necesario.' },
+        { t:'El GES/GEO pregunta por la satisfacción del plato.' },
+        { t:'El GEO retira los platos de entrada.' }
+      ], tips:[
+        { label:'Sopa del día', body:'Toca para abrir su ficha.', hoy:{ svc:'Almuerzo', courses:['Sopa'] } }
+      ] },
+    { title:'Fondos', anchor:'Ancla: armas la mesa para el segundo tiempo',
+      mnemo:'Armo · derecha–izquierda · fondo · demora-GES · comparto · pregunto · retiro',
+      checks:[
+        { t:'El GEO arma la mesa para el plato de fondo.' },
+        { t:'El GEO coloca los platos por la derecha y retira por la izquierda.', cond:'si aplica' },
+        { t:'El GEO trae y presenta los platos de fondo y los explica.', time:'15–20 min de la orden' },
+        { t:'Si la cocción toma tiempo extra (ej. punto de la carne), el GES se acerca a la mesa a explicar.' },
+        { t:EXP_COMPARTIR, cond:'si aplica' },
+        { t:'El GES/GEO visitó la mesa para preguntar si el servicio y la calidad de alimentos y bebidas eran satisfactorios.' },
+        { t:'El GEO retira los platos de fondo.' }
+      ], tips:[
+        { label:'Principales', body:'Toca uno para abrir su ficha con el guion breve.', hoy:{ svc:'Almuerzo', courses:['Plato principal'] } }
+      ] },
+    { title:'Cierre dulce', anchor:'Ancla: la mesa quedó vacía de fondos',
+      mnemo:'Limpio · armo · caliente-bajativo',
+      checks:[
+        { t:'El GEO limpia la mesa y ofrece el menú de postres.' },
+        { t:'El GEO arma la mesa para el postre.' },
+        { t:'El GEO ofrece bebidas calientes y bajativos.' }
+      ], tips:[
+        { label:'Postres', body:'Toca uno para abrir su ficha.', hoy:{ svc:'Almuerzo', courses:['Postre'] } }
+      ] },
+    { title:'Despedida', anchor:'Ancla: el viajero se levanta', mnemo:'Adiós con nombre',
+      checks:[ { t:'Al salir del Comedor, el viajero fue despedido.' } ],
+      tips:[EXP_T_APELLIDO] }
+  ] },
+
+  // Cena: los puntos y la mayoría de los tips vienen de la pauta de cena del
+  // Cockpit del owner. Tres tips se corrigieron contra la carta real: la lista
+  // de frutos secos dejaba afuera el Carrot cake (ahora sale de los alérgenos),
+  // la milhoja no es el único postre sin gluten sino el único que su ficha
+  // DECLARA sin gluten, y el filete ya no está en la carta de cena.
+  { key:'cena', label:'Cena', titulo:'Servicio Cena', fuente:'Cena', fases:[
+    expArribo(EXP_ORIENTA_MENU, [EXP_T_PGO]),
+    { title:'Presentación', anchor:'Ancla: te paras frente a la mesa',
+      mnemo:'Me presento · restricciones · pregunto · propongo · peques',
+      checks:[
+        { t:'El GEO se presentó en la mesa, dio su nombre y anunció que será él/ella quien se encargue del servicio.' },
+        { t:'El GEO presenta el menú dando una breve explicación y mencionando qué elementos tienen restricciones (gluten, lácteos, frutos secos, etc.).', cond:'si aplica' },
+        { t:'El GEO preguntará si alguien en la mesa tiene alguna restricción alimentaria (primera visita); si ya la conocemos, solo corrobora.' },
+        { t:'El GEO presentó el menú del día y el menú de vinos incluidos.', time:'máx 3 min sentados' },
+        { t:'De haber niños, el GEO explicará las alternativas de menú infantil, coordinando con los padres si se atiende primero a los niños.', cond:'si aplica' }
+      ], tips:[
+        { label:'Frutos secos y penicilina en la cena', alergenos:'Cena',
+          body:'Salen de los alérgenos de cada ficha del ciclo: menciónalos al presentar el menú.' },
+        { label:'Guion de bienvenida', guion:'Aperitivos y bienvenida' }
+      ] },
+    { title:'Líquidos', anchor:'Ancla: la mesa no tiene nada que beber',
+      mnemo:'Premium · agua · otras · sirvo · pan',
+      checks:[
+        { t:'Además de los vinos incluidos, el GEO ofreció el menú de vinos premium.' },
+        { t:'El GEO ofreció y sirvió agua mineral con/sin gas y dejó la botella en la mesa.', time:'máx 2 min sentados' },
+        { t:'Además del agua, el GEO ofreció otras bebidas (con o sin alcohol).' },
+        { t:'El GEO trae y presenta las bebidas.', time:'máx 10 min de la orden' },
+        { t:'Las bebidas estaban correctamente servidas.' },
+        { t:'El GEO sirvió pan y dips ofreciendo una breve explicación.' }
+      ], tips:[
+        EXP_T_INCLUIDOS, EXP_T_PREMIUM,
+        { label:'Un dato para contar', body:'El <strong>SOLdeSOL Chardonnay</strong> nació en 1993 en Traiguén; la apelación Valle del Malleco se creó para poder darle origen. Es el argumento que vuelve historia a un vino incluido.', wines:['soldesol'] }
+      ] },
+    { title:'La orden', anchor:'Ancla: tienes la libreta en mano',
+      mnemo:'Remuevo · ordeno · sé · miro · armo',
+      checks:[
+        { t:'El GEO removió posiciones si era necesario.' },
+        { t:'El GEO toma órdenes de comida, da sugerencias y repite la orden.' },
+        { t:'Al tomar la orden, el GEO demostró buen conocimiento del menú y sus ingredientes.' },
+        { t:'El GEO mantuvo contacto visual con el viajero que ordenaba.' },
+        { t:'El GEO arma la mesa tiempo por tiempo.' }
+      ], tips:[
+        EXP_T_SUGERIR,
+        { label:'Conocimiento que impresiona al evaluador', platos:['d9','d23','d53'],
+          body:'El <strong>pulpo</strong> es cocción al vacío a 90°C por 2 horas, con salsa anticuchera. El <strong>asado de tira</strong> se sella al vacío con vino tinto y va en cocción prolongada; la <strong>plateada</strong> lleva 16 horas a 85°C. Saber el método, no solo el nombre, demuestra dominio real del menú.' }
+      ] },
+    { title:'Entradas', anchor:'Ancla: sales de cocina con los primeros platos',
+      mnemo:'Simultáneo · repongo · entrada · comparto · caliente · correcto · pregunto · retiro',
+      checks:[
+        { t:'Todos los viajeros son atendidos simultáneamente, curso por curso.' },
+        { t:'El GEO ofreció reponer a tiempo agua, bebidas/aperitivos y vino.' },
+        { t:'El GEO trae y presenta las entradas con una breve explicación.', time:'máx 15 min de la orden' },
+        { t:EXP_COMPARTIR, cond:'si aplica' },
+        { t:'El viajero fue advertido de que el plato estaba caliente.', cond:'si aplica' },
+        { t:'La orden fue correcta y completa; tomó medidas de corrección si fue necesario.' },
+        { t:'El GES/GEO pregunta por la satisfacción del plato.' },
+        { t:'El GEO retira los platos de entrada.' }
+      ], tips:[
+        { label:'Entradas', body:'Toca una para abrir su ficha.', hoy:{ svc:'Cena', courses:['Entrada'] } },
+        { label:'Explicación breve de entradas frecuentes', platos:['d6','d5','d21'],
+          body:'<strong>Chupe de centolla:</strong> pastel cremoso horneado con Grana Padano gratinado (lleva lácteos y gluten). <strong>Hojas verdes Larache/Sequitor:</strong> con quinoas teñidas en betarraga y ají amarillo, dressing de mora o frambuesa. <strong>Camarones al ajillo:</strong> calibre 16-20 con merkén, láminas de ajo fritas y tostada de pan integral multisemillas (gluten).' },
+        { label:'Maridaje de entradas', body:'Mar y limón → <strong>Talinay</strong> o <strong>Azur</strong> (la burbuja limpia entre bocados). Chupes y sopas cremosas → <strong>SOLdeSOL</strong> o <strong>Aquitania</strong>. Ensalada de higos con queso azul → <strong>Erasmo</strong> o el rosado.',
+          wines:['talinay','azur','soldesol','aquitania','erasmo','garage-rose'] }
+      ] },
+    { title:'Fondos', anchor:'Ancla: armas la mesa para el segundo tiempo',
+      mnemo:'Armo · derecha–izquierda · fondo · demora-GES · comparto · pregunto · retiro',
+      checks:[
+        { t:'El GEO arma la mesa para el plato de fondo.' },
+        { t:'El GEO coloca los platos por la derecha y retira por la izquierda.' },
+        { t:'El GEO trae y presenta los platos de fondo con una breve explicación.', time:'15–20 min de la orden' },
+        { t:'Si la cocción toma tiempo extra (ej. punto de la carne), el GES se acerca a la mesa a explicar.' },
+        { t:EXP_COMPARTIR, cond:'si aplica' },
+        { t:'El GES/GEO visitó la mesa para preguntar si el servicio y la calidad eran satisfactorios.' },
+        { t:'El GEO retira los platos de fondo.' }
+      ], tips:[
+        { label:'Fondos', body:'Toca uno para abrir su ficha.', hoy:{ svc:'Cena', courses:['Plato principal'] } },
+        { label:'Punto de cocción', platos:['d56'],
+          body:'El <strong>pato</strong> se recomienda a punto o 3/4: lo dice su ficha. Si alguien pide un término que alarga la cocción, ese es el momento en que el <strong>GES se acerca</strong> a explicar la demora. Anticiparlo es lo que se evalúa acá.' },
+        { label:'Maridaje de fondos', body:'Carnes rojas y cocción larga → <strong>Pura Fe Cabernet</strong> o <strong>Pérez Cruz Carmenere</strong>. Cerdo y cordero especiado → <strong>Clos de Luz Syrah</strong>. Pescado con mantequilla y limón → <strong>Talinay</strong>; con puré o salsa cremosa → <strong>Chardonnay</strong>. Vegetales → <strong>Glup Cinsault</strong>.',
+          wines:['cabernet','perez-cruz','syrah','talinay','soldesol','glup'] }
+      ] },
+    { title:'Cierre dulce', anchor:'Ancla: la mesa quedó vacía de fondos',
+      mnemo:'Limpio · armo · caliente-bajativo',
+      checks:[
+        { t:'El GEO limpia la mesa y ofrece el menú de postres.' },
+        { t:'El GEO arma la mesa para el postre.' },
+        { t:'El GEO ofrece bebidas calientes y bajativos.' }
+      ], tips:[
+        { label:'Guion de postres', guion:'Postres y cierre de experiencia' },
+        { label:'Celíacos en el postre', platos:['d44','d12'],
+          body:'La <strong>milhoja de manzana</strong> es el único postre que su ficha declara <strong>sin gluten</strong> (helado de rica-rica, papel de airampo). Las <strong>texturas de chañar</strong> se pueden pedir sin madeleine para celíacos. Para el resto, la ficha del Menú y, ante la duda, cocina.' }
+      ] },
+    { title:'Despedida', anchor:'Ancla: el viajero se levanta', mnemo:'Adiós con nombre',
+      checks:[ { t:'Al salir del Comedor, el viajero fue despedido.' } ],
+      tips:[EXP_T_APELLIDO] }
+  ] },
+
+  // Equipo: lo general de la pauta (Colaboradores · Producto · Buffet). Lo que
+  // se repite en los tres servicios va una vez; `src` lo ata a cada fila.
+  { key:'equipo', label:'Equipo', titulo:'Equipo y salón', fuente:null, fases:[
+    { title:'Presencia y actitud', seccion:'COLABORADORES', anchor:'Ancla: antes de salir al salón',
+      mnemo:'Equipo · uniforme · zapatos · piocha · arreglado · sonrisa · inglés · respeto · atento · resuelvo',
+      checks:[
+        { t:'Los GEO demuestran estar organizados y trabajando en equipo.', src:'d0 a0 c0' },
+        { t:'El uniforme de los GEO estaba limpio, planchado y completo.', src:'d1 a1 c1' },
+        { t:'Sus zapatos estaban limpios.', src:'d2 a2 c2' },
+        { t:'Todos los GEO llevaban una piocha con su nombre.', src:'d3 a3 c3' },
+        { t:'La presentación del GEO estaba acorde al estándar de presentación personal: arreglado y acicalado.', src:'d4 a4 c4' },
+        { t:'El GEO sonrió y demostró un trato amigable.', src:'d5 a5 c5' },
+        { t:'El GEO podía comunicarse con fluidez en inglés.', src:'d6 a6 c6' },
+        { t:'El GEO respetó la presencia del viajero cuando interactuaba con sus colegas.', src:'d7 a7 c7' },
+        { t:'El GEO estuvo atento a las necesidades y requerimientos del viajero en todo momento.', src:'d8 a8 c8' },
+        { t:'Si hubo algún inconveniente durante el servicio, el GEO supo resolverlo profesionalmente.', src:'d9 a9 c9' }
+      ] },
+    { title:'Salón y mesas', seccion:'PRODUCTO', anchor:'Ancla: el Comedor antes de abrir',
+      mnemo:'Mesas · cubiertos · vajilla · manteles · servilletas · mantequilla · sal y azúcar · luces · vinos · back office · orden · silencio',
+      checks:[
+        { t:'Todas las mesas del Comedor estaban consistentemente puestas.', src:'d0 a0 c0' },
+        { t:'La cubertería estaba limpia y era la correcta.', src:'d1 a1 c1' },
+        { t:'La vajilla estaba limpia y en buen estado.', src:'d2 a2 c2' },
+        { t:'Los manteles, individuales, chilewich o camino estaban limpios y libres de desperdicios y manchas.', src:'d3 a3 c3' },
+        { t:'La servilleta estaba limpia, planchada y libre de manchas o rasgaduras.', src:'d4 a5 c5' },
+        { t:'La mantequilla estaba fresca y bien presentada.', src:'a4 c4' },
+        { t:'Había pimienta y sal disponibles, en buenas condiciones.', src:'d5' },
+        { t:'Había azúcar rubia y edulcorante disponibles.', src:'d6' },
+        { t:'Los artefactos de iluminación estaban en completo funcionamiento (todos prendidos).', cond:'si aplica', src:'c6' },
+        { t:'La mesa de vinos incluidos estaba bien armada y ordenada.', src:'a9 c10' },
+        { t:'El back office de los GEO estaba limpio y ordenado en todo momento.', src:'d7 a6 c7' },
+        { t:'Las mesas y sillas estaban ordenadas y limpias.', src:'d8 a7 c8' },
+        { t:'El Comedor estaba libre de ruidos y olores de la cocina.', src:'d9 a8 c9' }
+      ] },
+    { title:'Buffet de desayuno', seccion:'BUFFET', anchor:'Ancla: el buffet antes de que entre el primero',
+      mnemo:'Atractivo · limpio · estándar · tostadora · letreros · mantequilla · repuesto · vajilla · utensilios · cocina repone · jugos',
+      checks:[
+        { t:'El buffet era atractivo y tenía buena presentación.', src:'b0' },
+        { t:'El buffet estaba limpio y libre de desperdicios.', src:'b1' },
+        { t:'El buffet estaba montado de acuerdo al estándar.', src:'b2' },
+        { t:'La tostadora estaba a la temperatura correcta.', src:'b3' },
+        { t:'Todos los alimentos estaban identificados con una etiqueta o letrero.', src:'b4' },
+        { t:'La mantequilla estaba fresca y bien presentada.', src:'b5' },
+        { t:'Los letreros estaban limpios y en buen estado.', src:'b6' },
+        { t:'Los platos y bowls fueron repuestos a tiempo.', src:'b7' },
+        { t:'La vajilla del buffet era la apropiada, estaba ordenada y limpia.', src:'b8' },
+        { t:'Los utensilios apropiados estaban limpios y disponibles.', src:'b9' },
+        { t:'Se observa a personal de cocina reponiendo continuamente los ítems del buffet.', src:'b10' },
+        { t:'La comida estaba presentada de manera atractiva.', src:'b11' },
+        { t:'Los jugos estaban frescos, recién hechos.', src:'b12' }
+      ] }
+  ] }
+];
+// Numeración de fases: en los servicios la fase 0 es el arribo; en Equipo, 1..n.
+EXP_SEGS.forEach(s => s.fases.forEach((f, i) => { f.n = s.key === 'equipo' ? i + 1 : i; }));
+
+const EXP_SVG_OK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+// --- Estado persistente (personal) -------------------------------------------
+function expCargar(){
+  EXP_CARGADO = true;
+  try {
+    const s = JSON.parse(localStorage.getItem(EXP_LS) || 'null');
+    if (!s) return;
+    if (s.modo === 'estudio' || s.modo === 'servicio') EXP_MODO = s.modo;
+    if (s.marcas && typeof s.marcas === 'object') EXP_MARCAS = s.marcas;
+  } catch(e){ /* estado corrupto — arranca limpio */ }
+}
+function expGuardar(){
+  try { localStorage.setItem(EXP_LS, JSON.stringify({ modo:EXP_MODO, marcas:EXP_MARCAS })); } catch(e){}
+}
+// Marcas del segmento; si son de otro servicio (más de 12 h), se descartan.
+function expMarcas(seg){
+  const m = EXP_MARCAS[seg];
+  if (m && Date.now() - (m.ts || 0) > EXP_MARCAS_TTL){ delete EXP_MARCAS[seg]; expGuardar(); }
+  return (EXP_MARCAS[seg] && EXP_MARCAS[seg].ids) || {};
+}
+
+// --- Helpers -------------------------------------------------------------------
+function expSeg(k){ return EXP_SEGS.find(s => s.key === k) || EXP_SEGS[0]; }
+// El servicio del momento. Misma ventana que Menú y Comande para almuerzo y
+// cena (cena 18:00-00:59); de 01:00 a 10:59, desayuno. Preselección, no muro.
+function expSegPorHora(){
+  const d = new Date(), min = d.getHours() * 60 + d.getMinutes();
+  if (min >= 18 * 60 || min < 60) return 'cena';
+  return min < 11 * 60 ? 'desayuno' : 'almuerzo';
+}
+function expAbierta(seg, i){
+  const a = EXP_ABIERTAS[seg];
+  return a ? !!a[i] : i === 0;   // por defecto, la primera fase abierta
+}
+function expNorm(s){
+  return String(s || '').replace(/<[^>]*>/g, ' ').toLowerCase().normalize('NFD')
+    .replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+}
+// Servicios a los que aplica un punto de Equipo, desde su `src`.
+function expServiciosDe(src){
+  const s = new Set(String(src || '').split(/\s+/).map(x => x[0]));
+  return ['d','a','c'].filter(k => s.has(k) || (k === 'd' && s.has('b')))
+    .map(k => ({ d:'desayuno', a:'almuerzo', c:'cena' })[k]);
+}
+function expPlatosHoy(h){
+  const day = menuTodayCycleDay();
+  return DISHES.filter(d => d.service === h.svc && d.day === day && h.courses.includes(d.course));
+}
+
+// --- Render ----------------------------------------------------------------------
+function expEnter(){
+  if (!EXP_CARGADO) expCargar();
+  if (!EXP_SEG) EXP_SEG = expSegPorHora();
+  expRender();
+}
+
+function expRender(){
+  const root = document.getElementById('exp-root');
+  if (!root) return;
+  const bar = document.getElementById('exp-search-bar');
+  if (bar) bar.classList.toggle('has-query', !!EXP_Q);
+  if (EXP_Q){ root.innerHTML = expResultadosHtml(); return; }
+
+  const seg = expSeg(EXP_SEG);
+  const serv = EXP_MODO === 'servicio';
+  const marcas = expMarcas(seg.key);
+  const total = seg.fases.reduce((n, f) => n + f.checks.length, 0);
+  const hechas = seg.fases.reduce((n, f, i) => n + f.checks.filter((_, j) => marcas['f' + i + '-' + j]).length, 0);
+
+  const segs = `<div class="mn-svc">${EXP_SEGS.map(s =>
+    `<button class="mn-svc-btn${s.key === seg.key ? ' active' : ''}" onclick="expSetSeg('${s.key}')">${s.label}</button>`).join('')}</div>`;
+  const head = `<div class="exp-head"><div class="exp-title">${seg.titulo}</div>
+    <div class="exp-sub">Pauta de observación GEO · ${total} puntos · ${seg.fases.length} fases</div></div>`;
+  const modos = `<div class="exp-modos">
+    <button class="exp-modo${serv ? '' : ' active'}" onclick="expSetModo('estudio')">Modo Estudio</button>
+    <button class="exp-modo${serv ? ' active' : ''}" onclick="expSetModo('servicio')">Modo Servicio</button></div>`;
+  const estado = serv
+    ? `<div class="chk-meta-row"><span class="chk-meta">${seg.key === 'equipo' ? 'Revisión del salón' : 'Progreso del servicio'}</span>
+         <span><span class="chk-progress" id="exp-progreso">${hechas} / ${total}</span>
+         <button class="exp-reset" onclick="expReiniciar()">↺ reiniciar</button></span></div>
+       <div class="chk-progress-bar"><div class="chk-progress-fill${hechas === total ? ' complete' : ''}" id="exp-progreso-fill" style="width:${total ? hechas / total * 100 : 0}%"></div></div>`
+    : `<div class="exp-nota"><b>Estudio:</b> los puntos van tapados. Repásalos de memoria con el ancla y la frase de cada fase, y revela para comprobar. <b>Servicio:</b> márcalos a medida que los haces.</div>`;
+  const mapa = `<div class="exp-mapa">${seg.fases.map((f, i) => {
+      const lista = serv && f.checks.length && f.checks.every((_, j) => marcas['f' + i + '-' + j]);
+      return `<button class="exp-mapa-chip${lista ? ' hecha' : ''}" data-i="${i}" onclick="expIrFase(${i})"><b>${f.n}.</b> ${f.title}</button>`;
+    }).join('')}</div>`;
+  const fases = seg.fases.map((f, i) => expFaseHtml(seg, f, i, marcas)).join('');
+  const pie = `<div class="exp-pie">Explora Atacama · uso interno de entrenamiento</div>`;
+  root.innerHTML = `<div class="${serv ? 'exp-servicio' : 'exp-estudio'}">${segs}${head}${modos}${estado}${mapa}${fases}${pie}</div>`;
+}
+
+function expFaseHtml(seg, f, i, marcas){
+  const serv = EXP_MODO === 'servicio';
+  const ids = f.checks.map((_, j) => 'f' + i + '-' + j);
+  const hechas = ids.filter(id => marcas[id]).length;
+  const revelada = !!(EXP_REVELADAS[seg.key] || {})[i];
+  const cls = ['exp-fase', expAbierta(seg.key, i) && 'open', serv && hechas === ids.length && 'hecha',
+    !serv && !revelada && 'oculta'].filter(Boolean).join(' ');
+  const checks = f.checks.map((c, j) => {
+    const id = ids[j], ok = serv && marcas[id];
+    let tags = c.cond ? `<span class="exp-cond">${c.cond}</span>` : '';
+    if (c.src && c.src[0] !== 'b'){   // el buffet ya dice "de desayuno" en el título
+      const sv = expServiciosDe(c.src);
+      if (sv.length < 3) tags += `<span class="exp-cond">${sv.join(' · ')}</span>`;
+    }
+    return `<div class="exp-chk${ok ? ' ok' : ''}" id="exp-${seg.key}-${id}"${serv ? ` onclick="expToggleChk(${i},${j})"` : ''}>
+      <span class="exp-box">${EXP_SVG_OK}</span>
+      <span class="exp-chk-text">${c.time ? `<span class="exp-time">⏱ ${c.time}</span>` : ''}${vjEsc(c.t)}${tags}</span></div>`;
+  }).join('');
+  let extra = '';
+  if (!serv){
+    extra = (f.tips || []).map((tp, k) => expTipHtml(tp, seg.key, i, k)).join('');
+    if (!revelada) extra += `<button class="exp-revelar" onclick="expRevelar(${i})">Revelar puntos para autoevaluarme</button>`;
+  }
+  return `<div class="${cls}" id="exp-fase-${i}" data-i="${i}">
+    <button class="exp-fase-head" onclick="expToggleFase(${i})">
+      <span class="exp-num">${serv && hechas === ids.length ? EXP_SVG_OK : f.n}</span>
+      <span class="exp-titulos">
+        <span class="exp-fase-title">${f.title}${f.rol ? `<span class="exp-rol">${f.rol}</span>` : ''}</span>
+        <span class="exp-ancla">${f.anchor}</span>
+        <span class="exp-mnemo">${f.mnemo}</span>
+      </span>
+      ${serv ? `<span class="exp-cuenta">${hechas}/${ids.length}</span>` : ''}
+      <span class="exp-caret">▶</span>
+    </button>
+    <div class="exp-fase-body">${checks}${extra}</div></div>`;
+}
+
+// Un tip. Lo que nombra datos vivos falla cerrado: si el plato citado ya no
+// está en la carta, o no hay nada que mostrar hoy, el tip no aparece.
+function expTipHtml(tp, segKey, i, k){
+  if (tp.platos && !tp.platos.every(id => DISHES.some(d => d.id === id))) return '';
+  let label = tp.label, guion = '', filas = '';
+  let wines = (tp.wines || []).slice();
+  if (tp.guion){
+    const g = GUIONES.find(x => x.title === tp.guion);
+    if (!g) return '';
+    guion = g.text;
+    wines = wines.concat(g.wines || []);
+  }
+  if (tp.vinos) wines = wines.concat(WINES.filter(w => tp.vinos === 'premium' ? w.type === 'premium' : w.type !== 'premium').map(w => w.id));
+  const vistos = new Set();
+  const pills = wines.filter(id => !vistos.has(id) && vistos.add(id)).map(id => WINES.find(w => w.id === id)).filter(Boolean)
+    .map(w => `<button class="wine-type-badge badge-${w.type} exp-pill" onclick="expAbrirVino('${w.id}')">${vjEsc(w.name)}</button>`).join('');
+  let platos = '';
+  if (tp.hoy){
+    const lista = expPlatosHoy(tp.hoy);
+    if (!lista.length) return '';
+    label += ' · hoy D' + menuTodayCycleDay();
+    platos = lista.map(d => `<button class="exp-plato" onclick="expAbrirPlato('${d.id}')">${vjEsc(d.name)}</button>`).join('');
+  }
+  if (tp.alergenos){
+    const reglas = [['Frutos secos', /frutos secos/i], ['Penicilina', /penicilina/i]];
+    filas = reglas.map(([nom, re]) => {
+      const ds = DISHES.filter(d => d.service === tp.alergenos && (d.allergens || []).some(a => re.test(a)))
+        .sort((a, b) => String(a.day).localeCompare(String(b.day)));
+      if (!ds.length) return '';
+      return `<div class="exp-tip-fila"><span>${nom}</span><div class="exp-pills">${ds.map(d =>
+        `<button class="exp-plato" onclick="expAbrirPlato('${d.id}')"><i>D${d.day}</i>${vjEsc(d.name)}</button>`).join('')}</div></div>`;
+    }).join('');
+    if (!filas) return '';
+  }
+  let ir = '';
+  if (tp.ir){
+    const a = tp.ir;
+    const js = a.seg ? `expSetSeg('${a.seg}',${a.fase || 0})` : a.menu ? `expIrMenu('${a.menu}')` : `expIrTab('${a.tab}')`;
+    ir = `<button class="exp-ir" onclick="${js}">${a.label} →</button>`;
+  }
+  return `<div class="exp-tip" id="exp-tip-${segKey}-${i}-${k}">
+    <div class="exp-tip-label">${label}${tp.borrador ? ' <span class="exp-borr">· borrador</span>' : ''}</div>
+    ${tp.body ? `<div class="exp-tip-body">${tp.body}</div>` : ''}
+    ${guion ? `<div class="exp-tip-guion">${guion}</div>` : ''}
+    ${filas}${platos ? `<div class="exp-pills">${platos}</div>` : ''}${pills ? `<div class="exp-pills">${pills}</div>` : ''}${ir}</div>`;
+}
+
+// --- Interacción: se parcha en sitio; sólo segmento, modo y búsqueda repintan --
+function expSetSeg(k, fase){
+  EXP_SEG = k;
+  if (fase != null){ EXP_ABIERTAS[k] = Object.assign(EXP_ABIERTAS[k] || { 0:true }, { [fase]:true }); }
+  expRender();
+  if (fase != null) setTimeout(() => {
+    const el = document.getElementById('exp-fase-' + fase);
+    if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 60);
+}
+function expSetModo(m){
+  EXP_MODO = m;
+  if (m === 'estudio') EXP_REVELADAS = {};   // repaso fresco cada vez
+  expGuardar();
+  expRender();
+}
+function expToggleFase(i){
+  const k = EXP_SEG;
+  EXP_ABIERTAS[k] = EXP_ABIERTAS[k] || { 0:true };
+  EXP_ABIERTAS[k][i] = !expAbierta(k, i);
+  const el = document.getElementById('exp-fase-' + i);
+  if (el) el.classList.toggle('open', EXP_ABIERTAS[k][i]);
+}
+function expIrFase(i){
+  const k = EXP_SEG;
+  EXP_ABIERTAS[k] = EXP_ABIERTAS[k] || { 0:true };
+  EXP_ABIERTAS[k][i] = true;
+  const el = document.getElementById('exp-fase-' + i);
+  if (!el) return;
+  el.classList.add('open');
+  el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function expRevelar(i){
+  (EXP_REVELADAS[EXP_SEG] = EXP_REVELADAS[EXP_SEG] || {})[i] = true;
+  const el = document.getElementById('exp-fase-' + i);
+  if (!el) return;
+  el.classList.remove('oculta');
+  const b = el.querySelector('.exp-revelar');
+  if (b) b.remove();
+}
+function expToggleChk(i, j){
+  const k = EXP_SEG, id = 'f' + i + '-' + j;
+  expMarcas(k);
+  const m = EXP_MARCAS[k] = EXP_MARCAS[k] || { ts:0, ids:{} };
+  if (m.ids[id]) delete m.ids[id]; else m.ids[id] = 1;
+  m.ts = Date.now();
+  expGuardar();
+  const el = document.getElementById('exp-' + k + '-' + id);
+  if (el) el.classList.toggle('ok', !!m.ids[id]);
+  expPatchProgreso(i);
+}
+// Contadores de la fase y del servicio, sin repintar la lista.
+function expPatchProgreso(i){
+  const seg = expSeg(EXP_SEG), marcas = expMarcas(seg.key);
+  const f = seg.fases[i];
+  const hechas = f.checks.filter((_, j) => marcas['f' + i + '-' + j]).length;
+  const lista = hechas === f.checks.length;
+  const el = document.getElementById('exp-fase-' + i);
+  if (el){
+    el.classList.toggle('hecha', lista);
+    const num = el.querySelector('.exp-num'); if (num) num.innerHTML = lista ? EXP_SVG_OK : f.n;
+    const c = el.querySelector('.exp-cuenta'); if (c) c.textContent = hechas + '/' + f.checks.length;
+  }
+  const chip = document.querySelector(`.exp-mapa-chip[data-i="${i}"]`);
+  if (chip) chip.classList.toggle('hecha', lista);
+  const total = seg.fases.reduce((n, x) => n + x.checks.length, 0);
+  const todas = seg.fases.reduce((n, x, ii) => n + x.checks.filter((_, j) => marcas['f' + ii + '-' + j]).length, 0);
+  const p = document.getElementById('exp-progreso'); if (p) p.textContent = todas + ' / ' + total;
+  const fill = document.getElementById('exp-progreso-fill');
+  if (fill){ fill.style.width = (total ? todas / total * 100 : 0) + '%'; fill.classList.toggle('complete', todas === total); }
+}
+function expReiniciar(){
+  delete EXP_MARCAS[EXP_SEG];
+  expGuardar();
+  expRender();
+}
+
+// --- Saltos a otras tabs (acceso transversal) ---------------------------------
+function expIrTab(tab){
+  setTab(tab, document.getElementById('tab-btn-' + tab));
+}
+function expIrMenu(svc){
+  MENU_SERVICE = svc;
+  setTab('menus', document.querySelector('.main-tabs .tab'));
+}
+function expAbrirPlato(id){
+  setTab('menus', document.querySelector('.main-tabs .tab'));
+  menuJumpTwin(id);
+}
+function expAbrirVino(id){
+  // setTab primero: openWineFromGuion no conoce la tab Experto y no la ocultaría.
+  setTab('vinos', document.querySelectorAll('.main-tabs .tab')[1]);
+  openWineFromGuion(id);
+}
+
+// --- Buscador transversal: salta segmento, fase y modo -----------------------
+function expIndexar(){
+  EXP_BUSQ = [];
+  EXP_SEGS.forEach(s => s.fases.forEach((f, i) => {
+    f.checks.forEach((c, j) => EXP_BUSQ.push({ seg:s.key, i, j, txt:c.t,
+      n:expNorm([c.t, c.time, c.cond, f.title].join(' ')) }));
+    (f.tips || []).forEach((tp, k) => {
+      if (tp.platos && !tp.platos.every(id => DISHES.some(d => d.id === id))) return;   // tip que no se muestra
+      EXP_BUSQ.push({ seg:s.key, i, k, tip:true, txt:tp.label,
+        n:expNorm([tp.label, tp.body, tp.guion, f.title].join(' ')) });
+    });
+  }));
+}
+function expBuscarInput(){
+  const inp = document.getElementById('exp-search');
+  EXP_Q = inp ? inp.value.trim() : '';
+  expRender();
+}
+function expBuscarLimpiar(){
+  const inp = document.getElementById('exp-search');
+  if (inp) inp.value = '';
+  EXP_Q = '';
+  expRender();
+}
+function expResultadosHtml(){
+  if (!EXP_BUSQ) expIndexar();
+  const terms = expNorm(EXP_Q).split(' ').filter(t => t.length > 1);   // la "s" de "30 s" calza con todo
+  if (!terms.length) return '';
+  // El segmento activo primero: lo demás repite muchos puntos entre servicios.
+  const res = EXP_BUSQ.filter(r => terms.every(t => r.n.includes(t)))
+    .sort((a, b) => (b.seg === EXP_SEG) - (a.seg === EXP_SEG));
+  if (!res.length) return `<div class="chk-search-empty">Nada con «${vjEsc(EXP_Q)}».</div>`;
+  const filas = res.slice(0, 60).map(r => {
+    const s = expSeg(r.seg), f = s.fases[r.i];
+    const args = r.tip ? `'${r.seg}',${r.i},${r.k},1` : `'${r.seg}',${r.i},${r.j},0`;
+    return `<button class="exp-res" onclick="expIrPunto(${args})">
+      <div class="exp-res-ruta"><b>${s.label}</b> › ${f.n}. ${f.title}${r.tip ? ' · tip' : ''}</div>
+      <div class="exp-res-txt">${vjEsc(r.txt)}</div></button>`;
+  }).join('');
+  return `<div class="exp-res-cuenta">${res.length} resultado${res.length === 1 ? '' : 's'}</div>${filas}`;
+}
+function expIrPunto(seg, i, j, esTip){
+  expBuscarLimpiar();
+  EXP_SEG = seg;
+  EXP_ABIERTAS[seg] = EXP_ABIERTAS[seg] || { 0:true };
+  EXP_ABIERTAS[seg][i] = true;
+  if (esTip && EXP_MODO !== 'estudio'){ EXP_MODO = 'estudio'; expGuardar(); }   // los tips viven en Estudio
+  (EXP_REVELADAS[seg] = EXP_REVELADAS[seg] || {})[i] = true;  // llegar buscando no tapa lo buscado
+  expRender();
+  // Un tick después del repintado, como chkScrollToTask: con el innerHTML recién
+  // cambiado, el scroll suave se cancela y el punto queda fuera de la vista.
+  setTimeout(() => {
+    const el = document.getElementById(esTip ? `exp-tip-${seg}-${i}-${j}` : `exp-${seg}-f${i}-${j}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+    el.classList.remove('exp-pulso'); void el.offsetWidth; el.classList.add('exp-pulso');
+  }, 60);
+}
+
 // Ediciones de la carta (módulo med): acá, con TODOS los datos ya definidos
 // (los tragos y los postres legacy se arman más arriba que el boot de setLang).
 medArrancar();

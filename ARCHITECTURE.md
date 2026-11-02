@@ -27,6 +27,8 @@ que es operacional (turnos, postres, pedidos, comandas).
 - Ventana viva de tips de vino, intercalada en el listado de platos
 - Corcho digital de viajeros: dietas, alergias y restricciones por
   habitación, con filtros y contadores (módulo `viajeros`)
+- Experto: los estándares de comedor (pauta de observación GEO) para
+  estudiarlos y practicarlos, por servicio y para el equipo (§3.8)
 - Guía de Recepción: procedimientos del turno, tablas de consulta y
   plantillas de correo, con buscador transversal y uso sin red (§3.6)
 - Carta editable por el equipo: textos, matriz, maridaje, foto, día y orden
@@ -122,7 +124,7 @@ de tabs:
 │  Comedor Nicolás · Sebastián · Diego · Viviana              │
 │  Apoyo   Victor                                              │
 ├─────────────────────────────────────────────────────────────┤
-│ [Menú] [Vinos] [PGO] [Comande] [Café] [Checklist] [Recepción]│
+│ [Menú] [Vinos] [PGO] [Comande] [Café] [Experto] [Recepción]  │
 └─────────────────────────────────────────────────────────────┘
                     (contenido de la tab activa)
 ```
@@ -141,7 +143,8 @@ un `innerHTML`— es el patrón **park/place** de §5.
 | **Café** | Manual de bebidas + modo servicio (mesero / barista) | Estático (`COFFEE_DATA`) + Firebase `/orders` | 555 (mesero) · 999 (barista) |
 | **E-Check** | Comandera por mesa. **Dos vistas, a propósito distintas:** ingresar (fila de asientos, sin mapa) y entregar (la comanda completa ES el mapa de la mesa) | Firebase `/comandas/{date}/{id}` | 666 |
 | **Viajeros** | Observaciones de dieta por hab, **transcritas verbatim** (los tags derivados quedan en la ficha, no en la portada) | Firebase `/viajeros/current` (read-only; escribe `scripts/sync_viajeros.py`) | — |
-| **Checklist** | Tareas pre-servicio del equipo GEO (Montaje · Pasillo · Quincho) y del Bar, con marca, comentario y fotos. Visible desde el 2026-09-30 como sexta tab, sin destacar; antes era un botón sobre la fila y estuvo oculto desde el 2026-08-01 | Firebase `checklist_*` | 9876 (editar) |
+| **Checklist** | Tareas pre-servicio del equipo GEO (Montaje · Pasillo · Quincho) y del Bar, con marca, comentario y fotos. Visible desde el 2026-09-30 como sexta tab, sin destacar; antes era un botón sobre la fila y estuvo oculto desde el 2026-08-01. **Acceso oculto desde el 2026-11** (`hidden` en el botón): su lugar lo toma Experto; el módulo queda intacto | Firebase `checklist_*` | 9876 (editar) |
+| **Experto** | Los estándares de comedor de la pauta de observación GEO: el servicio de cada GEO por servicio (Desayuno · Almuerzo · Cena, en fases con ancla y frase para memorizar) y lo general del equipo (presencia, salón, buffet). Modo Estudio / Servicio (§3.8) | Estático en el script · marcas en `localStorage` | — |
 | **Recepción** | Guía de procedimientos del turno de recepción (primera área fuera de A&B): buscador transversal, checklist personal por procedimiento, tablas y plantillas. Séptima tab desde el 2026-10 (§3.6); **acceso oculto desde el 2026-10-10** (`RC_TAB_ON = false` + `hidden` en el botón), módulo intacto | Firebase **Storage** `recepcion/` (estático, detrás del gate) · marcas en `localStorage` | — |
 
 Los datos del Café (módulo Service Mode) y los del E-Check tienen su
@@ -490,7 +493,8 @@ señal se cae: el doc se copia en `localStorage` (`ata.quincho.v1`) y la vista
 arranca desde ahí aunque Viajeros no cargue. Un movimiento que no se guardó se
 deshace en pantalla, con aviso.
 
-**La guía de servicio vive en el Checklist**, sección Quincho del equipo GEO
+**La guía de servicio vive en el Checklist**, hoy sin acceso (la tab se ocultó
+en 2026-11 al llegar Experto; decisión del owner: oculto del todo), sección Quincho del equipo GEO
 (Antes · Recepción · En mesa · Show), sólo en español como todo lo operativo.
 Lo que se marca son tareas; el contexto de cada hito es la `nota` del momento
 (campo nuevo de la estructura, editable desde el editor con PIN), y `destaca`
@@ -737,6 +741,89 @@ se guardó…" y deshace.
 los guiones de "Maridajes generales" y los tips de vino. Estudio cruza índice ↔
 Menú por posición **y nombre**: renombrar un plato a algo muy distinto hace que
 ese cruce falle cerrado (sin matriz prestada), que es el comportamiento seguro.
+
+### 3.8 Experto: los estándares de comedor, para estudiar y practicar (2026-11)
+
+**Qué es.** La pauta con la que se evalúa al equipo —"Pautas de observación
+GEO", un Excel con una hoja por servicio— convertida en material de estudio. El
+molde es la pauta de cena que el owner armó en su Cockpit: el servicio de un GEO
+partido en **fases**, cada una con su **ancla** (el momento que la dispara: "te
+paras frente a la mesa") y una **frase para memorizar** ("Me presento ·
+restricciones · pregunto · propongo · peques"). Ocupa el lugar de Checklist en la
+tira.
+
+```
+[ buscar estándar, tiempo o palabra ]
+ DESAYUNO │ ALMUERZO │ CENA │ EQUIPO     ← preselección por hora, no muro
+[ MODO ESTUDIO ] [ MODO SERVICIO ]
+0. Arribo  1. Presentación  2. Líquidos …  ← mapa: toca y salta a la fase
+┌ (0) Arribo  QUIEN RECIBE ─────────────┐
+│ ANCLA: EL VIAJERO CRUZA LA PUERTA     │
+│ Saludo en 30 s · sonrío · elige · …   │
+│ ☐ ⏱ máx 30 s  El viajero fue saludado │  ← tapado (blur) en Estudio
+│ …              [ Revelar puntos ]     │
+│ ┃ TIP · Antes de que llegue el GEO    │  ← tips sólo en Estudio
+└───────────────────────────────────────┘
+```
+
+**Dónde va cada cosa de la pauta.**
+
+| Pauta (por hoja) | En Experto |
+|---|---|
+| I · Arribo | Fase 0 de cada servicio, rotulada "quien recibe" (lo hace GEM/GES/GEO): se estudia en el orden en que ocurre |
+| II · Servicio desayuno / almuerzo / cena | Fases 1..n del servicio (21 · 36 · 35 puntos), en el orden de la pauta |
+| III · Colaboradores | Equipo › Presencia y actitud |
+| IV · Producto | Equipo › Salón y mesas |
+| IV · Buffet (sólo desayuno) | Equipo › Buffet de desayuno |
+
+Lo que la pauta repite en las tres hojas (Colaboradores, Producto) va **una
+vez**; cada punto lleva `src` con las filas de origen (`d4 a4 c4`) y, si no
+aplica a los tres servicios, una etiqueta con los que sí ("almuerzo · cena").
+
+**Transcribir, no reescribir.** Mismo orden y mismo contenido que la pauta. Sólo
+se pasa a afirmación, se corrigen tildes y el tiempo límite sale a una etiqueta
+`⏱` ("máx 3 min sentados"); "si aplica" va a la suya. **El cruce se hace a
+máquina** (scratchpad, no repo): se extraen los puntos del Excel con openpyxl, se
+evalúa `EXP_SEGS` con node y se exige el mismo conteo por sección y que cada fila
+de Colaboradores/Producto/Buffet esté referenciada por **exactamente un** `src`.
+Debe dar 0. Los pares de baja similitud se leen a ojo: son los que pasaron el
+tiempo a la etiqueta.
+
+**Dos modos.** *Estudio*: los puntos de cada fase van tapados (blur) hasta
+"Revelar"; con el ancla y la frase se repasa de memoria y se comprueba. Volver a
+Estudio los vuelve a tapar. Los tips viven sólo acá. *Servicio*: los puntos se
+marcan con el pulgar; contador por fase, barra del servicio, y la fase completa
+se pinta teal. Marcar **parcha en sitio** (clase + contadores), sin `innerHTML`:
+medido Δy = 0 del punto tocado.
+
+**Marcas personales, nunca Firebase.** `localStorage` (`ata.experto.v1`), por
+aparato y por segmento. Vencen a las **12 h** (un servicio): al día siguiente se
+arranca limpio sin tocar nada. Es una herramienta de práctica, no un registro de
+cumplimiento —eso era el Checklist—, así que no hay nada que sincronizar.
+
+**Tips: datos vivos, y fallan cerrado.** Los vinos salen de `WINES` (los
+incluidos = todo lo que no es `premium`), los guiones de `GUIONES`, los platos
+del día de `DISHES` con `menuTodayCycleDay()`, y "frutos secos y penicilina en la
+cena" de los alérgenos de cada ficha. Cada píldora salta a su ficha en Vinos o
+Menú. Un tip que cita platos por id (`platos:[…]`) **no se muestra** si alguno ya
+no está en la carta; uno "de hoy" sin platos tampoco. Al portar los tips del
+Cockpit se corrigieron tres contra la carta real: la lista de frutos secos dejaba
+afuera el Carrot cake, la milhoja no es "el único postre sin gluten" sino el
+único que su ficha **declara** sin gluten, y el filete ya no está en la cena.
+Los tips de desayuno y almuerzo los redactó el asistente desde la data del
+Handbook y se rotulan **"· borrador"** en pantalla hasta que el owner los revise
+(quitar `borrador:true`).
+
+**Buscador transversal.** Igual que Checklist y Recepción: estático fuera de
+`#exp-root`, acento-insensible, AND de términos (los de una letra se ignoran: la
+"s" de "30 s" calzaba con todo). Busca puntos y tips de los cuatro segmentos,
+con el segmento activo primero. Tocar un resultado salta al segmento y la fase,
+la revela, y si es un tip pasa a Estudio. El scroll va **un tick después** del
+repintado (como `chkScrollToTask`): con el `innerHTML` recién cambiado el scroll
+suave se cancela.
+
+**Idioma: sólo ES**, como todo lo operativo. La ops-strip se colapsa como en
+Recepción (`body.in-experto`), con la misma compensación de scroll.
 
 ---
 
@@ -1687,6 +1774,11 @@ hecha: falta que sobreviva a un reload.
 
 Hay decisiones conscientes de prototipo. Listarlas explícitas:
 
+- **Tab CHECKLIST oculta desde 2026-11.** Su lugar en la tira lo tomó Experto
+  (§3.8). Igual que Rol: se oculta el **acceso** — atributo `hidden` en
+  `#tab-btn-checklist` —, no el módulo. Con ella queda sin acceso la guía de
+  servicio del Quincho (§3.5); el owner eligió ocultarla del todo, sin puerta
+  desde Experto. Revivirla = borrar el `hidden`.
 - **Tab RECEPCIÓN oculta desde 2026-10-10**, a pedido del owner, el mismo día
   que llegó a producción. Igual que Rol: se ocultó el **acceso**, no el módulo.
   `RC_TAB_ON = false` además impide que el arranque la reabra en el aparato que
@@ -1771,7 +1863,8 @@ Mapa de regiones aproximadas (los rangos cambian a medida que crece;
 | Módulo Comandera | 3900-4200 | Gate + home + new + active + drag + history |
 | Módulo Viajeros | ~5260-5525 (+ CSS ~1377, STATE TOP ~2500, UI ~2682) | Corcho de dietas por hab: stats/chips filtrantes, búsqueda con teclado numérico plegable, grilla con roster (primer nombre + bandera `VJ_NAC` en vez de esferas de iniciales), modal por hab. Read-only `/viajeros/current` |
 | Módulo Rol | 5500-6260 | PIN gate + lectura semanal del roster |
-| Módulo Checklist | 6260-6940 | Sub-secciones + fases + carry-over + edit mode supervisor |
+| Módulo Checklist | 6260-6940 | Sub-secciones + fases + carry-over + edit mode supervisor (acceso oculto desde 2026-11) |
+| Módulo Experto | antes de `medArrancar()` (+ CSS al final del `<style>`, STATE TOP `EXP_*` tras Recepción) | `EXP_SEGS` (los puntos transcritos + tips), `expRender`/`expFaseHtml`/`expTipHtml`, parches en sitio (`expToggleChk`, `expPatchProgreso`), buscador `expIndexar`/`expIrPunto`. Ver §3.8 |
 | Módulo Recepción | al final del script (+ CSS al final del `<style>`, STATE TOP tras Estudio, UI `rc*` sólo en `es`) | Guía de recepción: `rcCargarIndice` (Storage / `/recepcion-local/` + Cache API), `rcIndexar`/`rcBuscar`, vistas Inicio · Procedimiento · Referencia · Plantillas, visor de capturas. Ver §3.6 |
 | Boot | dispersos | setLang(currentLang) + fetches iniciales |
 
