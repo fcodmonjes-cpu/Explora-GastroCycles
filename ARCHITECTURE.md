@@ -176,7 +176,7 @@ PRINCIPALES ─ 4 · POSTRES ─ 3
 ```
 
 El hueco de los tips cae **justo antes de Principales** en los dos
-servicios: bajo la sopa en Almuerzo y bajo la entrada en Cena — misma
+servicios: bajo la sopa en Almuerzo y bajo los miniplatos en Cena — misma
 posición relativa. En **BAR no se muestra**, y es deliberado: esa carta no
 tiene sopa ni principales donde anclarlo. En búsqueda tampoco.
 
@@ -212,10 +212,32 @@ la operación no adoptó. Se mide en taps a hora pico (§11), no en elegancia.
 **La regla de oro de la matriz** (vive entera en `dietVerdict` + `menuHasMatrix`):
 `1` apto · `0` no apto · `'*'` apto con condición (obliga a tener su texto en
 `dietNotes`) · **ausente = sin dato**. Un plato sin datos JAMÁS se pinta como
-apto: se marca con borde punteado y "consultar cocina". Hoy aplica a los
-principales del almuerzo y a toda la cena, que se mantienen hasta fin de mes, y
-a los ejes que el Guion de Bar no declara. Silencio significa apto sólo donde
-hay matriz completa — por eso no existe un chip verde de "apto".
+apto: se marca con borde punteado y "consultar cocina". Desde que entró la cena
+(2026-11-03) almuerzo y cena tienen matriz completa en todos sus platos; hoy
+aplica sólo a los ejes que el Guion de Bar no declara. Silencio significa apto
+sólo donde hay matriz completa — por eso no existe un chip verde de "apto".
+Si varios ejes de un plato tienen la **misma** nota `✓*`, la ficha abierta los
+agrupa en una sola fila (la canasta de la cena explica cinco ejes con la misma
+frase del librito).
+
+**La cena (2026-11-03).** Misma gramática que el almuerzo, todo por posición
+fija. Sección **Miniplatos para compartir**: la **canasta de pan** (una sola
+para las cuatro noches: `fija:true`, `day:''`) y los 5 miniplatos por categoría
+(`MINIPLATO_SLOTS`: vegano · dip · proteína de mar · proteína de carne ·
+ensalada) — seis fichas, tres filas parejas de dos. Después Principales
+(`PRINCIPAL_SLOTS`, los mismos del almuerzo: el "Vacuno" del documento de cena
+es la "res" del de almuerzo) y Postres (`POSTRE_SLOTS`). En el código el curso
+de los miniplatos sigue siendo `'Entrada'`: es el lugar que ocupan, y así
+Comande, Experto y el editor no necesitaron un curso nuevo; sólo cambia el
+rótulo (`secMiniplatos`). La canasta no tiene día: `menuRenderCena` la dibuja
+todas las noches, la búsqueda la muestra en un bloque "Cena · Todas las noches",
+el editor no le ofrece día ni posición, y `menuJumpTwin` no toca el riel al
+abrirla. **Comande no lista miniplatos ni canasta** (decisión del owner): llegan
+como set al centro de la mesa, nadie los pide uno por uno — mismo criterio que
+el buffet; un ajuste va por el Special Request de entrada. Los documentos de
+cena no traen maridaje: con la cena anterior se fueron los únicos platos con
+`wines`, así que las fichas de vino quedan en "Platos que marida (0)" hasta que
+se cargue la propuesta de maridaje.
 
 **El bar absorbió Cocktails.** Toda la carta de bar (comida + tragos) vive en el
 segmento BAR; la tab Cocktails desapareció de `.main-tabs` (de 7 a 6 tabs) y
@@ -1565,9 +1587,12 @@ maridajes wireados a la ficha de cada vino.
 
 ### Receta 1b: Agregar un plato con matriz de restricciones
 
-Los platos del cambio de menú 2026 viven en tres arrays propios
-(`MENU_BUFFET`, `MENU_SOPAS`, `MENU_POSTRES`) que se empujan a `DISHES` al
-final del bloque de datos, más `BAR_DISHES` para la carta fija del bar.
+Los platos del cambio de menú 2026 viven en arrays propios —almuerzo:
+`MENU_BUFFET`, `MENU_SOPAS`, `MENU_PRINCIPALES`, `MENU_POSTRES`; cena:
+`MENU_CENA_PAN`, `MENU_CENA_MINI`, `MENU_CENA_PRINCIPALES`, `MENU_CENA_POSTRES`—
+que se empujan a `DISHES` al final del bloque de datos (`menuToDish`), más
+`BAR_DISHES` para la carta fija del bar. Ids: `bf`/`pr`/`po` en almuerzo,
+`mc`/`prc`/`poc` + `cn-pan` en cena (`{prefijo}{día}-{slot}`).
 
 ```js
 {
@@ -1860,7 +1885,7 @@ Mapa de regiones aproximadas (los rangos cambian a medida que crece;
 | `<script>` STATE TOP | 985-1170 | Todas las let/const accesibles desde boot |
 | Diccionario `UI` | 1170-1610 | ES/EN/PT strings |
 | Data estática | 1610-2400 | DISHES, WINES, COCKTAILS, MOCKTAILS, MOMENTOS, GUIONES |
-| Cambio de menú 2026 | tras `DISHES` | `DIET_AXES`, `VJ_TAG_TO_AXIS`, `BUFFET_SLOTS`, `POSTRE_SLOTS`, `MENU_CYCLE_OFFSET`, `MENU_BUFFET`, `MENU_SOPAS`, `MENU_POSTRES`, `BAR_DISHES`, `DISHES_LEGACY_POSTRES` (los 12 postres anteriores, retirados pero reversibles con `DISHES.push(...)`) y el `DISHES.push` que unifica todo |
+| Cambio de menú 2026 | tras `DISHES` | `DIET_AXES`, `VJ_TAG_TO_AXIS`, `BUFFET_SLOTS`, `POSTRE_SLOTS`, `MENU_CYCLE_OFFSET`, `MENU_BUFFET`, `MENU_SOPAS`, `MENU_PRINCIPALES`, `MENU_POSTRES`, el bloque CENA 2026 (`MINIPLATO_SLOTS`, `CENA_PAN_SLOT`, `MENU_CENA_*`), `BAR_DISHES`, los `DISHES_LEGACY_*` (postres, principales de almuerzo y cena anteriores: retirados del catálogo pero reversibles con `DISHES.push(...)`) y el `DISHES.push` que unifica todo |
 | Traducciones de contenido | tras `UI`, antes de los helpers | `DISH_TRANS` (EN/PT, **los 127 platos**: los 60 del ciclo original más los 67 del menú 2026 — buffet, sopas, principales, postres y carta de bar), `WINE_TRANS`, `GUION_TRANS` y los helpers `getDishTr`/`getWineTr`/`getGuionesTr`. Overlay por id, no campos por idioma — ver §5 |
 | Vista Menú | tras `setTab` | `renderDishes` + `menuRender*` (almuerzo/cena/bar/búsqueda), `dietVerdict`, `menuHasMatrix`, `menuExclStrip`, `menuVerdicts`, `menuTile`, la lente (`menuToggleAxis`, `menuApplyRoom`) y `menuJumpTwin` |
 | Navegación | 2200-2400 | setTab, setLang, openWineFromGuion |

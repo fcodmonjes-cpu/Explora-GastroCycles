@@ -1451,7 +1451,7 @@ select.med-in { min-height:40px; }
 .mn-v { display:flex; flex-wrap:wrap; gap:3px 9px; align-items:baseline; font-size:12px; line-height:1.45; }
 .mn-v-tag { flex:0 0 auto; min-width:78px; font-family:'Courier Prime','Courier New',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; }
 .mn-v.no      .mn-v-tag { color:#e08663; }
-.mn-v.note    .mn-v-tag { color:#cfa14a; }
+.mn-v.note    .mn-v-tag { color:#cfa14a; max-width:100%; }  /* varios ejes con la misma nota: el rótulo envuelve */
 .mn-v.nodata  .mn-v-tag { color:var(--text-tertiary); }
 .mn-v-txt { color:var(--text-secondary); }
 .mn-v.note .mn-v-txt { color:var(--text); }
@@ -3375,10 +3375,10 @@ const DISHES = [
 // Fuente: los 5 documentos de Yumcha (Armado de Menú, Restricciones
 // Alimenticias, los dos Guiones de Explicación y el Dossier de Concepto).
 //
-// Baja GRADUAL: entran el buffet (6 bandejas + sopa), los 12 postres nuevos y
-// los 11 platos del bar. Las 4 Opciones Principales del almuerzo NO se tocan —
-// siguen las actuales (course:'Plato principal' en DISHES) hasta fin de mes.
-// Los 16 principales nuevos están en los documentos, no en el código.
+// Entró por etapas: buffet, sopa, postres de almuerzo y bar (2026-08-10), los
+// principales de almuerzo (2026-08-25) y la cena completa (2026-11-03, bloque
+// CENA 2026 más abajo). Lo anterior no se borró: queda en el array literal de
+// DISHES y se retira del catálogo activo con los DISHES_LEGACY_*.
 //
 // Todo lo nuevo se empuja a DISHES al final del bloque, así el buscador, el
 // catálogo del Comande (COMANDA_SOURCES) y dishShortName() lo ven sin cambios.
@@ -3875,6 +3875,329 @@ const POSTRE_SLOTS = [
   { key:'sinazucar', uiKey:'slotSinAzucar' }
 ];
 
+// ═══════════════════════════════════════════════════════════
+// CENA 2026 — canasta, miniplatos, principales y postres
+// ═══════════════════════════════════════════════════════════
+// Fuente: los 4 documentos de cena de Yumcha (Armado de Menú v2, Guion de
+// Explicación de Preparaciones, Restricciones Alimenticias y Dossier v2).
+// Con esto el cambio de menú queda completo: almuerzo, cena y bar salen todos
+// de los documentos del asesor.
+//
+// `brief` y `extended` son textuales del Guion; la matriz `diet` de 9 ejes es
+// textual de la tabla de Restricciones (cruzada a máquina contra el .docx: 0
+// discrepancias). Cada `dietNotes` sale de la viñeta del mismo documento que
+// explica ese ✓*. Los documentos no traen maridaje: no se inventa ninguno.
+//
+// El Armado dice que en cena el día de la ficha técnica coincide con el día de
+// servicio, así que no llevan `recipeDay` (en almuerzo sí, porque difieren).
+
+// --- Los 5 miniplatos para compartir ----------------------------------------
+// Llegan juntos al centro de la mesa, uno por categoría, y la categoría no
+// cambia nunca: mismo rol que BUFFET_SLOTS. En el código el curso sigue
+// llamándose 'Entrada' (es el lugar que ocupan en la cena, y así Comande,
+// Experto y el editor no necesitan un curso nuevo); en pantalla se rotula
+// "Miniplatos para compartir".
+const MINIPLATO_SLOTS = [
+  { key:'vegano',   uiKey:'slotMiniVegano' },
+  { key:'dip',      uiKey:'slotDip'        },
+  { key:'mar',      uiKey:'slotMiniMar'    },
+  { key:'carne',    uiKey:'slotMiniCarne'  },
+  { key:'ensalada', uiKey:'slotEnsalada'   }
+];
+// La canasta va en la misma sección que los miniplatos —la tabla del asesor la
+// pone ahí— pero en su propia posición, fuera de MINIPLATO_SLOTS: así el editor
+// nunca ofrece mover un miniplato al lugar del pan.
+const CENA_PAN_SLOT = { key:'pan', uiKey:'slotPan' };
+
+// --- Canasta de pan: UNA para las cuatro noches -----------------------------
+// `fija:true` y `day:''`: no rota, así que no tiene día. menuRenderCena la
+// dibuja todas las noches, el buscador la muestra en su propio bloque y el
+// editor no le ofrece día ni posición. Comande no la lista (es para la mesa).
+const MENU_CENA_PAN =
+  {id:'cn-pan',day:'',slot:'pan',fija:true,
+   name:'Focaccia, Pan Pita y Librito',short:'Canasta de pan',
+   diet:{veg:'*', vgt:'*', pesc:'*', mar:1, fs:1, lac:'*', ge:0, gs:0, halal:'*'},
+   dietNotes:{veg:'Sin el librito (lleva manteca de cerdo, leche en polvo y dora de huevo): la focaccia y el pan pita sí son aptos.',vgt:'Sin el librito (lleva manteca de cerdo, leche en polvo y dora de huevo): la focaccia y el pan pita sí son aptos.',pesc:'Sin el librito (lleva manteca de cerdo, leche en polvo y dora de huevo): la focaccia y el pan pita sí son aptos.',lac:'Sin el librito (lleva manteca de cerdo, leche en polvo y dora de huevo): la focaccia y el pan pita sí son aptos.',halal:'Sin el librito (lleva manteca de cerdo, leche en polvo y dora de huevo): la focaccia y el pan pita sí son aptos.'},
+   brief:'Tres panes hechos en casa para acompañar los miniplatos: focaccia de aceite de oliva, pan pita y librito.',
+   extended:'La focaccia es de alta hidratación y fermentación lenta en frío, lo que le da una miga muy aireada; se termina con flor de sal y romero. El pan pita es de estilo israelí, horneado a muy alta temperatura para que se infle y quede suave. El librito es un pan chileno laminado, de capas que se separan al abrirlo, y se hace con manteca de cerdo: a viajeros vegetarianos, veganos o que no consumen cerdo hay que avisarles que pueden disfrutar la focaccia y el pan pita, pero no el librito. Ninguno de los tres es apto para quienes evitan el gluten.'};
+
+const MENU_CENA_MINI = [
+  // ── Día 1 ──────────────────────────────────────────────────────────
+  {id:'mc1-vegano',day:'1',slot:'vegano',
+   name:'Tomates y Uvas Ahumadas con Chancho en Piedra',short:'Tomates y uvas ahumadas',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Tomates cherry pelados y uvas ahumadas sobre chancho en piedra, una salsa chilena de tomate y ají, con cebollitas asadas y albahaca.',
+   extended:'El chancho en piedra es una salsa tradicional chilena; el nombre viene del mortero de piedra donde se machacaba, y no lleva cerdo. Aquí la hacemos tatemando —quemando directo al fuego— tomate, ajo, cebolla y ají verde antes de molerlos con cilantro, lo que le da un sabor ahumado. Se suman tomates cherry pelados, uvas ahumadas en casa y pétalos de cebollita perla asada. Es 100% vegano y apto para todas las restricciones. A viajeros extranjeros vale la pena explicarles el nombre.'},
+  {id:'mc1-dip',day:'1',slot:'dip',
+   name:'Crema de Yogurt, Pepino y Hierbas',short:'Crema de yogurt',
+   diet:{veg:0, vgt:'*', pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   dietNotes:{vgt:'Sin la trucha curada, que va sobre el tzatziki. El yogurt es sin lactosa.'},
+   brief:'Tzatziki de yogurt, pepino y eneldo, con láminas de trucha curada en casa, hinojo y perejil.',
+   extended:'El tzatziki es una salsa griega: yogurt batido con pepino rallado, ajo confitado, limón y eneldo. Encima va trucha curada por nosotros durante 36 horas con sal, azúcar, ralladura de limón, eneldo y pimienta molle, laminada muy fina al momento. El yogurt es sin lactosa. Para viajeros vegetarianos se puede servir sin la trucha.'},
+  {id:'mc1-mar',day:'1',slot:'mar',
+   name:'Tiradito de Pescado, Habas y Cebollín',short:'Tiradito',
+   diet:{veg:0, vgt:0, pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Pescado blanco laminado fino sobre una emulsión de habas, con sofrito de cebollín, habas fritas y aceite verde.',
+   extended:'El tiradito es de origen peruano: el pescado se corta en láminas finas, como un sashimi, en lugar de cubos como el ceviche. Se sirve sobre una emulsión de habas, cilantro y jengibre, con un sofrito suave de cebollín y puerro, habas fritas crujientes y un aceite verde de cebollín. Es apto para pescetarianos y no lleva mariscos, lactosa ni gluten.'},
+  {id:'mc1-carne',day:'1',slot:'carne',
+   name:'Pichanga de Mollejas',short:'Pichanga de mollejas',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:0, ge:1, gs:1, halal:0},
+   brief:'Nuestra versión de la pichanga chilena: mollejas fritas con queso de cabra, encurtidos de la casa y aceitunas.',
+   extended:'La pichanga es una tabla chilena para picar. Las mollejas se remojan en salmuera, se cocinan en un caldo aromático y se fríen pasadas por chuño, lo que les da un exterior crocante. Se mezclan con queso de cabra, ají verde, pepino y membrillo encurtidos en casa, cebollitas y aceitunas, y se terminan con una salsa escabechada. No es apta Halal, porque la salsa lleva un caldo con cerdo, ni para quienes evitan la lactosa, por el queso.'},
+  {id:'mc1-ensalada',day:'1',slot:'ensalada',
+   name:'Berros, Rabanitos, Durazno y Sésamo',short:'Berros y durazno',
+   diet:{veg:0, vgt:0, pesc:1, mar:1, fs:1, lac:1, ge:0, gs:1, halal:1},
+   brief:'Berros frescos con durazno a la brasa, rabanitos encurtidos y un aderezo de sésamo.',
+   extended:'El durazno se asa a la brasa hasta caramelizar, lo que equilibra el picor del berro y la acidez de los rabanitos encurtidos. El aderezo combina tahini (pasta de sésamo) con una base de soya dulce endulzada con arrope de chañar. Esa base lleva dashi de pescado, por lo que no es apta para veganos ni vegetarianos; por la soya, tampoco para quienes evitan el gluten de forma estricta.'},
+  // ── Día 2 ──────────────────────────────────────────────────────────
+  {id:'mc2-vegano',day:'2',slot:'vegano',
+   name:'Betarragas Asadas y Cítricos',short:'Betarragas y cítricos',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Carpaccio de betarraga asada con gajos de pomelo quemados y una gremolata de pimiento, pomelo y cebollita encurtida.',
+   extended:'La betarraga se asa entera hasta quedar tierna y luego se lamina muy fina. El pomelo se carameliza al soplete para suavizar su amargor, y la gremolata —un aderezo de origen italiano— combina pimiento asado, jugo de pomelo, cebollita encurtida, perejil y pimienta molle. Es 100% vegano y apto para todas las restricciones.'},
+  {id:'mc2-dip',day:'2',slot:'dip',
+   name:'Pasta de Pimientos Asados y Maní',short:'Muhammara',
+   diet:{veg:'*', vgt:1, pesc:1, mar:1, fs:0, lac:1, ge:0, gs:'*', halal:1},
+   dietNotes:{veg:'Sin el pan gratato, que va integrado en la pasta y lleva mantequilla. Avisar a cocina con anticipación.',gs:'Sin el pan gratato (es la misma versión que se prepara para veganos). Avisar a cocina con anticipación.'},
+   brief:'Muhammara: pasta de pimientos rojos asados y maní, con maní frito y un aceite de ají aromático.',
+   extended:'La muhammara es una pasta de origen sirio. La hacemos con pimientos asados al fuego, maní tostado, pan gratato, pasta de ají fermentado, arrope de chañar y comino, con una textura rústica. Se termina con maní frito y un aceite de ají infusionado con especias. No es apta para quienes evitan los frutos secos. El pan gratato lleva mantequilla sin lactosa; para viajeros veganos, cocina puede prepararla sin él si se avisa con anticipación.'},
+  {id:'mc2-mar',day:'2',slot:'mar',
+   name:'Tartar de Camarón o Centolla, Apio y Palta',short:'Tartar de camarón o centolla',
+   diet:{veg:0, vgt:0, pesc:1, mar:0, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Tartar de camarón o centolla, según disponibilidad, con apio y vegetales picados, mayonesa cítrica y una lámina de palta.',
+   extended:'La carne de camarón o centolla se mezcla con un picadillo de apio, rabanito, cebolla morada, perejil, ciboulette y ralladura de limón, ligado con una mayonesa cítrica hecha en casa. Se cubre con un disco de palta y hojas de mostaza aliñadas. Es apto para pescetarianos, pero no para quienes evitan los mariscos.'},
+  {id:'mc2-carne',day:'2',slot:'carne',
+   name:'Albóndigas a la Brasa con Salsa de Yogurt',short:'Albóndigas',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Albóndigas especiadas de vacuno, terminadas a la brasa, sobre salsa de yogurt con ajo y menta, con tomates asados y pepino.',
+   extended:'Son kofte, albóndigas de tradición turca: carne de vacuno con cebolla, perejil, comino, pimentón ahumado, canela y pimienta molle. Se doran y se terminan a la brasa para darles aroma ahumado. La salsa de yogurt sin lactosa, con ajo confitado y menta, las refresca. No llevan gluten.'},
+  {id:'mc2-ensalada',day:'2',slot:'ensalada',
+   name:'Endivia, Queso de Cabra, Mostaza y Pera',short:'Endivia y pera',
+   diet:{veg:0, vgt:1, pesc:1, mar:1, fs:1, lac:0, ge:1, gs:1, halal:1},
+   brief:'Hojas de endivia con pera cocida en vino tinto, queso de cabra y un aderezo de mostaza, arrope de chañar y queso de cabra.',
+   extended:'La endivia aporta un amargor suave que se equilibra con la pera cocida en vino tinto con canela —el alcohol se evapora en la cocción— y con el aderezo cremoso de mostaza Dijon, arrope de chañar y queso de cabra. Es vegetariana; no es apta para veganos ni para quienes evitan la lactosa.'},
+  // ── Día 3 ──────────────────────────────────────────────────────────
+  {id:'mc3-vegano',day:'3',slot:'vegano',
+   name:'Pepinos Rotos con Aceite de Merkén',short:'Pepinos rotos',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:0, lac:1, ge:0, gs:1, halal:1},
+   brief:'Pepinos golpeados y aliñados con soya, vinagre de arroz y chili oil, con aceite de merkén, ajo frito y sésamo.',
+   extended:'Es una receta de origen chino: los pepinos se golpean para romperlos, lo que les permite absorber mejor el aliño de soya, vinagre de arroz, aceite de sésamo, jengibre y chili oil. Se terminan con nuestro aceite de merkén —aceite infusionado con cacho de cabra ahumado y maní—, ajo frito, cilantro y sésamo. Es vegano. Por el maní no es apto para quienes evitan los frutos secos, y por la soya, para quienes evitan el gluten de forma estricta.'},
+  {id:'mc3-dip',day:'3',slot:'dip',
+   name:'Hummus de Garbanzos',short:'Hummus',
+   diet:{veg:'*', vgt:'*', pesc:'*', mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   dietNotes:{veg:'Sin el pollo ahumado, que va sobre el hummus.',vgt:'Sin el pollo ahumado, que va sobre el hummus.',pesc:'Sin el pollo ahumado, que va sobre el hummus.'},
+   brief:'Hummus cremoso con garbanzos cocidos y fritos, pollo ahumado desmenuzado, perejil y aceite de oliva.',
+   extended:'Para lograr un hummus muy liso, pelamos los garbanzos uno a uno y los licuamos calientes con tahini, limón y ajo confitado, sumando hielo para airearlo. Encima van garbanzos enteros, garbanzos fritos crujientes y pollo ahumado en casa. Sin el pollo, es apto para veganos, vegetarianos y pescetarianos.'},
+  {id:'mc3-mar',day:'3',slot:'mar',
+   name:'Escabeche de Pescado, Verduras Escabechadas y Quinoa Frita',short:'Escabeche de pescado',
+   diet:{veg:0, vgt:0, pesc:1, mar:0, fs:1, lac:1, ge:0, gs:1, halal:1},
+   brief:'Pescado curado en escabeche y quemado al soplete, sobre salsa escabechada de mariscos, con cebolla perla asada, zanahoria encurtida y quinoa frita.',
+   extended:'El pescado se sala, se cura en una solución de vinagre de arroz y se le quema la piel al soplete sin cocinar la carne. Se sirve sobre una salsa escabechada hecha con caldo de mariscos, soya y vino de arroz —el alcohol se evapora—, con cebollas perla asadas, cubitos de zanahoria encurtida y quinoa frita crujiente. No es apto para quienes evitan los mariscos, por la salsa.'},
+  {id:'mc3-carne',day:'3',slot:'carne',
+   name:'Tartar de Filete con Mayonesa de Ají Ahumado',short:'Tartar de filete',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:0, lac:1, ge:'*', gs:'*', halal:1},
+   dietNotes:{ge:'Sin el pan gratato de terminación.',gs:'Sin el pan gratato de terminación.'},
+   brief:'Tartar de filete con vegetales picados y mayonesa de cacho de cabra ahumado, cubierto de pan gratato con yema rallada y berros.',
+   extended:'El filete se pica a cuchillo y se mezcla con cebolla morada, pepinillos, rabanitos, perejil y clara cocida, ligado con una mayonesa de cacho de cabra ahumado hecha con el aceite de nuestra salsa macha. Se cubre con pan gratato mezclado con yema cocida rallada. La mayonesa lleva maní, por lo que no es apto para quienes evitan los frutos secos. Para quienes evitan el gluten se sirve sin pan gratato.'},
+  {id:'mc3-ensalada',day:'3',slot:'ensalada',
+   name:'Rúcula a la Brasa, Espinaca, Manzana Encurtida y Nori',short:'Rúcula a la brasa',
+   diet:{veg:0, vgt:'*', pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   dietNotes:{vgt:'Sin el fish floss (pescado ahumado desmenuzado), que va disperso sobre el plato.'},
+   brief:'Rúcula pasada por la brasa con espinaca, manzana verde encurtida, algas y pescado ahumado desmenuzado.',
+   extended:'La rúcula se pasa unos segundos por brasa muy caliente para darle un sabor ahumado sin perder frescura. Se mezcla con espinaca, manzana verde encurtida y algas nori y wakame, y se termina con fish floss: pescado ahumado, deshidratado y desmenuzado hasta quedar en hebras. Sin el fish floss, es apta para vegetarianos.'},
+  // ── Día 4 ──────────────────────────────────────────────────────────
+  {id:'mc4-vegano',day:'4',slot:'vegano',
+   name:'Hongos Salteados con Chañar',short:'Hongos con chañar',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:0, gs:1, halal:1},
+   brief:'Hongos de temporada salteados a fuego alto con salsa de soya y arrope de chañar, chañar fresco, cachiyuyo y ciboulette.',
+   extended:'Los hongos se saltean en wok muy caliente para dorarlos sin que suelten agua. La salsa combina soya, arrope de chañar —un jarabe hecho del fruto de un árbol del norte de Chile— y vinagre de arroz. Se termina con chañar fresco, hojas de cachiyuyo, un arbusto de sabor salino del desierto, y ciboulette. Es vegano; por la soya, no es apto para quienes evitan el gluten de forma estricta.'},
+  {id:'mc4-dip',day:'4',slot:'dip',
+   name:'Berenjenas Asadas con Gremolata',short:'Baba ganush',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:0, lac:1, ge:1, gs:1, halal:1},
+   brief:'Baba ganush de berenjena asada al fuego, con una gremolata de almendra, merkén y limón fermentado.',
+   extended:'El baba ganush es un puré levantino: la berenjena se asa directo al fuego hasta carbonizar la piel, se pela y se mezcla con tahini, limón y ajo confitado, dejando una textura rústica. Encima va una gremolata de almendra tostada, merkén ahumado, limón fermentado y perejil. Es vegano; por la almendra, no es apto para quienes evitan los frutos secos.'},
+  {id:'mc4-mar',day:'4',slot:'mar',
+   name:'Ceviche de Pescado, Cacho de Cabra, Cebollita Perla y Maní',short:'Ceviche',
+   diet:{veg:0, vgt:0, pesc:1, mar:1, fs:0, lac:1, ge:1, gs:1, halal:1},
+   brief:'Ceviche de pescado blanco en leche de tigre de cacho de cabra, con cebollitas perla encurtidas, salsa macha y maní frito.',
+   extended:'Lo hacemos al estilo carretillero peruano: el pescado se macera unos minutos con sal, ají y cilantro, y se mezcla con limón de Pica y la leche de tigre justo antes de salir, para que llegue firme por fuera y casi crudo por dentro. La leche de tigre lleva cacho de cabra ahumado. Se termina con cebollitas encurtidas, salsa macha y maní frito. Por el maní, no es apto para quienes evitan los frutos secos.'},
+  {id:'mc4-carne',day:'4',slot:'carne',
+   name:'Tataki de Vacuno a la Brasa con Betarragas',short:'Tataki de vacuno',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Filete de vacuno sellado a la brasa y laminado, sobre betarraga asada, con supremas de naranja quemadas y gremolata de ajo, jengibre y naranja.',
+   extended:'El tataki es una técnica japonesa: el filete se sella muy rápido a fuego alto por todos los lados, dejando el centro crudo, y se lamina fino. Va sobre láminas de betarraga asada a la brasa, con supremas de naranja caramelizadas y una gremolata de ajo confitado, jengibre, naranja y perejil. No lleva lactosa, gluten ni frutos secos.'},
+  {id:'mc4-ensalada',day:'4',slot:'ensalada',
+   name:'Kale Asada, Parmesano, Pistacho y Uva',short:'Kale asada',
+   diet:{veg:0, vgt:0, pesc:1, mar:1, fs:0, lac:0, ge:0, gs:'*', halal:1},
+   dietNotes:{gs:'Sin el pan gratato de pistacho de terminación. Sigue sin servir para frutos secos: lleva pistacho troceado.'},
+   brief:'Kale salteada a fuego alto con uvas, aderezo César, pan gratato de pistacho y parmesano rallado.',
+   extended:'El kale se saltea al wok solo unos segundos para darle un toque tostado sin perder estructura. Se aliña con nuestro aderezo César —yema, parmesano, anchoas y mostaza— junto a uvas frescas, y se cubre con pan gratato de pistacho y parmesano rallado al momento. Por las anchoas no es apta para vegetarianos, y lleva queso y pistacho. Para quienes evitan el gluten se puede servir sin el pan gratato.'}
+];
+
+// --- Principales de cena: 4 por día, en las mismas posiciones del almuerzo ---
+// Vegana · de mar · ave/cerdo (rotativo) · vacuno. Se reusa PRINCIPAL_SLOTS:
+// el documento de cena dice "Vacuno" donde el de almuerzo dice "res", y es la
+// misma categoría.
+const MENU_CENA_PRINCIPALES = [
+  // ── Día 1 ──────────────────────────────────────────────────────────
+  {id:'prc1-vegana',day:'1',slot:'vegana',
+   name:'Kebap de Berenjena',short:'Kebap de berenjena',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:0, gs:'*', halal:1},
+   dietNotes:{gs:'Sin el pan plano, que es de trigo. La salsa de laqueado lleva soya: no sirve para gluten estricto.'},
+   brief:'Pinchos de berenjena laqueados a la brasa sobre pan plano turco, con ensaladita de cebolla y rosa mosqueta, tomates y ají verde asados.',
+   extended:'La berenjena se lamina, pasa por salmuera y se fríe; luego se arma en pinchos y se termina en la robata —parrilla japonesa a carbón—, pintándola varias veces con una salsa de tahini, soya y arrope de chañar hasta caramelizar. Se sirve sobre un pan plano hecho en casa, con una ensaladita turca de cebolla morada, perejil y rosa mosqueta, y limón de Pica. Es 100% vegano. Para quienes evitan el gluten se puede servir sin el pan, aunque la salsa lleva soya.'},
+  {id:'prc1-mar',day:'1',slot:'mar',
+   name:'Fideuá de Caldillo de Congrio',short:'Fideuá',
+   diet:{veg:0, vgt:0, pesc:1, mar:0, fs:1, lac:1, ge:0, gs:0, halal:1},
+   brief:'Fideos finos cocidos en paellera con caldo de mariscos, congrio sellado, papitas fritas y pimentón asado, con mayonesa cítrica aparte.',
+   extended:'La fideuá es una preparación valenciana parecida a la paella, pero con fideos finos en vez de arroz. Aquí la cruzamos con el caldillo de congrio chileno: los fideos se cocinan en caldo de mariscos y sofrito hasta formar el socarrat, la capa tostada del fondo. Encima va congrio sellado, papitas fritas y tiras de pimentón asado. No es apta para quienes evitan los mariscos ni el gluten.'},
+  {id:'prc1-avecerdo',day:'1',slot:'avecerdo',
+   name:'Pechuga Rellena con Nuez, Hongos y Espinacas',short:'Pechuga rellena',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:0, lac:0, ge:0, gs:0, halal:1},
+   brief:'Pechuga de pollo rellena de hongos, nuez y espinaca, sobre espinaca salteada y una salsa de nuez con trufa fresca.',
+   extended:'La pechuga se abre y se rellena con un sofrito de hongos, ajo y jengibre, nuez tostada, espinaca y queso crema; luego se enrolla y se cocina al vacío a baja temperatura, y al servir se sella en mantequilla. La salsa es una bechamel hecha con leche de nuez infusionada con trufa, y se termina con trufa fresca rallada al momento. Lleva frutos secos, queso y harina, por lo que no es apta para quienes evitan los frutos secos, la lactosa o el gluten.'},
+  {id:'prc1-res',day:'1',slot:'res',
+   name:'Asado de Tira Larga Cocción con Puré y Mix de Hojas de Mostaza',short:'Asado de tira',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:1, ge:1, gs:1, halal:0},
+   brief:'Asado de tira cocido 36 horas y laqueado con salsa de chañar y miso, con puré de papas y hojas de mostaza.',
+   extended:'El asado de tira pasa una noche en salmuera con ajo y jengibre y luego se cocina al vacío durante 36 horas a baja temperatura, lo que lo deja muy tierno. Al servir se laquea con una salsa de chañar y miso hecha con su propio jugo de cocción. Se acompaña de un puré de papas con mantequilla de hierbas y un mix de hojas de mostaza con vinagreta de miso. No es apto Halal, porque la salsa y el puré llevan un caldo con cerdo.'},
+  // ── Día 2 ──────────────────────────────────────────────────────────
+  {id:'prc2-vegana',day:'2',slot:'vegana',
+   name:'Mil Hojas de Zapallito Italiano con Pepitas',short:'Mil hojas de zapallito',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Bloque de láminas de zapallito italiano dorado a alta temperatura, sobre salsa de pepitas, con kale salteada y pepitas tostadas.',
+   extended:'Apilamos unas veinte láminas finas de zapallito pintadas con aceite de oliva y las horneamos a alta temperatura para formar una costra. La salsa de pepitas se hace con semillas de zapallo tostadas y un dashi vegano de kombu y shiitake, lo que le da profundidad. Se termina con kale salteada y pepitas tostadas. Es 100% vegano y apto para todas las restricciones.'},
+  {id:'prc2-mar',day:'2',slot:'mar',
+   name:'Pescado al Vapor al Pil Pil, Papas a la Importancia y Espinaca Salteada',short:'Pescado al pil pil',
+   diet:{veg:0, vgt:0, pesc:1, mar:0, fs:1, lac:1, ge:0, gs:0, halal:1},
+   brief:'Pescado al vapor cubierto con espuma de pil pil, sobre papas a la importancia, con espinaca salteada y ajo frito.',
+   extended:'El pil pil es una salsa vasca que se liga con aceite de ajo y la gelatina natural del pescado; nosotros la servimos como espuma. Las papas a la importancia son rodajas pasadas por harina y huevo, fritas y luego cocidas en caldo de mariscos con ajo y perejil. Por las papas, no es apto para quienes evitan los mariscos o el gluten.'},
+  {id:'prc2-avecerdo',day:'2',slot:'avecerdo',
+   name:'Magret de Pato con Coliflor y Cebollitas',short:'Magret de pato',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:1, ge:'*', gs:'*', halal:0},
+   dietNotes:{ge:'Sin el pan gratato, que va mezclado en la ensalada de coliflor.',gs:'Sin el pan gratato, que va mezclado en la ensalada de coliflor.'},
+   brief:'Pechuga de pato con la piel dorada, sobre puré de coliflor, con coliflor asada, cebollitas y una reducción de caldo.',
+   extended:'El magret pasa por salmuera, se cocina al vacío a baja temperatura y al servir se sella por la piel hasta dejarla crujiente. Se acompaña de un puré de coliflor con leche de coco y mantequilla, y de una ensalada de coliflor y cebollitas asadas con mantequilla de hierbas y pan gratato. Se termina con una reducción de caldo. No es apto Halal, porque la reducción lleva un caldo con cerdo. Para quienes evitan el gluten se sirve sin pan gratato.'},
+  {id:'prc2-res',day:'2',slot:'res',
+   name:'Entraña a la Brasa con Espárragos, Habas y Rúcula',short:'Entraña',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:1, ge:0, gs:'*', halal:0},
+   dietNotes:{gs:'Sin el pan gratato de terminación. La ponzu lleva soya: no sirve para gluten estricto.'},
+   brief:'Entraña a la brasa sobre un salteado de habas, arvejas y espárragos, con rúcula a la brasa, ponzu de limón y limón fermentado.',
+   extended:'La entraña pasa por una salmuera breve y se asa a fuego alto para dejarla marcada por fuera y rosada por dentro. Se sirve sobre habas, arvejas y espárragos salteados al wok, con rúcula pasada por la brasa, una ponzu de limón de Pica, pan gratato y limón fermentado picado. La ponzu lleva soya y un caldo con cerdo, por lo que no es apta Halal. Se puede servir sin pan gratato.'},
+  // ── Día 3 ──────────────────────────────────────────────────────────
+  {id:'prc3-vegana',day:'3',slot:'vegana',
+   name:'Coliflor Reventada con Tomates Tatemados',short:'Coliflor reventada',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Bistec de coliflor quemado al horno sobre puré de coliflor con coco, cubierto de salsa de tomates tatemados, con cebollín asado, cilantro y huacatay.',
+   extended:'Cortamos la coliflor en un bistec grueso, lo blanqueamos y lo terminamos a alta temperatura para quemar los bordes. Va sobre un puré de coliflor con leche de coco y se cubre con una salsa de tomate, ajo, cebolla y ají tatemados —quemados al fuego— y licuados con cilantro. Se termina con cebollín asado, cilantro y huacatay, una hierba andina. Es 100% vegano y apto para todas las restricciones.'},
+  {id:'prc3-mar',day:'3',slot:'mar',
+   name:'Pesca a la Plancha, Ensalada de Hierbas y Kale',short:'Pesca a la plancha',
+   diet:{veg:0, vgt:0, pesc:1, mar:0, fs:1, lac:1, ge:0, gs:1, halal:1},
+   brief:'Pesca del día a la plancha sobre kale salteada, con salsa de mandarina, mandarinas asadas y una ensalada de hojas y hierbas.',
+   extended:'El pescado pasa por una salmuera breve y se sella a la plancha. Va sobre kale salteada al wok, con una salsa de mandarina, soya, arrope de chañar y caldo de mariscos, y gajos de mandarina quemados al soplete. Al costado, una ensalada de hojas de mostaza, berros, menta y perejil con vinagreta de mandarina. Por la salsa, no es apto para quienes evitan los mariscos.'},
+  {id:'prc3-avecerdo',day:'3',slot:'avecerdo',
+   name:'Matambrito Adobado con Ñoquis a la Mostaza',short:'Matambrito',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:1, ge:0, gs:0, halal:0},
+   brief:'Matambrito de cerdo adobado y laqueado a la brasa, sobre ñoquis de papa dorados en salsa de mostaza, con arvejas y berros.',
+   extended:'El matambrito se marina en un adobo estilo pastor —ají amarillo, cacho de cabra ahumado, piña y especias—, se cocina al vacío durante ocho horas y se termina en la robata. Los ñoquis son de papa horneada; se doran en mantequilla de hierbas y se ligan con una salsa de mostaza Dijon. Al costado, berros y perejil con limoneta. Es cerdo, por lo que no es apto Halal, y los ñoquis llevan harina de trigo.'},
+  {id:'prc3-res',day:'3',slot:'res',
+   name:'Mini Paella de Mollejas, Albóndigas y Pimientos',short:'Mini paella',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:1, ge:1, gs:1, halal:0},
+   brief:'Paella individual con mollejas selladas, albóndigas de vacuno, pimientos y alcachofas asadas, con mayonesa cítrica aparte.',
+   extended:'El arroz se marca con sofrito y se cocina en paellera individual hasta formar el socarrat. Lleva mollejas selladas, albóndigas de vacuno especiadas, tiras de pimiento asado y alcachofas. Se sirve con una mayonesa cítrica aparte. El arroz se cocina en un caldo con cerdo, por lo que no es apta Halal.'},
+  // ── Día 4 ──────────────────────────────────────────────────────────
+  {id:'prc4-vegana',day:'4',slot:'vegana',
+   name:'Zapallo al Horno con Mole Amarillito',short:'Zapallo con mole',
+   diet:{veg:1, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Lingote de zapallo asado con mole amarillito, sésamo tostado y cebolla morada encurtida con cilantro.',
+   extended:'El mole amarillito es una salsa mexicana de Oaxaca, hecha con ajíes secos tostados, tomate, cebolla y ajo asados, espesada con masa de maíz nixtamalizado —maíz cocido con cal— y terminada con huacatay. El zapallo se hornea y luego se termina a alta temperatura para formar costra. Se acompaña de xnipec, un encurtido yucateco de cebolla morada y ají picante en cítricos. Es 100% vegano y apto para todas las restricciones.'},
+  {id:'prc4-mar',day:'4',slot:'mar',
+   name:'Trucha al Vapor, Salsa de Alcachofas y Alcachofas Asadas',short:'Trucha al vapor',
+   diet:{veg:0, vgt:0, pesc:1, mar:0, fs:1, lac:0, ge:1, gs:1, halal:1},
+   brief:'Trucha al vapor sobre salsa cremosa de alcachofas, con alcachofas asadas, chips de alcachofa y gremolata de limón preservado.',
+   extended:'La trucha pasa por una salmuera breve y se cocina al vapor. La salsa combina puré de alcachofas, crema y mantequilla con una reducción de caldo de mariscos, espumante, jerez y vermut —el alcohol se evapora—. Se acompaña de corazones de alcachofa asados, chips de alcachofa fritos y una gremolata de limón preservado. No es apta para quienes evitan los mariscos ni la lactosa.'},
+  {id:'prc4-avecerdo',day:'4',slot:'avecerdo',
+   name:'Pasta Larga con Choritos, Mollejas y Pepitas de Zapallo',short:'Pasta con choritos',
+   diet:{veg:0, vgt:0, pesc:0, mar:0, fs:1, lac:1, ge:0, gs:0, halal:0},
+   brief:'Pasta larga en salsa verde de pepitas de zapallo, con choritos y mollejas a la brasa, y ensalada de perejil y pepitas garrapiñadas.',
+   extended:'La salsa se hace licuando semillas de zapallo tostadas con caldo de mariscos, caldo de ave y cerdo, perejil y un aceite de perejil y pepitas, lo que la deja verde y cremosa sin lácteos. Encima van choritos y mollejas pasados por la robata. No es apta para quienes evitan los mariscos o el gluten, ni Halal, por el caldo con cerdo.'},
+  {id:'prc4-res',day:'4',slot:'res',
+   name:'Flat Iron a la Brasa con Papas Atomatadas y Ensalada de Tomates',short:'Flat iron',
+   diet:{veg:0, vgt:0, pesc:0, mar:1, fs:1, lac:'*', ge:1, gs:1, halal:1},
+   dietNotes:{lac:'Sin el queso de cabra de la ensalada de tomates, que va en plato aparte.'},
+   brief:'Flat iron a la brasa sobre papas laminadas horneadas con sofrito, con una ensalada aparte de tomates, queso de cabra y hierbas.',
+   extended:'El flat iron es un corte de la paleta, muy tierno y con buen marmoleo; pasa por una salmuera breve y se asa a la brasa, rosado al centro. Las papas se laminan y se hornean en capas con sofrito de tomate, mantequilla y vino blanco. Al lado, en plato aparte, va una ensalada de tomates de temporada con queso de cabra, albahaca, perejil y huacatay, aliñada con una vinagreta de agua de tomate. Sin el queso de cabra, es apto para quienes evitan la lactosa.'}
+];
+
+// --- Postres de cena: las mismas 3 familias del almuerzo (POSTRE_SLOTS) ------
+const MENU_CENA_POSTRES = [
+  // ── Día 1 ──────────────────────────────────────────────────────────
+  {id:'poc1-fruta',day:'1',slot:'fruta',
+   name:'Naranja, Azafrán y Quinoa',short:'Naranja y azafrán',
+   diet:{veg:0, vgt:0, pesc:1, mar:1, fs:1, lac:0, ge:1, gs:1, halal:0},
+   brief:'Muselina de azafrán con sorbete de naranja, supremas de naranja quemadas, reducción de naranja y azafrán, y quinoa frita.',
+   extended:'El azafrán aporta un perfume floral que acompaña a la naranja en tres formas: sorbete, supremas caramelizadas al soplete y una reducción de jugo con azafrán. La quinoa frita da un contraste crujiente. La muselina lleva crema y gelatina animal, por lo que no es apta para vegetarianos, Halal ni para quienes evitan la lactosa.'},
+  {id:'poc1-granos',day:'1',slot:'granos',
+   name:'Coulant de Chocolate con Helado de Chocolate',short:'Coulant',
+   diet:{veg:0, vgt:1, pesc:1, mar:1, fs:1, lac:0, ge:0, gs:0, halal:1},
+   brief:'Pastel de chocolate de centro líquido, recién horneado, con crumble y helado de chocolate.',
+   extended:'Se hornea al momento para que el borde quede cocido y el centro líquido. Se acompaña de un crumble de cacao y un helado de chocolate 70% hecho en casa. Lleva harina, huevo y lácteos: no es apto para veganos ni para quienes evitan el gluten o la lactosa.'},
+  {id:'poc1-sinazucar',day:'1',slot:'sinazucar',
+   name:'Higos a la Brasa, Ricota, Miel de Ulmo y Tomillo',short:'Higos a la brasa',
+   diet:{veg:0, vgt:0, pesc:1, mar:1, fs:1, lac:0, ge:1, gs:1, halal:0},
+   brief:'Higos asados a la brasa sobre crema de ricota con miel de ulmo, gelatina de miel y tomillo, y helado de hoja de higuera.',
+   extended:'Los higos se asan enteros a la brasa para caramelizarlos. Se sirven sobre una diplomática de ricota —ricota con crema montada y miel de ulmo, una miel nativa del sur de Chile—, con cubos de gelatina de miel y tomillo y un helado infusionado con hojas de higuera. Es parte de la carta sin azúcar refinada: el dulzor viene de la fruta y la miel. La gelatina es de origen animal, por lo que no es apto para vegetarianos ni Halal, y por la ricota no es apto para quienes evitan la lactosa.'},
+  // ── Día 2 ──────────────────────────────────────────────────────────
+  {id:'poc2-fruta',day:'2',slot:'fruta',
+   name:'Mil Hojas de Manzana con Vainilla',short:'Mil hojas de manzana',
+   diet:{veg:0, vgt:1, pesc:1, mar:1, fs:0, lac:0, ge:0, gs:0, halal:1},
+   brief:'Capas de manzana verde caramelizadas y prensadas, sobre masa sucré, con helado de vainilla y syrup de limón y vainilla.',
+   extended:'Laminamos manzana verde muy fina y la horneamos en capas con caramelo y un syrup de limón y vainilla; se prensa toda una noche y se corta en lingotes. Se sirve sobre una masa sucré crocante con helado de vainilla. La masa lleva harina de almendras y de trigo: no es apto para quienes evitan los frutos secos, el gluten o la lactosa.'},
+  {id:'poc2-granos',day:'2',slot:'granos',
+   name:'Banana con Sésamo y Rica-Rica',short:'Banana y rica-rica',
+   diet:{veg:0, vgt:1, pesc:1, mar:1, fs:1, lac:0, ge:1, gs:1, halal:1},
+   brief:'Banana caramelizada con azúcar de rica-rica sobre praliné de sésamo, con helado de banana y toronjil.',
+   extended:'La rica-rica es un arbusto aromático del altiplano atacameño, de aroma fresco y cítrico; la molemos con azúcar para caramelizar la banana. Debajo va un praliné de sésamo con vino dulce de cosecha tardía, cuyo alcohol se evapora, y al lado un helado de banana. Lleva lácteos: no es apto para veganos ni para quienes evitan la lactosa.'},
+  {id:'poc2-sinazucar',day:'2',slot:'sinazucar',
+   name:'Sandía Macerada en Agua de Rosas y Granita',short:'Sandía y granita',
+   diet:{veg:0, vgt:1, pesc:1, mar:1, fs:1, lac:0, ge:0, gs:0, halal:1},
+   brief:'Sandía impregnada en frío con granita de sandía, helado y mermelada de rosa del año, y mote suflado.',
+   extended:'Los trozos de sandía se impregnan al vacío con jugo de sandía y almíbar de miel, y se sirven congelados. Encima va granita de sandía raspada al momento, un helado infusionado con rosa del año y puntos de mermelada de rosa. El mote suflado, de trigo, da el crujiente. Es parte de la carta sin azúcar refinada. No es apto para quienes evitan el gluten ni la lactosa.'},
+  // ── Día 3 ──────────────────────────────────────────────────────────
+  {id:'poc3-fruta',day:'3',slot:'fruta',
+   name:'Frutilla, Yogurt y Balsámico',short:'Frutilla y yogurt',
+   diet:{veg:0, vgt:1, pesc:1, mar:1, fs:1, lac:0, ge:1, gs:1, halal:1},
+   brief:'Frutillas a la brasa sobre compota de frutilla con albahaca, con helado de yogurt y reducción de balsámico.',
+   extended:'Las frutillas se asan enteras a la brasa para caramelizarlas y se sirven sobre una compota fresca de frutilla y albahaca. El helado de yogurt aporta acidez, y la reducción de vinagre balsámico con arrope de chañar, profundidad. El yogurt es sin lactosa, pero el helado lleva leche en polvo, así que no es apto para quienes evitan la lactosa.'},
+  {id:'poc3-granos',day:'3',slot:'granos',
+   name:'Texturas de Almendra',short:'Texturas de almendra',
+   diet:{veg:0, vgt:0, pesc:1, mar:1, fs:0, lac:1, ge:1, gs:1, halal:0},
+   brief:'Financier de almendra remojado en leche de almendra, con praliné, almendras garrapiñadas, sorbete y espuma de almendra.',
+   extended:'Es un recorrido por la almendra en distintas texturas: un financier —bizcocho de almendra— remojado en leche de almendra, praliné de almendra tostada, almendras garrapiñadas con sal, sorbete de leche de almendra y una espuma liviana. No lleva harina de trigo. La espuma lleva gelatina animal, así que no es apto para vegetarianos ni Halal.'},
+  {id:'poc3-sinazucar',day:'3',slot:'sinazucar',
+   name:'Tostada Francesa de Cabra',short:'Tostada francesa',
+   diet:{veg:0, vgt:1, pesc:1, mar:1, fs:1, lac:0, ge:0, gs:0, halal:1},
+   brief:'Brioche remojado y dorado en mantequilla, con helado de leche de cabra y toffee de manjar de cabra.',
+   extended:'Es nuestra versión de la torrija: brioche hecho en casa, remojado en leche, huevo y miel de ulmo, y dorado en mantequilla. Se acompaña de helado de leche de cabra y un toffee hecho con manjar de leche de cabra, cocido lentamente durante horas. Es parte de la carta sin azúcar refinada. Por la leche de cabra y el brioche, no es apto para quienes evitan la lactosa o el gluten.'},
+  // ── Día 4 ──────────────────────────────────────────────────────────
+  {id:'poc4-fruta',day:'4',slot:'fruta',
+   name:'Torta Helada de Frutos Rojos y Cachiyuyo',short:'Torta helada',
+   diet:{veg:0, vgt:0, pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:0},
+   brief:'Crema fría de vainilla con sorbete de frambuesa, compota de frutos rojos, merengue crujiente de frutos rojos y cachiyuyo, y frambuesas.',
+   extended:'Es una torta helada desarmada: crema fría de vainilla, sorbete de frambuesa, compota fresca de frutos rojos y un merengue crujiente con frutos rojos y cachiyuyo, un arbusto de sabor salino del desierto que equilibra el dulzor. La crema lleva gelatina animal, así que no es apta para vegetarianos ni Halal.',
+   barTwin:'bar-frutosrojos'},
+  {id:'poc4-granos',day:'4',slot:'granos',
+   name:'Mont Blanc de Nuez y Vinagre Balsámico',short:'Mont Blanc de nuez',
+   diet:{veg:0, vgt:1, pesc:1, mar:1, fs:0, lac:1, ge:1, gs:1, halal:1},
+   brief:'Montaña de crema de nuez sobre merengue de balsámico y sorbete de leche de nuez, con reducción de balsámico y nuez caramelizada.',
+   extended:'El Mont Blanc es un postre clásico que se hace con crema de castañas; nosotros lo hacemos con nuez. Sobre un disco de merengue de balsámico y canela va un sorbete de leche de nuez, cubierto con hilos de crema de nuez. Se termina con reducción de balsámico y arrope de chañar, nuez rallada y una nuez caramelizada. No es apto para quienes evitan los frutos secos.'},
+  {id:'poc4-sinazucar',day:'4',slot:'sinazucar',
+   name:'Mango Asado y Arroz con Leche de Coco',short:'Mango y arroz con coco',
+   diet:{veg:0, vgt:1, pesc:1, mar:1, fs:1, lac:1, ge:1, gs:1, halal:1},
+   brief:'Arroz con leche de coco con mango a la brasa, sorbete de mango, sésamo, canela y ralladura de limón.',
+   extended:'El arroz se cocina lentamente en leche y leche de coco, y se endulza con miel de palma. Encima va mango asado a la brasa y laminado, y un sorbete de mango, con canela y limón rallados al momento. Es parte de la carta sin azúcar refinada. No es apto para veganos, por los lácteos.'}
+];
+
 // --- Carta de Bar -----------------------------------------------------------
 // Carta FIJA: los mismos 11 platos todos los días, sin ciclo (Dossier §5).
 // Por eso no llevan `day` y la vista reemplaza el selector D1-D4 por un
@@ -3941,7 +4264,10 @@ const BAR_DISHES = [
    name:'Torta Helada de Frutos Rojos',short:'Torta de frutos rojos',
    diet:{veg:0,lac:0},
    brief:'Sorbete de frambuesa, merengue, crema chiboust de vainilla y compota de frutos rojos.',
-   extended:'Combina un sorbete de frambuesa con una crema chiboust de vainilla (una crema pastelera aligerada con merengue), más merengue y una compota de frutos rojos que aporta acidez y frescura. Este postre también está disponible en la carta de cena. Lleva huevo y lácteos, no apto para veganos.'},
+   extended:'Combina un sorbete de frambuesa con una crema chiboust de vainilla (una crema pastelera aligerada con merengue), más merengue y una compota de frutos rojos que aporta acidez y frescura. Este postre también está disponible en la carta de cena. Lleva huevo y lácteos, no apto para veganos.',
+   // Hermana de la Torta Helada de Frutos Rojos y Cachiyuyo de la cena del día
+   // 4 (el Guion de cena la marca con 💡; el Dossier confirma el par).
+   dinnerTwin:'poc4-fruta'},
   // El Dossier la lista como "Castaña y Canela"; el Guion de Bar describe la
   // ficha real con nuez (sorbete de leche de nuez, praliné de nuez). Usamos
   // "Nuez" y queda pendiente que el asesor unifique el nombre.
@@ -3958,22 +4284,13 @@ const BAR_DISHES = [
    lunchTwin:'po2-granos'}
 ];
 
-// --- Los 12 postres anteriores pasan a ser los de la CENA -------------------
-// (2026-08-15) Los postres nuevos vienen del documento de ALMUERZO; la cena
-// todavía no tiene el suyo. Al entrar el menú nuevo se cargaron como
-// 'Almuerzo y Cena' y estos 12 se dieron de baja, así que la cena quedó
-// mostrando postres que no le corresponden y sin los propios. Se separa:
-// los nuevos sirven sólo el almuerzo y estos vuelven al catálogo como cena.
-//
-// Se reasigna el servicio a 'Cena' a propósito: su valor original era
-// 'Almuerzo y Cena', que los duplicaría en el almuerzo junto a los nuevos.
-// El resto del objeto queda intacto — conservan sus maridajes y sus
-// traducciones EN/PT en DISH_TRANS, y su `day` ya está en la numeración de la
-// app (nunca pasaron por menuToDish, así que MENU_CYCLE_OFFSET no les aplica).
-// Como no traen `slot`, el render los dibuja como ficha sin rótulo; los nuevos,
-// que sí lo traen, se agrupan por familia. Eso ya está resuelto en
-// menuRenderAlmuerzo() y menuRenderCena().
-// Cuando llegue el documento de cena, estos salen y entran los suyos.
+// --- Los 12 postres anteriores ----------------------------------------------
+// (2026-08-15) Cuando entraron los postres nuevos del ALMUERZO, estos 12
+// siguieron sirviendo la cena, que todavía no tenía documento propio.
+// (2026-11-03) Llegó el de cena y salen del catálogo activo también ahí.
+// Quedan acá completos, con sus maridajes y sus traducciones EN/PT en
+// DISH_TRANS. Su servicio se deja en 'Cena' (el original era 'Almuerzo y
+// Cena'): si alguna vez se restituyen, no deben duplicarse en el almuerzo.
 const DISHES_LEGACY_POSTRES = DISHES.filter(d => d.course === 'Postre');
 DISHES_LEGACY_POSTRES.forEach(d => { const i = DISHES.indexOf(d); if (i > -1) DISHES.splice(i, 1); });
 DISHES_LEGACY_POSTRES.forEach(d => { d.service = 'Cena'; });
@@ -3983,13 +4300,22 @@ DISHES_LEGACY_POSTRES.forEach(d => { d.service = 'Cena'; });
 // catálogo activo. Quedan acá completos, con sus maridajes (`wines`) y sus
 // traducciones EN/PT en DISH_TRANS, que siguen intactas.
 // Para revertir la baja basta con: DISHES.push(...DISHES_LEGACY_PRINCIPALES_ALMUERZO).
-//
-// El filtro es por service === 'Almuerzo' a propósito: los 16 principales de
-// CENA quedan donde están. La cena sigue siendo el master del ciclo hasta que
-// llegue su propio documento.
 const DISHES_LEGACY_PRINCIPALES_ALMUERZO =
   DISHES.filter(d => d.course === 'Plato principal' && d.service === 'Almuerzo');
 DISHES_LEGACY_PRINCIPALES_ALMUERZO.forEach(d => {
+  const i = DISHES.indexOf(d); if (i > -1) DISHES.splice(i, 1);
+});
+
+// --- Retiro de la cena anterior: 16 entradas y 16 principales ---------------
+// (2026-11-03) Mismo criterio. Con esto DISHES ya no tiene ningún plato
+// anterior al cambio de menú: lo que queda en el array literal de arriba es
+// archivo. Para revertir: DISHES.push(...DISHES_LEGACY_CENA, ...DISHES_LEGACY_POSTRES).
+// Con estos se van también los maridajes de la carta (eran los únicos platos
+// con `wines`): las fichas de vino quedan sin "platos que marida" hasta que
+// se carguen los de la cena nueva, desde el editor o en código.
+const DISHES_LEGACY_CENA =
+  DISHES.filter(d => d.service === 'Cena' && (d.course === 'Entrada' || d.course === 'Plato principal'));
+DISHES_LEGACY_CENA.forEach(d => {
   const i = DISHES.indexOf(d); if (i > -1) DISHES.splice(i, 1);
 });
 
@@ -4009,10 +4335,15 @@ DISHES.push(
   ...MENU_BUFFET .map(d => menuToDish(d, 'Almuerzo',         'Buffet')),
   ...MENU_SOPAS  .map(d => menuToDish(d, 'Almuerzo',         'Sopa')),
   ...MENU_PRINCIPALES.map(d => menuToDish(d, 'Almuerzo',     'Plato principal')),
-  // Los postres nuevos son del documento de ALMUERZO: no van a la cena. La
-  // cena la cubren los 12 anteriores, restituidos arriba como 'Cena'.
+  // Cada documento sirve sólo a su servicio: los postres de almuerzo no van a
+  // la cena ni al revés, aunque compartan las tres familias.
   ...MENU_POSTRES.map(d => menuToDish(d, 'Almuerzo',          'Postre')),
-  ...DISHES_LEGACY_POSTRES
+  // La canasta no tiene día: menuToDish traduciría '' a un día real, así que
+  // se le devuelve el vacío después.
+  { ...menuToDish(MENU_CENA_PAN, 'Cena', 'Entrada'), day:'', docDay:'' },
+  ...MENU_CENA_MINI       .map(d => menuToDish(d, 'Cena',     'Entrada')),
+  ...MENU_CENA_PRINCIPALES.map(d => menuToDish(d, 'Cena',     'Plato principal')),
+  ...MENU_CENA_POSTRES    .map(d => menuToDish(d, 'Cena',     'Postre'))
 );
 
 const WINES = [
@@ -5179,6 +5510,10 @@ const UI = {
     slotCocidos:'Vegetales cocidos', slotProFria:'Proteína fría', slotProCoc:'Proteína cocida',
     slotFruta:'Fruta', slotGranos2:'Granos y chocolate', slotSinAzucar:'Sin azúcar',
     slotVegana:'Vegana', slotMar:'De mar', slotAveCerdo:'Ave / cerdo', slotRes:'Carne de res',
+    // Cena 2026: canasta + 5 miniplatos para compartir
+    secMiniplatos:'Miniplatos para compartir', miniCount:'5 + canasta', everyNight:'Todas las noches',
+    slotPan:'Canasta de pan', slotMiniVegano:'Vegano', slotDip:'Dip', slotMiniMar:'Proteína de mar',
+    slotMiniCarne:'Proteína de carne', slotEnsalada:'Ensalada',
     dietVeg:'Vegano', dietVgt:'Vegetariano', dietPesc:'Pescetariano',
     dietMar:'Sin mariscos', dietFs:'Sin frutos secos', dietLac:'Sin lactosa',
     dietGe:'Sin gluten estricto', dietGs:'Sin gluten superficial', dietHalal:'Sin cerdo / Halal',
@@ -5190,7 +5525,7 @@ const UI = {
     dietNotFit:'No apto', dietWithNote:'Con nota', dietNoData:'Sin dato · consultar cocina', dietNoDataShort:'sin dato',
     dietNoMatrix:'Este plato todavía no tiene la tabla de restricciones del asesor. Confirma con cocina antes de ofrecerlo.',
     guionMore:'Explicación completa', guionLess:'Cerrar explicación',
-    barTwin:'También en el Bar', lunchTwin:'También en almuerzo',
+    barTwin:'También en el Bar', lunchTwin:'También en almuerzo', dinnerTwin:'También en la cena',
     svcBar:'Bar', barFixed:'Carta fija · todos los días',
     barFood:'Comida', barDrinks:'Tragos', barSalado:'Salado', barDulce:'Dulce',
     barDraft:'Ficha pendiente', recipeDayLabel:'Receta día',
@@ -5493,6 +5828,10 @@ const UI = {
     slotCocidos:'Cooked vegetables', slotProFria:'Cold protein', slotProCoc:'Cooked protein',
     slotFruta:'Fruit', slotGranos2:'Grains & chocolate', slotSinAzucar:'No added sugar',
     slotVegana:'Vegan', slotMar:'From the sea', slotAveCerdo:'Poultry / pork', slotRes:'Beef',
+    // Dinner 2026 — EN proposal, pending owner review
+    secMiniplatos:'Small plates to share', miniCount:'5 + bread', everyNight:'Every night',
+    slotPan:'Bread basket', slotMiniVegano:'Vegan', slotDip:'Dip', slotMiniMar:'From the sea',
+    slotMiniCarne:'Meat', slotEnsalada:'Salad',
     dietVeg:'Vegan', dietVgt:'Vegetarian', dietPesc:'Pescatarian',
     dietMar:'No shellfish', dietFs:'No nuts', dietLac:'No lactose',
     dietGe:'Strict gluten-free', dietGs:'Light gluten-free', dietHalal:'No pork / Halal',
@@ -5504,7 +5843,7 @@ const UI = {
     dietNotFit:'Not suitable', dietWithNote:'With a note', dietNoData:'No data · check with kitchen', dietNoDataShort:'no data',
     dietNoMatrix:'This dish has no restriction table from the consultant yet. Confirm with the kitchen before offering it.',
     guionMore:'Full explanation', guionLess:'Close explanation',
-    barTwin:'Also on the Bar menu', lunchTwin:'Also at lunch',
+    barTwin:'Also on the Bar menu', lunchTwin:'Also at lunch', dinnerTwin:'Also at dinner',
     svcBar:'Bar', barFixed:'Fixed menu · every day',
     barFood:'Food', barDrinks:'Drinks', barSalado:'Savoury', barDulce:'Sweet',
     barDraft:'Recipe pending', recipeDayLabel:'Recipe day',
@@ -5734,6 +6073,10 @@ const UI = {
     slotCocidos:'Legumes cozidos', slotProFria:'Proteína fria', slotProCoc:'Proteína cozida',
     slotFruta:'Fruta', slotGranos2:'Grãos e chocolate', slotSinAzucar:'Sem açúcar',
     slotVegana:'Vegana', slotMar:'Do mar', slotAveCerdo:'Ave / porco', slotRes:'Carne bovina',
+    // Jantar 2026 — proposta PT, pendente de revisão do owner
+    secMiniplatos:'Pratinhos para compartilhar', miniCount:'5 + pães', everyNight:'Todas as noites',
+    slotPan:'Cesta de pães', slotMiniVegano:'Vegano', slotDip:'Pasta', slotMiniMar:'Do mar',
+    slotMiniCarne:'Carne', slotEnsalada:'Salada',
     dietVeg:'Vegano', dietVgt:'Vegetariano', dietPesc:'Pescetariano',
     dietMar:'Sem frutos do mar', dietFs:'Sem frutos secos', dietLac:'Sem lactose',
     dietGe:'Sem glúten estrito', dietGs:'Sem glúten superficial', dietHalal:'Sem porco / Halal',
@@ -5745,7 +6088,7 @@ const UI = {
     dietNotFit:'Não apto', dietWithNote:'Com nota', dietNoData:'Sem dado · consultar a cozinha', dietNoDataShort:'sem dado',
     dietNoMatrix:'Este prato ainda não tem a tabela de restrições do consultor. Confirme com a cozinha antes de oferecer.',
     guionMore:'Explicação completa', guionLess:'Fechar explicação',
-    barTwin:'Também na Carta de Bar', lunchTwin:'Também no almoço',
+    barTwin:'Também na Carta de Bar', lunchTwin:'Também no almoço', dinnerTwin:'Também no jantar',
     svcBar:'Bar', barFixed:'Carta fixa · todos os dias',
     barFood:'Comida', barDrinks:'Drinks', barSalado:'Salgado', barDulce:'Doce',
     barDraft:'Ficha pendente', recipeDayLabel:'Receita dia',
@@ -6535,9 +6878,16 @@ function menuVerdicts(d){
   // Las notas de condicional se leen del plato TRADUCIDO: sin esto, un '*' se
   // explicaba siempre en español aunque la ficha estuviera en EN/PT.
   const trNotes = getDishTr(d).dietNotes || d.dietNotes || {};
+  // Ejes con la MISMA nota van en una sola fila: la canasta de la cena explica
+  // cinco ✓* con la misma frase del librito, y repetirla cinco veces la entierra.
+  const grupos = [];
   cond.forEach(ax => {
     const note = trNotes[ax] || '';
-    rows += `<div class="mn-v note"><span class="mn-v-tag">${label(ax)}</span><span class="mn-v-txt">${vjEsc(note)}</span></div>`;
+    const g = grupos.find(x => x.note === note);
+    if (g) g.axes.push(ax); else grupos.push({ note, axes:[ax] });
+  });
+  grupos.forEach(g => {
+    rows += `<div class="mn-v note"><span class="mn-v-tag">${g.axes.map(label).join(' · ')}</span><span class="mn-v-txt">${vjEsc(g.note)}</span></div>`;
   });
   if (nod.length)
     rows += `<div class="mn-v nodata"><span class="mn-v-tag">${t('dietNoData')}</span><span class="mn-v-txt">${nod.map(label).join(' · ')}</span></div>`;
@@ -6558,7 +6908,9 @@ function menuTile(d, slotLabel, wide){
   if (open){
     const extOpen = MENU_GUION_OPEN === d.id;
     const twin    = d.barTwin ? BAR_DISHES.find(b => b.id === d.barTwin)
-                  : d.lunchTwin ? DISHES.find(x => x.id === d.lunchTwin) : null;
+                  : d.lunchTwin ? DISHES.find(x => x.id === d.lunchTwin)
+                  : d.dinnerTwin ? DISHES.find(x => x.id === d.dinnerTwin) : null;
+    const twinKey = d.barTwin ? 'barTwin' : d.lunchTwin ? 'lunchTwin' : 'dinnerTwin';
     // Maridaje: los platos nuevos no traen vino (los documentos no lo dan y no
     // se inventa). Los que sí lo tienen conservan sus chips de siempre.
     const wines = (d.wines || []).map(wid => {
@@ -6574,7 +6926,7 @@ function menuTile(d, slotLabel, wide){
       ${d.draft ? `<div class="mn-draft">${t('barDraft')}</div>` : ''}
       ${estFichaEscuchable(d) ? `<button class="mn-listen" onclick="event.stopPropagation();estDesdeFicha('${d.id}')">${EST_ICON_AUD}<span>${t('estListen')}</span></button>` : ''}
       ${wines ? `<div class="detail-section" style="margin-top:12px"><h3>${t('pairings')}</h3><div class="wine-suggestions">${wines}</div></div>` : ''}
-      ${twin ? `<div class="mn-twin" onclick="event.stopPropagation();menuJumpTwin('${twin.id}')">💡 ${d.barTwin ? t('barTwin') : t('lunchTwin')} · ${vjEsc((tw => tw.short || tw.name)(getDishTr(twin)))}</div>` : ''}
+      ${twin ? `<div class="mn-twin" onclick="event.stopPropagation();menuJumpTwin('${twin.id}')">💡 ${t(twinKey)} ·${vjEsc((tw => tw.short || tw.name)(getDishTr(twin)))}</div>` : ''}
       ${d.recipeDay ? `<div class="mn-meta">${t('recipeDayLabel')} ${d.recipeDay}</div>` : ''}
     </div>`;
   }
@@ -6724,20 +7076,29 @@ function menuRenderAlmuerzo(){
   return html || `<div class="empty-state">${t('noDishes')}</div>`;
 }
 
-// --- Cena: se mantiene tal cual hasta que llegue su documento --------------
+// --- Cena: canasta + 5 miniplatos + principales + postres ------------------
+// Misma gramática que el almuerzo: todo por posición fija. La canasta abre la
+// sección de miniplatos —la tabla del asesor la pone ahí, y llega a la mesa
+// con ellos— y con ella la grilla queda en 3 filas parejas de 2.
 function menuRenderCena(){
   const day = (currentDay === 'all') ? menuTodayCycleDay() : currentDay;
   const of  = (course) => menuOrden(DISHES.filter(d => d.day === day && d.course === course &&
                                              (d.service === 'Cena' || d.service === 'Almuerzo y Cena')));
-  const starters = of('Entrada'), mains = of('Plato principal'), postres = of('Postre');
+  const minis = of('Entrada'), mains = of('Plato principal'), postres = of('Postre');
+  // La canasta no tiene día (`fija`): se sirve las cuatro noches.
+  const pan = DISHES.filter(d => d.fija && d.service === 'Cena');
+  // Sin `slot` (si se restituye la cena anterior) cada sección vuelve a la
+  // lista plana sin rótulos, como ya hacían los postres.
+  const plano = (list) => menuVisible(list).map(d => menuTile(d, '', false)).join('');
   let html = '';
-  if (starters.length) html += menuSection('starter', menuVisible(starters).map(d => menuTile(d, '', false)).join(''), starters.length);
-  html += winetipsSlot();      // sobre los principales, igual que en Almuerzo
-  if (mains.length)    html += menuSection('secMains', menuVisible(mains).map(d => menuTile(d, '', false)).join(''), mains.length);
-  if (postres.length){
-    const tiles = menuSlotTiles(postres, POSTRE_SLOTS);
-    html += menuSection('secDesserts', postres.some(p => p.slot) ? tiles : menuVisible(postres).map(d => menuTile(d, '', false)).join(''), postres.length);
+  if (minis.length || pan.length){
+    const tiles = menuSlotTiles(pan, [CENA_PAN_SLOT])
+                + (minis.some(m => m.slot) ? menuSlotTiles(minis, MINIPLATO_SLOTS) : plano(minis));
+    html += menuSection('secMiniplatos', tiles, 1, t('miniCount'));
   }
+  html += winetipsSlot();      // sobre los principales, igual que en Almuerzo
+  if (mains.length)   html += menuSection('secMains', mains.some(m => m.slot) ? menuSlotTiles(mains, PRINCIPAL_SLOTS) : plano(mains), mains.length);
+  if (postres.length) html += menuSection('secDesserts', postres.some(p => p.slot) ? menuSlotTiles(postres, POSTRE_SLOTS) : plano(postres), postres.length);
   return html || `<div class="empty-state">${t('noDishes')}</div>`;
 }
 
@@ -6776,10 +7137,17 @@ function menuRenderSearch(q){
     COURSE_ORDER.forEach(course => {
       const list = menuVisible(found.filter(d => d.course === course));
       if (!list.length) return;
-      html += `<div class="mn-sec"><div class="mn-sec-head">${courseLabel(course)}</div>
+      // 'Entrada' hoy sólo existe en la cena, y ahí son los miniplatos.
+      html += `<div class="mn-sec"><div class="mn-sec-head">${course === 'Entrada' ? t('secMiniplatos') : courseLabel(course)}</div>
         <div class="mn-grid">${list.map(d => menuTile(d, '', false)).join('')}</div></div>`;
     });
   });
+  // Lo que se sirve todas las noches (la canasta) no tiene día: bloque propio.
+  const fijas = menuVisible(DISHES.filter(d => d.fija && hit(d)));
+  if (fijas.length){
+    html += `<div class="day-heading">${t('dinner')} · ${t('everyNight')}</div>
+      <div class="mn-sec"><div class="mn-grid">${fijas.map(d => menuTile(d, '', false)).join('')}</div></div>`;
+  }
   const bar = menuVisible(BAR_DISHES.filter(hit));
   if (bar.length){
     html += `<div class="day-heading">${t('svcBar')}</div>
@@ -6957,8 +7325,11 @@ function menuJumpTwin(id){
     const d = DISHES.find(x => x.id === id);
     if (!d) return;
     MENU_SERVICE = (d.service === 'Cena') ? 'cena' : 'almuerzo';
-    currentDay = d.day;
-    document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', String(i + 1) === d.day));
+    // La canasta (`fija`) se ve en cualquier día: se queda en el que está.
+    if (d.day){
+      currentDay = d.day;
+      document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', String(i + 1) === d.day));
+    }
   }
   selectedDish = id;
   MENU_GUION_OPEN = null;
@@ -8743,8 +9114,8 @@ function medTragos(){ return COCKTAILS.concat(MOCKTAILS, MOMENTOS); }
 
 // Rótulos editables del Menú: bandejas, familias y títulos de sección.
 function medRotulosKeys(){
-  const k = BUFFET_SLOTS.concat(PRINCIPAL_SLOTS, POSTRE_SLOTS).map(s => s.uiKey);
-  return k.concat(['secBuffet','secSoup','secMains','secDesserts','starter','barSalado','barDulce']);
+  const k = BUFFET_SLOTS.concat(PRINCIPAL_SLOTS, POSTRE_SLOTS, MINIPLATO_SLOTS, [CENA_PAN_SLOT]).map(s => s.uiKey);
+  return k.concat(['secBuffet','secSoup','secMains','secDesserts','secMiniplatos','starter','barSalado','barDulce']);
 }
 
 // --- La foto del original ---------------------------------------------------
@@ -8996,8 +9367,9 @@ function menuSlotTiles(list, slots){
     .map(d => menuTile(d, t(s.uiKey), false)).join('')).join('');
 }
 function medSlotsDe(d){
-  if (!d || !d.slot) return null;
+  if (!d || !d.slot || d.fija) return null;
   if (d.course === 'Buffet') return BUFFET_SLOTS;
+  if (d.course === 'Entrada') return MINIPLATO_SLOTS;
   if (d.course === 'Plato principal') return PRINCIPAL_SLOTS;
   if (d.course === 'Postre') return POSTRE_SLOTS;
   return null;
@@ -9008,7 +9380,7 @@ function medHermanos(d, day){
 }
 function medSecKey(d){
   if (BAR_DISHES.indexOf(d) >= 0) return d.cat === 'Dulce' ? 'barDulce' : 'barSalado';
-  return { 'Buffet':'secBuffet', 'Sopa':'secSoup', 'Entrada':'starter', 'Plato principal':'secMains', 'Postre':'secDesserts' }[d.course] || null;
+  return { 'Buffet':'secBuffet', 'Sopa':'secSoup', 'Entrada':'secMiniplatos', 'Plato principal':'secMains', 'Postre':'secDesserts' }[d.course] || null;
 }
 // Posición actual de un plato en su lista: la clave de bandeja o el n° (1..n).
 function medPosDe(d){
@@ -9070,8 +9442,9 @@ function medAbrir(col, id){
   if (col === 'platos'){
     const d = MED_OBJ.platos[id];
     const keys = [], lbls = [];
-    const sl = medSlotsDe(d);
-    if (sl){ const s = sl.find(z => z.key === d.slot); if (s){ keys.push(s.uiKey); lbls.push('medSlotLabel'); } }
+    // La canasta no se mueve (medSlotsDe la deja fuera), pero su rótulo sí se edita.
+    const sl = d.fija ? [CENA_PAN_SLOT] : medSlotsDe(d);
+    if (sl){ const s = sl.find(z => z.key === d.slot);if (s){ keys.push(s.uiKey); lbls.push('medSlotLabel'); } }
     const sk = medSecKey(d); if (sk){ keys.push(sk); lbls.push('medSecLabel'); }
     E.rot = { keys, lbls, vals:{ es:{}, en:{}, pt:{} } };
     MED_LANGS.forEach(l => keys.forEach(k => { E.rot.vals[l][k] = medValor('rotulos', k, l, ''); }));
@@ -9204,25 +9577,29 @@ function medCuerpoPlato(){
     ${p !== '-' || E.foto ? `<button type="button" class="med-btn" onclick="medFotoQuitar()">${t('medPhotoRemove')}</button>` : ''}
     ${medBotonFotoOriginal()}</div>`;
 
-  h += medSec('medPlace');
-  const isBar = BAR_DISHES.indexOf(d) >= 0;
-  const sl = medSlotsDe(d);
-  let posOpts;
-  if (sl){
-    posOpts = sl.map(s => {
-      const occ = DISHES.find(x => x !== d && x.service === d.service && x.course === d.course && x.day === E.ubic.day && x.slot === s.key);
-      return [s.key, t(s.uiKey) + (occ ? ' · ' + (getDishTr(occ).short || getDishTr(occ).name) : '')];
-    });
-  } else {
-    const n = medHermanos(d, isBar ? null : E.ubic.day).filter(x => x !== d).length + 1;
-    posOpts = Array.from({ length: n }, (_, i) => [String(i + 1), String(i + 1)]);
+  // La canasta de la cena (`fija`) no tiene día ni posición que elegir: se
+  // sirve todas las noches en su propio lugar.
+  if (!d.fija){
+    h += medSec('medPlace');
+    const isBar = BAR_DISHES.indexOf(d) >= 0;
+    const sl = medSlotsDe(d);
+    let posOpts;
+    if (sl){
+      posOpts = sl.map(s => {
+        const occ = DISHES.find(x => x !== d && x.service === d.service && x.course === d.course && x.day === E.ubic.day && x.slot === s.key);
+        return [s.key, t(s.uiKey) + (occ ? ' · ' + (getDishTr(occ).short || getDishTr(occ).name) : '')];
+      });
+    } else {
+      const n = medHermanos(d, isBar ? null : E.ubic.day).filter(x => x !== d).length + 1;
+      posOpts = Array.from({ length: n }, (_, i) => [String(i + 1), String(i + 1)]);
+    }
+    const opt = (arr, cur) => arr.map(([v, lbl]) => `<option value="${v}"${String(v) === String(cur) ? ' selected' : ''}>${vjEsc(lbl)}</option>`).join('');
+    h += `<div class="med-row2">
+      ${isBar ? '' : `<div class="med-f"><div class="med-lbl"><span>${t('medDay')}</span></div><select class="cmd-modal-input med-in" onchange="medUbic('day',this.value)">${opt(['1','2','3','4'].map(x => [x, t('day') + ' ' + x]), E.ubic.day)}</select></div>`}
+      <div class="med-f"><div class="med-lbl"><span>${t('medPos')}</span></div><select class="cmd-modal-input med-in" onchange="medUbic('pos',this.value)">${opt(posOpts, E.ubic.pos)}</select></div>
+    </div>`;
+    if (sl) h += `<div class="med-hint">${t('medSwapHint')}</div>`;
   }
-  const opt = (arr, cur) => arr.map(([v, lbl]) => `<option value="${v}"${String(v) === String(cur) ? ' selected' : ''}>${vjEsc(lbl)}</option>`).join('');
-  h += `<div class="med-row2">
-    ${isBar ? '' : `<div class="med-f"><div class="med-lbl"><span>${t('medDay')}</span></div><select class="cmd-modal-input med-in" onchange="medUbic('day',this.value)">${opt(['1','2','3','4'].map(x => [x, t('day') + ' ' + x]), E.ubic.day)}</select></div>`}
-    <div class="med-f"><div class="med-lbl"><span>${t('medPos')}</span></div><select class="cmd-modal-input med-in" onchange="medUbic('pos',this.value)">${opt(posOpts, E.ubic.pos)}</select></div>
-  </div>`;
-  if (sl) h += `<div class="med-hint">${t('medSwapHint')}</div>`;
 
   if (E.rot.keys.length){
     h += medSec('medLabels');
@@ -14832,6 +15209,13 @@ const COMANDA_SOURCES = [
         // Sólo afecta al almuerzo: MENU_SOPAS se mapea a 'Almuerzo' (ver
         // menuToDish), y en cena ese lugar lo ocupa ENTRADA con 4 opciones.
         if (d.course === 'Sopa') return false;
+        // (2026-11-03) Con la cena nueva, 'Entrada' son los 5 miniplatos para
+        // compartir: llegan juntos al centro de la mesa como un set, nadie los
+        // pide uno por uno. Fuera por la misma razón que el buffet (decisión
+        // del owner). Un ajuste del tipo "dip sin trucha" va por el Special
+        // Request de entrada, que sigue más abajo. La canasta tampoco entra:
+        // no tiene día, así que el filtro de arriba ya la deja fuera.
+        if (d.course === 'Entrada') return false;
         const svc = d.service || '';
         if (isLunch)  return svc === 'Almuerzo' || svc === 'Almuerzo y Cena';
         if (isDinner) return svc === 'Cena'     || svc === 'Almuerzo y Cena';
@@ -21572,8 +21956,8 @@ const EXP_SEGS = [
         { t:'El GEO presentó el menú del día y el menú de vinos incluidos.', time:'máx 3 min sentados' },
         { t:'De haber niños, el GEO explicará las alternativas de menú infantil, coordinando con los padres si se atiende primero a los niños.', cond:'si aplica' }
       ], tips:[
-        { label:'Frutos secos y penicilina en la cena', alergenos:'Cena',
-          body:'Salen de los alérgenos de cada ficha del ciclo: menciónalos al presentar el menú.' },
+        { label:'Frutos secos en la cena', alergenos:'Cena',
+          body:'Salen de la tabla de restricciones de cada plato del ciclo: menciónalos al presentar el menú.' },
         { label:'Guion de bienvenida', guion:'Aperitivos y bienvenida' }
       ] },
     { title:'Líquidos', anchor:'Ancla: la mesa no tiene nada que beber',
@@ -21599,8 +21983,8 @@ const EXP_SEGS = [
         { t:'El GEO arma la mesa tiempo por tiempo.' }
       ], tips:[
         EXP_T_SUGERIR,
-        { label:'Conocimiento que impresiona al evaluador', platos:['d9','d23','d53'],
-          body:'El <strong>pulpo</strong> es cocción al vacío a 90°C por 2 horas, con salsa anticuchera. El <strong>asado de tira</strong> se sella al vacío con vino tinto y va en cocción prolongada; la <strong>plateada</strong> lleva 16 horas a 85°C. Saber el método, no solo el nombre, demuestra dominio real del menú.' }
+        { label:'Conocimiento que impresiona al evaluador', platos:['prc1-res','mc1-dip','prc3-avecerdo'],
+          body:'El <strong>asado de tira</strong> pasa una noche en salmuera y se cocina al vacío 36 horas a baja temperatura. La <strong>trucha</strong> del dip de yogurt la curamos en casa durante 36 horas. El <strong>matambrito</strong> va ocho horas al vacío y se termina en la robata, la parrilla japonesa a carbón. Saber el método, no solo el nombre, demuestra dominio real del menú.' }
       ] },
     { title:'Entradas', anchor:'Ancla: sales de cocina con los primeros platos',
       mnemo:'Simultáneo · repongo · entrada · comparto · caliente · correcto · pregunto · retiro',
@@ -21614,11 +21998,16 @@ const EXP_SEGS = [
         { t:'El GES/GEO pregunta por la satisfacción del plato.' },
         { t:'El GEO retira los platos de entrada.' }
       ], tips:[
-        { label:'Entradas', body:'Toca una para abrir su ficha.', hoy:{ svc:'Cena', courses:['Entrada'] } },
-        { label:'Explicación breve de entradas frecuentes', platos:['d6','d5','d21'],
-          body:'<strong>Chupe de centolla:</strong> pastel cremoso horneado con Grana Padano gratinado (lleva lácteos y gluten). <strong>Hojas verdes Larache/Sequitor:</strong> con quinoas teñidas en betarraga y ají amarillo, dressing de mora o frambuesa. <strong>Camarones al ajillo:</strong> calibre 16-20 con merkén, láminas de ajo fritas y tostada de pan integral multisemillas (gluten).' },
-        { label:'Maridaje de entradas', body:'Mar y limón → <strong>Talinay</strong> o <strong>Azur</strong> (la burbuja limpia entre bocados). Chupes y sopas cremosas → <strong>SOLdeSOL</strong> o <strong>Aquitania</strong>. Ensalada de higos con queso azul → <strong>Erasmo</strong> o el rosado.',
-          wines:['talinay','azur','soldesol','aquitania','erasmo','garage-rose'] }
+        { label:'Miniplatos', body:'Toca uno para abrir su ficha.', hoy:{ svc:'Cena', courses:['Entrada'] } },
+        // Del Dossier de Concepto (Particularidades de la cena · Por qué miniplatos).
+        { label:'Cómo presentar el set', platos:['mc1-dip','mc3-dip'],
+          body:'Los cinco miniplatos llegan <strong>juntos al centro de la mesa</strong>: basta nombrar cada uno en una frase e invitar a compartir; la explicación extendida queda para cuando el viajero pregunta por alguno. Si alguien tiene una restricción, la conversación es qué miniplatos del set puede comer y cuáles se ajustan —el <strong>dip sin su proteína</strong> para un vegetariano—, no reemplazar el set entero.' },
+        { label:'El librito de la canasta', platos:['cn-pan'],
+          body:'El librito se hace con <strong>manteca de cerdo</strong> (y lleva leche en polvo y dora de huevo). A viajeros veganos, vegetarianos o que no comen cerdo hay que decirles que la <strong>focaccia y el pan pita</strong> sí pueden. Ninguno de los tres panes es apto para quien evita el gluten.' },
+        // Sólo la regla general: el maridaje plato por plato de la cena nueva está
+        // pendiente (propuesta aparte, para revisión del owner).
+        { label:'Maridaje de miniplatos', body:'Mar y limón → <strong>Talinay</strong> o <strong>Azur</strong> (la burbuja limpia entre bocados). Lo cremoso → <strong>SOLdeSOL</strong> o <strong>Aquitania</strong>.',
+          wines:['talinay','azur','soldesol','aquitania'] }
       ] },
     { title:'Fondos', anchor:'Ancla: armas la mesa para el segundo tiempo',
       mnemo:'Armo · derecha–izquierda · fondo · demora-GES · comparto · pregunto · retiro',
@@ -21632,8 +22021,8 @@ const EXP_SEGS = [
         { t:'El GEO retira los platos de fondo.' }
       ], tips:[
         { label:'Fondos', body:'Toca uno para abrir su ficha.', hoy:{ svc:'Cena', courses:['Plato principal'] } },
-        { label:'Punto de cocción', platos:['d56'],
-          body:'El <strong>pato</strong> se recomienda a punto o 3/4: lo dice su ficha. Si alguien pide un término que alarga la cocción, ese es el momento en que el <strong>GES se acerca</strong> a explicar la demora. Anticiparlo es lo que se evalúa acá.' },
+        { label:'Punto de cocción', platos:['prc2-res','prc4-res'],
+          body:'La <strong>entraña</strong> sale marcada por fuera y rosada por dentro; el <strong>flat iron</strong>, rosado al centro: lo dice su ficha. Si alguien pide un término que alarga la cocción, ese es el momento en que el <strong>GES se acerca</strong> a explicar la demora. Anticiparlo es lo que se evalúa acá.' },
         { label:'Maridaje de fondos', body:'Carnes rojas y cocción larga → <strong>Pura Fe Cabernet</strong> o <strong>Pérez Cruz Carmenere</strong>. Cerdo y cordero especiado → <strong>Clos de Luz Syrah</strong>. Pescado con mantequilla y limón → <strong>Talinay</strong>; con puré o salsa cremosa → <strong>Chardonnay</strong>. Vegetales → <strong>Glup Cinsault</strong>.',
           wines:['cabernet','perez-cruz','syrah','talinay','soldesol','glup'] }
       ] },
@@ -21645,8 +22034,11 @@ const EXP_SEGS = [
         { t:'El GEO ofrece bebidas calientes y bajativos.' }
       ], tips:[
         { label:'Guion de postres', guion:'Postres y cierre de experiencia' },
-        { label:'Celíacos en el postre', platos:['d44','d12'],
-          body:'La <strong>milhoja de manzana</strong> es el único postre que su ficha declara <strong>sin gluten</strong> (helado de rica-rica, papel de airampo). Las <strong>texturas de chañar</strong> se pueden pedir sin madeleine para celíacos. Para el resto, la ficha del Menú y, ante la duda, cocina.' }
+        // Transcrito de la tabla de Restricciones de cena (GE ✓ y GS ✓).
+        { label:'Celíacos en el postre', platos:['poc1-fruta','poc1-sinazucar','poc2-granos','poc3-fruta','poc3-granos','poc4-fruta','poc4-granos','poc4-sinazucar'],
+          body:'Según la tabla del asesor, todas las noches hay postre <strong>sin gluten</strong>: D1 naranja con azafrán e higos a la brasa · D2 banana con rica-rica · D3 frutilla con yogurt y texturas de almendra (el financier no lleva harina de trigo) · D4 los tres. Para el resto, la ficha del Menú y, ante la duda, cocina.' },
+        // Del Dossier de Concepto (Particularidades de la cena).
+        { label:'Sin azúcar refinada', body:'En esa familia el dulzor viene de frutas, mieles y endulzantes como la alulosa. Se presenta como <strong>«sin azúcar refinada»</strong>, nunca como apto para diabéticos: si un viajero tiene una restricción de azúcar por salud, consultar con cocina. Y si un <strong>vegano</strong> pide postre, cocina lo adapta en el momento: basta confirmar que preparará una versión adecuada, sin prometer un plato.' }
       ] },
     { title:'Despedida', anchor:'Ancla: el viajero se levanta', mnemo:'Adiós con nombre',
       checks:[ { t:'Al salir del Comedor, el viajero fue despedido.' } ],
@@ -21862,9 +22254,13 @@ function expTipHtml(tp, segKey, i, k){
     platos = lista.map(d => `<button class="exp-plato" onclick="expAbrirPlato('${d.id}')">${vjEsc(d.name)}</button>`).join('');
   }
   if (tp.alergenos){
-    const reglas = [['Frutos secos', /frutos secos/i], ['Penicilina', /penicilina/i]];
-    filas = reglas.map(([nom, re]) => {
-      const ds = DISHES.filter(d => d.service === tp.alergenos && (d.allergens || []).some(a => re.test(a)))
+    // Los platos anteriores al cambio de menú declaraban alérgenos en prosa; los
+    // 2026, con la matriz (✗ en el eje). Se leen las dos fuentes: un ✓* no entra,
+    // porque tiene arreglo y su nota ya lo dice en la ficha.
+    const reglas = [['Frutos secos', /frutos secos/i, 'fs'], ['Penicilina', /penicilina/i, null]];
+    filas = reglas.map(([nom, re, eje]) => {
+      const ds = DISHES.filter(d => d.service === tp.alergenos &&
+          ((d.allergens || []).some(a => re.test(a)) || (eje && d.diet && d.diet[eje] === 0)))
         .sort((a, b) => String(a.day).localeCompare(String(b.day)));
       if (!ds.length) return '';
       return `<div class="exp-tip-fila"><span>${nom}</span><div class="exp-pills">${ds.map(d =>
