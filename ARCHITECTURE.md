@@ -235,9 +235,11 @@ el editor no le ofrece día ni posición, y `menuJumpTwin` no toca el riel al
 abrirla. **Comande no lista miniplatos ni canasta** (decisión del owner): llegan
 como set al centro de la mesa, nadie los pide uno por uno — mismo criterio que
 el buffet; un ajuste va por el Special Request de entrada. Los documentos de
-cena no traen maridaje: con la cena anterior se fueron los únicos platos con
-`wines`, así que las fichas de vino quedan en "Platos que marida (0)" hasta que
-se cargue la propuesta de maridaje.
+cena no traen maridaje: el de la cena es una **propuesta propia aprobada por el
+owner** (2026-11-03) sobre los vinos incluidos, en un bloque aparte
+(`MARIDAJE_CENA`, id → `{wines, why}`) que `menuToDish` aplica sólo a la cena.
+Los platos 2026 del almuerzo siguen sin vino. Después se edita desde la ficha
+como cualquier maridaje (§3.7).
 
 **El bar absorbió Cocktails.** Toda la carta de bar (comida + tragos) vive en el
 segmento BAR; la tab Cocktails desapareció de `.main-tabs` (de 7 a 6 tabs) y
