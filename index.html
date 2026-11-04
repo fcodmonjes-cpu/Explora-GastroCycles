@@ -2801,6 +2801,62 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
 .vj-foto-visor-acc .vj-nota-btn { position:relative; display:inline-block; padding:6px 14px; cursor:pointer; }
 .vj-foto-visor-acc .vj-nota-btn.busy { cursor:progress; color:var(--gold); }
 .vj-foto-borrar.seguro { border-color:var(--coral); color:var(--coral); }
+/* Importar rostros (sólo PC). El mismo lenguaje del visor y las notas: fondo
+   oscuro, bordes finos, Courier para lo operativo. Sin color nuevo: gold =
+   marcada para subir, coral = algo que mirar. Las líneas que cambian durante la
+   subida tienen alto fijo: la grilla no se corre bajo el mouse. */
+.vj-title-row .vj-imp-btn { margin-right:auto; }
+.vj-imp-btn { background:none; border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:3px 10px;
+  font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--text-tertiary); cursor:pointer; }
+.vj-imp-btn:hover { border-color:var(--gold); color:var(--gold); }
+.vj-imp { position:fixed; inset:0; z-index:90; background:rgba(0,0,0,0.72); display:flex; align-items:center; justify-content:center; padding:24px; }
+.vj-imp-in { background:var(--bg-secondary); border:0.5px solid var(--border-md); border-radius:var(--radius-lg);
+  width:100%; max-width:1040px; max-height:100%; display:flex; flex-direction:column; padding:1rem 1.2rem; }
+.vj-imp.vj-imp-sobre .vj-imp-in { outline:0.5px dashed var(--gold); outline-offset:-6px; }
+/* Sólo la grilla cede alto: el resumen de dos líneas no se monta sobre ella. */
+.vj-imp-in > * { flex-shrink:0; }
+.vj-imp-in > .vj-imp-grilla { flex-shrink:1; }
+.vj-imp-cab { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:0.7rem; }
+.vj-imp-tit { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:21px; color:var(--text); }
+.vj-imp-zona { min-height:150px; }
+.vj-imp-ojo, .vj-imp-estado, .vj-imp-lista, .vj-imp-res, .vj-imp-prog, .vj-imp-meta, .vj-imp-arch, .vj-imp-motivo, .vj-imp-est, .vj-imp-marca, .vj-imp-ctl button, .vj-imp-gtit {
+  font-family:'Courier Prime','Courier New',monospace; }
+.vj-imp-ojo, .vj-imp-estado { font-size:10.5px; line-height:1.5; color:var(--text-tertiary); }
+.vj-imp-ojo { margin-top:8px; }
+.vj-imp-estado { margin:2px 0 10px; min-height:16px; }
+.vj-imp .mal { color:var(--coral); }
+.vj-imp-grilla { overflow-y:auto; flex:1 1 auto; min-height:0; padding-right:4px; }
+.vj-imp-grupo { margin-bottom:1.1rem; }
+.vj-imp-gtit { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:8px; }
+.vj-imp-cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(168px, 1fr)); gap:10px; }
+.vj-imp-card { border:0.5px solid var(--border); border-radius:var(--radius-md); padding:10px 10px 8px; min-width:0;
+  display:flex; flex-direction:column; align-items:center; gap:3px; text-align:center; }
+.vj-imp-card.on { border-color:var(--gold); }
+.vj-imp-card.ok { opacity:0.55; }
+.vj-imp-cara { width:112px; height:112px; border-radius:50%; border:0.5px solid var(--gold); background:#fff;
+  cursor:grab; touch-action:none; margin-bottom:4px; display:block; }
+.vj-imp-cara:active { cursor:grabbing; }
+.vj-imp-cara.vacia { background:var(--bg); border-style:dashed; border-color:var(--border-md); cursor:default; }
+.vj-imp-nom { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.2; color:var(--text); }
+.vj-imp-meta, .vj-imp-arch, .vj-imp-motivo, .vj-imp-est { font-size:9.5px; line-height:1.45; color:var(--text-tertiary); max-width:100%; }
+.vj-imp-arch { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.vj-imp-motivo, .vj-imp-px.baja, .vj-imp-card.falla .vj-imp-est { color:var(--coral); }
+.vj-imp-est { min-height:14px; }
+.vj-imp-card.ok .vj-imp-est { color:var(--gold); }
+.vj-imp-ctl { display:flex; gap:4px; margin-top:4px; }
+.vj-imp-ctl button { background:none; border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:2px 7px;
+  font-size:10px; color:var(--text-secondary); cursor:pointer; }
+.vj-imp-ctl button:hover { border-color:var(--gold); color:var(--gold); }
+.vj-imp-marca { font-size:10px; color:var(--text-secondary); display:flex; align-items:center; gap:5px; margin-top:4px; cursor:pointer; }
+.vj-imp-marca input { accent-color:var(--gold); margin:0; }
+.vj-imp-lista { font-size:10px; line-height:1.65; color:var(--text-tertiary); columns:2 260px; }
+.vj-imp-lista div { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.vj-imp-pie { display:flex; align-items:center; justify-content:flex-end; gap:8px; min-height:30px;
+  padding-top:10px; margin-top:4px; border-top:0.5px solid var(--border); }
+.vj-imp-pie:empty { display:none; }
+.vj-imp-res, .vj-imp-prog { margin-right:auto; font-size:10.5px; color:var(--text-secondary); }
+.vj-imp-go[disabled] { opacity:0.4; cursor:default; }
 
 .vj-empty { font-family:'Courier Prime','Courier New',monospace; font-size:12px; color:var(--text-tertiary); text-align:center; padding:2.5rem 1rem; line-height:1.8; }
 /* ═══ RECEPCIÓN — guía de procedimientos (2026-10) ═══════════════════════════
@@ -5139,6 +5195,15 @@ const VJ_FOTO_BUSY         = {};     // pid → true mientras sube o borra
 const VJ_FOTO_BLOB         = {};
 const VJ_FOTO_PIDIENDO     = new Set();   // paths con la descarga en curso
 const VJ_FOTO_FALLO        = {};     // path → ms del último intento fallido (se reintenta al minuto)
+// Importar rostros (2026-11): el .zip que la oficina baja de SharePoint con los
+// escaneos de pasaportes y cédulas → una cara por viajero, cruzando el CRS que
+// trae el nombre de cada archivo con el `crs` del roster. Todo pasa en la
+// memoria de la pestaña; lo único que sube es la cara recortada, por vjFotoSubir.
+const VJ_IMP_ON            = true;   // válvula: en false el botón no aparece
+const VJ_IMP_PREV          = 700;    // px del lado mayor del documento en la vista previa
+const VJ_IMP_MIN_LADO      = 300;    // px nativos del recorte bajo los cuales se avisa "baja resolución"
+let VJ_IMP                 = null;   // null | { fase, items, total, leidos, hechos, pdf, ignorados, error }
+let VJ_IMP_ARR             = null;   // arrastre en curso sobre una cara de la grilla
 
 // ── Quincho (piloto, 2026-09-30) ────────────────────────────────────────────
 // Las mesas del quincho, publicadas por scripts/quincho.py en /quincho/current.
@@ -5542,6 +5607,20 @@ const UI = {
     vjFotoSinGuardar:'La foto NO se guardó — revisá la conexión',
     vjFotoSinBorrar:'La foto NO se borró — revisá la conexión',
     vjFotoNoImagen:'Ese archivo no es una imagen que el navegador pueda abrir',
+    vjImpBtn:'importar rostros', vjImpTit:'Importar rostros', vjImpCerrar:'cerrar',
+    vjImpZona:'Arrastrá acá el .zip que bajaste de SharePoint (o las imágenes sueltas), o hacé clic para elegirlo',
+    vjImpOjo:'Los escaneos no salen de este computador: sólo sube la cara recortada, que se borra sola el día del check-out. Cada archivo se cruza por el CRS de su nombre.',
+    vjImpLeyendo:'leyendo', vjImpVacio:'No encontré imágenes ahí', vjImpZipMal:'Ese .zip no se pudo abrir',
+    vjImpSinCrs:'El roster de hoy no trae CRS: no hay con qué cruzar',
+    vjImpPdf:'PDF (no se pueden abrir acá)', vjImpIgnorados:'archivos que no son imagen',
+    vjImpG_listo:'listas para subir', vjImpG_revisar:'para revisar', vjImpG_tiene:'ya tienen foto',
+    vjImpG_fuera:'no están en casa hoy', vjImpG_sinnum:'sin CRS en el nombre',
+    vjImpM_nombre:'el archivo dice', vjImpM_baja:'baja resolución', vjImpM_dup:'hay otro archivo de esta persona',
+    vjImpM_noabre:'no se pudo abrir la imagen', vjImpM_crsDe:'el CRS es de', vjImpM_porNombre:'se asignó por el nombre', vjImpM_vertical:'documento parado: girá si hace falta',
+    vjImpSubir:'subir', vjImpReemplazar:'reemplazar la actual', vjImpSubirN:'Subir', vjImpFoto1:'foto', vjImpFotos:'fotos',
+    vjImpSubiendo:'subiendo', vjImpSubidas:'subidas', vjImpFallaron:'no se guardaron: tocá Subir de nuevo',
+    vjImpOtro:'importar otro', vjImpGirar:'girar', vjImpCentrar:'centrar', vjImpAcercar:'acercar', vjImpAlejar:'alejar',
+    vjImpEstSube:'subiendo…', vjImpEstOk:'✓ subida', vjImpEstMal:'no se guardó',
     vjEnLodge:'en el lodge', vjComen:'comen', vjComenTit:'Cubiertos asignados en PGO',
     vjStatRestric:'restricciones',
     vjRevisar:'revisar observación',
@@ -12090,6 +12169,7 @@ function viajerosRender(){
     root.innerHTML = `
       <div class="vj-head">
         <div class="vj-title-row">
+          <button type="button" class="vj-imp-btn" id="vj-imp-btn" hidden onclick="vjImpAbrir()"></button>
           <span class="vj-updated" id="vj-updated"></span>
         </div>
         <div class="vj-vistas">
@@ -12116,6 +12196,12 @@ function viajerosRender(){
   vjPaintUpdated();
   document.getElementById('vj-search').placeholder   = t('vjSearchPh');
   vjSyncNumpad();
+  // Importar rostros: sólo en el PC (mouse), en la vista de viajeros y con roster.
+  const impBtn = document.getElementById('vj-imp-btn');
+  if (impBtn){
+    impBtn.hidden = !(VJ_IMP_ON && VJ_FOTO_ON && VIAJEROS_DATA && VIAJEROS_VISTA === 'viajeros' && vjFotoEsPc());
+    impBtn.textContent = t('vjImpBtn');
+  }
   const esCom = VIAJEROS_VISTA === 'comedor';
   const esQn  = VIAJEROS_VISTA === 'quincho';
   // Buscador, numpad y chips son del corcho de viajeros: en Comedor no aplican
@@ -12639,20 +12725,25 @@ async function vjFotoBorrarObjeto(path){
     return r.ok || r.status === 404;   // ya no estaba: el objetivo se cumplió
   } catch(e){ return false; }
 }
-async function vjFotoSubir(pid, file){
-  if (!VJ_FOTO_ON || !pid || VJ_FOTO_BUSY[pid]) return;
+// `opts.silencioso`: sin avisos (el importador muestra el resultado en su
+// grilla). `opts.autor`: firma de la entrada en vez de la del aparato.
+// Devuelve true sólo si quedaron guardados los bytes Y el índice.
+async function vjFotoSubir(pid, file, opts){
+  opts = opts || {};
+  const avisar = clave => { if (!opts.silencioso) comandaAvisoSinGuardar(clave); };
+  if (!VJ_FOTO_ON || !pid || VJ_FOTO_BUSY[pid]) return false;
   const tr = vjPorPid(pid);
-  if (!tr) return;
+  if (!tr) return false;
   // HEIC u otro formato que el navegador no abre: el tipo puede venir vacío en
   // Windows, así que decide la decodificación, no la extensión.
-  if (!file || (file.type && !/^image\//.test(file.type))){ comandaAvisoSinGuardar('vjFotoNoImagen'); return; }
+  if (!file || (file.type && !/^image\//.test(file.type))){ avisar('vjFotoNoImagen'); return false; }
   VJ_FOTO_BUSY[pid] = 'sube';
   vjFotoRepintar();
-  let path = '', subida = false;
+  let path = '', subida = false, ok = false;
   try {
     let img;
     try { img = await vjFotoComprimir(file); }
-    catch(e){ comandaAvisoSinGuardar('vjFotoNoImagen'); return; }
+    catch(e){ avisar('vjFotoNoImagen'); return false; }
     const ts = Date.now();
     path = `${VJ_FOTOS_PATH}/${pid}/${ts}.jpg`;
     const up = await fetch(`https://firebasestorage.googleapis.com/v0/b/${EST_BUCKET}/o?name=${encodeURIComponent(path)}`, {
@@ -12664,7 +12755,8 @@ async function vjFotoSubir(pid, file){
     subida = true;
     const entrada = { path, ts, out: tr.out || '', hab: String(tr.hab || ''), w: img.w, h: img.h };
     if (tr.outAt && tr.outAt.length > 10) entrada.outAt = tr.outAt.slice(0, 16);
-    if (vjFirmaLeer()) entrada.autor = VJ_FIRMA;
+    if (opts.autor) entrada.autor = String(opts.autor).slice(0, 24);
+    else if (vjFirmaLeer()) entrada.autor = VJ_FIRMA;
     await fbTokenRefrescar();
     const r = await fetch(vjFotosUrl('/' + pid), {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entrada)
@@ -12678,16 +12770,18 @@ async function vjFotoSubir(pid, file){
       vjFotoSoltarBlob(previa.path);
       vjFotoBorrarObjeto(previa.path);   // si falla, la recoge la purga de huérfanas del servidor
     }
-    VJ_FOTO_OPEN = null;
+    if (!opts.silencioso) VJ_FOTO_OPEN = null;
+    ok = true;
   } catch(e){
     console.warn('[viajeros] la foto no se guardó:', e && e.message);
     // Subió el archivo pero no el índice: se deshace, para no dejar una foto que nadie ve ni nadie borra.
     if (subida && path) vjFotoBorrarObjeto(path);
-    comandaAvisoSinGuardar('vjFotoSinGuardar');
+    avisar('vjFotoSinGuardar');
   } finally {
     delete VJ_FOTO_BUSY[pid];
     vjFotoRepintar();
   }
+  return ok;
 }
 async function vjFotoBorrar(pid, silencioso){
   const f = VJ_FOTOS[pid];
@@ -12811,6 +12905,7 @@ document.addEventListener('drop', e => {
 // UNA sola persona a la vista— a ella. Si no, no hay a quién dárselo y se
 // ignora. Un pegado de TEXTO sigue su camino (una nota, el buscador).
 function vjFotoDestinoPegar(){
+  if (VJ_IMP) return null;   // con el importador abierto, un pegado no va a ninguna ficha
   if (VJ_FOTO_VER) return VJ_FOTO_VER;
   if (VJ_FOTO_OPEN) return VJ_FOTO_OPEN;
   const filas = document.querySelectorAll('.vj-modal .vj-detail-person[data-vj-drop]');
@@ -12829,8 +12924,580 @@ document.addEventListener('paste', e => {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (VJ_FOTO_VER){ vjFotoVerCerrar(); e.stopPropagation(); }
+  else if (VJ_IMP){ vjImpCerrar(); e.stopPropagation(); }
   else if (VJ_FOTO_OPEN){ vjFotoCerrar(); }
 });
+
+// ── Importar rostros (PC de la oficina, 2026-11) ──────────────────────────────
+// Entrada: el .zip que baja SharePoint (o imágenes sueltas). Cada archivo:
+//   1. se cruza por CRS con el roster. El nombre es LIBRE ("Aditya … crs 3481310",
+//      "Crs 3514951 hui feng 2", "cynthia Crs 601277867"): se prueba cada
+//      secuencia de dígitos contra los `crs` del día; el nombre escrito sólo
+//      controla (si no se parece, la tarjeta va a "revisar").
+//   2. se le ubica la cara con un recorte FIJO por formato (opción A del owner:
+//      sin dependencias). Pasaporte y cédula tienen la foto a la izquierda.
+//   3. se revisa en una grilla (mover, acercar, girar, marcar) y recién ahí sube,
+//      DE A UNA, por vjFotoSubir: mismas reglas, compresión, índice y purga.
+// Quien ya tiene foto se SALTA por defecto (decisión del owner): marcarla a
+// mano la reemplaza. Lo que no está en el roster de hoy no se puede subir: la
+// purga necesita su OUT. Nada se guarda en el aparato; al cerrar, se olvida.
+
+// ZIP sin librerías. Por pedazos (Blob.slice), no el archivo entero en memoria:
+// un día de escaneos puede pesar cientos de MB. SharePoint guarda los JPEG sin
+// comprimir (método 0) y lo demás con deflate (8), que el navegador ya trae.
+async function vjImpBytes(blob, desde, largo){
+  return new DataView(await blob.slice(desde, desde + largo).arrayBuffer());
+}
+async function vjImpZipEntradas(file){
+  const tam = file.size;
+  const cola = Math.min(tam, 22 + 65535 + 20);
+  const dvC = await vjImpBytes(file, tam - cola, cola);
+  let e = -1;
+  for (let i = cola - 22; i >= 0; i--) if (dvC.getUint32(i, true) === 0x06054b50){ e = i; break; }
+  if (e < 0) throw new Error('zip');
+  let n = dvC.getUint16(e + 10, true), cdTam = dvC.getUint32(e + 12, true), cdOff = dvC.getUint32(e + 16, true);
+  // ZIP64 (más de 65535 archivos o de 4 GB): los valores reales van en otro registro.
+  if ((n === 0xFFFF || cdTam === 0xFFFFFFFF || cdOff === 0xFFFFFFFF) && e >= 20 && dvC.getUint32(e - 20, true) === 0x07064b50){
+    const z = Number(dvC.getBigUint64(e - 20 + 8, true));
+    const dvZ = await vjImpBytes(file, z, 56);
+    if (dvZ.getUint32(0, true) === 0x06064b50){
+      n = Number(dvZ.getBigUint64(32, true)); cdTam = Number(dvZ.getBigUint64(40, true)); cdOff = Number(dvZ.getBigUint64(48, true));
+    }
+  }
+  const dv = await vjImpBytes(file, cdOff, cdTam);
+  const u8 = new Uint8Array(dv.buffer);
+  const dec = new TextDecoder('utf-8');
+  const out = [];
+  let p = 0;
+  for (let k = 0; k < n && p + 46 <= cdTam; k++){
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const flags = dv.getUint16(p + 8, true), metodo = dv.getUint16(p + 10, true);
+    let comp = dv.getUint32(p + 20, true), real = dv.getUint32(p + 24, true), loc = dv.getUint32(p + 42, true);
+    const nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true);
+    const nombre = dec.decode(u8.subarray(p + 46, p + 46 + nl));
+    if (comp === 0xFFFFFFFF || real === 0xFFFFFFFF || loc === 0xFFFFFFFF){
+      for (let q = p + 46 + nl, fin = q + xl; q + 4 <= fin; ){
+        const id = dv.getUint16(q, true), sz = dv.getUint16(q + 2, true);
+        if (id === 1){
+          let r = q + 4;
+          if (real === 0xFFFFFFFF){ real = Number(dv.getBigUint64(r, true)); r += 8; }
+          if (comp === 0xFFFFFFFF){ comp = Number(dv.getBigUint64(r, true)); r += 8; }
+          if (loc  === 0xFFFFFFFF){ loc  = Number(dv.getBigUint64(r, true)); }
+          break;
+        }
+        q += 4 + sz;
+      }
+    }
+    p += 46 + nl + xl + cl;
+    if (!nombre || nombre.endsWith('/') || /(^|\/)(__MACOSX\/|\._)/.test(nombre)) continue;
+    out.push({ nombre, metodo, comp, loc, cifrado: !!(flags & 1) });
+  }
+  return out;
+}
+async function vjImpZipArchivo(zip, en){
+  const h = await vjImpBytes(zip, en.loc, 30);
+  if (h.getUint32(0, true) !== 0x04034b50) throw new Error('zip');
+  const ini = en.loc + 30 + h.getUint16(26, true) + h.getUint16(28, true);
+  const datos = zip.slice(ini, ini + en.comp);
+  const tipo = vjImpTipo(en.nombre);
+  if (en.metodo === 0) return new Blob([datos], { type: tipo });
+  if (en.metodo !== 8 || typeof DecompressionStream === 'undefined') throw new Error('metodo');
+  const s = datos.stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Blob([await new Response(s).arrayBuffer()], { type: tipo });
+}
+function vjImpTipo(nombre){
+  const x = (String(nombre).toLowerCase().match(/\.([a-z0-9]+)$/) || [])[1] || '';
+  return x === 'png' ? 'image/png' : (x === 'jpg' || x === 'jpeg' || x === 'jfif') ? 'image/jpeg' : '';
+}
+
+// ── Cruce por CRS ──
+function vjImpNorm(s){ return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+// Palabras que la oficina suele sumar al nombre y que no son del viajero.
+const VJ_IMP_RELLENO = new Set(['crs','pasaporte','passport','pasaport','cedula','carnet','dni','rut','id','scan','img','image','foto','doc','copia','pag','frente','reverso']);
+function vjImpIndice(){
+  const idx = {};
+  const habs = (VIAJEROS_DATA && VIAJEROS_DATA.habs) || {};
+  Object.keys(habs).forEach(h => (habs[h] || []).forEach(tr => {
+    if (tr && tr.crs && tr.pid) idx[String(tr.crs)] = Object.assign({ hab: h }, tr);
+  }));
+  return idx;
+}
+// ¿El nombre escrito en el archivo es el de esta persona? Basta el nombre de
+// pila, o dos palabras del nombre completo (por si PGO lo trae en otro orden).
+// Un archivo sin letras no contradice nada.
+function vjImpPuntaje(palabras, nombre){
+  const T = vjImpNorm(nombre).split(/[^a-z]+/).filter(Boolean);
+  const igual = (w, x) => x === w || (Math.min(x.length, w.length) >= 4 && (x.startsWith(w) || w.startsWith(x)));
+  const hits = T.filter(x => palabras.some(w => igual(w, x))).length;
+  const primero = T.length > 0 && palabras.some(w => igual(w, T[0]));
+  return { hits, primero, ok: !palabras.length || primero || hits >= 2 };
+}
+function vjImpCruce(nombre, idx){
+  const base = String(nombre).split('/').pop().replace(/\.[^.]*$/, '');
+  const nums = base.match(/\d+/g) || [];
+  let tr = null, crs = '';
+  for (const d of nums){
+    const k = idx[d] ? d : (idx[d.replace(/^0+/, '')] ? d.replace(/^0+/, '') : '');
+    if (k){ tr = idx[k]; crs = k; break; }
+  }
+  const letras = vjImpNorm(base.replace(/\d+/g, ' ')).split(/[^a-z]+/)
+    .filter(w => w.length >= 3 && !VJ_IMP_RELLENO.has(w));
+  // Caso real (carpeta del 2026-11-04): "Crs 601828520 maristela smith" y
+  // "Crs 601828520 reynaldo smith" — la oficina le puso a los dos el CRS de
+  // uno, aunque en PGO cada persona tiene el suyo. Coincidir el apellido no
+  // alcanza: tiene que estar el nombre de pila. Si no está y en la MISMA hab hay
+  // UNA sola persona cuyo nombre sí calza, se le asigna a ella (va a revisar).
+  let nombreOk = true, porNombre = '';
+  if (tr && letras.length){
+    nombreOk = vjImpPuntaje(letras, tr.nombre).ok;
+    if (!nombreOk){
+      const hab = ((VIAJEROS_DATA && VIAJEROS_DATA.habs) || {})[tr.hab] || [];
+      const alt = hab.filter(x => x && x.pid && x.pid !== tr.pid && vjImpPuntaje(letras, x.nombre).ok);
+      if (alt.length === 1){ porNombre = tr.nombre; tr = Object.assign({ hab: tr.hab }, alt[0]); nombreOk = true; }
+    }
+  }
+  return {
+    tr, crs, nombreOk, porNombre, dice: letras.join(' '),
+    conNum: nums.some(d => d.length >= 5),
+    // "… hui feng 2": el 2 de la segunda copia. Entre dos archivos de la misma
+    // persona, el principal es el que no trae números de más.
+    extras: nums.filter(d => d !== crs && d.replace(/^0+/, '') !== crs).length,
+  };
+}
+
+// ── Recorte fijo (opción A) ──
+// Dónde va la foto dentro de cada formato ICAO 9303, en fracciones del
+// documento apaisado: pasaporte TD3 (125 × 88 mm) y cédula TD1 (85,6 × 54 mm).
+// Es el punto de partida; la grilla deja corregir. CALIBRAR con escaneos reales.
+const VJ_IMP_FORMATOS = {
+  pasaporte: { x: 0.035, y: 0.21, w: 0.29, h: 0.52 },
+  cedula:    { x: 0.030, y: 0.20, w: 0.31, h: 0.62 },
+};
+// Dónde está el documento en la hoja: la multifuncional entrega la hoja entera,
+// casi toda blanca, con el documento en un rincón. Las columnas y filas con
+// tinta (más que unas motas de polvo) marcan su caja; una sombra angosta en el
+// borde del escáner queda separada por blanco y pierde frente al documento.
+function vjImpCajaDoc(img){
+  const W = img.naturalWidth || img.width, H = img.naturalHeight || img.height;
+  const k = Math.min(1, 400 / Math.max(W, H));
+  const w = Math.max(1, Math.round(W * k)), h = Math.max(1, Math.round(H * k));
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  const px = ctx.getImageData(0, 0, w, h).data;
+  const col = new Uint32Array(w), fil = new Uint32Array(h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++){
+    const i = (y * w + x) * 4;
+    if (px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114 < 215){ col[x]++; fil[y]++; }
+  }
+  const tramo = (arr, total) => {
+    const umbral = total * 0.04, hueco = Math.max(2, Math.round(arr.length * 0.03));
+    let mejor = null, ini = -1, ult = -1, suma = 0;
+    const cerrar = () => { if (ini >= 0 && (!mejor || suma > mejor.suma)) mejor = { a: ini, b: ult, suma }; ini = -1; };
+    for (let i = 0; i < arr.length; i++){
+      if (arr[i] > umbral){ if (ini < 0){ ini = i; suma = 0; } ult = i; suma += arr[i]; }
+      else if (ini >= 0 && i - ult > hueco) cerrar();
+    }
+    cerrar();
+    return mejor || { a: 0, b: arr.length - 1 };
+  };
+  const cx = tramo(col, h), cy = tramo(fil, w);
+  // Si lo "con tinta" es casi toda la hoja (un recorte que ya es el documento),
+  // o un manchón demasiado chico para ser un documento, se usa la imagen entera.
+  const bw = (cx.b - cx.a + 1) / w, bh = (cy.b - cy.a + 1) / h;
+  if (bw < 0.15 || bh < 0.1) return { x: 0, y: 0, w: W, h: H };
+  return { x: cx.a / k, y: cy.a / k, w: Math.min(W, (cx.b - cx.a + 1) / k), h: Math.min(H, (cy.b - cy.a + 1) / k) };
+}
+// El documento recortado y girado, a la escala `k`. Sirve tanto para la vista
+// previa (desde la imagen o desde otro canvas) como para el recorte final.
+function vjImpDibujarDoc(fuente, doc, rot, k){
+  const w = Math.max(1, Math.round(doc.w * k)), h = Math.max(1, Math.round(doc.h * k));
+  const gira = rot % 180 !== 0;
+  const c = document.createElement('canvas');
+  c.width = gira ? h : w; c.height = gira ? w : h;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.translate(c.width / 2, c.height / 2);
+  ctx.rotate(rot * Math.PI / 180);
+  ctx.drawImage(fuente, doc.x, doc.y, doc.w, doc.h, -w / 2, -h / 2, w, h);
+  return c;
+}
+// Medidas NATIVAS del documento ya girado: el recorte vive en ese espacio.
+function vjImpDims(it){ return it.rot % 180 ? { w: it.doc.h, h: it.doc.w } : { w: it.doc.w, h: it.doc.h }; }
+// Recorte cuadrado: la foto del documento con margen ("PP antes que PPP", pidió
+// el owner), centrado un poco arriba de la mitad, donde está la cara. Cuadrado
+// porque la ficha lo muestra en un círculo: lo que se ve en la grilla es lo que
+// queda. El lado cubre el ancho de la foto con aire a los costados.
+function vjImpRearmar(it){
+  const base = it.base;
+  it.prev = it.rot ? vjImpDibujarDoc(base, { x: 0, y: 0, w: base.width, h: base.height }, it.rot, 1) : base;
+  const D = vjImpDims(it);
+  const r = Math.max(D.w, D.h) / Math.max(1, Math.min(D.w, D.h));
+  it.formato = r >= 1.51 ? 'cedula' : 'pasaporte';
+  const f = VJ_IMP_FORMATOS[it.formato];
+  const fw = f.w * D.w, fh = f.h * D.h;
+  it.caja = { cx: (f.x + f.w / 2) * D.w, cy: f.y * D.h + fh * 0.46, s: Math.max(fw, fh * 0.75) * 1.25 };
+  vjImpLimitar(it);
+}
+function vjImpLimitar(it){
+  const D = vjImpDims(it), c = it.caja;
+  c.s  = Math.max(40, Math.min(c.s, Math.max(D.w, D.h)));
+  c.cx = Math.max(0, Math.min(D.w, c.cx));
+  c.cy = Math.max(0, Math.min(D.h, c.cy));
+}
+async function vjImpPreparar(it){
+  const img = await vjFotoDecodificar(it.blob);
+  it.doc = vjImpCajaDoc(img);
+  const kp = Math.min(1, VJ_IMP_PREV / Math.max(it.doc.w, it.doc.h));
+  it.base = vjImpDibujarDoc(img, it.doc, 0, kp);
+  it.kPrev = kp;
+  it.rot = 0;
+  it.vertical = it.doc.h > it.doc.w * 1.05;   // documento parado: no se adivina el sentido
+  vjImpRearmar(it);
+}
+// La cara final, a resolución NATIVA del escaneo (nunca agrandada): se vuelve a
+// abrir el original y se corta ahí, no desde la vista previa.
+async function vjImpRecorteFinal(it){
+  const img = await vjFotoDecodificar(it.blob);
+  const docC = vjImpDibujarDoc(img, it.doc, it.rot, 1);
+  const c = it.caja;
+  const lado = Math.max(1, Math.round(Math.min(c.s, VJ_FOTO_LADO)));
+  const out = document.createElement('canvas');
+  out.width = out.height = lado;
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, lado, lado);
+  ctx.drawImage(docC, c.cx - c.s / 2, c.cy - c.s / 2, c.s, c.s, 0, 0, lado, lado);
+  return await new Promise(r => out.toBlob(r, 'image/png'));
+}
+
+// ── Lectura y clasificación ──
+const VJ_IMP_GRUPOS = ['listo', 'revisar', 'tiene', 'fuera', 'sinnum'];
+async function vjImpRecibir(files){
+  if (!VJ_IMP_ON || !VIAJEROS_DATA || (VJ_IMP && VJ_IMP.fase === 'subiendo')) return;
+  VJ_IMP = { fase: 'leyendo', items: [], total: 0, leidos: 0, hechos: 0, pdf: 0, ignorados: 0, error: '' };
+  vjImpPintar();
+  const fuentes = [];
+  for (const f of files){
+    const nom = f.name || '';
+    if (/\.zip$/i.test(nom) || /zip/.test(f.type || '')){
+      try {
+        (await vjImpZipEntradas(f)).forEach(en => {
+          if (vjImpTipo(en.nombre) && !en.cifrado) fuentes.push({ nombre: en.nombre, sacar: () => vjImpZipArchivo(f, en) });
+          else if (/\.pdf$/i.test(en.nombre)) VJ_IMP.pdf++;
+          else VJ_IMP.ignorados++;
+        });
+      } catch(e){ VJ_IMP.error = 'vjImpZipMal'; }
+    } else if (vjImpTipo(nom) || /^image\/(png|jpeg)$/.test(f.type || '')) fuentes.push({ nombre: nom, sacar: async () => f });
+    else if (/\.pdf$/i.test(nom)) VJ_IMP.pdf++;
+    else VJ_IMP.ignorados++;
+  }
+  fuentes.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base', numeric: true }));
+  VJ_IMP.total = fuentes.length;
+  vjImpPintarEstado();
+  const idx = vjImpIndice();
+  if (!Object.keys(idx).length && fuentes.length) VJ_IMP.error = 'vjImpSinCrs';
+  for (let n = 0; n < fuentes.length; n++){
+    const fu = fuentes[n];
+    const it = { id: 'i' + n, nombre: fu.nombre.split('/').pop(), marcado: false, estado: '', rot: 0, motivos: [] };
+    it.cruce = vjImpCruce(fu.nombre, idx);
+    it.tr = it.cruce.tr;
+    // Sólo se abre la imagen de quien se puede subir: lo demás es una línea.
+    if (it.tr){
+      try { it.blob = await fu.sacar(); await vjImpPreparar(it); }
+      catch(e){ it.noAbre = true; it.base = it.prev = null; }
+    }
+    VJ_IMP.items.push(it);
+    VJ_IMP.leidos = n + 1;
+    vjImpPintarEstado();
+  }
+  vjImpClasificar(VJ_IMP.items);
+  VJ_IMP.fase = 'revisar';
+  vjImpPintar();
+}
+function vjImpClasificar(items){
+  // Dos archivos de la misma persona: el principal es el sin números de más.
+  const porPid = {};
+  items.forEach(it => { if (it.tr && !it.noAbre) (porPid[it.tr.pid] = porPid[it.tr.pid] || []).push(it); });
+  const segundo = new Set();
+  Object.values(porPid).forEach(g => {
+    if (g.length < 2) return;
+    g.slice().sort((a, b) => a.cruce.extras - b.cruce.extras || a.nombre.length - b.nombre.length)
+      .slice(1).forEach(it => segundo.add(it));
+  });
+  items.forEach(it => {
+    it.motivos = [];
+    if (!it.tr){ it.grupo = it.cruce.conNum ? 'fuera' : 'sinnum'; it.marcado = false; return; }
+    if (it.noAbre){ it.grupo = 'revisar'; it.motivos.push(t('vjImpM_noabre')); it.marcado = false; return; }
+    if (it.cruce.porNombre) it.motivos.push(`${t('vjImpM_crsDe')} ${it.cruce.porNombre}: ${t('vjImpM_porNombre')}`);
+    if (segundo.has(it)) it.motivos.push(t('vjImpM_dup'));
+    if (!it.cruce.nombreOk) it.motivos.push(`${t('vjImpM_nombre')} «${it.cruce.dice}»`);
+    if (it.caja.s < VJ_IMP_MIN_LADO) it.motivos.push(t('vjImpM_baja'));
+    if (it.vertical) it.motivos.push(t('vjImpM_vertical'));
+    if (vjFotoDe(it.tr)){ it.grupo = 'tiene'; it.marcado = false; return; }
+    it.grupo = it.motivos.length ? 'revisar' : 'listo';
+    it.marcado = it.grupo === 'listo';
+  });
+}
+
+// ── Subida: de a una, en fila ──
+async function vjImpSubir(){
+  const v = VJ_IMP;
+  if (!v || v.fase !== 'revisar') return;
+  const cola = v.items.filter(it => it.marcado && it.tr && !it.noAbre && it.estado !== 'ok');
+  if (!cola.length) return;
+  v.fase = 'subiendo'; v.hechos = 0; v.total = cola.length;
+  vjImpPintarPie();
+  const cerrar = document.querySelector('#vj-imp .vj-imp-cab .vj-modal-close');
+  if (cerrar) cerrar.disabled = true;
+  const firma = vjFirmaLeer() ? VJ_FIRMA : '';
+  for (const it of cola){
+    it.estado = 'subiendo'; vjImpPintarCardEstado(it);
+    let ok = false;
+    try {
+      const recorte = await vjImpRecorteFinal(it);
+      ok = !!recorte && await vjFotoSubir(it.tr.pid, recorte,
+        { silencioso: true, autor: firma ? `importador · ${firma}` : 'importador' });
+    } catch(e){ ok = false; }
+    it.estado = ok ? 'ok' : 'falla';
+    if (ok) it.marcado = false;   // una que falló queda marcada: "Subir" la reintenta
+    v.hechos++;
+    vjImpPintarCardEstado(it);
+    vjImpPintarPie();
+  }
+  v.fase = 'revisar';
+  if (cerrar && cerrar.isConnected) cerrar.disabled = false;
+  vjImpPintarPie();
+}
+
+// ── Panel ── Vive en <body>, como el visor: el polling de Viajeros repinta la
+// grilla de habs y no puede llevarse la revisión de nadie. No se cierra con un
+// clic afuera: perder veinte recortes ajustados por un clic de más no.
+function vjImpAbrir(){
+  if (!VJ_IMP) VJ_IMP = { fase: 'vacio', items: [], total: 0, leidos: 0, hechos: 0, pdf: 0, ignorados: 0, error: '' };
+  vjImpPintar();
+}
+function vjImpCerrar(){
+  if (VJ_IMP && VJ_IMP.fase === 'subiendo') return;
+  VJ_IMP = null; VJ_IMP_ARR = null;
+  const el = document.getElementById('vj-imp');
+  if (el) el.remove();
+}
+function vjImpOtro(){
+  if (VJ_IMP && VJ_IMP.fase === 'subiendo') return;
+  VJ_IMP = null;
+  vjImpAbrir();
+}
+function vjImpElegido(input){
+  const fs = Array.from((input && input.files) || []);
+  if (input) input.value = '';
+  if (fs.length) vjImpRecibir(fs);
+}
+function vjImpItem(id){ return VJ_IMP && VJ_IMP.items.find(x => x.id === id); }
+function vjImpConteo(){
+  const c = {};
+  VJ_IMP_GRUPOS.forEach(g => { c[g] = 0; });
+  (VJ_IMP ? VJ_IMP.items : []).forEach(it => { if (it.grupo) c[it.grupo]++; });
+  return c;
+}
+function vjImpEstadoHtml(){
+  const v = VJ_IMP, partes = [];
+  if (v.fase === 'leyendo') partes.push(`${t('vjImpLeyendo')} ${v.leidos} / ${v.total || '…'}`);
+  else if (v.items.length){
+    const c = vjImpConteo();
+    partes.push(VJ_IMP_GRUPOS.filter(g => c[g]).map(g => `${c[g]} ${t('vjImpG_' + g)}`).join(' · '));
+  } else if (v.fase !== 'vacio') partes.push(t('vjImpVacio'));
+  if (v.pdf) partes.push(`${v.pdf} ${t('vjImpPdf')}`);
+  if (v.ignorados) partes.push(`${v.ignorados} ${t('vjImpIgnorados')}`);
+  if (v.error) partes.push(`<span class="mal">${t(v.error)}</span>`);
+  return partes.join(' · ');
+}
+function vjImpPorSubir(){
+  return VJ_IMP ? VJ_IMP.items.filter(it => it.marcado && it.tr && !it.noAbre && it.estado !== 'ok').length : 0;
+}
+function vjImpPieHtml(){
+  const v = VJ_IMP;
+  if (!v || !v.items.length || v.fase === 'leyendo') return '';
+  if (v.fase === 'subiendo')
+    return `<span class="vj-imp-prog">${t('vjImpSubiendo')} ${Math.min(v.hechos + 1, v.total)} / ${v.total}…</span>`;
+  const ok = v.items.filter(it => it.estado === 'ok').length, mal = v.items.filter(it => it.estado === 'falla').length;
+  const n = vjImpPorSubir();
+  return `${ok || mal ? `<span class="vj-imp-res">${ok} ${t('vjImpSubidas')}${mal ? ` · <span class="mal">${mal} ${t('vjImpFallaron')}</span>` : ''}</span>` : ''}
+    <button type="button" class="vj-nota-btn" onclick="vjImpOtro()">${t('vjImpOtro')}</button>
+    <button type="button" class="vj-nota-btn on vj-imp-go"${n ? '' : ' disabled'} onclick="vjImpSubir()">${t('vjImpSubirN')} ${n} ${t(n === 1 ? 'vjImpFoto1' : 'vjImpFotos')}</button>`;
+}
+function vjImpLadoTxt(it){ return it.caja ? `≈ ${Math.round(Math.min(it.caja.s, VJ_FOTO_LADO))} px` : ''; }
+function vjImpEstTxt(it){
+  return it.estado === 'subiendo' ? t('vjImpEstSube') : it.estado === 'ok' ? t('vjImpEstOk') : it.estado === 'falla' ? t('vjImpEstMal') : '';
+}
+function vjImpCardHtml(it){
+  const tr = it.tr, puede = !!(it.prev && !it.noAbre);
+  const id = vjEsc(it.id);
+  const quieto = VJ_IMP && VJ_IMP.fase === 'subiendo';
+  return `
+    <div class="vj-imp-card${it.marcado ? ' on' : ''}${it.estado ? ' ' + it.estado : ''}" id="vj-imp-${id}">
+      ${puede ? `<canvas class="vj-imp-cara" width="224" height="224" data-vj-imp-cara="${id}"></canvas>` : `<div class="vj-imp-cara vacia"></div>`}
+      <div class="vj-imp-nom">${vjEsc(tr.nombre)}</div>
+      <div class="vj-imp-meta">${t('vjHab')} ${vjEsc(tr.hab)}${puede ? ` · <span class="vj-imp-px${it.caja.s < VJ_IMP_MIN_LADO ? ' baja' : ''}" data-vj-imp-px="${id}">${vjImpLadoTxt(it)}</span>` : ''}</div>
+      <div class="vj-imp-arch" title="${vjEsc(it.nombre)}">${vjEsc(it.nombre)}</div>
+      ${it.motivos.length ? `<div class="vj-imp-motivo">${it.motivos.map(vjEsc).join(' · ')}</div>` : ''}
+      ${puede ? `
+      <div class="vj-imp-ctl">
+        <button type="button" onclick="vjImpZoom('${id}', 1 / 1.12)" aria-label="${t('vjImpAcercar')}">+</button>
+        <button type="button" onclick="vjImpZoom('${id}', 1.12)" aria-label="${t('vjImpAlejar')}">−</button>
+        <button type="button" onclick="vjImpGirar('${id}')">${t('vjImpGirar')}</button>
+        <button type="button" onclick="vjImpCentrar('${id}')">${t('vjImpCentrar')}</button>
+      </div>
+      <label class="vj-imp-marca"><input type="checkbox"${it.marcado ? ' checked' : ''}${quieto || it.estado === 'ok' ? ' disabled' : ''}
+        onchange="vjImpMarcar('${id}', this.checked)"> ${t(it.grupo === 'tiene' ? 'vjImpReemplazar' : 'vjImpSubir')}</label>` : ''}
+      <div class="vj-imp-est" data-vj-imp-est="${id}">${vjImpEstTxt(it)}</div>
+    </div>`;
+}
+function vjImpGrupoHtml(g){
+  const items = VJ_IMP.items.filter(it => it.grupo === g);
+  if (!items.length) return '';
+  const cuerpo = (g === 'fuera' || g === 'sinnum')
+    ? `<div class="vj-imp-lista">${items.map(it => `<div title="${vjEsc(it.nombre)}">${vjEsc(it.nombre)}</div>`).join('')}</div>`
+    : `<div class="vj-imp-cards">${items.map(vjImpCardHtml).join('')}</div>`;
+  return `<div class="vj-imp-grupo"><div class="vj-imp-gtit">${t('vjImpG_' + g)} · ${items.length}</div>${cuerpo}</div>`;
+}
+function vjImpPintar(){
+  let el = document.getElementById('vj-imp');
+  if (!VJ_IMP){ if (el) el.remove(); return; }
+  if (!el){
+    el = document.createElement('div');
+    el.id = 'vj-imp';
+    el.className = 'vj-imp';
+    // El panel entero recibe el .zip. Se frena acá: el arrastre de fotos de las
+    // fichas (listeners de document) no tiene que verlo.
+    el.addEventListener('dragover', e => {
+      if (!vjFotoArrastraArchivo(e)) return;
+      e.preventDefault(); e.stopPropagation();
+      const libre = VJ_IMP && VJ_IMP.fase !== 'subiendo' && VJ_IMP.fase !== 'leyendo';
+      e.dataTransfer.dropEffect = libre ? 'copy' : 'none';
+      el.classList.toggle('vj-imp-sobre', libre);
+    });
+    el.addEventListener('dragleave', e => { if (!e.relatedTarget || !el.contains(e.relatedTarget)) el.classList.remove('vj-imp-sobre'); });
+    el.addEventListener('drop', e => {
+      if (!vjFotoArrastraArchivo(e)) return;
+      e.preventDefault(); e.stopPropagation();
+      el.classList.remove('vj-imp-sobre');
+      if (VJ_IMP && (VJ_IMP.fase === 'subiendo' || VJ_IMP.fase === 'leyendo')) return;
+      vjImpRecibir(Array.from(e.dataTransfer.files || []));
+    });
+    el.addEventListener('pointerdown', vjImpArrastreIni);
+    el.addEventListener('wheel', vjImpRueda, { passive: false });
+    document.body.appendChild(el);
+  }
+  const v = VJ_IMP;
+  const hay = v.items.length > 0;
+  el.innerHTML = `
+    <div class="vj-imp-in" role="dialog" aria-label="${t('vjImpTit')}">
+      <div class="vj-imp-cab">
+        <span class="vj-imp-tit">${t('vjImpTit')}</span>
+        <button type="button" class="vj-modal-close" onclick="vjImpCerrar()" aria-label="${t('vjImpCerrar')}"${v.fase === 'subiendo' ? ' disabled' : ''}>×</button>
+      </div>
+      ${hay || v.fase === 'leyendo' ? '' : `
+      <label class="vj-foto-zona vj-imp-zona">
+        <input type="file" accept=".zip,application/zip,image/png,image/jpeg" multiple class="vj-foto-file" onchange="vjImpElegido(this)">
+        <span>${t('vjImpZona')}</span>
+      </label>
+      <div class="vj-imp-ojo">${t('vjImpOjo')}</div>`}
+      <div class="vj-imp-estado" id="vj-imp-estado">${vjImpEstadoHtml()}</div>
+      ${hay && v.fase !== 'leyendo' ? `<div class="vj-imp-grilla">${VJ_IMP_GRUPOS.map(vjImpGrupoHtml).join('')}</div>` : ''}
+      <div class="vj-imp-pie" id="vj-imp-pie">${vjImpPieHtml()}</div>
+    </div>`;
+  v.items.forEach(vjImpPintarCara);
+}
+function vjImpPintarEstado(){ const e = document.getElementById('vj-imp-estado'); if (e && VJ_IMP) e.innerHTML = vjImpEstadoHtml(); }
+function vjImpPintarPie(){ const e = document.getElementById('vj-imp-pie'); if (e && VJ_IMP) e.innerHTML = vjImpPieHtml(); }
+function vjImpPintarCardEstado(it){
+  const c = document.getElementById('vj-imp-' + it.id);
+  if (!c) return;
+  c.classList.remove('subiendo', 'ok', 'falla');
+  if (it.estado) c.classList.add(it.estado);
+  c.classList.toggle('on', !!it.marcado);
+  const est = c.querySelector('[data-vj-imp-est]');
+  if (est) est.textContent = vjImpEstTxt(it);
+  const box = c.querySelector('.vj-imp-marca input');
+  if (box){ box.checked = !!it.marcado; box.disabled = (VJ_IMP && VJ_IMP.fase === 'subiendo') || it.estado === 'ok'; }
+}
+function vjImpPintarCara(it){
+  if (!it.prev || !it.caja) return;
+  const cv = document.querySelector(`canvas[data-vj-imp-cara="${it.id}"]`);
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const k = it.kPrev, c = it.caja;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.drawImage(it.prev, (c.cx - c.s / 2) * k, (c.cy - c.s / 2) * k, c.s * k, c.s * k, 0, 0, cv.width, cv.height);
+}
+function vjImpPintarLado(it){
+  const e = document.querySelector(`[data-vj-imp-px="${it.id}"]`);
+  if (!e) return;
+  e.textContent = vjImpLadoTxt(it);
+  e.classList.toggle('baja', it.caja.s < VJ_IMP_MIN_LADO);
+}
+function vjImpMarcar(id, on){
+  const it = vjImpItem(id);
+  if (!it || (VJ_IMP && VJ_IMP.fase === 'subiendo')) return;
+  it.marcado = !!on;
+  vjImpPintarCardEstado(it);
+  vjImpPintarPie();
+}
+function vjImpZoom(id, f){
+  const it = vjImpItem(id);
+  if (!it || !it.caja || VJ_IMP.fase === 'subiendo') return;
+  it.caja.s *= f;
+  vjImpLimitar(it); vjImpPintarCara(it); vjImpPintarLado(it);
+}
+function vjImpGirar(id){
+  const it = vjImpItem(id);
+  if (!it || !it.base || VJ_IMP.fase === 'subiendo') return;
+  it.rot = (it.rot + 90) % 360;
+  vjImpRearmar(it);
+  const c = document.getElementById('vj-imp-' + it.id);
+  if (c){ c.outerHTML = vjImpCardHtml(it); vjImpPintarCara(it); }
+}
+function vjImpCentrar(id){
+  const it = vjImpItem(id);
+  if (!it || !it.base || VJ_IMP.fase === 'subiendo') return;
+  vjImpRearmar(it); vjImpPintarCara(it); vjImpPintarLado(it);
+}
+// Mover el encuadre arrastrando la cara; la rueda acerca y aleja.
+function vjImpArrastreIni(e){
+  const cv = e.target.closest && e.target.closest('canvas[data-vj-imp-cara]');
+  if (!cv || !VJ_IMP || VJ_IMP.fase === 'subiendo') return;
+  const it = vjImpItem(cv.getAttribute('data-vj-imp-cara'));
+  if (!it || !it.caja) return;
+  e.preventDefault();
+  try { cv.setPointerCapture(e.pointerId); } catch(_){}
+  VJ_IMP_ARR = { it, cv, x: e.clientX, y: e.clientY };
+  const mover = ev => {
+    const a = VJ_IMP_ARR;
+    if (!a) return;
+    const k = a.it.caja.s / (a.cv.getBoundingClientRect().width || 1);
+    a.it.caja.cx -= (ev.clientX - a.x) * k;
+    a.it.caja.cy -= (ev.clientY - a.y) * k;
+    a.x = ev.clientX; a.y = ev.clientY;
+    vjImpLimitar(a.it); vjImpPintarCara(a.it);
+  };
+  const fin = () => {
+    VJ_IMP_ARR = null;
+    cv.removeEventListener('pointermove', mover);
+    cv.removeEventListener('pointerup', fin);
+    cv.removeEventListener('pointercancel', fin);
+  };
+  cv.addEventListener('pointermove', mover);
+  cv.addEventListener('pointerup', fin);
+  cv.addEventListener('pointercancel', fin);
+}
+function vjImpRueda(e){
+  const cv = e.target.closest && e.target.closest('canvas[data-vj-imp-cara]');
+  if (!cv) return;
+  e.preventDefault();
+  vjImpZoom(cv.getAttribute('data-vj-imp-cara'), e.deltaY > 0 ? 1.06 : 1 / 1.06);
+}
 
 // `opts.hist:false` esconde el histórico de exploraciones. Lo usa el Comande:
 // ahí la pregunta es "qué le puedo servir a esta mesa", y hasta cuatro líneas
