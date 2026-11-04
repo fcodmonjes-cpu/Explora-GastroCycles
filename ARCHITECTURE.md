@@ -1070,6 +1070,17 @@ hab 0 · nombre 0 · edad 0 · nac 0 · grupo 0 · in 0 · out 0   (difieren)
 devuelve 0 viajeros, el sync vuelve a leer la tabla en vez de caerse. Es el
 corazón del módulo y de él cuelgan las dietas.
 
+**El CRS por viajero (2026-11-04).** La misma query pide además
+`confirmationNumber`, y cada ficha lleva `crs` (sólo dígitos). Es el número
+que la oficina escribe en el nombre de los archivos de pasaporte, y lo usa el
+importador de fotos para saber de quién es cada archivo. Se midió antes de
+pedirlo (`--explore crs`, una sola corrida, valores enmascarados): 99/99
+viajeros con número, **99 distintos**, y en las 41 habs compartidas cada
+acompañante tiene el suyo; 7 o 9 dígitos. Ojo con `partyCode`: ése es el
+compartido por la reserva del grupo, no sirve para identificar a la persona.
+Cero llamadas nuevas a PGO. En el respaldo por HTML no hay CRS: las fichas
+salen sin él y el importador simplemente no las encuentra.
+
 #### Las dietas NO se migran, y esto se midió
 
 La intuición decía que `dietReq` / `foodRestrictions` / `dietReqObs` iban a
