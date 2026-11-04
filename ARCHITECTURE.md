@@ -1483,6 +1483,18 @@ nombre no calza y en la misma hab hay **una** persona cuyo nombre sí, se le
 asigna a ella y la tarjeta va a revisar, desmarcada. Entre dos archivos de la
 misma persona, el principal es el que no trae números de más (el " 2").
 
+**«Para quién es la foto».** Recepción a veces nombra los archivos de la pareja
+con el CRS de uno solo y **sin nombre**: nada que cruzar, las dos fotos caen en
+el titular. Por eso, cuando la hab del titular tiene más gente, el nombre de la
+tarjeta es un `<select>` con esa hab (`vjImpCompaneros`, desde
+`cruce.habOrigen`). Elegir es decidir: se borran las dudas de nombre, la tarjeta
+queda marcada (salvo que pise una foto ya puesta o choque con otro archivo de
+esa persona) y **no cambia de grupo ni de lugar**: se repinta donde está con
+su alto conservado (`vjImpAsignar`). Si la elección arma un choque, el "segundo
+archivo" es la tarjeta recién tocada (`aMano` guarda cuándo): el aviso sale
+donde uno mira. Los motivos se derivan del estado (`vjImpMotivos`), no se
+guardan, así que cambian solos al reasignar.
+
 **Los grupos de la grilla:** listas (marcadas) · para revisar (baja resolución,
 nombre que no calza, CRS de otro, segundo archivo, documento parado) · ya
 tienen foto · no están en casa hoy · sin CRS en el nombre. Las dos últimas no se

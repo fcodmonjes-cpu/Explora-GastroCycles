@@ -2839,12 +2839,22 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
 .vj-imp-cara:active { cursor:grabbing; }
 .vj-imp-cara.vacia { background:var(--bg); border-style:dashed; border-color:var(--border-md); cursor:default; }
 .vj-imp-nom { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.2; color:var(--text); }
+/* "para:" — el nombre mismo es el selector cuando hay más gente en la hab: se
+   lee igual que el texto, sólo el ▾ y la línea punteada avisan que se elige. */
+.vj-imp-para { font:inherit; color:inherit; background:transparent; border:0; border-bottom:0.5px dashed var(--border-md);
+  padding:0 14px 0 0; margin:0; max-width:100%; cursor:pointer; -webkit-appearance:none; appearance:none;
+  background-image:linear-gradient(45deg, transparent 50%, var(--text-tertiary) 50%), linear-gradient(135deg, var(--text-tertiary) 50%, transparent 50%);
+  background-position:calc(100% - 7px) 55%, calc(100% - 3px) 55%; background-size:4px 4px; background-repeat:no-repeat;
+  text-overflow:ellipsis; }
+.vj-imp-para:hover, .vj-imp-para:focus { border-bottom-color:var(--gold); outline:none; }
+.vj-imp-para:disabled { cursor:default; border-bottom-color:transparent; background-image:none; padding-right:0; }
+.vj-imp-para option { background:var(--bg); color:var(--text); font-family:'Courier Prime',monospace; font-size:12px; }
 .vj-imp-meta, .vj-imp-arch, .vj-imp-motivo, .vj-imp-est { font-size:9.5px; line-height:1.45; color:var(--text-tertiary); max-width:100%; }
 .vj-imp-arch { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .vj-imp-motivo, .vj-imp-px.baja, .vj-imp-card.falla .vj-imp-est { color:var(--coral); }
 .vj-imp-est { min-height:14px; }
 .vj-imp-card.ok .vj-imp-est { color:var(--gold); }
-.vj-imp-ctl { display:flex; gap:4px; margin-top:4px; }
+.vj-imp-ctl { display:flex; gap:4px; margin-top:auto; padding-top:4px; }   /* los controles, siempre al pie de la tarjeta */
 .vj-imp-ctl button { background:none; border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:2px 7px;
   font-size:10px; color:var(--text-secondary); cursor:pointer; }
 .vj-imp-ctl button:hover { border-color:var(--gold); color:var(--gold); }
@@ -5616,6 +5626,7 @@ const UI = {
     vjImpG_listo:'listas para subir', vjImpG_revisar:'para revisar', vjImpG_tiene:'ya tienen foto',
     vjImpG_fuera:'no están en casa hoy', vjImpG_sinnum:'sin CRS en el nombre',
     vjImpM_nombre:'el archivo dice', vjImpM_baja:'baja resolución', vjImpM_dup:'hay otro archivo de esta persona',
+    vjImpM_tiene:'ya tiene foto: se reemplaza', vjImpM_elegi:'si es de otra persona de la hab, elegila en el nombre', vjImpPara:'para quién es la foto',
     vjImpM_noabre:'no se pudo abrir la imagen', vjImpM_crsDe:'el CRS es de', vjImpM_porNombre:'se asignó por el nombre', vjImpM_vertical:'documento parado: girá si hace falta',
     vjImpSubir:'subir', vjImpReemplazar:'reemplazar la actual', vjImpSubirN:'Subir', vjImpFoto1:'foto', vjImpFotos:'fotos',
     vjImpSubiendo:'subiendo', vjImpSubidas:'subidas', vjImpFallaron:'no se guardaron: tocá Subir de nuevo',
@@ -13048,6 +13059,7 @@ function vjImpCruce(nombre, idx){
   // alcanza: tiene que estar el nombre de pila. Si no está y en la MISMA hab hay
   // UNA sola persona cuyo nombre sí calza, se le asigna a ella (va a revisar).
   let nombreOk = true, porNombre = '';
+  const habOrigen = tr ? String(tr.hab) : '';   // la hab del titular del CRS: de ahí sale el selector "para:"
   if (tr && letras.length){
     nombreOk = vjImpPuntaje(letras, tr.nombre).ok;
     if (!nombreOk){
@@ -13057,7 +13069,7 @@ function vjImpCruce(nombre, idx){
     }
   }
   return {
-    tr, crs, nombreOk, porNombre, dice: letras.join(' '),
+    tr, crs, nombreOk, porNombre, habOrigen, dice: letras.join(' '),
     conNum: nums.some(d => d.length >= 5),
     // "… hui feng 2": el 2 de la segunda copia. Entre dos archivos de la misma
     // persona, el principal es el que no trae números de más.
@@ -13216,29 +13228,88 @@ async function vjImpRecibir(files){
   VJ_IMP.fase = 'revisar';
   vjImpPintar();
 }
-function vjImpClasificar(items){
-  // Dos archivos de la misma persona: el principal es el sin números de más.
+// Dos archivos para la misma persona: el principal es el sin números de más
+// (el " 2" de la segunda copia); el otro va desmarcado. Se recalcula cada vez
+// que alguien reasigna una foto con el selector "para:". Si el choque lo armó
+// una elección a mano, el "segundo" es la tarjeta recién tocada (aMano guarda
+// cuándo): el aviso aparece donde uno está mirando y ninguna otra crece.
+function vjImpRecalcDup(items){
   const porPid = {};
-  items.forEach(it => { if (it.tr && !it.noAbre) (porPid[it.tr.pid] = porPid[it.tr.pid] || []).push(it); });
-  const segundo = new Set();
+  items.forEach(it => {
+    it.segundo = false;
+    if (it.tr && !it.noAbre) (porPid[it.tr.pid] = porPid[it.tr.pid] || []).push(it);
+  });
   Object.values(porPid).forEach(g => {
     if (g.length < 2) return;
-    g.slice().sort((a, b) => a.cruce.extras - b.cruce.extras || a.nombre.length - b.nombre.length)
-      .slice(1).forEach(it => segundo.add(it));
+    g.slice().sort((a, b) => (a.aMano || 0) - (b.aMano || 0)
+                          || a.cruce.extras - b.cruce.extras || a.nombre.length - b.nombre.length)
+      .slice(1).forEach(it => { it.segundo = true; });
   });
+}
+// Los motivos salen del estado, no se guardan: así cambian solos al reasignar.
+// Elegir la persona a mano es una decisión: borra las dudas sobre el nombre.
+function vjImpMotivos(it){
+  if (it.noAbre) return [t('vjImpM_noabre')];
+  const m = [];
+  if (!it.aMano){
+    if (it.cruce.porNombre) m.push(`${t('vjImpM_crsDe')} ${it.cruce.porNombre}: ${t('vjImpM_porNombre')}`);
+    if (!it.cruce.nombreOk) m.push(`${t('vjImpM_nombre')} «${it.cruce.dice}»`);
+  }
+  if (it.segundo) m.push(t('vjImpM_dup'));
+  if (it.caja && it.caja.s < VJ_IMP_MIN_LADO) m.push(t('vjImpM_baja'));
+  if (it.vertical) m.push(t('vjImpM_vertical'));
+  if (it.aMano && it.estado !== 'ok' && vjFotoDe(it.tr)) m.push(t('vjImpM_tiene'));
+  return m;
+}
+function vjImpClasificar(items){
+  vjImpRecalcDup(items);
   items.forEach(it => {
-    it.motivos = [];
     if (!it.tr){ it.grupo = it.cruce.conNum ? 'fuera' : 'sinnum'; it.marcado = false; return; }
-    if (it.noAbre){ it.grupo = 'revisar'; it.motivos.push(t('vjImpM_noabre')); it.marcado = false; return; }
-    if (it.cruce.porNombre) it.motivos.push(`${t('vjImpM_crsDe')} ${it.cruce.porNombre}: ${t('vjImpM_porNombre')}`);
-    if (segundo.has(it)) it.motivos.push(t('vjImpM_dup'));
-    if (!it.cruce.nombreOk) it.motivos.push(`${t('vjImpM_nombre')} «${it.cruce.dice}»`);
-    if (it.caja.s < VJ_IMP_MIN_LADO) it.motivos.push(t('vjImpM_baja'));
-    if (it.vertical) it.motivos.push(t('vjImpM_vertical'));
+    if (it.noAbre){ it.grupo = 'revisar'; it.marcado = false; return; }
     if (vjFotoDe(it.tr)){ it.grupo = 'tiene'; it.marcado = false; return; }
-    it.grupo = it.motivos.length ? 'revisar' : 'listo';
+    it.grupo = vjImpMotivos(it).length ? 'revisar' : 'listo';
     it.marcado = it.grupo === 'listo';
   });
+}
+// Las personas de la hab del titular del CRS: a quién más puede ser la foto.
+// Caso real: recepción nombra los archivos de la pareja con el CRS de uno solo.
+function vjImpCompaneros(it){
+  const hab = it.cruce && it.cruce.habOrigen;
+  const lista = ((VIAJEROS_DATA && VIAJEROS_DATA.habs) || {})[hab] || [];
+  return lista.filter(x => x && x.pid).map(x => Object.assign({ hab }, x));
+}
+// "para:" — reasigna la foto a otra persona de la hab. La tarjeta NO cambia de
+// grupo ni de lugar (nada se mueve bajo el mouse): se repinta donde está, y
+// también las que dejaron o pasaron a ser "otro archivo de esta persona".
+function vjImpAsignar(id, pid){
+  const v = VJ_IMP, it = vjImpItem(id);
+  if (!v || !it || v.fase === 'subiendo' || it.estado === 'ok') return;
+  const nuevo = vjImpCompaneros(it).find(x => x.pid === pid);
+  if (!nuevo || (it.tr && it.tr.pid === pid)) return;
+  const antes = new Map(v.items.map(x => [x, x.segundo]));
+  it.tr = nuevo;
+  it.aMano = Date.now();
+  it.estado = '';
+  vjImpRecalcDup(v.items);
+  // Elegirla es la decisión: queda marcada, salvo que pise una foto que ya
+  // está o que haya otro archivo para esa misma persona.
+  it.marcado = !vjFotoDe(it.tr) && !it.segundo;
+  v.items.forEach(x => {
+    if (x !== it && antes.get(x) === x.segundo) return;
+    // La que dejó de ser "otro archivo" vuelve a marcarse si ya no tiene dudas.
+    if (x !== it && x.estado !== 'ok')
+      x.marcado = !x.segundo && !vjFotoDe(x.tr) && !vjImpMotivos(x).length;
+    const c = document.getElementById('vj-imp-' + x.id);
+    if (!c) return;
+    // Sin el aviso la tarjeta quedaría más baja y todo lo de abajo subiría:
+    // conserva su alto (los controles van al pie, no se corren).
+    const alto = c.getBoundingClientRect().height;
+    c.outerHTML = vjImpCardHtml(x);
+    const n = document.getElementById('vj-imp-' + x.id);
+    if (n){ n.style.boxSizing = 'border-box'; n.style.minHeight = alto + 'px'; }
+    vjImpPintarCara(x);
+  });
+  vjImpPintarPie();
 }
 
 // ── Subida: de a una, en fila ──
@@ -13335,13 +13406,21 @@ function vjImpCardHtml(it){
   const tr = it.tr, puede = !!(it.prev && !it.noAbre);
   const id = vjEsc(it.id);
   const quieto = VJ_IMP && VJ_IMP.fase === 'subiendo';
+  const otros = puede ? vjImpCompaneros(it) : [];
+  const motivos = vjImpMotivos(it);
+  // Sólo se sugiere elegir a otro cuando hay duda (segundo archivo o nombre que no calza).
+  if (otros.length > 1 && !it.aMano && (it.segundo || !it.cruce.nombreOk)) motivos.push(t('vjImpM_elegi'));
   return `
     <div class="vj-imp-card${it.marcado ? ' on' : ''}${it.estado ? ' ' + it.estado : ''}" id="vj-imp-${id}">
       ${puede ? `<canvas class="vj-imp-cara" width="224" height="224" data-vj-imp-cara="${id}"></canvas>` : `<div class="vj-imp-cara vacia"></div>`}
-      <div class="vj-imp-nom">${vjEsc(tr.nombre)}</div>
+      <div class="vj-imp-nom">${otros.length > 1
+        ? `<select class="vj-imp-para" aria-label="${t('vjImpPara')}" title="${t('vjImpPara')}"${quieto || it.estado === 'ok' ? ' disabled' : ''}
+            onchange="vjImpAsignar('${id}', this.value)">${otros.map(x =>
+              `<option value="${vjEsc(x.pid)}"${x.pid === tr.pid ? ' selected' : ''}>${vjEsc(x.nombre)}</option>`).join('')}</select>`
+        : vjEsc(tr.nombre)}</div>
       <div class="vj-imp-meta">${t('vjHab')} ${vjEsc(tr.hab)}${puede ? ` · <span class="vj-imp-px${it.caja.s < VJ_IMP_MIN_LADO ? ' baja' : ''}" data-vj-imp-px="${id}">${vjImpLadoTxt(it)}</span>` : ''}</div>
       <div class="vj-imp-arch" title="${vjEsc(it.nombre)}">${vjEsc(it.nombre)}</div>
-      ${it.motivos.length ? `<div class="vj-imp-motivo">${it.motivos.map(vjEsc).join(' · ')}</div>` : ''}
+      ${motivos.length ? `<div class="vj-imp-motivo">${motivos.map(vjEsc).join(' · ')}</div>` : ''}
       ${puede ? `
       <div class="vj-imp-ctl">
         <button type="button" onclick="vjImpZoom('${id}', 1 / 1.12)" aria-label="${t('vjImpAcercar')}">+</button>
@@ -13350,7 +13429,7 @@ function vjImpCardHtml(it){
         <button type="button" onclick="vjImpCentrar('${id}')">${t('vjImpCentrar')}</button>
       </div>
       <label class="vj-imp-marca"><input type="checkbox"${it.marcado ? ' checked' : ''}${quieto || it.estado === 'ok' ? ' disabled' : ''}
-        onchange="vjImpMarcar('${id}', this.checked)"> ${t(it.grupo === 'tiene' ? 'vjImpReemplazar' : 'vjImpSubir')}</label>` : ''}
+        onchange="vjImpMarcar('${id}', this.checked)"> ${t(it.estado !== 'ok' && vjFotoDe(tr) ? 'vjImpReemplazar' : 'vjImpSubir')}</label>` : ''}
       <div class="vj-imp-est" data-vj-imp-est="${id}">${vjImpEstTxt(it)}</div>
     </div>`;
 }
@@ -13422,6 +13501,8 @@ function vjImpPintarCardEstado(it){
   if (est) est.textContent = vjImpEstTxt(it);
   const box = c.querySelector('.vj-imp-marca input');
   if (box){ box.checked = !!it.marcado; box.disabled = (VJ_IMP && VJ_IMP.fase === 'subiendo') || it.estado === 'ok'; }
+  const para = c.querySelector('select.vj-imp-para');
+  if (para) para.disabled = (VJ_IMP && VJ_IMP.fase === 'subiendo') || it.estado === 'ok';
 }
 function vjImpPintarCara(it){
   if (!it.prev || !it.caja) return;
