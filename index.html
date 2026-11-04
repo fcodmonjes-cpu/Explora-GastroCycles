@@ -2751,6 +2751,57 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
 .vj-nota-btn { background:none; border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:4px 11px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.06em; color:var(--text-secondary); cursor:pointer; }
 .vj-nota-btn.on { border-color:var(--gold); color:var(--gold); }
 
+/* FOTO DEL VIAJERO (2026-11). Elemento visual nuevo, aprobado con preview por
+   el owner: la foto ocupa la columna de la cara, redonda, 44 px y con el borde
+   fino gold de siempre; la bandera baja a insignia en la esquina. Sin color ni
+   fuente nueva. El hueco es FIJO: la imagen llega después (blob con token) y
+   se parcha en el lugar, sin mover la fila. Punteado = no se pudo cargar (el
+   "sin dato" del programa, §3.1). */
+.vj-foto { position:relative; flex:0 0 auto; width:44px; height:44px; padding:0; margin:0;
+  border-radius:50%; border:0.5px solid var(--gold); background:var(--bg-secondary);
+  cursor:zoom-in; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+/* La columna de la cara mide 38 px (bandera/avatar). La foto crece 6 px hacia
+   el margen y no hacia el texto: así el nombre arranca en la misma x con o sin
+   foto, y las filas de una hab siguen alineadas. */
+.vj-detail-person .vj-foto { margin-left:-6px; }
+.vj-foto img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
+.vj-foto img:not([src]) { visibility:hidden; }
+.vj-foto.falla { border-style:dashed; border-color:var(--border-md); }
+.vj-foto-flag { position:absolute; right:-6px; bottom:-4px; font-size:15px; line-height:1; pointer-events:none; }
+.vj-flag.foto { color:var(--text-tertiary); }
+.vj-foto-add { margin-left:6px; }
+.vj-foto-panel { margin-top:7px; }
+.vj-foto-zona { position:relative; display:flex; align-items:center; justify-content:center;
+  min-height:62px; padding:10px 14px; border:0.5px dashed var(--border-md); border-radius:var(--radius-md);
+  font-family:'Courier Prime','Courier New',monospace; font-size:11px; line-height:1.45;
+  color:var(--text-tertiary); text-align:center; cursor:pointer; transition:color .15s, border-color .15s; }
+.vj-foto-zona:hover, .vj-drop-on .vj-foto-zona, .vj-foto-panel.vj-drop-on .vj-foto-zona { border-color:var(--gold); color:var(--gold); }
+.vj-foto-zona.busy { cursor:progress; color:var(--gold); border-style:solid; border-color:rgba(186,117,23,0.5); }
+/* El input queda en el DOM (iOS no abre el selector de un input display:none
+   en todas las versiones) pero invisible: el que se toca es el label. */
+.vj-foto-file { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+/* Arrastrando una imagen sobre la fila: un contorno fino, nada más. */
+.vj-detail-person.vj-drop-on { outline:0.5px dashed var(--gold); outline-offset:-1px; border-radius:var(--radius-md); }
+.vj-foto-visor { position:fixed; inset:0; z-index:95; background:rgba(0,0,0,0.82);
+  display:flex; align-items:center; justify-content:center; padding:16px; }
+.vj-foto-visor-in { position:relative; display:flex; flex-direction:column; align-items:center; gap:7px; max-width:100%; }
+.vj-foto-visor-x { align-self:flex-end; margin:0 -2px 2px 0; }
+.vj-foto-visor-img { position:relative; border-radius:var(--radius-md); overflow:hidden;
+  background:var(--bg-secondary); border:0.5px solid var(--border-md); }
+.vj-foto-visor-img img { width:100%; height:100%; object-fit:contain; display:block; }
+.vj-foto-visor-img img:not([src]) { visibility:hidden; }
+.vj-foto-visor-falla { display:none; position:absolute; inset:0; align-items:center; justify-content:center;
+  font-family:'Courier Prime','Courier New',monospace; font-size:11px; color:var(--text-tertiary); }
+.vj-foto-visor-img.falla { border-style:dashed; }
+.vj-foto-visor-img.falla .vj-foto-visor-falla { display:flex; }
+.vj-foto-visor-nom { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:19px; color:var(--text); text-align:center; margin-top:3px; }
+.vj-foto-visor-meta { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; line-height:1.5;
+  color:var(--text-tertiary); text-align:center; max-width:320px; }
+.vj-foto-visor-acc { display:flex; gap:8px; margin-top:4px; }
+.vj-foto-visor-acc .vj-nota-btn { position:relative; display:inline-block; padding:6px 14px; cursor:pointer; }
+.vj-foto-visor-acc .vj-nota-btn.busy { cursor:progress; color:var(--gold); }
+.vj-foto-borrar.seguro { border-color:var(--coral); color:var(--coral); }
+
 .vj-empty { font-family:'Courier Prime','Courier New',monospace; font-size:12px; color:var(--text-tertiary); text-align:center; padding:2.5rem 1rem; line-height:1.8; }
 /* ═══ RECEPCIÓN — guía de procedimientos (2026-10) ═══════════════════════════
    Paleta existente, sin colores nuevos: ámbar = acción/activo, coral = "ojo"
@@ -5066,6 +5117,28 @@ let VJ_NOTA_BUF            = '';     // lo tipeado, para que un re-render no lo 
 // nada— sino saber a quién preguntarle por una nota. Texto libre a propósito:
 // una lista pre-armada hay que mantenerla cada vez que entra alguien nuevo.
 let VJ_FIRMA               = '';
+// Fotos por viajero (2026-11). Los BYTES van a Firebase Storage
+// (viajeros_fotos/{pid}/{ts}.jpg), nunca al repo —que es público— ni a la RTDB.
+// La RTDB sólo guarda el índice /viajeros_fotos/{pid} → {path, ts, out, …}:
+// la misma clave por persona que las notas. Se borran solas el día del OUT,
+// pasada la hora de salida (sin hora: desde las 18:00). La purga de verdad la
+// hace el sync en el servidor (purgar_fotos); la app sólo deja de mostrarlas y,
+// si el reloj del aparato coincide con el día del reporte, también las borra.
+const VJ_FOTO_ON           = true;   // válvula: en false la ficha queda como antes
+const VJ_FOTOS_PATH        = 'viajeros_fotos';
+const VJ_FOTO_LADO         = 800;    // px del lado mayor: nítida al agrandarla en el iPhone
+const VJ_FOTO_MAX_BYTES    = 450 * 1024;   // las reglas de Storage cortan en 500 KB
+const VJ_FOTO_CORTE_SIN_HORA = '18:00';    // sin outAt de PGO, la purga espera a esta hora
+let VJ_FOTOS               = {};     // { pid: { path, ts, out, outAt?, hab, autor?, w, h } }
+let VJ_FOTO_OPEN           = null;   // pid con el panel de subida abierto (uno a la vez)
+let VJ_FOTO_VER            = null;   // pid del visor abierto
+const VJ_FOTO_BUSY         = {};     // pid → true mientras sube o borra
+// path → objectURL. Sólo en memoria, a propósito: son datos personales que
+// vencen en días, y un Cache API los dejaría en el disco del teléfono después
+// de la purga.
+const VJ_FOTO_BLOB         = {};
+const VJ_FOTO_PIDIENDO     = new Set();   // paths con la descarga en curso
+const VJ_FOTO_FALLO        = {};     // path → ms del último intento fallido (se reintenta al minuto)
 
 // ── Quincho (piloto, 2026-09-30) ────────────────────────────────────────────
 // Las mesas del quincho, publicadas por scripts/quincho.py en /quincho/current.
@@ -5459,6 +5532,16 @@ const UI = {
     vjNotaOjo:'Se borra sola un par de días después del check-out. Las alergias van en PGO, no acá.',
     vjNotaFirma:'firma', vjNotaFirmaPh:'tu nombre',
     vjNotaChips:['agua con gas','agua sin gas','special request'],
+    vjFotoAdd:'foto', vjFotoVer:'ver foto',
+    vjFotoZonaPc:'Arrastrá una imagen acá, pegala con Ctrl+V o elegí un archivo',
+    vjFotoZonaTouch:'Elegí una foto o sacala con la cámara',
+    vjFotoZonaSuelta:'Soltala para subirla', vjFotoSubiendo:'subiendo…', vjFotoBorrando:'borrando…',
+    vjFotoOjo:'Se borra sola el día del check-out, después de la salida.',
+    vjFotoCambiar:'cambiar', vjFotoBorrar:'borrar foto', vjFotoBorrarSeguro:'¿borrar? tocá de nuevo',
+    vjFotoCerrar:'cerrar', vjFotoSubida:'subida', vjFotoNoCarga:'No se pudo cargar la foto',
+    vjFotoSinGuardar:'La foto NO se guardó — revisá la conexión',
+    vjFotoSinBorrar:'La foto NO se borró — revisá la conexión',
+    vjFotoNoImagen:'Ese archivo no es una imagen que el navegador pueda abrir',
     vjEnLodge:'en el lodge', vjComen:'comen', vjComenTit:'Cubiertos asignados en PGO',
     vjStatRestric:'restricciones',
     vjRevisar:'revisar observación',
@@ -11189,7 +11272,8 @@ async function viajerosFetch(){
     VIAJEROS_LOAD_ERROR = true;
   }
   VIAJEROS_FETCHED_AT = Date.now();
-  await Promise.all([vjNotasFetch(), qnFetch()]);   // el dato flexible y el quincho, en sus propios paths
+  await Promise.all([vjNotasFetch(), vjFotosFetch(), qnFetch()]);   // el dato flexible, las fotos y el quincho, en sus propios paths
+  vjFotosPurgaCliente();
   viajerosRender();
   pgoBannerRender();
 }
@@ -11541,6 +11625,9 @@ function vjNacTexto(tr){ return String(tr.nacName || tr.nac || '').trim(); }
 // Unifica la ficha con la tarjeta de persona, que ya usaba bandera.
 function vjCaraEl(tr){
   const f = vjFlag(tr.nac);
+  // Con foto, la foto ES la cara y la bandera baja a insignia en la esquina.
+  const foto = vjFotoDe(tr);
+  if (foto) return vjFotoCaraEl(tr, foto, f);
   return f ? `<span class="vj-detail-flag">${f}</span>` : vjAvatarEl(tr);
 }
 // 'YYYY-MM-DDTHH:MM' → 'HH:MM'. Vacío si la marca es sólo fecha: PGO entrega
@@ -12327,7 +12414,7 @@ function vjNotasBloque(tr){
       </div>
     </div>` : `
     <button type="button" class="vj-nota-add"
-            onclick="event.stopPropagation();vjNotaAbrir('${pid}')">+ ${t('vjNotaAdd')}</button>`;
+            onclick="event.stopPropagation();vjNotaAbrir('${pid}')">+ ${t('vjNotaAdd')}</button>${vjFotoAddBtn(tr)}`;
   if (!notas.length && !abierto){
     // Sin notas: sólo el acceso, sin encabezado. El dato duro manda la ficha.
     return `<div class="vj-notas vacio">${editor}</div>`;
@@ -12339,6 +12426,411 @@ function vjNotasBloque(tr){
       ${editor}
     </div>`;
 }
+
+// ── Fotos del viajero (2026-11) ───────────────────────────────────────────
+// Una foto por persona, para reconocerla. Subirla tiene que ser trivial desde
+// el PC de recepción: arrastrarla a la fila, pegarla con Ctrl+V o elegir el
+// archivo. Se achica y se recomprime ACÁ (canvas → JPEG ~800 px, sin EXIF: ni
+// GPS ni modelo de cámara viajan) y recién entonces sube.
+//
+//   bytes   → Storage  viajeros_fotos/{pid}/{ts}.jpg  (reglas: get con sesión,
+//             nunca list; create sólo JPEG < 500 KB; delete con sesión)
+//   índice  → RTDB     /viajeros_fotos/{pid} = {path, ts, out, outAt?, hab, autor?, w, h}
+//
+// Mismo ancla que las notas (`pid`, la persona), así la foto sigue al huésped
+// si lo mudan de hab y el que llega nunca hereda la del anterior. El nombre
+// lleva el ts: reemplazar es subir una nueva y borrar la vieja, nunca pisar,
+// así un teléfono con la vieja en memoria no muestra una cara equivocada.
+//
+// Se descarga con el token en el header (Storage no acepta el de la RTDB en la
+// URL) y se muestra como blob, como las capturas de Recepción (§3.6). Nunca se
+// usa la URL "pública" con downloadToken: esa abre la foto sin sesión.
+function vjFotosUrl(sufijo){
+  return `${CF_FIREBASE_CONFIG.databaseURL}/${VJ_FOTOS_PATH}${sufijo || ''}.json${fbQS()}`;
+}
+function vjFotoObjUrl(path){
+  return `https://firebasestorage.googleapis.com/v0/b/${EST_BUCKET}/o/${encodeURIComponent(path)}`;
+}
+async function vjFotoAuth(){
+  await fbAuthInit();
+  const tk = await fbTokenRefrescar();
+  return tk ? { Authorization: 'Firebase ' + tk } : {};
+}
+function vjAhoraReal(){
+  const d = new Date();
+  return vjIsoLocal(d) + 'T' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function vjPorPid(pid){
+  const habs = (VIAJEROS_DATA && VIAJEROS_DATA.habs) || {};
+  for (const h of Object.keys(habs)){
+    const tr = (habs[h] || []).find(x => x && x.pid === pid);
+    if (tr) return Object.assign({ hab: h }, tr);
+  }
+  return null;
+}
+// El corte de la purga (decisión del owner, 2026-11-03): el día del OUT, pasada
+// la hora de salida que da PGO; sin hora, desde las 18:00. Antes del OUT nunca.
+// MISMA regla que foto_vence() en sync_viajeros.py — si cambia una, la otra.
+// Se mira primero el roster de hoy (una estadía extendida corre el OUT) y si la
+// persona ya no está, lo que se guardó al subirla.
+function vjFotoCorte(f, tr){
+  const out = (tr && tr.out) || (f && f.out) || '';
+  if (!out) return '';
+  const at = (tr && tr.out === out && tr.outAt) || (f && f.out === out && f.outAt) || '';
+  return (at && at.length > 10 && at.slice(0, 10) === out) ? at.slice(0, 16) : out + 'T' + VJ_FOTO_CORTE_SIN_HORA;
+}
+function vjFotoVencida(f, tr){
+  const c = vjFotoCorte(f, tr);
+  return !!c && vjAhoraReal() >= c;
+}
+// La foto vigente de un viajero, o null. Una vencida no se muestra aunque la
+// purga todavía no haya pasado: después de la salida, la foto ya no está.
+function vjFotoDe(tr){
+  if (!VJ_FOTO_ON || !tr || !tr.pid) return null;
+  const f = VJ_FOTOS[tr.pid];
+  return (f && f.path && !vjFotoVencida(f, tr)) ? f : null;
+}
+async function vjFotosFetch(){
+  if (!VJ_FOTO_ON) return;
+  try {
+    const resp = await fetch(vjFotosUrl(), { cache: 'no-store' });
+    const data = await resp.json();
+    // Rechazo (token, o la regla todavía sin publicar): se conserva lo que había.
+    if (!resp.ok || (data && data.error)) return;
+    const limpio = {};
+    Object.entries(data || {}).forEach(([pid, f]) => {
+      // Sólo un path dentro de la carpeta de ESA persona: un índice que apunte
+      // a otro lado no se sigue.
+      if (f && typeof f.path === 'string' && f.path.indexOf(`${VJ_FOTOS_PATH}/${pid}/`) === 0) limpio[pid] = f;
+    });
+    // Reemplazada o borrada desde otro aparato: se suelta el blob viejo.
+    Object.values(VJ_FOTOS).forEach(f => {
+      if (f && f.path && !Object.values(limpio).some(n => n.path === f.path)) vjFotoSoltarBlob(f.path);
+    });
+    VJ_FOTOS = limpio;
+  } catch(e){ /* sin red: se sigue con lo que haya en memoria */ }
+}
+// La red de abajo de la purga del servidor (purgar_fotos, cada hora): como las
+// demás auto-purgas del programa (§4), el que abre la app borra lo vencido.
+// Sólo si el reloj del aparato está en el mismo día que el reporte: un teléfono
+// con la fecha corrida, o en otro huso, no borra nada.
+function vjFotosPurgaCliente(){
+  if (!VJ_FOTO_ON || !VIAJEROS_DATA || !VIAJEROS_DATA.habs) return;
+  if (vjTodayIso() !== VIAJEROS_DATA.date) return;
+  Object.keys(VJ_FOTOS).forEach(pid => {
+    if (!VJ_FOTO_BUSY[pid] && vjFotoVencida(VJ_FOTOS[pid], vjPorPid(pid))) vjFotoBorrar(pid, true);
+  });
+}
+function vjFotoSoltarBlob(path){
+  const u = VJ_FOTO_BLOB[path];
+  if (u) { try { URL.revokeObjectURL(u); } catch(e){} }
+  delete VJ_FOTO_BLOB[path];
+}
+// Descarga diferida: la cara se dibuja con su hueco fijo (44 px) y la imagen
+// se parcha en el lugar cuando llega — nada se mueve bajo el dedo.
+function vjFotoPedir(path){
+  if (VJ_FOTO_PIDIENDO.has(path)) return;
+  if (VJ_FOTO_FALLO[path] && Date.now() - VJ_FOTO_FALLO[path] < 60000) return;
+  VJ_FOTO_PIDIENDO.add(path);
+  (async () => {
+    let url = '';
+    try {
+      const r = await fetch(vjFotoObjUrl(path) + '?alt=media', { headers: await vjFotoAuth(), cache: 'no-store' });
+      if (r.ok) url = URL.createObjectURL(await r.blob());
+    } catch(e){}
+    VJ_FOTO_PIDIENDO.delete(path);
+    if (url){ VJ_FOTO_BLOB[path] = url; delete VJ_FOTO_FALLO[path]; }
+    else VJ_FOTO_FALLO[path] = Date.now();
+    vjFotoParchar(path);
+  })();
+}
+function vjFotoParchar(path){
+  const url = VJ_FOTO_BLOB[path];
+  document.querySelectorAll('[data-vj-foto]').forEach(el => {
+    if (el.getAttribute('data-vj-foto') !== path) return;
+    const img = el.querySelector('img');
+    if (url){ if (img && img.getAttribute('src') !== url) img.src = url; el.classList.remove('falla'); }
+    else el.classList.add('falla');
+  });
+}
+function vjFotoCaraEl(tr, foto, flag){
+  const src = VJ_FOTO_BLOB[foto.path];
+  if (!src) vjFotoPedir(foto.path);
+  const falla = !src && VJ_FOTO_FALLO[foto.path];
+  return `<button type="button" class="vj-foto${falla ? ' falla' : ''}" data-vj-foto="${vjEsc(foto.path)}"
+            aria-label="${t('vjFotoVer')}" onclick="event.stopPropagation();vjFotoVer('${vjEsc(tr.pid)}')"><img alt=""${src ? ` src="${src}"` : ''}>${flag ? `<span class="vj-foto-flag">${flag}</span>` : ''}</button>`;
+}
+function vjFotoEsPc(){
+  try { return window.matchMedia('(hover: hover) and (pointer: fine)').matches; } catch(e){ return false; }
+}
+// "+ foto" junto a "+ agregar nota". Sólo sin foto: con foto, cambiarla o
+// borrarla está en el visor (tocar la cara), y soltar una imagen nueva sobre la
+// fila la reemplaza.
+function vjFotoAddBtn(tr){
+  if (!VJ_FOTO_ON || !tr || !tr.pid || VJ_FOTO_OPEN === tr.pid || vjFotoDe(tr)) return '';
+  return `<button type="button" class="vj-nota-add vj-foto-add"
+            onclick="event.stopPropagation();vjFotoAbrir('${vjEsc(tr.pid)}')">+ ${t('vjFotoAdd')}</button>`;
+}
+function vjFotoPanel(tr){
+  if (!VJ_FOTO_ON || !tr || !tr.pid || VJ_FOTO_OPEN !== tr.pid) return '';
+  const pid = vjEsc(tr.pid);
+  const busy = !!VJ_FOTO_BUSY[tr.pid];
+  // La zona entera es el <label>: un clic abre el selector (en el iPhone, la
+  // fototeca o la cámara), y también recibe el arrastre y el pegado.
+  return `
+    <div class="vj-foto-panel" data-vj-drop="${pid}" onclick="event.stopPropagation()">
+      <label class="vj-foto-zona${busy ? ' busy' : ''}">
+        <input type="file" accept="image/*" class="vj-foto-file"${busy ? ' disabled' : ''}
+               onchange="vjFotoElegido('${pid}', this)">
+        <span>${busy ? t('vjFotoSubiendo') : t(vjFotoEsPc() ? 'vjFotoZonaPc' : 'vjFotoZonaTouch')}</span>
+      </label>
+      <div class="vj-nota-acciones">
+        <span class="vj-nota-ojo">${t('vjFotoOjo')}</span>
+        <button type="button" class="vj-nota-btn" onclick="vjFotoCerrar()">${t('vjNotaCancelar')}</button>
+      </div>
+    </div>`;
+}
+function vjFotoAbrir(pid){ VJ_FOTO_OPEN = pid; VJ_NOTA_OPEN = null; VJ_NOTA_BUF = ''; vjFotoRepintar(); }
+function vjFotoCerrar(){ VJ_FOTO_OPEN = null; vjFotoRepintar(); }
+function vjFotoElegido(pid, input){
+  const f = input && input.files && input.files[0];
+  if (input) input.value = '';   // elegir el mismo archivo dos veces vuelve a disparar
+  if (f) vjFotoSubir(pid, f);
+}
+function vjFotoRepintar(){
+  vjNotasRepintar();
+  if (VJ_FOTO_VER) vjFotoVisorPintar();
+}
+// Archivo → JPEG chico. Por <img> y no por createImageBitmap: el <img> respeta
+// la orientación EXIF en todos los navegadores actuales (una foto del iPhone
+// sale derecha) y el canvas no copia los metadatos.
+function vjFotoDecodificar(file){
+  return new Promise((res, rej) => {
+    const u = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload  = () => { res(img); setTimeout(() => URL.revokeObjectURL(u), 0); };
+    img.onerror = () => { URL.revokeObjectURL(u); rej(new Error('decode')); };
+    img.src = u;
+  });
+}
+async function vjFotoComprimir(file){
+  const img = await vjFotoDecodificar(file);
+  const w0 = img.naturalWidth, h0 = img.naturalHeight;
+  if (!w0 || !h0) throw new Error('decode');
+  const k = Math.min(1, VJ_FOTO_LADO / Math.max(w0, h0));
+  const w = Math.max(1, Math.round(w0 * k)), h = Math.max(1, Math.round(h0 * k));
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff';           // un PNG con transparencia no queda negro
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  let blob = null;
+  for (const q of [0.82, 0.72, 0.6, 0.5]){
+    blob = await new Promise(r => c.toBlob(r, 'image/jpeg', q));
+    if (blob && blob.size <= VJ_FOTO_MAX_BYTES) break;
+  }
+  if (!blob || blob.size > VJ_FOTO_MAX_BYTES) throw new Error('encode');
+  return { blob, w, h };
+}
+async function vjFotoBorrarObjeto(path){
+  try {
+    const r = await fetch(vjFotoObjUrl(path), { method: 'DELETE', headers: await vjFotoAuth() });
+    return r.ok || r.status === 404;   // ya no estaba: el objetivo se cumplió
+  } catch(e){ return false; }
+}
+async function vjFotoSubir(pid, file){
+  if (!VJ_FOTO_ON || !pid || VJ_FOTO_BUSY[pid]) return;
+  const tr = vjPorPid(pid);
+  if (!tr) return;
+  // HEIC u otro formato que el navegador no abre: el tipo puede venir vacío en
+  // Windows, así que decide la decodificación, no la extensión.
+  if (!file || (file.type && !/^image\//.test(file.type))){ comandaAvisoSinGuardar('vjFotoNoImagen'); return; }
+  VJ_FOTO_BUSY[pid] = 'sube';
+  vjFotoRepintar();
+  let path = '', subida = false;
+  try {
+    let img;
+    try { img = await vjFotoComprimir(file); }
+    catch(e){ comandaAvisoSinGuardar('vjFotoNoImagen'); return; }
+    const ts = Date.now();
+    path = `${VJ_FOTOS_PATH}/${pid}/${ts}.jpg`;
+    const up = await fetch(`https://firebasestorage.googleapis.com/v0/b/${EST_BUCKET}/o?name=${encodeURIComponent(path)}`, {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'image/jpeg' }, await vjFotoAuth()),
+      body: img.blob
+    });
+    if (!up.ok) throw new Error('storage ' + up.status);
+    subida = true;
+    const entrada = { path, ts, out: tr.out || '', hab: String(tr.hab || ''), w: img.w, h: img.h };
+    if (tr.outAt && tr.outAt.length > 10) entrada.outAt = tr.outAt.slice(0, 16);
+    if (vjFirmaLeer()) entrada.autor = VJ_FIRMA;
+    await fbTokenRefrescar();
+    const r = await fetch(vjFotosUrl('/' + pid), {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entrada)
+    });
+    // Un 401 resuelve sin lanzar: sin este chequeo la foto se vería guardada y no estaría.
+    if (!r.ok) throw new Error('rtdb ' + r.status);
+    const previa = VJ_FOTOS[pid];
+    VJ_FOTOS[pid] = entrada;
+    VJ_FOTO_BLOB[path] = URL.createObjectURL(img.blob);   // ya la tenemos: no se vuelve a bajar
+    if (previa && previa.path && previa.path !== path){
+      vjFotoSoltarBlob(previa.path);
+      vjFotoBorrarObjeto(previa.path);   // si falla, la recoge la purga de huérfanas del servidor
+    }
+    VJ_FOTO_OPEN = null;
+  } catch(e){
+    console.warn('[viajeros] la foto no se guardó:', e && e.message);
+    // Subió el archivo pero no el índice: se deshace, para no dejar una foto que nadie ve ni nadie borra.
+    if (subida && path) vjFotoBorrarObjeto(path);
+    comandaAvisoSinGuardar('vjFotoSinGuardar');
+  } finally {
+    delete VJ_FOTO_BUSY[pid];
+    vjFotoRepintar();
+  }
+}
+async function vjFotoBorrar(pid, silencioso){
+  const f = VJ_FOTOS[pid];
+  if (!f || VJ_FOTO_BUSY[pid]) return;
+  VJ_FOTO_BUSY[pid] = 'borra';
+  if (!silencioso) vjFotoRepintar();
+  try {
+    // Primero los bytes: lo que importa borrar es la foto, no el índice.
+    if (!(await vjFotoBorrarObjeto(f.path))) throw new Error('storage');
+    await fbTokenRefrescar();
+    // Si la base no contesta, el índice queda apuntando a nada: la ficha muestra
+    // el hueco punteado y lo limpia la purga de huérfanas del servidor.
+    await fetch(vjFotosUrl('/' + pid), { method: 'DELETE' }).catch(() => {});
+    delete VJ_FOTOS[pid];
+    vjFotoSoltarBlob(f.path);
+    if (VJ_FOTO_VER === pid) vjFotoVerCerrar();
+  } catch(e){
+    if (!silencioso) comandaAvisoSinGuardar('vjFotoSinBorrar');
+  } finally {
+    delete VJ_FOTO_BUSY[pid];
+    vjFotoRepintar();
+  }
+}
+// Borrar pide dos toques: es irreversible y el botón está al lado de "cambiar".
+function vjFotoBorrarPedir(pid, btn){
+  if (btn && btn.dataset.seguro === '1'){ vjFotoBorrar(pid); return; }
+  if (!btn) return;
+  btn.dataset.seguro = '1';
+  btn.classList.add('seguro');
+  btn.textContent = t('vjFotoBorrarSeguro');
+  setTimeout(() => {
+    if (!btn.isConnected) return;
+    btn.dataset.seguro = '';
+    btn.classList.remove('seguro');
+    btn.textContent = t('vjFotoBorrar');
+  }, 3000);
+}
+// ── Visor ── Vive en <body>, fuera de #vj-body: el polling repinta la grilla y
+// no puede cerrarle el visor a quien está mirando.
+function vjFotoVer(pid){ VJ_FOTO_VER = pid; vjFotoVisorPintar(); }
+function vjFotoVerCerrar(){
+  VJ_FOTO_VER = null;
+  const el = document.getElementById('vj-foto-visor');
+  if (el) el.remove();
+}
+function vjFotoVisorTam(w, h){
+  w = w || 3; h = h || 4;
+  const mw = Math.min(window.innerWidth - 32, 560);
+  const mh = Math.max(160, window.innerHeight - 220);
+  const k = Math.min(mw / w, mh / h);
+  return { w: Math.round(w * k), h: Math.round(h * k) };
+}
+function vjFotoVisorPintar(){
+  const pid = VJ_FOTO_VER;
+  let el = document.getElementById('vj-foto-visor');
+  const tr = pid && vjPorPid(pid);
+  const f = tr && vjFotoDe(tr);
+  if (!f){ if (el) el.remove(); VJ_FOTO_VER = null; return; }
+  if (!el){
+    el = document.createElement('div');
+    el.id = 'vj-foto-visor';
+    el.className = 'vj-foto-visor';
+    el.addEventListener('click', vjFotoVerCerrar);
+    document.body.appendChild(el);
+  }
+  const src = VJ_FOTO_BLOB[f.path];
+  if (!src) vjFotoPedir(f.path);
+  const tam = vjFotoVisorTam(f.w, f.h);
+  const busy = VJ_FOTO_BUSY[pid];
+  const d = new Date(f.ts || 0);
+  const cuando = f.ts ? `${vjShortDate(vjIsoLocal(d))} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}` : '';
+  const p = vjEsc(pid);
+  el.innerHTML = `
+    <div class="vj-foto-visor-in" data-vj-drop="${p}" onclick="event.stopPropagation()">
+      <button type="button" class="vj-modal-close vj-foto-visor-x" onclick="vjFotoVerCerrar()" aria-label="${t('vjFotoCerrar')}">×</button>
+      <div class="vj-foto-visor-img${!src && VJ_FOTO_FALLO[f.path] ? ' falla' : ''}" data-vj-foto="${vjEsc(f.path)}"
+           style="width:${tam.w}px;height:${tam.h}px"><img alt=""${src ? ` src="${src}"` : ''}><span class="vj-foto-visor-falla">${t('vjFotoNoCarga')}</span></div>
+      <div class="vj-foto-visor-nom">${vjEsc(tr.nombre)} · ${t('vjHab')} ${vjEsc(tr.hab)}</div>
+      <div class="vj-foto-visor-meta">${cuando ? `${t('vjFotoSubida')} ${cuando}` : ''}${f.autor ? ` · ${vjEsc(f.autor)}` : ''}<br>${t('vjFotoOjo')}</div>
+      <div class="vj-foto-visor-acc">
+        <label class="vj-nota-btn${busy ? ' busy' : ''}">${busy === 'sube' ? t('vjFotoSubiendo') : t('vjFotoCambiar')}<input type="file" accept="image/*" class="vj-foto-file"${busy ? ' disabled' : ''} onchange="vjFotoElegido('${p}', this)"></label>
+        <button type="button" class="vj-nota-btn vj-foto-borrar"${busy ? ' disabled' : ''} onclick="vjFotoBorrarPedir('${p}', this)">${busy === 'borra' ? t('vjFotoBorrando') : t('vjFotoBorrar')}</button>
+      </div>
+    </div>`;
+}
+// ── Arrastrar y pegar (PC) ──
+// Cualquier [data-vj-drop] (la fila del viajero, el panel, el visor) recibe la
+// imagen. Dentro del módulo, un archivo que cae fuera de una fila NO puede
+// hacer que el navegador abra la imagen y se vaya de la página.
+function vjFotoArrastraArchivo(e){
+  const ty = e.dataTransfer && e.dataTransfer.types;
+  return !!ty && Array.prototype.indexOf.call(ty, 'Files') >= 0;
+}
+function vjFotoEnModulo(el){
+  return !!(el && el.closest && el.closest('#vj-body, .vj-foto-visor, .vj-modal-backdrop, [data-vj-drop]'));
+}
+function vjFotoDropLimpiar(){
+  document.querySelectorAll('.vj-drop-on').forEach(n => n.classList.remove('vj-drop-on'));
+}
+document.addEventListener('dragover', e => {
+  if (!VJ_FOTO_ON || !vjFotoArrastraArchivo(e) || !vjFotoEnModulo(e.target)) return;
+  e.preventDefault();
+  const z = e.target.closest('[data-vj-drop]');
+  e.dataTransfer.dropEffect = z ? 'copy' : 'none';
+  if (z && !z.classList.contains('vj-drop-on')){ vjFotoDropLimpiar(); z.classList.add('vj-drop-on'); }
+  else if (!z) vjFotoDropLimpiar();
+});
+document.addEventListener('dragleave', e => { if (!e.relatedTarget) vjFotoDropLimpiar(); });
+document.addEventListener('dragend', vjFotoDropLimpiar);
+document.addEventListener('drop', e => {
+  vjFotoDropLimpiar();
+  if (!VJ_FOTO_ON || !vjFotoArrastraArchivo(e) || !vjFotoEnModulo(e.target)) return;
+  e.preventDefault();
+  const z = e.target.closest('[data-vj-drop]');
+  if (!z) return;
+  const fs = Array.from(e.dataTransfer.files || []);
+  const file = fs.find(f => /^image\//.test(f.type)) || fs[0];
+  if (file) vjFotoSubir(z.getAttribute('data-vj-drop'), file);
+});
+// Ctrl+V: va al visor abierto, o al panel "+ foto" abierto, o —si la hab tiene
+// UNA sola persona a la vista— a ella. Si no, no hay a quién dárselo y se
+// ignora. Un pegado de TEXTO sigue su camino (una nota, el buscador).
+function vjFotoDestinoPegar(){
+  if (VJ_FOTO_VER) return VJ_FOTO_VER;
+  if (VJ_FOTO_OPEN) return VJ_FOTO_OPEN;
+  const filas = document.querySelectorAll('.vj-modal .vj-detail-person[data-vj-drop]');
+  return filas.length === 1 ? filas[0].getAttribute('data-vj-drop') : null;
+}
+document.addEventListener('paste', e => {
+  if (!VJ_FOTO_ON) return;
+  const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
+  const it = items.find(i => i.kind === 'file' && /^image\//.test(i.type));
+  if (!it) return;
+  const pid = vjFotoDestinoPegar();
+  if (!pid) return;
+  e.preventDefault();
+  vjFotoSubir(pid, it.getAsFile());
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (VJ_FOTO_VER){ vjFotoVerCerrar(); e.stopPropagation(); }
+  else if (VJ_FOTO_OPEN){ vjFotoCerrar(); }
+});
 
 // `opts.hist:false` esconde el histórico de exploraciones. Lo usa el Comande:
 // ahí la pregunta es "qué le puedo servir a esta mesa", y hasta cuatro líneas
@@ -12357,8 +12849,10 @@ function vjTravelerRow(tr, today, opts){
   // Es la diferencia entre "se va hoy" y "se va 16:30, o sea que almuerza".
   const hIn  = vjHora(tr.inAt);
   const hOut = vjHora(tr.outAt);
+  // data-vj-drop: toda la fila recibe una imagen arrastrada desde el PC.
+  const drop = (VJ_FOTO_ON && tr.pid) ? ` data-vj-drop="${vjEsc(tr.pid)}"` : '';
   return `
-    <div class="vj-detail-person">
+    <div class="vj-detail-person"${drop}>
       ${vjCaraEl(tr)}
       <div class="vj-detail-main">
         <div class="vj-detail-name">${vjEsc(tr.nombre)}${vjIsNino(tr) ? `<span class="vj-nino-badge">${t('vjNino')}</span>` : ''}</div>
@@ -12368,6 +12862,7 @@ function vjTravelerRow(tr, today, opts){
         ${(tr.obs || '').trim() ? `<div class="vj-detail-obs">${vjEsc(tr.obs)}</div>` : ''}
         ${verHist ? vjHistHtml(tr) : ''}
         ${vjNotasBloque(tr)}
+        ${vjFotoPanel(tr)}
       </div>
     </div>`;
 }
@@ -12436,6 +12931,10 @@ function vjRenderHabs(){
     // habitación por habitación para descubrir que alguien dejó un dato.
     const nNo = list.reduce((a, tr) => a + vjNotasDe(tr).length, 0);
     if (nNo) flags.push(`<span class="vj-flag nota">✎ ${nNo}</span>`);
+    // Fotos: sólo la marca. Bajar las imágenes de toda la grilla costaría un
+    // pedido por viajero cada vez que se abre PGO; la foto vive un tap adentro.
+    const nFo = list.filter(tr => vjFotoDe(tr)).length;
+    if (nFo) flags.push(`<span class="vj-flag foto">◉ ${nFo}</span>`);
     return `
       <div class="vj-hab-card" onclick="vjOpenHab('${h}')">
         <div class="vj-hab-top"><span class="vj-hab-num">${vjEsc(h)}</span><span class="vj-hab-grupo">${vjEsc(grupo)}</span></div>
