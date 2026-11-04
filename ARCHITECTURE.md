@@ -1480,6 +1480,64 @@ como antes y no se pide nada.
 
 **Idioma: sólo ES** (operativo): claves `vjFoto*` sólo en `UI.es`.
 
+### 4.7 Importar rostros: del .zip de la oficina a las fichas (2026-11)
+
+**El pedido.** Que el traspaso de fotos siga siendo manual y controlado en la
+oficina, pero en una pasada al día y no ficha por ficha. La oficina archiva en
+SharePoint un escaneo de pasaporte o cédula por viajero, con el nombre y el
+**CRS** en el nombre del archivo.
+
+**Decisiones del owner (2026-11-04):**
+
+| Pregunta | Decisión |
+|---|---|
+| ¿Script en el PC o en el Handbook? | **En el Handbook**, en el navegador. Ni Python ni nada que instalar (IT no lo autoriza), y ningún token guardado en un archivo: usa la sesión del gate. |
+| ¿Cómo llega la carpeta? | **El .zip que baja SharePoint**, arrastrado al panel. Leer el link directo exigiría registrar una app en Azure (permiso de IT). |
+| ¿Cómo se encuentra la cara? | **Recorte fijo por formato** (opción A), sin dependencias, con ajuste a mano. Pasaporte y cédula. |
+| ¿Quien ya tiene foto? | **Se salta.** Marcarla a mano la reemplaza. |
+| El botón | **«Importar rostros»**, sólo en el PC (puntero fino), en la vista Viajeros. |
+
+**El cruce.** El sync guarda el `crs` de cada viajero (§4.2, `confirmationNumber`
+de PGO, uno por persona). El nombre del archivo es libre —"Aditya … crs
+3481310", "Crs 3514951 hui feng 2", "cynthia Crs 601277867"—, así que se prueba
+**cada secuencia de dígitos** contra los CRS del día. El nombre escrito sólo
+controla: tiene que estar el **nombre de pila** (o dos palabras del nombre).
+Caso real de la primera carpeta: los dos Smith con el CRS de uno solo. Si el
+nombre no calza y en la misma hab hay **una** persona cuyo nombre sí, se le
+asigna a ella y la tarjeta va a revisar, desmarcada. Entre dos archivos de la
+misma persona, el principal es el que no trae números de más (el " 2").
+
+**Los grupos de la grilla:** listas (marcadas) · para revisar (baja resolución,
+nombre que no calza, CRS de otro, segundo archivo, documento parado) · ya
+tienen foto · no están en casa hoy · sin CRS en el nombre. Las dos últimas no se
+pueden subir: la purga necesita el OUT del roster. Lo de mañana entra mañana;
+como lo ya subido se salta, se puede soltar la carpeta entera cada día.
+
+**El recorte.** La multifuncional entrega la hoja entera: primero se ubica el
+documento sobre el blanco (proyecciones de tinta por fila y columna), por su
+forma se distingue cédula (≈1,59) de pasaporte (≈1,42) y se toma la zona de la
+foto según ICAO 9303 (`VJ_IMP_FORMATOS`, **por calibrar con escaneos reales**),
+cuadrada y con margen —"PP antes que PPP": la ficha lo muestra en un círculo—.
+La vista previa sale de una copia chica del documento; **la cara final se corta
+del original, a resolución nativa** (nunca agrandada; tope 800 px). Bajo 300 px
+nativos, aviso de baja resolución: viene del escaneo, no se arregla después.
+En la grilla: arrastrar mueve, la rueda o + / − acercan, «girar», «centrar».
+
+**El .zip, sin librerías.** Directorio central leído por pedazos (`Blob.slice`,
+nunca el archivo entero en memoria), ZIP64 incluido; método 0 (así guarda
+SharePoint los JPEG) o deflate con el `DecompressionStream` del navegador. PDF
+y otros se cuentan y se ignoran.
+
+**La subida.** De a una, en fila, por el mismo `vjFotoSubir` (que ahora acepta
+`{silencioso, autor}` y devuelve si quedó guardada): mismas reglas de Storage,
+JPEG sin EXIF, índice con el OUT, purga después del check-out. Firma
+`importador` (o `importador · firma`). Una que falla queda marcada y "Subir" la
+reintenta. Los escaneos **nunca salen del PC**: sólo viaja la cara recortada,
+y al cerrar el panel todo se olvida. El panel vive en `<body>` (el polling no
+se lo lleva) y no se cierra con un clic afuera.
+
+**Válvula `VJ_IMP_ON`** (STATE TOP). **Idioma: sólo ES** (claves `vjImp*`).
+
 ---
 
 ## 5. El patrón "módulo"
@@ -2037,7 +2095,7 @@ Mapa de regiones aproximadas (los rangos cambian a medida que crece;
 | Módulo Clima (`wx`) | tras `winetips` | Ráfagas de la ventana de almuerzo + altitud, en una línea sobre las tabs. `wxUrl`/`wxPeakGust`/`wxFetch`/`wxRender` + cache `localStorage`. Open-Meteo, sin Firebase — ver §3.2 |
 | Edición de la carta (`med`) | antes de `COFFEE MODULE DATA` (+ CSS tras `.mn-meta`, STATE TOP `MED_*`, UI `med*`) | Overlay de ediciones sobre platos/vinos/tragos/rótulos, editor en hoja inferior, fotos subidas. `medArrancar()` corre al final del script principal — ver §3.7 |
 | Módulo Comandera | 3900-4200 | Gate + home + new + active + drag + history |
-| Módulo Viajeros | ~5260-5525 (+ CSS ~1377, STATE TOP ~2500, UI ~2682) | Corcho de dietas por hab: stats/chips filtrantes, búsqueda con teclado numérico plegable, grilla con roster (primer nombre + bandera `VJ_NAC` en vez de esferas de iniciales), modal por hab. Read-only `/viajeros/current`. Notas del equipo (`vjNota*`) y fotos por viajero (`vjFoto*`, tras las notas: subida por arrastre/pegado/archivo, visor, purga en el cliente — §4.6) |
+| Módulo Viajeros | ~5260-5525 (+ CSS ~1377, STATE TOP ~2500, UI ~2682) | Corcho de dietas por hab: stats/chips filtrantes, búsqueda con teclado numérico plegable, grilla con roster (primer nombre + bandera `VJ_NAC` en vez de esferas de iniciales), modal por hab. Read-only `/viajeros/current`. Notas del equipo (`vjNota*`) y fotos por viajero (`vjFoto*`, tras las notas: subida por arrastre/pegado/archivo, visor, purga en el cliente — §4.6) e importador de rostros desde el .zip de la oficina (`vjImp*`, sólo PC — §4.7) |
 | Módulo Rol | 5500-6260 | PIN gate + lectura semanal del roster |
 | Módulo Checklist | 6260-6940 | Sub-secciones + fases + carry-over + edit mode supervisor (acceso oculto desde 2026-11) |
 | Módulo Experto | antes de `medArrancar()` (+ CSS al final del `<style>`, STATE TOP `EXP_*` tras Recepción) | `EXP_SEGS` (los puntos transcritos + tips), `expRender`/`expFaseHtml`/`expTipHtml`, parches en sitio (`expToggleChk`, `expPatchProgreso`), buscador `expIndexar`/`expIrPunto`. Ver §3.8 |
