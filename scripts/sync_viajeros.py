@@ -541,6 +541,9 @@ PGO_EXPLORE_PATHS = {
     # No es una página: es el sondeo de por dónde salen las exploraciones del
     # viajero (la del día y el histórico). Ver pgo_probe_exploraciones.
     "exploraciones": "(GraphQL + Reporte Geos · sondeo)",
+    # Tampoco es una página: ¿trae PGO el número de confirmación (CRS) POR
+    # VIAJERO? Lo necesita el importador de pasaportes. Ver pgo_probe_crs.
+    "crs":      "(GraphQL travellersInhouse · sondeo CRS)",
     "arrival":  PGO_ARRIVAL_PATH,
     "birthday": PGO_BIRTHDAY_PATH,
     "comedor":  PGO_COMEDOR_PATH,
@@ -2236,6 +2239,99 @@ def _gql_muestra(page, etiqueta, query, variables, ruta):
         print(f"[explora]    {k:26} {len(vals):>3} con dato · {ej}")
 
 
+_CRS_CAMPO = re.compile(
+    r"confirm|crs|reserv|resv|opera|profile|perfil|folio|booking|locator|"
+    r"number|numero|code|codigo", re.I)
+
+
+def _crs_forma(v):
+    """'12345678' -> '8 dígitos'. Sólo la FORMA: el valor nunca se imprime."""
+    s = str(v).strip()
+    tipo = "dígitos" if s.isdigit() else ("alfanum" if s.isalnum() else "mixto")
+    return f"{len(s)} {tipo}"
+
+
+def pgo_probe_crs(page, date_str):
+    """¿Trae PGO el número de confirmación (CRS) de CADA viajero?
+
+    Lo necesita el importador de pasaportes: el archivo se nombra con el CRS
+    del viajero y el cruce contra el roster tiene que ser por persona. La
+    query del roster devuelve una fila de reserva por persona (§4.2), así que
+    el número debería vivir en esa fila — esto lo comprueba antes de pedirlo
+    en el sync productivo, donde un campo inexistente tumbaría la query.
+
+    Poco ruido a propósito: 2 consultas de esquema + 1 de datos. Imprime
+    nombres de campo, cuántas filas lo traen, cuántos valores distintos y su
+    forma (largo, dígitos o no) — NUNCA el valor. No escribe Firebase.
+    """
+    print("\n[crs] ══ Sondeo del número de confirmación por viajero ══")
+    cand = {}
+    for tipo in ("ReservationType", "TravellerType"):
+        q = ('{ __type(name: "%s") { fields { name type '
+             '{ name kind ofType { name kind ofType { name kind } } } } } }' % tipo)
+        try:
+            campos = ((pgo_graphql(page, q).get("data") or {}).get("__type") or {}).get("fields") or []
+        except Exception as e:
+            print(f"[crs] {tipo}: error {type(e).__name__}")
+            campos = []
+        esc = [f["name"] for f in campos
+               if _CRS_CAMPO.search(f["name"])
+               and _gql_tname(f.get("type")).strip("[]!") in _GQL_ESCALARES]
+        print(f"[crs] {tipo}: {len(campos)} campos · candidatos: {esc or '(ninguno)'}")
+        cand[tipo] = esc[:15]
+    if not any(cand.values()):
+        print("[crs] Ningún campo candidato: el CRS no viene por esta query.")
+        return
+    q = ("query ($hotelId: Int!, $date: Date!) { travellersInhouse(hotelId: $hotelId, date: $date) "
+         "{ room %s traveller { firstName %s } } }"
+         % (" ".join(cand["ReservationType"]), " ".join(cand["TravellerType"])))
+    try:
+        res = pgo_graphql(page, q, {"hotelId": PGO_HOTEL_ID, "date": date_str})
+    except Exception as e:
+        print(f"[crs] la query de datos falló: {type(e).__name__}: {e}")
+        return
+    if res.get("errors"):
+        print(f"[crs] errores: {str(res['errors'])[:400]}")
+    filas = (res.get("data") or {}).get("travellersInhouse") or []
+    # Una entrada por persona: (hab, {campo: valor}) con los de la reserva y
+    # los del viajero juntos (prefijo R. / T.).
+    pers = []
+    for f in filas:
+        r = {f"R.{k}": f.get(k) for k in cand["ReservationType"]}
+        t = f.get("traveller")
+        for tr in (t if isinstance(t, list) else [t]):
+            if isinstance(tr, dict):
+                d = dict(r)
+                d.update({f"T.{k}": tr.get(k) for k in cand["TravellerType"]})
+                pers.append((str(f.get("room") or ""), d))
+    print(f"[crs] {date_str}: {len(filas)} filas de reserva · {len(pers)} personas")
+    habs = {}
+    for hab, _ in pers:
+        habs[hab] = habs.get(hab, 0) + 1
+    compartidas = [h for h, n in habs.items() if n >= 2]
+    print(f"[crs] habitaciones con 2+ personas: {len(compartidas)}")
+    for campo in [f"R.{k}" for k in cand["ReservationType"]] + [f"T.{k}" for k in cand["TravellerType"]]:
+        vals = [str(d.get(campo)).strip() for _, d in pers
+                if d.get(campo) not in (None, "", 0) and str(d.get(campo)).strip()]
+        if not vals:
+            print(f"[crs]   {campo:32} vacío en todas")
+            continue
+        formas = {}
+        for v in vals:
+            formas[_crs_forma(v)] = formas.get(_crs_forma(v), 0) + 1
+        # En las habs compartidas: ¿cada acompañante tiene el suyo, o lo comparten?
+        propio = comparte = 0
+        for h in compartidas:
+            vs = [str(d.get(campo)).strip() for hh, d in pers if hh == h and d.get(campo)]
+            if len(vs) >= 2:
+                if len(set(vs)) == len(vs):
+                    propio += 1
+                else:
+                    comparte += 1
+        print(f"[crs]   {campo:32} llenos {len(vals)}/{len(pers)} · distintos {len(set(vals))}"
+              f" · forma {formas} · habs compartidas: uno por persona {propio}, compartido {comparte}")
+
+
 def pgo_probe_exploraciones(page, date_str):
     """¿Por dónde salen las exploraciones del viajero (del día y su histórico)?
 
@@ -2500,9 +2596,11 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
         # saber por dónde pedir las exploraciones antes de escribir el mapeo.
         if "exploraciones" in paths:
             pgo_probe_exploraciones(page, date_str or datetime.date.today().isoformat())
+        if "crs" in paths:
+            pgo_probe_crs(page, date_str or datetime.date.today().isoformat())
 
         for nombre, path in paths.items():
-            if nombre in ("inout", "exploraciones"):
+            if nombre in ("inout", "exploraciones", "crs"):
                 continue
             print(f"\n[explore] ===== {nombre}  ({path}) =====")
             try:
