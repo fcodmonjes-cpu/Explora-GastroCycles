@@ -56,7 +56,7 @@ que es operacional (turnos, postres, pedidos, comandas).
 | Hosting | Vercel (auto-deploy por branch) | `main` → `gastrocycles.vercel.app` (producción). `staging` → URL fija para QA desde iPhone. `feature/*` y `fix/*` → preview por commit. Ver sección 12. **Cada deployment copia el árbol entero del repo y todos suman contra los 10 GB del plan Hobby** — por eso existe `.vercelignore` (§12). |
 | Tipografía | Cormorant Garamond (italic 500/700) + Courier Prime monospace | Cargadas vía Google Fonts. Family declarada en CSS desde el inicio; sólo recientemente se cargó la real. |
 | Instalable | PWA: `manifest.webmanifest` + `sw.js` (service worker propio, ~50 líneas) | Se agrega al home screen y abre sin chrome del browser. Network-first: el cache es red de emergencia, no fuente de verdad. Ver §2.1. |
-| Archivos pesados | Firebase Storage, carpeta `estudio/` (audios del menú) | Fuera del repo a propósito: cada deploy de Vercel copia el árbol entero (§12). Detrás del gate por reglas de Storage. Plan Blaze, bucket en US-EAST1, válvula `EST_STORAGE_ON`. Ver §3.4. |
+| Archivos pesados | Firebase Storage: `estudio/` (audios del menú), `recepcion/` (guía) y `viajeros_fotos/` (fotos de huéspedes, con purga) | Fuera del repo a propósito: cada deploy de Vercel copia el árbol entero (§12) y el repo es público. Detrás del gate por reglas de Storage. Plan Blaze, bucket en US-EAST1, válvulas `EST_STORAGE_ON` / `RC_STORAGE_ON` / `VJ_FOTO_ON`. Ver §3.4, §3.6 y §4.6. |
 | Clima | Open-Meteo (REST, sin API key) | **Único tercero fuera de Firebase.** Gratis, CORS abierto y sin registro — en una app sin build step, una API key quedaría visible en el HTML. Si cae, el módulo se apaga solo. Ver §3.2. |
 | Telemetría | Vercel Analytics (`/_vercel/insights/script.js`) | Pageviews ligeros, sin más. Da 404 en local — solo existe en el deploy de Vercel. |
 
@@ -873,7 +873,7 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
 ├── viajeros/                      ← dietas y restricciones por habitación
 │   └── current → { date, updatedAt, source,
 │                   habs: { "01": [ { id, nombre, edad, nac, grupo,
-│                                     in, out, tags[], obs, foto?,
+│                                     in, out, tags[], obs,
 │                                     rde? { h, n }, rdeM?, outAtM? } ] },  ← rush desayuno
 │                    manana? "YYYY-MM-DD" }                ← día de rdeM/outAtM
 │       (un solo doc sobrescrito por cada sync; lo escribe
@@ -882,6 +882,12 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
 │        manual (SEED_ROWS) y --from-excel quedan como respaldo. Read-only en
 │        la app, sin PIN. Tags canónicos alergia-*/dieta-*/cond-* compartidos
 │        script ↔ VJ_TAGS — ver §4.1)
+│
+├── viajeros_fotos/                ← índice de las fotos por viajero (§4.6)
+│   └── {pid} → { path, ts, out, outAt?, hab, autor?, w, h, _visto? }
+│       (los BYTES van a Storage viajeros_fotos/{pid}/{ts}.jpg, nunca acá.
+│        La app escribe al subir/borrar; el sync purga el día del OUT tras la
+│        salida, a las 24 h si el viajero desaparece antes, y las huérfanas)
 │
 ├── orders/                        ← cola viva del café (mesero → barista)
 │   └── {auto-id} → { items[], table, timestamp, status:'pending', lang }
@@ -911,7 +917,7 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
          2 días de la fecha. Regla: la misma condición que viajeros_notas)
 ```
 
-**Reglas de Firebase.** Cerradas desde el 2026-08-17: los 14 paths (13 + `menu_ediciones` desde el 2026-10-10) exigen
+**Reglas de Firebase.** Cerradas desde el 2026-08-17: los 14 paths (13 + `menu_ediciones` desde el 2026-10-10; `viajeros_fotos` se suma al publicar §4.6) exigen
 `auth != null` para leer y escribir. Ver §4.3.
 
 **Auto-purga.** Todo módulo que escribe datos temporales tiene su propia
@@ -1341,6 +1347,122 @@ que sin eso mandarían el token vencido y comerían un 401 en silencio.
 > cualquier llamador que no chequee el status va a guardar un error como si
 > fueran datos. Si se agrega un módulo que lea de Firebase por REST, que use
 > `fbGetJson()`.
+
+---
+
+### 4.6 Fotos de viajeros: Storage, gate y purga (2026-11)
+
+**El pedido.** *"Agregar fotos a cada tarjeta de viajero, con auto purga
+después del check-out, fácil desde el computador."* Es para reconocer al
+huésped: el garzón que lo ve llegar a la mesa sabe quién es y qué no come.
+Son **datos personales**, y por eso cada decisión de abajo apunta a lo mismo:
+que la foto exista lo justo, detrás de la misma llave que el resto.
+
+**Decisiones del owner (2026-11-03), con preview:**
+
+| Pregunta | Decisión |
+|---|---|
+| ¿Quién sube, cambia o borra? | **Cualquiera con el gate**, como las notas. El PIN supervisor está en el código público: sería fricción, no protección. |
+| ¿Cuándo se purga? | **El día del OUT, pasada la hora de salida** (`outAt` de PGO); sin hora, **desde las 18:00**. |
+| ¿Cómo se ve? | **En la fila**: redonda, 44 px, borde fino gold; la bandera baja a insignia; tocarla abre el visor. En la vista general, **sólo la marca `◉ N`** junto a `✎ N`. |
+| ¿Cuántas? | **Una por viajero**; subir otra la reemplaza. |
+
+**Dónde vive cada cosa.**
+
+```
+Storage  viajeros_fotos/{pid}/{ts}.jpg     los bytes (JPEG ~800 px, < 450 KB)
+RTDB     /viajeros_fotos/{pid}             el índice {path, ts, out, outAt?, hab, autor?, w, h, _visto?}
+```
+
+Nunca en el repo (es público, §3.6). Nunca en `/viajeros/current`: el sync lo
+pisa entero cada hora, y el `foto?` que el shape tenía reservado quedó sin uso.
+Y nunca como data URL en la RTDB (como la carta editable, §3.7): el índice se
+lee entero para la marca `◉ N`, y con la imagen adentro cada apertura de PGO
+bajaría todas las caras. La clave es el `pid` de las notas (§4.1): la foto
+sigue a la persona si la mudan de hab, y el que llega nunca hereda la del
+anterior.
+
+**Subir, desde el PC.** Tres caminos que terminan en la misma función
+(`vjFotoSubir`):
+
+- **Soltar** la imagen sobre la fila del viajero (toda la fila es zona, con un
+  contorno fino al pasar).
+- **Ctrl+V**: va al visor abierto, al panel "+ foto" abierto o, si la hab
+  tiene una sola persona a la vista, a ella. Sin destino claro se ignora, y un
+  pegado de texto sigue su camino (una nota, el buscador).
+- El panel **"+ foto"**: un `<label>` que abre el selector; en el iPhone,
+  fototeca o cámara.
+
+Un archivo que cae dentro del módulo pero fuera de una fila no hace que el
+navegador abra la imagen y se vaya de la página. La imagen se achica en el
+cliente (canvas → JPEG, lado mayor 800 px, calidad 0,82 → 0,5 hasta entrar en
+450 KB). Sale **sin EXIF**: ni GPS ni modelo de cámara viajan. Se decodifica
+por `<img>` y no por `createImageBitmap` porque así respeta la rotación de las
+fotos del iPhone. Un HEIC en Chrome/Windows no decodifica, y avisa.
+
+Orden de escritura: Storage → RTDB. Si la RTDB rechaza, se borra lo subido:
+una foto sin índice no la ve nadie ni la borra nadie. Reemplazar es subir con
+otro nombre (`{ts}.jpg`) y borrar la vieja, así un teléfono con la vieja en
+memoria nunca muestra la cara equivocada. Borrar pide dos toques y va al revés:
+primero los bytes, después el índice.
+
+**Ver.** El índice viaja con `viajerosFetch` (un GET más, junto a notas y
+quincho). La cara se dibuja con su hueco fijo y la imagen se parcha en el lugar
+al llegar (`vjFotoParchar`): nada se mueve bajo el dedo. Se baja con
+`Authorization: Firebase <token>` y se muestra como blob, como las capturas de
+Recepción. **Sólo en memoria**, a propósito: un Cache API la dejaría en el
+disco del teléfono después de la purga. La foto crece 6 px hacia el margen y no
+hacia el texto: el nombre arranca en la misma x con o sin foto. El visor vive
+en `<body>`, fuera de `#vj-body`, para que el polling no se lo cierre a quien
+está mirando. Una foto vencida **no se muestra** aunque la purga no haya pasado
+todavía (`vjFotoDe`).
+
+**La purga, del lado servidor.** `purgar_fotos()` en `sync_viajeros.py` corre
+en cada pasada del cron (cada hora), con el service account y después de
+publicar el roster:
+
+| Caso | Qué hace |
+|---|---|
+| En casa, antes del corte | Refresca `_visto` y, si PGO lo cambió, `out`/`outAt` (estadía extendida). |
+| En casa, pasado el corte | Borra Storage y después el índice. |
+| Fuera del roster, pasado el `out` guardado | Borra. |
+| Fuera del roster antes del OUT (se fue antes) | Borra a las **24 h** del último `_visto` (o del `ts` de subida). Un sync con roster incompleto no borra nada. |
+| Roster vacío | **No purga nada** (la regla de las notas). |
+| Archivo en Storage sin índice, de más de 2 h | Lo borra (subida a medias, reemplazo que no alcanzó a borrar la vieja). |
+| Índice sin archivo, de más de 2 h | Borra el índice. |
+
+El corte (`foto_corte` en Python, `vjFotoCorte` en JS) es **la misma regla en
+los dos lados**: si cambia una, la otra. La decisión es una función pura
+(`decidir_foto`), probada con 13 casos borde, y la purga entera se probó con la
+red simulada. Nunca tumba el sync: un error queda en el log y se reintenta en
+la corrida siguiente. `--fotos-simular` loguea qué borraría sin borrar (el doc
+del roster sí se escribe). Los logs llevan pid y motivo, nunca la imagen.
+
+**La red de abajo, en el cliente**, como las otras auto-purgas (§4): quien abre
+PGO borra lo vencido (`vjFotosPurgaCliente`), **sólo si el día del aparato
+coincide con el del reporte**; un teléfono con la fecha corrida no borra nada.
+Sirve sobre todo mientras el feature está en staging, porque **el cron corre el
+script de `main`**: la purga del servidor arranca recién con el merge.
+Opcional y recomendado: una regla de ciclo de vida del bucket que borra
+`viajeros_fotos/` a los 30 días, pase lo que pase.
+
+**Reglas.** Las publica el owner; el texto exacto y la verificación están en
+`docs/reglas-viajeros-fotos.md`.
+
+- RTDB: `.read/.write` con sesión y forma fija (`path` sólo dentro de la
+  carpeta de ese `pid`, `out` con forma de fecha, `$otro: false`).
+- Storage: `get` con sesión y **`list` nunca**: sin el nombre exacto, que sólo
+  está en el índice, no se llega a una foto. `create` sólo `{13 dígitos}.jpg`,
+  `image/jpeg` y < 500 KB; sin `update`; `delete` con sesión.
+- El CORS del bucket suma `POST` y `DELETE`.
+- El script suma el scope `devstorage.read_write` al mismo `FIREBASE_KEY`. Si
+  el log dice `no pude listar Storage (403)`, al service account le falta
+  `roles/storage.objectAdmin` sobre el bucket. Ningún secret nuevo.
+
+**Válvula `VJ_FOTO_ON`** (STATE TOP): en `false`, la ficha queda exactamente
+como antes y no se pide nada.
+
+**Idioma: sólo ES** (operativo): claves `vjFoto*` sólo en `UI.es`.
 
 ---
 
@@ -1899,7 +2021,7 @@ Mapa de regiones aproximadas (los rangos cambian a medida que crece;
 | Módulo Clima (`wx`) | tras `winetips` | Ráfagas de la ventana de almuerzo + altitud, en una línea sobre las tabs. `wxUrl`/`wxPeakGust`/`wxFetch`/`wxRender` + cache `localStorage`. Open-Meteo, sin Firebase — ver §3.2 |
 | Edición de la carta (`med`) | antes de `COFFEE MODULE DATA` (+ CSS tras `.mn-meta`, STATE TOP `MED_*`, UI `med*`) | Overlay de ediciones sobre platos/vinos/tragos/rótulos, editor en hoja inferior, fotos subidas. `medArrancar()` corre al final del script principal — ver §3.7 |
 | Módulo Comandera | 3900-4200 | Gate + home + new + active + drag + history |
-| Módulo Viajeros | ~5260-5525 (+ CSS ~1377, STATE TOP ~2500, UI ~2682) | Corcho de dietas por hab: stats/chips filtrantes, búsqueda con teclado numérico plegable, grilla con roster (primer nombre + bandera `VJ_NAC` en vez de esferas de iniciales), modal por hab. Read-only `/viajeros/current` |
+| Módulo Viajeros | ~5260-5525 (+ CSS ~1377, STATE TOP ~2500, UI ~2682) | Corcho de dietas por hab: stats/chips filtrantes, búsqueda con teclado numérico plegable, grilla con roster (primer nombre + bandera `VJ_NAC` en vez de esferas de iniciales), modal por hab. Read-only `/viajeros/current`. Notas del equipo (`vjNota*`) y fotos por viajero (`vjFoto*`, tras las notas: subida por arrastre/pegado/archivo, visor, purga en el cliente — §4.6) |
 | Módulo Rol | 5500-6260 | PIN gate + lectura semanal del roster |
 | Módulo Checklist | 6260-6940 | Sub-secciones + fases + carry-over + edit mode supervisor (acceso oculto desde 2026-11) |
 | Módulo Experto | antes de `medArrancar()` (+ CSS al final del `<style>`, STATE TOP `EXP_*` tras Recepción) | `EXP_SEGS` (los puntos transcritos + tips), `expRender`/`expFaseHtml`/`expTipHtml`, parches en sitio (`expToggleChk`, `expPatchProgreso`), buscador `expIndexar`/`expIrPunto`. Ver §3.8 |

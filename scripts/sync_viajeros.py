@@ -3255,6 +3255,8 @@ def get_token():
         scopes=[
             "https://www.googleapis.com/auth/firebase.database",
             "https://www.googleapis.com/auth/userinfo.email",
+            # Storage: sólo para borrar las fotos de viajeros vencidas (purgar_fotos).
+            "https://www.googleapis.com/auth/devstorage.read_write",
         ],
     )
     creds.refresh(GoogleAuthRequest())
@@ -3327,6 +3329,213 @@ def purgar_notas(token, doc):
             print(f"[sync-viajeros] notas: problema con '{pid}' ({e}); se deja como está.")
     print(f"[sync-viajeros] notas: {len(con_notas)} con contenido · "
           f"{refrescados} en casa · {borrados} purgadas (gracia {NOTAS_GRACIA // 86400000} días)")
+
+
+# ── Fotos de viajeros (2026-11) ──────────────────────────────────────────────
+# Los BYTES viven en Firebase Storage (viajeros_fotos/{pid}/{ts}.jpg) y el índice
+# en /viajeros_fotos/{pid} = {path, ts, out, outAt?, hab, autor?, w, h, _visto?}.
+# Son fotos de huéspedes —datos personales— y se borran solas. La regla la eligió
+# el owner (2026-11-03): el día del OUT, pasada la hora de salida de PGO; sin
+# hora, desde las 18:00. Es la MISMA que vjFotoCorte() en index.html: si cambia
+# una, la otra. La app también deja de mostrarlas en ese momento, así que este
+# borrado nunca llega "tarde" a la pantalla; llega a tiempo al disco.
+#
+# Corre en cada sync (cada hora), con el service account: no depende de que
+# alguien abra la página. Tres casos además del normal:
+#   · se fue ANTES de su OUT (desaparece del roster): se borra a las 24 h de la
+#     última vez que se lo vio. El margen es para un sync que trajo un roster
+#     incompleto: un solo hueco no borra nada.
+#   · roster vacío: no se purga NADA (la misma regla que las notas).
+#   · huérfanas: un archivo en Storage sin índice (subió y la base no contestó,
+#     o el reemplazo no alcanzó a borrar la vieja) se borra a las 2 h; un índice
+#     que apunta a un archivo que ya no existe, también.
+FOTOS_PATH           = "viajeros_fotos"
+FOTOS_BUCKET         = "explora-cafe-orders.firebasestorage.app"
+FOTOS_CORTE_SIN_HORA = "18:00"
+FOTOS_GRACIA_AUSENTE = 24 * 3600 * 1000   # ms: desapareció del roster antes del OUT
+FOTOS_HUERFANA_MS    = 2 * 3600 * 1000    # ms: subida a medias / reemplazo a medias
+GCS_API              = "https://storage.googleapis.com/storage/v1"
+
+
+def ahora_chile():
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.datetime.now(ZoneInfo("America/Santiago"))
+    except Exception:
+        return datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3)))
+
+
+def foto_corte(out, out_at):
+    """'YYYY-MM-DDTHH:MM' desde el que la foto está vencida, o '' si no hay OUT."""
+    if not out:
+        return ""
+    if out_at and len(out_at) > 10 and out_at[:10] == out:
+        return out_at[:16]
+    return f"{out}T{FOTOS_CORTE_SIN_HORA}"
+
+
+def decidir_foto(entrada, tr, ahora_iso, ahora_ms):
+    """Qué hacer con una foto. Pura (sin red), para poder probarla.
+
+    entrada: el índice de /viajeros_fotos/{pid}. tr: el viajero en el roster de
+    este sync, o None si no está. Devuelve (accion, motivo, cambios):
+      ("borrar", motivo, None) · ("visto", None, {campos a refrescar}) · ("esperar", None, None)
+    """
+    if tr is not None:
+        # En casa. Manda el roster: una estadía extendida corre el OUT.
+        out = tr.get("out") or entrada.get("out") or ""
+        out_at = tr.get("outAt") if tr.get("out") == out else ""
+        if out and ahora_iso >= foto_corte(out, out_at):
+            return "borrar", "check-out", None
+        cambios = {"_visto": ahora_ms}
+        if out and out != entrada.get("out"):
+            cambios["out"] = out
+        if out_at and len(out_at) > 10 and out_at[:16] != entrada.get("outAt"):
+            cambios["outAt"] = out_at[:16]
+        return "visto", None, cambios
+    # Fuera del roster: se decide con lo que se guardó al subirla.
+    out = entrada.get("out") or ""
+    out_at = entrada.get("outAt") or ""
+    if out and ahora_iso >= foto_corte(out, out_at):
+        return "borrar", "check-out (ya fuera del roster)", None
+    visto = entrada.get("_visto")
+    if not isinstance(visto, (int, float)):
+        visto = entrada.get("ts")     # se subió desde la ficha: en ese momento estaba
+    if isinstance(visto, (int, float)) and ahora_ms - visto > FOTOS_GRACIA_AUSENTE:
+        return "borrar", "se fue antes del OUT", None
+    return "esperar", None, None
+
+
+def _gcs_obj(nombre):
+    from urllib.parse import quote
+    return f"{GCS_API}/b/{FOTOS_BUCKET}/o/{quote(nombre, safe='')}"
+
+
+def gcs_listar(token, prefijo):
+    import requests
+    out, page = [], None
+    while True:
+        params = {"prefix": prefijo, "fields": "items(name,timeCreated),nextPageToken"}
+        if page:
+            params["pageToken"] = page
+        r = requests.get(f"{GCS_API}/b/{FOTOS_BUCKET}/o", params=params,
+                         headers={"Authorization": f"Bearer {token}"}, timeout=20)
+        if not r.ok:
+            raise RuntimeError(f"{r.status_code}: {r.text[:200]}")
+        j = r.json()
+        out.extend(j.get("items") or [])
+        page = j.get("nextPageToken")
+        if not page:
+            return out
+
+
+def gcs_borrar(token, nombre):
+    """True si quedó borrado (o ya no estaba)."""
+    import requests
+    r = requests.delete(_gcs_obj(nombre), headers={"Authorization": f"Bearer {token}"}, timeout=20)
+    if r.ok or r.status_code == 404:
+        return True
+    raise RuntimeError(f"{r.status_code}: {r.text[:200]}")
+
+
+def fb_patch(token, path, data):
+    import requests
+    r = requests.patch(f"{DB_URL}/{path}.json", headers={"Authorization": f"Bearer {token}"},
+                       json=data, timeout=20)
+    if not r.ok:
+        raise RuntimeError(f"{r.status_code}: {r.text[:200]}")
+
+
+def _ms_iso(s):
+    try:
+        return int(datetime.datetime.fromisoformat(str(s).replace("Z", "+00:00")).timestamp() * 1000)
+    except Exception:
+        return None
+
+
+def purgar_fotos(token, doc, simular=False):
+    """Borra de Storage y de la base las fotos vencidas y las huérfanas.
+
+    Nunca tumba el sync: cualquier error se loguea y la foto queda para la
+    próxima corrida (una hora después). Con `simular`, sólo dice qué haría.
+    Los logs llevan pid y motivo, nunca la imagen ni otros datos del huésped.
+    """
+    tag = "[sync-viajeros] fotos:"
+    roster = {t.get("pid"): t for hab in (doc.get("habs") or {}).values() for t in hab if t.get("pid")}
+    if not roster:
+        print(f"{tag} roster vacío — NO se purga nada.")
+        return
+    try:
+        indice = fb_get(token, FOTOS_PATH) or {}
+    except Exception as e:
+        print(f"{tag} no pude leer el índice ({e}); no se purga.")
+        return
+    if not isinstance(indice, dict):
+        indice = {}
+    ahora = ahora_chile()
+    ahora_iso, ahora_ms = ahora.strftime("%Y-%m-%dT%H:%M"), int(time.time() * 1000)
+    pre = "(simulado) " if simular else ""
+    borradas, vistas, vivas, ya_borrados = 0, 0, {}, set()
+    for pid, ent in indice.items():
+        if not isinstance(ent, dict) or not isinstance(ent.get("path"), str):
+            continue
+        try:
+            accion, motivo, cambios = decidir_foto(ent, roster.get(pid), ahora_iso, ahora_ms)
+            if accion == "borrar":
+                print(f"{tag} {pre}borro '{pid}' ({motivo})")
+                if not simular:
+                    # Primero los bytes: si eso falla, el índice queda y se reintenta.
+                    gcs_borrar(token, ent["path"])
+                    fb_delete(token, f"{FOTOS_PATH}/{pid}")
+                ya_borrados.add(ent["path"])
+                borradas += 1
+                continue
+            vivas[ent["path"]] = (pid, ent)
+            if accion == "visto":
+                vistas += 1
+                if not simular:
+                    fb_patch(token, f"{FOTOS_PATH}/{pid}", cambios)
+        except Exception as e:
+            print(f"{tag} problema con '{pid}' ({e}); se deja para la próxima corrida.")
+            vivas[ent["path"]] = (pid, ent)
+    # Huérfanas, en las dos direcciones. Sin poder listar no se adivina nada.
+    huerfanas = 0
+    try:
+        objetos = gcs_listar(token, FOTOS_PATH + "/")
+    except Exception as e:
+        print(f"{tag} no pude listar Storage ({e}); sin purga de huérfanas. "
+              "¿El service account tiene permiso sobre el bucket? (ARCHITECTURE §4.6)")
+        objetos = None
+    if objetos is not None:
+        existentes = set()
+        for o in objetos:
+            nombre = o.get("name") or ""
+            existentes.add(nombre)
+            if nombre in vivas or nombre in ya_borrados:
+                continue
+            creado = _ms_iso(o.get("timeCreated"))
+            if creado is None or ahora_ms - creado < FOTOS_HUERFANA_MS:
+                continue    # puede ser una subida en curso: el índice llega después
+            try:
+                print(f"{tag} {pre}borro archivo huérfano {nombre.split('/')[1] if '/' in nombre else nombre}")
+                if not simular:
+                    gcs_borrar(token, nombre)
+                huerfanas += 1
+            except Exception as e:
+                print(f"{tag} problema borrando huérfano ({e}).")
+        for path, (pid, ent) in vivas.items():
+            ts = ent.get("ts")
+            if path in existentes or not isinstance(ts, (int, float)) or ahora_ms - ts < FOTOS_HUERFANA_MS:
+                continue
+            try:
+                print(f"{tag} {pre}borro índice sin archivo '{pid}'")
+                if not simular:
+                    fb_delete(token, f"{FOTOS_PATH}/{pid}")
+                huerfanas += 1
+            except Exception as e:
+                print(f"{tag} problema con el índice de '{pid}' ({e}).")
+    print(f"{tag} {pre}{len(indice)} en el índice · {vistas} en casa · {borradas} vencidas borradas · "
+          f"{huerfanas} huérfanas · corte {ahora_iso} (Chile)")
 
 
 def fb_put(token, path, data):
@@ -3488,6 +3697,10 @@ def main():
     # Después de escribir, no antes: si el PUT falla, el roster de este doc no
     # se publicó y no corresponde tomar decisiones de borrado con él.
     purgar_notas(token, doc)
+    try:
+        purgar_fotos(token, doc, simular="--fotos-simular" in sys.argv)
+    except Exception as e:      # la purga de fotos nunca tumba el sync del roster
+        print(f"[sync-viajeros] fotos: la purga falló ({e}); se reintenta en la próxima corrida.")
     print("[sync-viajeros] Listo.")
 
 
