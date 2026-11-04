@@ -893,7 +893,7 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
          2 días de la fecha. Regla: la misma condición que viajeros_notas)
 ```
 
-**Reglas de Firebase.** Cerradas desde el 2026-08-17: los 14 paths (13 + `menu_ediciones` desde el 2026-10-10; `viajeros_fotos` se suma al publicar §4.6) exigen
+**Reglas de Firebase.** Cerradas desde el 2026-08-17: los 15 paths (13 + `menu_ediciones` desde el 2026-10-10 + `viajeros_fotos` desde el 2026-11-03, §4.6) exigen
 `auth != null` para leer y escribir. Ver §4.3.
 
 **Auto-purga.** Todo módulo que escribe datos temporales tiene su propia
@@ -1417,20 +1417,25 @@ del roster sí se escribe). Los logs llevan pid y motivo, nunca la imagen.
 **La red de abajo, en el cliente**, como las otras auto-purgas (§4): quien abre
 PGO borra lo vencido (`vjFotosPurgaCliente`), **sólo si el día del aparato
 coincide con el del reporte**; un teléfono con la fecha corrida no borra nada.
-Sirve sobre todo mientras el feature está en staging, porque **el cron corre el
-script de `main`**: la purga del servidor arranca recién con el merge.
-Opcional y recomendado: una regla de ciclo de vida del bucket que borra
-`viajeros_fotos/` a los 30 días, pase lo que pase.
+Ojo con las pruebas en una rama: **el cron corre el script de `main`**, así que
+la purga del servidor de un cambio sólo arranca con el merge.
+Y por debajo de todo, una **regla de ciclo de vida del bucket** (aplicada el
+2026-11-03) borra lo que haya en `viajeros_fotos/` a los 30 días, pase lo que
+pase con el cron.
 
-**Reglas.** Las publica el owner; el texto exacto y la verificación están en
-`docs/reglas-viajeros-fotos.md`.
+**Reglas.** Publicadas por el owner el 2026-11-03 y verificadas desde afuera
+(sin sesión: RTDB 401; Storage 403 al ver, subir y borrar; listar, rechazado).
+El texto exacto y la verificación están en `docs/reglas-viajeros-fotos.md`.
 
 - RTDB: `.read/.write` con sesión y forma fija (`path` sólo dentro de la
   carpeta de ese `pid`, `out` con forma de fecha, `$otro: false`).
 - Storage: `get` con sesión y **`list` nunca**: sin el nombre exacto, que sólo
   está en el índice, no se llega a una foto. `create` sólo `{13 dígitos}.jpg`,
   `image/jpeg` y < 500 KB; sin `update`; `delete` con sesión.
-- El CORS del bucket suma `POST` y `DELETE`.
+- **CORS: nada que tocar.** El endpoint v0 de Firebase Storage responde el
+  preflight y las subidas/borrados con `Access-Control-Allow-Origin: *` por su
+  cuenta (medido 2026-11-03); el CORS del bucket (§3.4, sólo `GET`) sigue
+  haciendo falta para la descarga con `?alt=media`, y ya estaba.
 - El script suma el scope `devstorage.read_write` al mismo `FIREBASE_KEY`. Si
   el log dice `no pude listar Storage (403)`, al service account le falta
   `roles/storage.objectAdmin` sobre el bucket. Ningún secret nuevo.
