@@ -1,6 +1,11 @@
 # Reglas para las fotos de viajeros (`viajeros_fotos`)
 
-Cuatro cosas que se publican **desde la consola**, una sola vez. Las hace el
+> **Estado (2026-11-03): publicado.** 1 (RTDB) y 2 (Storage) publicados por el
+> owner; 3 (CORS) resultó innecesario; 5 (ciclo de vida a 30 días) aplicado.
+> Queda 4 por comprobar en el log de la primera corrida del sync en `main`.
+> Este archivo sirve para rehacerlo si hiciera falta.
+
+Cosas que se publican **desde la consola**, una sola vez. Las hace el
 owner: la app y el script ya están listos y, mientras no estén publicadas, nada
 se rompe (la ficha queda como antes y subir una foto muestra el aviso coral
 "La foto NO se guardó").
@@ -77,10 +82,15 @@ baja la foto con el header de auth, como las capturas de Recepción. Para leer
 ese token también hace falta sesión, y muere con el archivo cuando la purga lo
 borra.
 
-## 3. CORS del bucket — que el navegador pueda subir y borrar
+## 3. CORS del bucket — NO hizo falta
 
-El CORS de §3.4 sólo permite `GET`. Hay que sumar `POST` y `DELETE`. Desde la
-Cloud Shell de la consola de Google Cloud (proyecto `explora-cafe-orders`):
+Medido el 2026-11-03, después de publicar 2: el endpoint v0
+(`firebasestorage.googleapis.com`) responde el preflight con
+`POST, GET, HEAD, DELETE, PATCH` y las subidas/borrados con
+`Access-Control-Allow-Origin: *` por su cuenta, sin mirar el CORS del bucket.
+Ese CORS (§3.4, sólo `GET`) es el de la descarga con `?alt=media`, y ya estaba.
+**Sólo si** algún día subir desde el navegador da un error de CORS en la
+consola, esto lo resuelve (Cloud Shell, proyecto `explora-cafe-orders`):
 
 ```bash
 echo '[{"origin":["*"],"method":["GET","POST","DELETE"],"responseHeader":["Authorization","Content-Type","Content-Length"],"maxAgeSeconds":3600}]' > cors.json
