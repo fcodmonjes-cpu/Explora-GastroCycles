@@ -2042,20 +2042,25 @@ def pgo_probe_roster(page, date_str):
 # datos. Las observaciones NO salen de acá: medido el 2026-08-17, los campos de
 # dieta de la API traen 4-5 casos contra 9 del reporte HTML — migrarlas perdería
 # restricciones. Ver §4.2.
+# `confirmationNumber` es el CRS que la oficina escribe en el nombre de los
+# archivos de pasaporte: UNO POR VIAJERO (sondeo `--explore crs` 2026-11-04:
+# 99/99 distintos, cada acompañante el suyo; `partyCode` es el compartido).
+# Va en la misma query: cero llamadas nuevas a PGO.
 PGO_ROSTER_QUERY = """query ($hotelId: Int!, $date: Date!) {
   travellersInhouse(hotelId: $hotelId, date: $date) {
-    room checkin checkout
+    room checkin checkout confirmationNumber
     traveller { firstName lastName age nationality nationalityName group }
   }
 }"""
 
 
 def pgo_fetch_roster(page, date_str):
-    """Roster de in-house por GraphQL → (filas, nacnames).
+    """Roster de in-house por GraphQL → (filas, nacnames, crs).
 
     Las filas van en el formato de SEED_ROWS. `nacnames` es
-    {nombre_normalizado: 'Brasil'} y viaja aparte para no tocar la tupla de 8
-    campos, que la comparten SEED_ROWS, parse_pgo y cruzar_obs_comedor.
+    {nombre_normalizado: 'Brasil'} y `crs` es {nombre_normalizado: '1234567'};
+    viajan aparte para no tocar la tupla de 8 campos, que la comparten
+    SEED_ROWS, parse_pgo y cruzar_obs_comedor.
 
     Reemplaza al scraping del Reporte Geos. Verificado contra el HTML nombre por
     nombre y habitación por habitación: 70/70 idénticos (§4.2).
@@ -2064,8 +2069,9 @@ def pgo_fetch_roster(page, date_str):
     if res.get("errors"):
         print(f"[roster] errores: {str(res['errors'])[:300]}")
     filas = (res.get("data") or {}).get("travellersInhouse") or []
-    out, nacnames = [], {}
+    out, nacnames, crs = [], {}, {}
     for f in filas:
+        conf = re.sub(r"\D", "", str(f.get("confirmationNumber") or ""))
         hab_raw = str(f.get("room") or "")
         digits = re.sub(r"\D", "", hab_raw)
         hab = digits.zfill(2) if digits else hab_raw.strip()
@@ -2083,12 +2089,14 @@ def pgo_fetch_roster(page, date_str):
             nn = fix_mojibake(tr.get("nationalityName")).strip()
             if nn:
                 nacnames[norm_key(nombre)] = nn
+            if conf:
+                crs[norm_key(nombre)] = conf
             out.append((hab, nombre, _to_int(tr.get("age")),
                         str(tr.get("nationality") or "").strip().upper(),
                         str(tr.get("group") or "").strip(), ind, outd, ""))
     print(f"[sync-viajeros] roster (API): {len(out)} viajeros en {len({r[0] for r in out})} "
-          f"habitaciones · {len(nacnames)} con nombre de país")
-    return out, nacnames
+          f"habitaciones · {len(nacnames)} con nombre de país · {len(crs)} con CRS")
+    return out, nacnames, crs
 
 
 def pgo_compara_roster(api_rows, html_rows):
@@ -2722,16 +2730,16 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         # así que conserva las dos vías.
         fecha_iso = date_str or _pgo_fecha_visible(page)
         geos = []
-        roster_api, nacnames = None, {}
+        roster_api, nacnames, crs = None, {}, {}
         try:
-            roster_api, nacnames = pgo_fetch_roster(
+            roster_api, nacnames, crs = pgo_fetch_roster(
                 page, fecha_iso or datetime.date.today().isoformat())
             if not roster_api:
                 raise ValueError("la API devolvió 0 viajeros")
         except Exception as e:
             print(f"[sync-viajeros] roster por API falló ({type(e).__name__}: {e}); "
                   "vuelvo al Reporte Geos por HTML.")
-            roster_api, nacnames = None, {}
+            roster_api, nacnames, crs = None, {}, {}
         # El Geos se lee SIEMPRE desde el 2026-09-16, no sólo como respaldo: sus
         # columnas `exp` e `historia` son la exploración del día y el histórico
         # del viajero, y no existen en ninguna otra fuente que hoy consultemos
@@ -2864,7 +2872,7 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         for c in dict.fromkeys(api_calls):
             print("   ", c)
     return (geos, dietas, (fecha_iso or datetime.date.today().isoformat()),
-            horas, totales, comedor, cumples, roster_api, nacnames, rde, manana)
+            horas, totales, comedor, cumples, roster_api, nacnames, rde, manana, crs)
 
 
 # Mapeo encabezado de PGO (ya normalizado) → campo interno. Varios alias por si
@@ -3742,7 +3750,7 @@ def main():
         date_str = _arg_value("--date")   # None = usar el día que PGO ya muestra
         print("[sync-viajeros] PGO — login y lectura de reportes "
               f"({date_str or 'fecha por defecto de PGO'})...")
-        geos, dietas, date_str, horas, totales, comedor, cumples, roster_api, nacnames, rde, manana = pgo_fetch(
+        geos, dietas, date_str, horas, totales, comedor, cumples, roster_api, nacnames, rde, manana, crs = pgo_fetch(
             date_str,
             dump="--dump-html" in sys.argv,
             trace_net="--trace-net" in sys.argv)
@@ -3765,6 +3773,11 @@ def main():
             print(f"[sync-viajeros] comedor → obs: {n_com} observaciones por persona sumadas")
         print(f"[sync-viajeros] PGO: {len(geos)} filas Geos · {len(dietas)} filas Dietas → {len(rows)} viajeros")
         expl = exploraciones_por_nombre(geos)
+        # El CRS viaja por el mismo canal que las exploraciones (por nombre;
+        # build_doc copia esas claves a la ficha tal cual). Lo usa el
+        # importador de pasaportes para saber de quién es cada archivo.
+        for k, c in (crs or {}).items():
+            expl.setdefault(k, {})["crs"] = c
         doc = build_doc(rows, date_str, "pgo", horas, totales, comedor, cumples, nacnames, expl,
                         rde, manana)
     else:
