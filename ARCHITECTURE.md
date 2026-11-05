@@ -1541,6 +1541,27 @@ los pasaportes no salen del computador. Subir la cara al Handbook sigue siendo
 aparte (la casilla de cada tarjeta) y funciona también para quien llega mañana
 (`vjFotoSubir` recibe `opts.tr`; la purga del servidor lo cuenta presente).
 
+**Giro libre (QA del owner, 2026-11-05).** Un escaneo torcido no se arregla
+con 90°. Una perilla sobre el borde del círculo marca "arriba" del documento y
+se arrastra alrededor (medio grado de paso); Shift + rueda gira medio grado;
+doble clic endereza a la vuelta recta; «girar» sigue dando 90°. El giro ya no
+se hornea en un canvas: `vjImpDibujarCara` aplica la transformación al dibujar,
+tanto la vista previa (desde `it.base`) como el recorte final (desde la imagen
+original, a resolución nativa). El recorte vive en el espacio del documento
+girado — la caja que lo contiene (`vjImpDims`) — y `vjImpDeDoc`/`vjImpADoc`
+pasan de un espacio al otro. Girar es alrededor del centro del recorte
+(`vjImpRotarA`): la cara queda donde está y la hoja gira debajo.
+
+**Dos rostros de un archivo: «duplicar».** Recepción a veces escanea dos
+pasaportes en una hoja. «duplicar» crea una tarjeta gemela al lado
+(`vjImpDuplicar`): mismo `blob`, su propio recorte, giro y dueño, y la **hoja
+entera** a la vista — la detección de documento se queda con un solo bloque de
+tinta y puede haber dejado afuera al segundo pasaporte (pasó en la prueba) —, a
+más resolución de vista previa (`VJ_IMP_PREV_HOJA`). Arranca en el mismo punto
+que la original y el foco va a su buscador. Al guardar con nombres salen dos
+copias idénticas del original, cada una con su CRS y su nombre; cada cara sube
+a su ficha. «quitar copia» la saca (el archivo no se toca).
+
 **Los grupos de la grilla:** listas (marcadas) · para revisar (baja resolución,
 nombre que no calza, CRS de otro, segundo archivo) · sin asignar · ya tienen
 foto. Lo de pasado mañana entra mañana; como lo ya subido se salta, se puede
