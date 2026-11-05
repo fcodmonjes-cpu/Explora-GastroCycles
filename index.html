@@ -2835,7 +2835,21 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
 .vj-imp-card.on { border-color:var(--gold); }
 .vj-imp-card.ok { opacity:0.55; }
 .vj-imp-cara { width:112px; height:112px; border-radius:50%; border:0.5px solid var(--gold); background:#fff;
-  cursor:grab; touch-action:none; margin-bottom:4px; display:block; }
+  cursor:grab; touch-action:none; margin-bottom:4px; display:block; box-sizing:border-box; }
+/* La perilla de giro: un punto sobre el borde del círculo que marca "arriba"
+   del documento. Se arrastra alrededor; doble clic endereza a la vuelta recta. */
+.vj-imp-rueda { position:relative; width:112px; height:112px; margin-bottom:4px; }
+.vj-imp-rueda .vj-imp-cara { margin:0; }
+.vj-imp-giro { position:absolute; left:56px; top:0; width:11px; height:11px; margin:-6px 0 0 -6px; border-radius:50%;
+  background:var(--surface); border:1px solid var(--gold); cursor:grab; touch-action:none; box-sizing:border-box; }
+.vj-imp-giro:hover, .vj-imp-giro.activo { background:var(--gold); }
+.vj-imp-giro.activo { cursor:grabbing; }
+.vj-imp-fila { display:flex; align-items:center; justify-content:center; gap:12px; margin-top:4px; }
+.vj-imp-fila .vj-imp-marca { margin-top:0; }
+.vj-imp-dup { background:none; border:0; padding:0; font-family:'Courier Prime','Courier New',monospace; font-size:10px;
+  color:var(--text-tertiary); cursor:pointer; text-decoration:underline dotted; text-underline-offset:2px; }
+.vj-imp-dup:hover { color:var(--gold); }
+.vj-imp-dup:disabled { visibility:hidden; }
 .vj-imp-cara:active { cursor:grabbing; }
 .vj-imp-cara.vacia { background:var(--bg); border-style:dashed; border-color:var(--border-md); cursor:default; }
 .vj-imp-nom { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.2; color:var(--text); }
@@ -6037,7 +6051,8 @@ const UI = {
     vjImpM_noabre:'no se pudo abrir la imagen', vjImpM_crsDe:'el CRS es de', vjImpM_porNombre:'se asignó por el nombre',
     vjImpSubir:'subir', vjImpReemplazar:'reemplazar la actual', vjImpSubirN:'Subir', vjImpFoto1:'foto', vjImpFotos:'fotos',
     vjImpSubiendo:'subiendo', vjImpSubidas:'subidas', vjImpFallaron:'no se guardaron: tocá Subir de nuevo',
-    vjImpOtro:'importar otro', vjImpGirar:'girar', vjImpCentrar:'centrar', vjImpAcercar:'acercar', vjImpAlejar:'alejar',
+    vjImpOtro:'importar otro', vjImpGirar:'girar', vjImpGiroTit:'arrastrá para girar · Shift + rueda: medio grado · doble clic: endereza',
+    vjImpDup:'duplicar', vjImpDupTit:'otro rostro del mismo archivo (dos pasaportes en un escaneo)', vjImpQuitar:'quitar copia', vjImpQuitarTit:'sacar esta copia (el archivo no se toca)', vjImpCentrar:'centrar', vjImpAcercar:'acercar', vjImpAlejar:'alejar',
     vjImpEstSube:'subiendo…', vjImpEstOk:'✓ subida', vjImpEstMal:'no se guardó',
     vjEnLodge:'en el lodge', vjComen:'comen', vjComenTit:'Cubiertos asignados en PGO',
     vjStatRestric:'restricciones',
@@ -13610,29 +13625,68 @@ function vjImpCajaDoc(img){
   if (bw < 0.15 || bh < 0.1) return { x: 0, y: 0, w: W, h: H };
   return { x: cx.a / k, y: cy.a / k, w: Math.min(W, (cx.b - cx.a + 1) / k), h: Math.min(H, (cy.b - cy.a + 1) / k) };
 }
-// El documento recortado y girado, a la escala `k`. Sirve tanto para la vista
-// previa (desde la imagen o desde otro canvas) como para el recorte final.
-function vjImpDibujarDoc(fuente, doc, rot, k){
-  const w = Math.max(1, Math.round(doc.w * k)), h = Math.max(1, Math.round(doc.h * k));
-  const gira = rot % 180 !== 0;
+// El documento (sin girar) a la escala `k`: la base de la vista previa. El
+// giro ya no se "hornea" en un canvas: se aplica al dibujar (vjImpDibujarCara),
+// así el ángulo puede ser cualquiera y moverlo con la perilla no cuesta nada.
+function vjImpDibujarDoc(fuente, doc, k){
   const c = document.createElement('canvas');
-  c.width = gira ? h : w; c.height = gira ? w : h;
+  c.width = Math.max(1, Math.round(doc.w * k)); c.height = Math.max(1, Math.round(doc.h * k));
   const ctx = c.getContext('2d');
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
-  ctx.translate(c.width / 2, c.height / 2);
-  ctx.rotate(rot * Math.PI / 180);
-  ctx.drawImage(fuente, doc.x, doc.y, doc.w, doc.h, -w / 2, -h / 2, w, h);
+  ctx.drawImage(fuente, doc.x, doc.y, doc.w, doc.h, 0, 0, c.width, c.height);
   return c;
 }
-// Medidas NATIVAS del documento ya girado: el recorte vive en ese espacio.
-function vjImpDims(it){ return it.rot % 180 ? { w: it.doc.h, h: it.doc.w } : { w: it.doc.w, h: it.doc.h }; }
+// El recorte vive en el espacio del documento GIRADO (medidas nativas): la caja
+// que lo contiene entero. Con 0/90/180/270 es el documento o su traspuesto.
+function vjImpDims(it){
+  const a = it.rot * Math.PI / 180, co = Math.abs(Math.cos(a)), si = Math.abs(Math.sin(a));
+  return { w: it.doc.w * co + it.doc.h * si, h: it.doc.w * si + it.doc.h * co };
+}
+// Documento (nativo, sin girar) ↔ espacio girado, con ángulo `rot`.
+function vjImpDeDoc(it, x, y, rot){
+  const r = rot === undefined ? it.rot : rot;
+  const a = r * Math.PI / 180, co = Math.cos(a), si = Math.sin(a);
+  const D = vjImpDims(Object.assign({}, it, { rot: r }));
+  const dx = x - it.doc.w / 2, dy = y - it.doc.h / 2;
+  return { x: D.w / 2 + dx * co - dy * si, y: D.h / 2 + dx * si + dy * co };
+}
+function vjImpADoc(it, x, y){
+  const a = it.rot * Math.PI / 180, co = Math.cos(a), si = Math.sin(a);
+  const D = vjImpDims(it);
+  const dx = x - D.w / 2, dy = y - D.h / 2;
+  return { x: it.doc.w / 2 + dx * co + dy * si, y: it.doc.h / 2 - dx * si + dy * co };
+}
+// Dibuja el recorte cuadrado en `ctx` (lado × lado). `fuente` es la base de la
+// vista previa (escala it.kPrev, sólo el documento) o la imagen original
+// (`src` = el rectángulo del documento dentro de la hoja).
+function vjImpDibujarCara(ctx, lado, it, fuente, src){
+  const c = it.caja, z = lado / c.s, D = vjImpDims(it);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, lado, lado);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.setTransform(z, 0, 0, z, -(c.cx - c.s / 2) * z, -(c.cy - c.s / 2) * z);   // → espacio girado
+  ctx.translate(D.w / 2, D.h / 2);
+  ctx.rotate(it.rot * Math.PI / 180);
+  ctx.translate(-it.doc.w / 2, -it.doc.h / 2);                                   // → documento nativo
+  if (src) ctx.drawImage(fuente, src.x, src.y, src.w, src.h, 0, 0, it.doc.w, it.doc.h);
+  else ctx.drawImage(fuente, 0, 0, it.doc.w, it.doc.h);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+}
+// Gira a `nuevo` grados alrededor del centro del recorte: la cara queda donde
+// está y la hoja gira debajo (como enderezar un papel bajo una lupa).
+function vjImpRotarA(it, nuevo){
+  const p = vjImpADoc(it, it.caja.cx, it.caja.cy);
+  it.rot = ((nuevo % 360) + 360) % 360;
+  const q = vjImpDeDoc(it, p.x, p.y);
+  it.caja.cx = q.x; it.caja.cy = q.y;
+  vjImpLimitar(it);
+}
 // Recorte cuadrado: la foto del documento con margen ("PP antes que PPP", pidió
 // el owner), centrado un poco arriba de la mitad, donde está la cara. Cuadrado
 // porque la ficha lo muestra en un círculo: lo que se ve en la grilla es lo que
 // queda. El lado cubre el ancho de la foto con aire a los costados.
 function vjImpRearmar(it){
-  const base = it.base;
-  it.prev = it.rot ? vjImpDibujarDoc(base, { x: 0, y: 0, w: base.width, h: base.height }, it.rot, 1) : base;
+  it.prev = it.base;
   const D = vjImpDims(it);
   const r = Math.max(D.w, D.h) / Math.max(1, Math.min(D.w, D.h));
   it.formato = r >= 1.51 ? 'cedula' : 'pasaporte';
@@ -13651,7 +13705,7 @@ async function vjImpPreparar(it){
   const img = await vjFotoDecodificar(it.blob);
   it.doc = vjImpCajaDoc(img);
   const kp = Math.min(1, VJ_IMP_PREV / Math.max(it.doc.w, it.doc.h));
-  it.base = vjImpDibujarDoc(img, it.doc, 0, kp);
+  it.base = vjImpDibujarDoc(img, it.doc, kp);
   it.kPrev = kp;
   it.rot = 0;
   // Sin aviso de "documento parado": los escaneos reales son la hoja A4 entera,
@@ -13662,14 +13716,10 @@ async function vjImpPreparar(it){
 // abrir el original y se corta ahí, no desde la vista previa.
 async function vjImpRecorteFinal(it){
   const img = await vjFotoDecodificar(it.blob);
-  const docC = vjImpDibujarDoc(img, it.doc, it.rot, 1);
-  const c = it.caja;
-  const lado = Math.max(1, Math.round(Math.min(c.s, VJ_FOTO_LADO)));
+  const lado = Math.max(1, Math.round(Math.min(it.caja.s, VJ_FOTO_LADO)));
   const out = document.createElement('canvas');
   out.width = out.height = lado;
-  const ctx = out.getContext('2d');
-  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, lado, lado);
-  ctx.drawImage(docC, c.cx - c.s / 2, c.cy - c.s / 2, c.s, c.s, 0, 0, lado, lado);
+  vjImpDibujarCara(out.getContext('2d'), lado, it, img, it.doc);
   return await new Promise(r => out.toBlob(r, 'image/png'));
 }
 
@@ -13805,11 +13855,17 @@ function vjImpAsignar(id, pid){
   // Elegirla es la decisión: queda marcada, salvo que pise una foto que ya
   // está o que haya otro archivo para esa misma persona.
   it.marcado = !vjFotoDe(it.tr) && !it.segundo;
-  v.items.forEach(x => {
-    if (x !== it && antes.get(x) === x.segundo) return;
+  vjImpRepintarCambios(antes, it);
+  vjImpPintarPie();
+}
+// Repinta la tarjeta tocada y las que cambiaron de "otro archivo de esta
+// persona" (en las dos direcciones), cada una en su lugar.
+function vjImpRepintarCambios(antes, tocado){
+  VJ_IMP.items.forEach(x => {
+    if (x !== tocado && antes.get(x) === x.segundo) return;
     // La que dejó de ser "otro archivo" vuelve a marcarse si ya no tiene dudas.
-    if (x !== it && x.estado !== 'ok')
-      x.marcado = !x.segundo && !vjFotoDe(x.tr) && !vjImpMotivos(x).length;
+    if (x !== tocado && x.estado !== 'ok')
+      x.marcado = !!x.tr && !x.segundo && !vjFotoDe(x.tr) && !vjImpMotivos(x).length;
     const c = document.getElementById('vj-imp-' + x.id);
     if (!c) return;
     // Sin el aviso la tarjeta quedaría más baja y todo lo de abajo subiría:
@@ -13820,7 +13876,6 @@ function vjImpAsignar(id, pid){
     if (n){ n.style.boxSizing = 'border-box'; n.style.minHeight = alto + 'px'; }
     vjImpPintarCara(x);
   });
-  vjImpPintarPie();
 }
 
 // ── Subida: de a una, en fila ──
@@ -13936,7 +13991,9 @@ function vjImpCardHtml(it){
   const px = puede ? `<span class="vj-imp-px${it.caja.s < VJ_IMP_MIN_LADO ? ' baja' : ''}" data-vj-imp-px="${id}">${vjImpLadoTxt(it)}</span>` : '';
   return `
     <div class="vj-imp-card${it.marcado ? ' on' : ''}${it.estado ? ' ' + it.estado : ''}" id="vj-imp-${id}">
-      ${puede ? `<canvas class="vj-imp-cara" width="224" height="224" data-vj-imp-cara="${id}"></canvas>` : `<div class="vj-imp-cara vacia"></div>`}
+      ${puede ? `<div class="vj-imp-rueda"><canvas class="vj-imp-cara" width="224" height="224" data-vj-imp-cara="${id}"></canvas>
+        <span class="vj-imp-giro" data-vj-imp-giro="${id}" title="${t('vjImpGiroTit')}"${quieto || it.estado === 'ok' ? ' hidden' : ''}
+          ondblclick="vjImpEnderezar('${id}')"></span></div>` : `<div class="vj-imp-cara vacia"></div>`}
       <div class="vj-imp-nom">
         <input type="text" class="vj-imp-busca" data-vj-imp-busca="${id}" value="${tr ? vjEsc(tr.nombre) : ''}"
           placeholder="${t('vjImpBusca')}" title="${t('vjImpBuscaTit')}" aria-label="${t('vjImpBuscaTit')}"
@@ -13954,8 +14011,13 @@ function vjImpCardHtml(it){
         <button type="button" onclick="vjImpGirar('${id}')">${t('vjImpGirar')}</button>
         <button type="button" onclick="vjImpCentrar('${id}')">${t('vjImpCentrar')}</button>
       </div>
-      <label class="vj-imp-marca"${tr ? '' : ' style="visibility:hidden"'}><input type="checkbox"${it.marcado ? ' checked' : ''}${quieto || it.estado === 'ok' || !tr ? ' disabled' : ''}
-        onchange="vjImpMarcar('${id}', this.checked)"> ${t(tr && it.estado !== 'ok' && vjFotoDe(tr) ? 'vjImpReemplazar' : 'vjImpSubir')}</label>` : ''}
+      <div class="vj-imp-fila">
+        <label class="vj-imp-marca"${tr ? '' : ' style="visibility:hidden"'}><input type="checkbox"${it.marcado ? ' checked' : ''}${quieto || it.estado === 'ok' || !tr ? ' disabled' : ''}
+          onchange="vjImpMarcar('${id}', this.checked)"> ${t(tr && it.estado !== 'ok' && vjFotoDe(tr) ? 'vjImpReemplazar' : 'vjImpSubir')}</label>
+        ${it.copia
+          ? `<button type="button" class="vj-imp-dup" onclick="vjImpQuitar('${id}')"${quieto || it.estado === 'ok' ? ' disabled' : ''} title="${t('vjImpQuitarTit')}">${t('vjImpQuitar')}</button>`
+          : `<button type="button" class="vj-imp-dup" onclick="vjImpDuplicar('${id}')"${quieto ? ' disabled' : ''} title="${t('vjImpDupTit')}">${t('vjImpDup')}</button>`}
+      </div>` : ''}
       <div class="vj-imp-est" data-vj-imp-est="${id}">${vjImpEstTxt(it)}</div>
     </div>`;
 }
@@ -14024,18 +14086,21 @@ function vjImpPintarCardEstado(it){
   const est = c.querySelector('[data-vj-imp-est]');
   if (est) est.textContent = vjImpEstTxt(it);
   const box = c.querySelector('.vj-imp-marca input');
-  if (box){ box.checked = !!it.marcado; box.disabled = (VJ_IMP && VJ_IMP.fase === 'subiendo') || it.estado === 'ok'; }
+  const quieto = (VJ_IMP && VJ_IMP.fase === 'subiendo') || it.estado === 'ok';
+  if (box){ box.checked = !!it.marcado; box.disabled = quieto || !it.tr; }
   const busca = c.querySelector('input.vj-imp-busca');
-  if (busca) busca.disabled = (VJ_IMP && VJ_IMP.fase === 'subiendo') || it.estado === 'ok' || !!it.noAbre;
+  if (busca) busca.disabled = quieto || !!it.noAbre;
+  const giro = c.querySelector('[data-vj-imp-giro]');
+  if (giro) giro.hidden = quieto;
+  const dup = c.querySelector('.vj-imp-dup');
+  if (dup) dup.disabled = (VJ_IMP && VJ_IMP.fase === 'subiendo') || (it.copia && it.estado === 'ok');
 }
 function vjImpPintarCara(it){
   if (!it.prev || !it.caja) return;
   const cv = document.querySelector(`canvas[data-vj-imp-cara="${it.id}"]`);
   if (!cv) return;
-  const ctx = cv.getContext('2d');
-  const k = it.kPrev, c = it.caja;
-  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
-  ctx.drawImage(it.prev, (c.cx - c.s / 2) * k, (c.cy - c.s / 2) * k, c.s * k, c.s * k, 0, 0, cv.width, cv.height);
+  vjImpDibujarCara(cv.getContext('2d'), cv.width, it, it.base);
+  vjImpPintarGiro(it);
 }
 function vjImpPintarLado(it){
   const e = document.querySelector(`[data-vj-imp-px="${it.id}"]`);
@@ -14059,10 +14124,8 @@ function vjImpZoom(id, f){
 function vjImpGirar(id){
   const it = vjImpItem(id);
   if (!it || !it.base || VJ_IMP.fase === 'subiendo') return;
-  it.rot = (it.rot + 90) % 360;
-  vjImpRearmar(it);
-  const c = document.getElementById('vj-imp-' + it.id);
-  if (c){ c.outerHTML = vjImpCardHtml(it); vjImpPintarCara(it); }
+  vjImpRotarA(it, Math.round(it.rot / 90) * 90 + 90);   // a la próxima vuelta recta
+  vjImpPintarCara(it); vjImpPintarLado(it);
 }
 function vjImpCentrar(id){
   const it = vjImpItem(id);
@@ -14070,7 +14133,54 @@ function vjImpCentrar(id){
   vjImpRearmar(it); vjImpPintarCara(it); vjImpPintarLado(it);
 }
 // Mover el encuadre arrastrando la cara; la rueda acerca y aleja.
+// La perilla se ubica sobre el borde en el ángulo del documento (arriba = 0°).
+function vjImpPintarGiro(it){
+  const e = document.querySelector(`[data-vj-imp-giro="${it.id}"]`);
+  if (!e) return;
+  const a = it.rot * Math.PI / 180, r = 56;
+  e.style.left = (r + r * Math.sin(a)).toFixed(1) + 'px';
+  e.style.top  = (r - r * Math.cos(a)).toFixed(1) + 'px';
+  const g = Math.round(((it.rot + 180) % 360 - 180) * 10) / 10;
+  e.title = `${g.toLocaleString('es')}° · ${t('vjImpGiroTit')}`;
+}
+function vjImpEnderezar(id){
+  const it = vjImpItem(id);
+  if (!it || !it.caja || VJ_IMP.fase === 'subiendo') return;
+  vjImpRotarA(it, Math.round(it.rot / 90) * 90);
+  vjImpPintarCara(it); vjImpPintarLado(it);
+}
+// Girar arrastrando la perilla: el ángulo sigue al cursor alrededor del centro
+// del círculo, con la diferencia desde donde se tomó (no salta al soltar).
+function vjImpGiroIni(e, perilla){
+  const it = vjImpItem(perilla.getAttribute('data-vj-imp-giro'));
+  if (!it || !it.caja) return;
+  e.preventDefault(); e.stopPropagation();
+  try { perilla.setPointerCapture(e.pointerId); } catch(_){}
+  const ref = perilla.parentElement.getBoundingClientRect();
+  const cx = ref.left + ref.width / 2, cy = ref.top + ref.height / 2;
+  const ang = ev => Math.atan2(ev.clientX - cx, cy - ev.clientY) * 180 / Math.PI;
+  const a0 = ang(e), r0 = it.rot;
+  perilla.classList.add('activo');
+  const mover = ev => {
+    let d = ang(ev) - a0;
+    d = Math.round(d * 2) / 2;   // medio grado: fino, pero sin temblor de pulso
+    vjImpRotarA(it, r0 + d);
+    vjImpPintarCara(it);
+  };
+  const fin = () => {
+    perilla.classList.remove('activo');
+    perilla.removeEventListener('pointermove', mover);
+    perilla.removeEventListener('pointerup', fin);
+    perilla.removeEventListener('pointercancel', fin);
+    vjImpPintarLado(it);
+  };
+  perilla.addEventListener('pointermove', mover);
+  perilla.addEventListener('pointerup', fin);
+  perilla.addEventListener('pointercancel', fin);
+}
 function vjImpArrastreIni(e){
+  const perilla = e.target.closest && e.target.closest('[data-vj-imp-giro]');
+  if (perilla){ if (VJ_IMP && VJ_IMP.fase !== 'subiendo') vjImpGiroIni(e, perilla); return; }
   const cv = e.target.closest && e.target.closest('canvas[data-vj-imp-cara]');
   if (!cv || !VJ_IMP || VJ_IMP.fase === 'subiendo') return;
   const it = vjImpItem(cv.getAttribute('data-vj-imp-cara'));
@@ -14101,7 +14211,67 @@ function vjImpRueda(e){
   const cv = e.target.closest && e.target.closest('canvas[data-vj-imp-cara]');
   if (!cv) return;
   e.preventDefault();
-  vjImpZoom(cv.getAttribute('data-vj-imp-cara'), e.deltaY > 0 ? 1.06 : 1 / 1.06);
+  const id = cv.getAttribute('data-vj-imp-cara');
+  if (e.shiftKey){
+    // Shift + rueda: medio grado por paso. Windows manda el Shift+rueda como
+    // desplazamiento horizontal (deltaX), por eso se miran los dos.
+    const it = vjImpItem(id), d = e.deltaY || e.deltaX;
+    if (!it || !it.caja || !d || VJ_IMP.fase === 'subiendo') return;
+    vjImpRotarA(it, it.rot + (d > 0 ? 0.5 : -0.5));
+    vjImpPintarCara(it);
+    return;
+  }
+  vjImpZoom(id, e.deltaY > 0 ? 1.06 : 1 / 1.06);
+}
+
+// ── Duplicar: dos rostros de un mismo archivo ── Recepción a veces escanea dos
+// pasaportes en una hoja. La copia es una tarjeta más, al lado de la original:
+// mismo archivo, la HOJA ENTERA a la vista (la detección de documento pudo
+// quedarse con uno solo de los dos), su propio recorte, giro y dueño. Al
+// guardar con nombres salen dos copias idénticas del original, cada una con su
+// CRS y su nombre; cada cara sube a su ficha.
+const VJ_IMP_PREV_HOJA = 1400;   // px del lado mayor de la hoja en la copia: la cara chica necesita más detalle
+async function vjImpDuplicar(id){
+  const v = VJ_IMP, it = vjImpItem(id);
+  if (!v || !it || !it.blob || !it.caja || v.fase !== 'revisar') return;
+  let img;
+  try { img = await vjFotoDecodificar(it.blob); } catch(e){ return; }
+  v.copias = (v.copias || 0) + 1;
+  const W = img.naturalWidth, H = img.naturalHeight;
+  const n = {
+    id: `${it.id}c${v.copias}`, nombre: it.nombre, blob: it.blob, copia: true,
+    tr: null, marcado: false, estado: '', grupo: it.grupo, rot: it.rot,
+    // El cruce sólo aporta la hab sugerida al buscador; la copia no hereda dudas.
+    cruce: Object.assign({}, it.cruce, { tr: null, porNombre: '', nombreOk: true, suelto: '' }),
+    doc: { x: 0, y: 0, w: W, h: H },
+  };
+  n.kPrev = Math.min(1, VJ_IMP_PREV_HOJA / Math.max(W, H));
+  n.base = n.prev = vjImpDibujarDoc(img, n.doc, n.kPrev);
+  // Arranca donde estaba la original (su cara, pasada a la hoja entera): de
+  // ahí se arrastra hasta el otro pasaporte.
+  const p = vjImpADoc(it, it.caja.cx, it.caja.cy);
+  const q = vjImpDeDoc(n, p.x + it.doc.x, p.y + it.doc.y);
+  n.caja = { cx: q.x, cy: q.y, s: it.caja.s };
+  vjImpLimitar(n);
+  v.items.splice(v.items.indexOf(it) + 1, 0, n);
+  const c = document.getElementById('vj-imp-' + it.id);
+  if (c) c.insertAdjacentHTML('afterend', vjImpCardHtml(n));
+  vjImpPintarCara(n);
+  vjImpPintarEstado(); vjImpPintarPie();
+  // Lo siguiente es decir de quién es: el foco va a su buscador.
+  const inp = document.querySelector(`input[data-vj-imp-busca="${n.id}"]`);
+  if (inp){ inp.focus(); inp.scrollIntoView({ block: 'nearest' }); }
+}
+function vjImpQuitar(id){
+  const v = VJ_IMP, it = vjImpItem(id);
+  if (!v || !it || !it.copia || v.fase !== 'revisar' || it.estado === 'ok') return;
+  const antes = new Map(v.items.map(x => [x, x.segundo]));
+  v.items.splice(v.items.indexOf(it), 1);
+  const c = document.getElementById('vj-imp-' + it.id);
+  if (c) c.remove();
+  vjImpRecalcDup(v.items);
+  vjImpRepintarCambios(antes, null);
+  vjImpPintarEstado(); vjImpPintarPie();
 }
 
 // ── Buscador "¿de quién es?" ── Uno abierto a la vez. Con el teclado se rotula
