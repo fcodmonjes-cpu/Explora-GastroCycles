@@ -1057,6 +1057,25 @@ compartido por la reserva del grupo, no sirve para identificar a la persona.
 Cero llamadas nuevas a PGO. En el respaldo por HTML no hay CRS: las fichas
 salen sin él y el importador simplemente no las encuentra.
 
+**Las llegadas de mañana (2026-11-05).** La oficina escanea pasaportes a la
+llegada y a veces el día antes, así que el rotulador (§4.7) necesita el CRS de
+quien todavía no está. `--explore llegadas` (una corrida, sólo conteos) mostró:
+- `travellersInhouse(hoy)` **ya trae a quienes llegan hoy**, antes del
+  check-in (16/16 con CRS, nombre y hab a mediodía). Nada que agregar.
+- `travellersInhouse(mañana)` filtrado por `checkin == mañana` da las llegadas
+  de mañana: 23/23 con CRS y nombre; la hab puede faltar (19/23).
+- `reportInOut.travellerIn` **no sirve**: va por reserva (15 CRS en 16 filas) e
+  incluye las canceladas (`arrivalStatus: CANCELLED`, 7 de 16).
+
+`pgo_fetch_llegadas` corre esa query con la fecha de mañana (**una consulta más
+por corrida**) y el doc lleva `llegadas: [{pid, nombre, crs, hab, in, out, nac,
+nacName?}]`, **fuera de `habs`**: el corcho no los muestra en casa antes de
+tiempo. El pid se arma como en `build_doc` (por nombre), así la cara subida el
+día antes es de la misma ficha cuando entran al roster. `purgar_fotos` cuenta
+las llegadas como presentes; sin eso, esa cara caería en "fuera del roster" y a
+las 24 h se borraría como "se fue antes del OUT". Si la query falla, el sync
+sigue sin llegadas.
+
 #### Las dietas NO se migran, y esto se midió
 
 La intuición decía que `dietReq` / `foodRestrictions` / `dietReqObs` iban a
