@@ -2820,7 +2820,7 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
 .vj-imp-cab { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:0.7rem; }
 .vj-imp-tit { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:21px; color:var(--text); }
 .vj-imp-zona { min-height:150px; }
-.vj-imp-ojo, .vj-imp-estado, .vj-imp-lista, .vj-imp-res, .vj-imp-prog, .vj-imp-meta, .vj-imp-arch, .vj-imp-motivo, .vj-imp-est, .vj-imp-marca, .vj-imp-ctl button, .vj-imp-gtit {
+.vj-imp-ojo, .vj-imp-estado, .vj-imp-res, .vj-imp-prog, .vj-imp-meta, .vj-imp-arch, .vj-imp-motivo, .vj-imp-est, .vj-imp-marca, .vj-imp-ctl button, .vj-imp-gtit {
   font-family:'Courier Prime','Courier New',monospace; }
 .vj-imp-ojo, .vj-imp-estado { font-size:10.5px; line-height:1.5; color:var(--text-tertiary); }
 .vj-imp-ojo { margin-top:8px; }
@@ -2839,16 +2839,25 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
 .vj-imp-cara:active { cursor:grabbing; }
 .vj-imp-cara.vacia { background:var(--bg); border-style:dashed; border-color:var(--border-md); cursor:default; }
 .vj-imp-nom { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.2; color:var(--text); }
-/* "para:" — el nombre mismo es el selector cuando hay más gente en la hab: se
-   lee igual que el texto, sólo el ▾ y la línea punteada avisan que se elige. */
-.vj-imp-para { font:inherit; color:inherit; background:transparent; border:0; border-bottom:0.5px dashed var(--border-md);
-  padding:0 14px 0 0; margin:0; max-width:100%; cursor:pointer; -webkit-appearance:none; appearance:none;
-  background-image:linear-gradient(45deg, transparent 50%, var(--text-tertiary) 50%), linear-gradient(135deg, var(--text-tertiary) 50%, transparent 50%);
-  background-position:calc(100% - 7px) 55%, calc(100% - 3px) 55%; background-size:4px 4px; background-repeat:no-repeat;
-  text-overflow:ellipsis; }
-.vj-imp-para:hover, .vj-imp-para:focus { border-bottom-color:var(--gold); outline:none; }
-.vj-imp-para:disabled { cursor:default; border-bottom-color:transparent; background-image:none; padding-right:0; }
-.vj-imp-para option { background:var(--bg); color:var(--text); font-family:'Courier Prime',monospace; font-size:12px; }
+/* El buscador "¿de quién es?": el nombre mismo es el campo. Se lee como el
+   texto de la tarjeta; la línea punteada avisa que se puede escribir. La lista
+   de resultados flota encima (absoluta): no empuja nada de la grilla. */
+.vj-imp-nom { position:relative; width:100%; }
+.vj-imp-busca { font:inherit; color:inherit; background:transparent; border:0; border-bottom:0.5px dashed var(--border-md);
+  padding:0 2px; margin:0; width:100%; box-sizing:border-box; text-align:center; text-overflow:ellipsis; outline:none; }
+.vj-imp-busca::placeholder { color:var(--text-tertiary); font-style:italic; }
+.vj-imp-busca:hover, .vj-imp-busca:focus { border-bottom-color:var(--gold); }
+.vj-imp-busca:focus { text-align:left; }
+.vj-imp-busca:disabled { border-bottom-color:transparent; }
+.vj-imp-sug { position:absolute; left:-6px; right:-6px; top:calc(100% + 4px); z-index:6;
+  background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:4px 0;
+  box-shadow:0 8px 24px rgba(0,0,0,.45); text-align:left; max-height:260px; overflow-y:auto; }
+.vj-imp-sug-i { display:block; width:100%; background:none; border:0; text-align:left; padding:5px 10px; cursor:pointer; color:var(--text); }
+.vj-imp-sug-i.on, .vj-imp-sug-i:hover { background:rgba(255,255,255,.05); }
+.vj-imp-sug-i.on .vj-imp-sug-n { color:var(--gold); }
+.vj-imp-sug-n { display:block; font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:15px; line-height:1.2; }
+.vj-imp-sug-m, .vj-imp-sug-nada { display:block; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; color:var(--text-tertiary); }
+.vj-imp-sug-nada { padding:5px 10px; }
 .vj-imp-meta, .vj-imp-arch, .vj-imp-motivo, .vj-imp-est { font-size:9.5px; line-height:1.45; color:var(--text-tertiary); max-width:100%; }
 .vj-imp-arch { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .vj-imp-motivo, .vj-imp-px.baja, .vj-imp-card.falla .vj-imp-est { color:var(--coral); }
@@ -2860,8 +2869,6 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
 .vj-imp-ctl button:hover { border-color:var(--gold); color:var(--gold); }
 .vj-imp-marca { font-size:10px; color:var(--text-secondary); display:flex; align-items:center; gap:5px; margin-top:4px; cursor:pointer; }
 .vj-imp-marca input { accent-color:var(--gold); margin:0; }
-.vj-imp-lista { font-size:10px; line-height:1.65; color:var(--text-tertiary); columns:2 260px; }
-.vj-imp-lista div { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .vj-imp-pie { display:flex; align-items:center; justify-content:flex-end; gap:8px; min-height:30px;
   padding-top:10px; margin-top:4px; border-top:0.5px solid var(--border); }
 .vj-imp-pie:empty { display:none; }
@@ -6015,15 +6022,19 @@ const UI = {
     vjFotoNoImagen:'Ese archivo no es una imagen que el navegador pueda abrir',
     vjImpBtn:'importar rostros', vjImpTit:'Importar rostros', vjImpCerrar:'cerrar',
     vjImpZona:'Arrastrá acá el .zip que bajaste de SharePoint (o las imágenes sueltas), o hacé clic para elegirlo',
-    vjImpOjo:'Los escaneos no salen de este computador: sólo sube la cara recortada, que se borra sola el día del check-out. Cada archivo se cruza por el CRS de su nombre.',
+    vjImpOjo:'Los escaneos no salen de este computador: sólo sube la cara recortada, que se borra sola el día del check-out. Cada archivo se cruza por el CRS de su nombre; al que no lo trae se le busca dueño escribiendo en la tarjeta. «Guardar con nombres» deja los originales en una carpeta, ya rotulados.',
     vjImpLeyendo:'leyendo', vjImpVacio:'No encontré imágenes ahí', vjImpZipMal:'Ese .zip no se pudo abrir',
     vjImpSinCrs:'El roster de hoy no trae CRS: no hay con qué cruzar',
     vjImpPdf:'PDF (no se pueden abrir acá)', vjImpIgnorados:'archivos que no son imagen',
     vjImpG_listo:'listas para subir', vjImpG_revisar:'para revisar', vjImpG_tiene:'ya tienen foto',
-    vjImpG_fuera:'no están en casa hoy', vjImpG_sinnum:'sin CRS en el nombre',
+    vjImpG_libre:'sin asignar', vjImpM_suelto1:'el CRS', vjImpM_suelto2:'no es de nadie en casa ni de las llegadas de mañana',
     vjImpM_nombre:'el archivo dice', vjImpM_baja:'baja resolución', vjImpM_dup:'hay otro archivo de esta persona',
-    vjImpM_tiene:'ya tiene foto: se reemplaza', vjImpM_elegi:'si es de otra persona de la hab, elegila en el nombre', vjImpPara:'para quién es la foto',
-    vjImpM_noabre:'no se pudo abrir la imagen', vjImpM_crsDe:'el CRS es de', vjImpM_porNombre:'se asignó por el nombre', vjImpM_vertical:'documento parado: girá si hace falta',
+    vjImpM_tiene:'ya tiene foto: se reemplaza', vjImpM_elegi:'si es de otra persona, buscala en el nombre',
+    vjImpBusca:'¿de quién es?', vjImpBuscaTit:'¿de quién es? buscar por nombre, CRS o hab', vjImpBuscaNada:'nadie así en casa ni entre las llegadas de mañana',
+    vjImpLlega:'llega mañana', vjImpSinHab:'sin hab',
+    vjImpGuardar:'guardar con nombres', vjImpGuardados:'guardados en', vjImpZipListo:'en el .zip descargado', vjImpGuardarMal:'no se pudieron guardar',
+    vjImpArchivo1:'archivo', vjImpArchivos:'archivos',
+    vjImpM_noabre:'no se pudo abrir la imagen', vjImpM_crsDe:'el CRS es de', vjImpM_porNombre:'se asignó por el nombre',
     vjImpSubir:'subir', vjImpReemplazar:'reemplazar la actual', vjImpSubirN:'Subir', vjImpFoto1:'foto', vjImpFotos:'fotos',
     vjImpSubiendo:'subiendo', vjImpSubidas:'subidas', vjImpFallaron:'no se guardaron: tocá Subir de nuevo',
     vjImpOtro:'importar otro', vjImpGirar:'girar', vjImpCentrar:'centrar', vjImpAcercar:'acercar', vjImpAlejar:'alejar',
@@ -13181,7 +13192,8 @@ async function vjFotoSubir(pid, file, opts){
   opts = opts || {};
   const avisar = clave => { if (!opts.silencioso) comandaAvisoSinGuardar(clave); };
   if (!VJ_FOTO_ON || !pid || VJ_FOTO_BUSY[pid]) return false;
-  const tr = vjPorPid(pid);
+  // `opts.tr`: el importador sube también a quien llega mañana (fuera de `habs`).
+  const tr = (opts.tr && opts.tr.pid === pid) ? opts.tr : vjPorPid(pid);
   if (!tr) return false;
   // HEIC u otro formato que el navegador no abre: el tipo puede venir vacío en
   // Windows, así que decide la decodificación, no la extensión.
@@ -13462,28 +13474,65 @@ function vjImpTipo(nombre){
 // ── Cruce por CRS ──
 function vjImpNorm(s){ return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
 // Palabras que la oficina suele sumar al nombre y que no son del viajero.
-const VJ_IMP_RELLENO = new Set(['crs','pasaporte','passport','pasaport','cedula','carnet','dni','rut','id','scan','img','image','foto','doc','copia','pag','frente','reverso']);
-function vjImpIndice(){
-  const idx = {};
+const VJ_IMP_RELLENO = new Set(['crs','pasaporte','passport','pasaport','cedula','carnet','dni','rut','id','scan','img','image','foto','doc','copia','pag','frente','reverso','escaner','scanner','escaneo','pdi']);
+// Todos a los que se les puede asignar un archivo: los que están en casa (las
+// llegadas de hoy ya vienen ahí) y los que llegan mañana (`llegadas` del doc,
+// fuera de `habs`; ARCHITECTURE §4.2). `llega:true` marca a estos últimos.
+function vjImpGente(){
+  const out = [], vistos = new Set();
   const habs = (VIAJEROS_DATA && VIAJEROS_DATA.habs) || {};
   Object.keys(habs).forEach(h => (habs[h] || []).forEach(tr => {
-    if (tr && tr.crs && tr.pid) idx[String(tr.crs)] = Object.assign({ hab: h }, tr);
+    if (tr && tr.pid && !vistos.has(tr.pid)){ vistos.add(tr.pid); out.push(Object.assign({}, tr, { hab: h })); }
   }));
+  ((VIAJEROS_DATA && VIAJEROS_DATA.llegadas) || []).forEach(tr => {
+    if (tr && tr.pid && tr.out && !vistos.has(tr.pid)){
+      vistos.add(tr.pid);
+      out.push(Object.assign({}, tr, { hab: String(tr.hab || ''), llega: true }));
+    }
+  });
+  return out;
+}
+function vjImpIndice(){
+  const idx = {};
+  vjImpGente().forEach(tr => { if (tr.crs) idx[String(tr.crs)] = tr; });
   return idx;
+}
+// "AAAAMMDD" del nombre que pone el escáner ("Escáner_20261104 (4).png"): es
+// una fecha, no un CRS. Sin esto, cada escaneo sin rotular parecía "un CRS de
+// alguien que no está".
+function vjImpEsFecha(d){
+  const m = /^(20\d\d)(\d\d)(\d\d)$/.exec(d);
+  return !!m && +m[2] >= 1 && +m[2] <= 12 && +m[3] >= 1 && +m[3] <= 31;
+}
+// A lo más una letra de diferencia (cambiada, sobrante o faltante): "GLASSMAN"
+// escrito por recepción contra "Glasman" en PGO.
+function vjImpCasi(a, b){
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0, j = 0, dif = 0;
+  while (i < a.length && j < b.length){
+    if (a[i] === b[j]){ i++; j++; continue; }
+    if (++dif > 1) return false;
+    if (a.length > b.length) i++;
+    else if (b.length > a.length) j++;
+    else { i++; j++; }
+  }
+  return dif + (a.length - i) + (b.length - j) <= 1;
 }
 // ¿El nombre escrito en el archivo es el de esta persona? Basta el nombre de
 // pila, o dos palabras del nombre completo (por si PGO lo trae en otro orden).
 // Un archivo sin letras no contradice nada.
 function vjImpPuntaje(palabras, nombre){
   const T = vjImpNorm(nombre).split(/[^a-z]+/).filter(Boolean);
-  const igual = (w, x) => x === w || (Math.min(x.length, w.length) >= 4 && (x.startsWith(w) || w.startsWith(x)));
+  const igual = (w, x) => x === w || (Math.min(x.length, w.length) >= 4 && (x.startsWith(w) || w.startsWith(x)))
+    || (Math.min(x.length, w.length) >= 5 && vjImpCasi(w, x));
   const hits = T.filter(x => palabras.some(w => igual(w, x))).length;
   const primero = T.length > 0 && palabras.some(w => igual(w, T[0]));
   return { hits, primero, ok: !palabras.length || primero || hits >= 2 };
 }
 function vjImpCruce(nombre, idx){
   const base = String(nombre).split('/').pop().replace(/\.[^.]*$/, '');
-  const nums = base.match(/\d+/g) || [];
+  const nums = (base.match(/\d+/g) || []).filter(d => !vjImpEsFecha(d));
   let tr = null, crs = '';
   for (const d of nums){
     const k = idx[d] ? d : (idx[d.replace(/^0+/, '')] ? d.replace(/^0+/, '') : '');
@@ -13500,15 +13549,16 @@ function vjImpCruce(nombre, idx){
   const habOrigen = tr ? String(tr.hab) : '';   // la hab del titular del CRS: de ahí sale el selector "para:"
   if (tr && letras.length){
     nombreOk = vjImpPuntaje(letras, tr.nombre).ok;
-    if (!nombreOk){
-      const hab = ((VIAJEROS_DATA && VIAJEROS_DATA.habs) || {})[tr.hab] || [];
-      const alt = hab.filter(x => x && x.pid && x.pid !== tr.pid && vjImpPuntaje(letras, x.nombre).ok);
-      if (alt.length === 1){ porNombre = tr.nombre; tr = Object.assign({ hab: tr.hab }, alt[0]); nombreOk = true; }
+    if (!nombreOk && tr.hab){
+      const alt = vjImpGente().filter(x => x.hab === tr.hab && x.pid !== tr.pid && vjImpPuntaje(letras, x.nombre).ok);
+      if (alt.length === 1){ porNombre = tr.nombre; tr = alt[0]; nombreOk = true; }
     }
   }
   return {
     tr, crs, nombreOk, porNombre, habOrigen, dice: letras.join(' '),
     conNum: nums.some(d => d.length >= 5),
+    // El número largo que no cruzó con nadie: se muestra en "sin asignar".
+    suelto: tr ? '' : (nums.find(d => d.length >= 5) || ''),
     // "… hui feng 2": el 2 de la segunda copia. Entre dos archivos de la misma
     // persona, el principal es el que no trae números de más.
     extras: nums.filter(d => d !== crs && d.replace(/^0+/, '') !== crs).length,
@@ -13604,7 +13654,8 @@ async function vjImpPreparar(it){
   it.base = vjImpDibujarDoc(img, it.doc, 0, kp);
   it.kPrev = kp;
   it.rot = 0;
-  it.vertical = it.doc.h > it.doc.w * 1.05;   // documento parado: no se adivina el sentido
+  // Sin aviso de "documento parado": los escaneos reales son la hoja A4 entera,
+  // vertical siempre, y el aviso salía en todas (QA del owner, 2026-11-05).
   vjImpRearmar(it);
 }
 // La cara final, a resolución NATIVA del escaneo (nunca agrandada): se vuelve a
@@ -13623,7 +13674,9 @@ async function vjImpRecorteFinal(it){
 }
 
 // ── Lectura y clasificación ──
-const VJ_IMP_GRUPOS = ['listo', 'revisar', 'tiene', 'fuera', 'sinnum'];
+// "libre" = sin asignar: no trae CRS, o trae uno que no es de nadie en casa ni
+// de las llegadas de mañana. También es tarjeta: se le busca dueño a mano.
+const VJ_IMP_GRUPOS = ['listo', 'revisar', 'libre', 'tiene'];
 async function vjImpRecibir(files){
   if (!VJ_IMP_ON || !VIAJEROS_DATA || (VJ_IMP && VJ_IMP.fase === 'subiendo')) return;
   VJ_IMP = { fase: 'leyendo', items: [], total: 0, leidos: 0, hechos: 0, pdf: 0, ignorados: 0, error: '' };
@@ -13653,11 +13706,10 @@ async function vjImpRecibir(files){
     const it = { id: 'i' + n, nombre: fu.nombre.split('/').pop(), marcado: false, estado: '', rot: 0, motivos: [] };
     it.cruce = vjImpCruce(fu.nombre, idx);
     it.tr = it.cruce.tr;
-    // Sólo se abre la imagen de quien se puede subir: lo demás es una línea.
-    if (it.tr){
-      try { it.blob = await fu.sacar(); await vjImpPreparar(it); }
-      catch(e){ it.noAbre = true; it.base = it.prev = null; }
-    }
+    // Se abren todas: la que no cruzó también se rotula a mano (y se guarda con
+    // nombre). `blob` es el archivo ORIGINAL, intacto: de ahí sale la descarga.
+    try { it.blob = await fu.sacar(); await vjImpPreparar(it); }
+    catch(e){ it.noAbre = true; it.base = it.prev = null; }
     VJ_IMP.items.push(it);
     VJ_IMP.leidos = n + 1;
     vjImpPintarEstado();
@@ -13688,6 +13740,7 @@ function vjImpRecalcDup(items){
 // Elegir la persona a mano es una decisión: borra las dudas sobre el nombre.
 function vjImpMotivos(it){
   if (it.noAbre) return [t('vjImpM_noabre')];
+  if (!it.tr) return it.cruce.suelto ? [`${t('vjImpM_suelto1')} ${it.cruce.suelto} ${t('vjImpM_suelto2')}`] : [];
   const m = [];
   if (!it.aMano){
     if (it.cruce.porNombre) m.push(`${t('vjImpM_crsDe')} ${it.cruce.porNombre}: ${t('vjImpM_porNombre')}`);
@@ -13695,34 +13748,54 @@ function vjImpMotivos(it){
   }
   if (it.segundo) m.push(t('vjImpM_dup'));
   if (it.caja && it.caja.s < VJ_IMP_MIN_LADO) m.push(t('vjImpM_baja'));
-  if (it.vertical) m.push(t('vjImpM_vertical'));
   if (it.aMano && it.estado !== 'ok' && vjFotoDe(it.tr)) m.push(t('vjImpM_tiene'));
   return m;
 }
 function vjImpClasificar(items){
   vjImpRecalcDup(items);
   items.forEach(it => {
-    if (!it.tr){ it.grupo = it.cruce.conNum ? 'fuera' : 'sinnum'; it.marcado = false; return; }
     if (it.noAbre){ it.grupo = 'revisar'; it.marcado = false; return; }
+    if (!it.tr){ it.grupo = 'libre'; it.marcado = false; return; }
     if (vjFotoDe(it.tr)){ it.grupo = 'tiene'; it.marcado = false; return; }
     it.grupo = vjImpMotivos(it).length ? 'revisar' : 'listo';
     it.marcado = it.grupo === 'listo';
   });
 }
-// Las personas de la hab del titular del CRS: a quién más puede ser la foto.
-// Caso real: recepción nombra los archivos de la pareja con el CRS de uno solo.
+// Las personas de la hab del titular del CRS: lo primero que ofrece el buscador
+// con el campo vacío. Caso real: recepción nombra los archivos de la pareja con
+// el CRS de uno solo.
 function vjImpCompaneros(it){
-  const hab = it.cruce && it.cruce.habOrigen;
-  const lista = ((VIAJEROS_DATA && VIAJEROS_DATA.habs) || {})[hab] || [];
-  return lista.filter(x => x && x.pid).map(x => Object.assign({ hab }, x));
+  const hab = (it.cruce && it.cruce.habOrigen) || (it.tr && it.tr.hab) || '';
+  return hab ? vjImpGente().filter(x => x.hab === hab) : [];
 }
-// "para:" — reasigna la foto a otra persona de la hab. La tarjeta NO cambia de
-// grupo ni de lugar (nada se mueve bajo el mouse): se repinta donde está, y
-// también las que dejaron o pasaron a ser "otro archivo de esta persona".
+// El buscador: nombre (cualquier palabra, desde el comienzo; con una letra de
+// diferencia si es larga) o número (la hab si son 1-3 dígitos; si no, CRS), entre
+// los que están en casa y los que llegan mañana. Primero la hab del archivo,
+// después los de casa, después las llegadas.
+function vjImpBuscar(q, it){
+  const nq = vjImpNorm(q).trim();
+  const dig = (nq.match(/\d+/g) || []).join('');
+  const pal = nq.replace(/\d+/g, ' ').split(/[^a-z]+/).filter(Boolean);
+  if (!dig && !pal.length) return vjImpCompaneros(it);
+  const hab0 = (it.cruce && it.cruce.habOrigen) || (it.tr && it.tr.hab) || '';
+  const sinCeros = s => String(s || '').replace(/^0+/, '');
+  return vjImpGente().filter(x => {
+    // 1-3 dígitos es una hab ("14"); desde 4, un pedazo del CRS. Mezclarlos
+    // traía a cualquiera cuyo CRS contuviera "14".
+    if (dig && (dig.length <= 3 ? !(x.hab && sinCeros(x.hab) === sinCeros(dig)) : !String(x.crs || '').includes(dig))) return false;
+    const W = vjImpNorm(x.nombre).split(/[^a-z]+/).filter(Boolean);
+    return pal.every(p => W.some(w => w.startsWith(p) || (p.length >= 5 && vjImpCasi(p, w))));
+  }).sort((a, b) => ((b.hab === hab0) - (a.hab === hab0)) || ((a.llega ? 1 : 0) - (b.llega ? 1 : 0))
+                    || a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }))
+    .slice(0, 8);
+}
+// Asigna el archivo a otra persona (o a alguien, si no tenía). La tarjeta NO
+// cambia de grupo ni de lugar (nada se mueve bajo el mouse): se repinta donde
+// está, y también las que dejaron o pasaron a ser "otro archivo de esta persona".
 function vjImpAsignar(id, pid){
   const v = VJ_IMP, it = vjImpItem(id);
   if (!v || !it || v.fase === 'subiendo' || it.estado === 'ok') return;
-  const nuevo = vjImpCompaneros(it).find(x => x.pid === pid);
+  const nuevo = vjImpGente().find(x => x.pid === pid);
   if (!nuevo || (it.tr && it.tr.pid === pid)) return;
   const antes = new Map(v.items.map(x => [x, x.segundo]));
   it.tr = nuevo;
@@ -13766,8 +13839,9 @@ async function vjImpSubir(){
     let ok = false;
     try {
       const recorte = await vjImpRecorteFinal(it);
+      // El `tr` va explícito: quien llega mañana todavía no está en `habs`.
       ok = !!recorte && await vjFotoSubir(it.tr.pid, recorte,
-        { silencioso: true, autor: firma ? `importador · ${firma}` : 'importador' });
+        { silencioso: true, autor: firma ? `importador · ${firma}` : 'importador', tr: it.tr });
     } catch(e){ ok = false; }
     it.estado = ok ? 'ok' : 'falla';
     if (ok) it.marcado = false;   // una que falló queda marcada: "Subir" la reintenta
@@ -13788,13 +13862,13 @@ function vjImpAbrir(){
   vjImpPintar();
 }
 function vjImpCerrar(){
-  if (VJ_IMP && VJ_IMP.fase === 'subiendo') return;
+  if (VJ_IMP && (VJ_IMP.fase === 'subiendo' || VJ_IMP.fase === 'guardando')) return;
   VJ_IMP = null; VJ_IMP_ARR = null;
   const el = document.getElementById('vj-imp');
   if (el) el.remove();
 }
 function vjImpOtro(){
-  if (VJ_IMP && VJ_IMP.fase === 'subiendo') return;
+  if (VJ_IMP && (VJ_IMP.fase === 'subiendo' || VJ_IMP.fase === 'guardando')) return;
   VJ_IMP = null;
   vjImpAbrir();
 }
@@ -13830,10 +13904,17 @@ function vjImpPieHtml(){
   if (!v || !v.items.length || v.fase === 'leyendo') return '';
   if (v.fase === 'subiendo')
     return `<span class="vj-imp-prog">${t('vjImpSubiendo')} ${Math.min(v.hechos + 1, v.total)} / ${v.total}…</span>`;
+  if (v.fase === 'guardando') return `<span class="vj-imp-prog">${t('vjImpGuardar')}…</span>`;
   const ok = v.items.filter(it => it.estado === 'ok').length, mal = v.items.filter(it => it.estado === 'falla').length;
-  const n = vjImpPorSubir();
-  return `${ok || mal ? `<span class="vj-imp-res">${ok} ${t('vjImpSubidas')}${mal ? ` · <span class="mal">${mal} ${t('vjImpFallaron')}</span>` : ''}</span>` : ''}
+  const n = vjImpPorSubir(), ng = vjImpGuardables().length, g = v.guardado;
+  const arch = k => `${k} ${t(k === 1 ? 'vjImpArchivo1' : 'vjImpArchivos')}`;
+  const res = [];
+  if (ok || mal) res.push(`${ok} ${t('vjImpSubidas')}${mal ? ` · <span class="mal">${mal} ${t('vjImpFallaron')}</span>` : ''}`);
+  if (g) res.push(g.mal ? `<span class="mal">${t('vjImpGuardarMal')}${g.n ? ` (${arch(g.n)} ${t('vjImpGuardados')} «${vjEsc(g.donde || '')}»)` : ''}</span>`
+                 : g.zip ? `${arch(g.n)} ${t('vjImpZipListo')}` : `${arch(g.n)} ${t('vjImpGuardados')} «${vjEsc(g.donde)}»`);
+  return `${res.length ? `<span class="vj-imp-res">${res.join(' · ')}</span>` : ''}
     <button type="button" class="vj-nota-btn" onclick="vjImpOtro()">${t('vjImpOtro')}</button>
+    <button type="button" class="vj-nota-btn"${ng ? '' : ' disabled'} onclick="vjImpGuardar()">${t('vjImpGuardar')} · ${ng}</button>
     <button type="button" class="vj-nota-btn on vj-imp-go"${n ? '' : ' disabled'} onclick="vjImpSubir()">${t('vjImpSubirN')} ${n} ${t(n === 1 ? 'vjImpFoto1' : 'vjImpFotos')}</button>`;
 }
 function vjImpLadoTxt(it){ return it.caja ? `≈ ${Math.round(Math.min(it.caja.s, VJ_FOTO_LADO))} px` : ''; }
@@ -13844,19 +13925,26 @@ function vjImpCardHtml(it){
   const tr = it.tr, puede = !!(it.prev && !it.noAbre);
   const id = vjEsc(it.id);
   const quieto = VJ_IMP && VJ_IMP.fase === 'subiendo';
-  const otros = puede ? vjImpCompaneros(it) : [];
   const motivos = vjImpMotivos(it);
-  // Sólo se sugiere elegir a otro cuando hay duda (segundo archivo o nombre que no calza).
-  if (otros.length > 1 && !it.aMano && (it.segundo || !it.cruce.nombreOk)) motivos.push(t('vjImpM_elegi'));
+  // Sólo se sugiere buscar a otro cuando hay duda (segundo archivo o nombre que no calza).
+  if (tr && !it.aMano && (it.segundo || !it.cruce.nombreOk)) motivos.push(t('vjImpM_elegi'));
+  const donde = !tr ? [] : [
+    tr.llega ? t('vjImpLlega') : '',
+    tr.hab ? `${t('vjHab')} ${vjEsc(tr.hab)}` : t('vjImpSinHab'),
+    tr.crs ? `CRS ${vjEsc(tr.crs)}` : '',
+  ].filter(Boolean);
+  const px = puede ? `<span class="vj-imp-px${it.caja.s < VJ_IMP_MIN_LADO ? ' baja' : ''}" data-vj-imp-px="${id}">${vjImpLadoTxt(it)}</span>` : '';
   return `
     <div class="vj-imp-card${it.marcado ? ' on' : ''}${it.estado ? ' ' + it.estado : ''}" id="vj-imp-${id}">
       ${puede ? `<canvas class="vj-imp-cara" width="224" height="224" data-vj-imp-cara="${id}"></canvas>` : `<div class="vj-imp-cara vacia"></div>`}
-      <div class="vj-imp-nom">${otros.length > 1
-        ? `<select class="vj-imp-para" aria-label="${t('vjImpPara')}" title="${t('vjImpPara')}"${quieto || it.estado === 'ok' ? ' disabled' : ''}
-            onchange="vjImpAsignar('${id}', this.value)">${otros.map(x =>
-              `<option value="${vjEsc(x.pid)}"${x.pid === tr.pid ? ' selected' : ''}>${vjEsc(x.nombre)}</option>`).join('')}</select>`
-        : vjEsc(tr.nombre)}</div>
-      <div class="vj-imp-meta">${t('vjHab')} ${vjEsc(tr.hab)}${puede ? ` · <span class="vj-imp-px${it.caja.s < VJ_IMP_MIN_LADO ? ' baja' : ''}" data-vj-imp-px="${id}">${vjImpLadoTxt(it)}</span>` : ''}</div>
+      <div class="vj-imp-nom">
+        <input type="text" class="vj-imp-busca" data-vj-imp-busca="${id}" value="${tr ? vjEsc(tr.nombre) : ''}"
+          placeholder="${t('vjImpBusca')}" title="${t('vjImpBuscaTit')}" aria-label="${t('vjImpBuscaTit')}"
+          autocomplete="off" spellcheck="false"${quieto || it.estado === 'ok' || it.noAbre ? ' disabled' : ''}
+          onfocus="vjImpBuscaAbrir(this)" oninput="vjImpBuscaPintar(this)" onkeydown="vjImpBuscaTecla(event, this)" onblur="vjImpBuscaCerrar(this)">
+        <div class="vj-imp-sug" hidden></div>
+      </div>
+      <div class="vj-imp-meta">${donde.concat(px ? [px] : []).join(' · ')}</div>
       <div class="vj-imp-arch" title="${vjEsc(it.nombre)}">${vjEsc(it.nombre)}</div>
       ${motivos.length ? `<div class="vj-imp-motivo">${motivos.map(vjEsc).join(' · ')}</div>` : ''}
       ${puede ? `
@@ -13866,17 +13954,15 @@ function vjImpCardHtml(it){
         <button type="button" onclick="vjImpGirar('${id}')">${t('vjImpGirar')}</button>
         <button type="button" onclick="vjImpCentrar('${id}')">${t('vjImpCentrar')}</button>
       </div>
-      <label class="vj-imp-marca"><input type="checkbox"${it.marcado ? ' checked' : ''}${quieto || it.estado === 'ok' ? ' disabled' : ''}
-        onchange="vjImpMarcar('${id}', this.checked)"> ${t(it.estado !== 'ok' && vjFotoDe(tr) ? 'vjImpReemplazar' : 'vjImpSubir')}</label>` : ''}
+      <label class="vj-imp-marca"${tr ? '' : ' style="visibility:hidden"'}><input type="checkbox"${it.marcado ? ' checked' : ''}${quieto || it.estado === 'ok' || !tr ? ' disabled' : ''}
+        onchange="vjImpMarcar('${id}', this.checked)"> ${t(tr && it.estado !== 'ok' && vjFotoDe(tr) ? 'vjImpReemplazar' : 'vjImpSubir')}</label>` : ''}
       <div class="vj-imp-est" data-vj-imp-est="${id}">${vjImpEstTxt(it)}</div>
     </div>`;
 }
 function vjImpGrupoHtml(g){
   const items = VJ_IMP.items.filter(it => it.grupo === g);
   if (!items.length) return '';
-  const cuerpo = (g === 'fuera' || g === 'sinnum')
-    ? `<div class="vj-imp-lista">${items.map(it => `<div title="${vjEsc(it.nombre)}">${vjEsc(it.nombre)}</div>`).join('')}</div>`
-    : `<div class="vj-imp-cards">${items.map(vjImpCardHtml).join('')}</div>`;
+  const cuerpo = `<div class="vj-imp-cards">${items.map(vjImpCardHtml).join('')}</div>`;
   return `<div class="vj-imp-grupo"><div class="vj-imp-gtit">${t('vjImpG_' + g)} · ${items.length}</div>${cuerpo}</div>`;
 }
 function vjImpPintar(){
@@ -13891,7 +13977,7 @@ function vjImpPintar(){
     el.addEventListener('dragover', e => {
       if (!vjFotoArrastraArchivo(e)) return;
       e.preventDefault(); e.stopPropagation();
-      const libre = VJ_IMP && VJ_IMP.fase !== 'subiendo' && VJ_IMP.fase !== 'leyendo';
+      const libre = VJ_IMP && VJ_IMP.fase === 'vacio' || (VJ_IMP && VJ_IMP.fase === 'revisar');
       e.dataTransfer.dropEffect = libre ? 'copy' : 'none';
       el.classList.toggle('vj-imp-sobre', libre);
     });
@@ -13900,7 +13986,7 @@ function vjImpPintar(){
       if (!vjFotoArrastraArchivo(e)) return;
       e.preventDefault(); e.stopPropagation();
       el.classList.remove('vj-imp-sobre');
-      if (VJ_IMP && (VJ_IMP.fase === 'subiendo' || VJ_IMP.fase === 'leyendo')) return;
+      if (VJ_IMP && VJ_IMP.fase !== 'vacio' && VJ_IMP.fase !== 'revisar') return;
       vjImpRecibir(Array.from(e.dataTransfer.files || []));
     });
     el.addEventListener('pointerdown', vjImpArrastreIni);
@@ -13939,8 +14025,8 @@ function vjImpPintarCardEstado(it){
   if (est) est.textContent = vjImpEstTxt(it);
   const box = c.querySelector('.vj-imp-marca input');
   if (box){ box.checked = !!it.marcado; box.disabled = (VJ_IMP && VJ_IMP.fase === 'subiendo') || it.estado === 'ok'; }
-  const para = c.querySelector('select.vj-imp-para');
-  if (para) para.disabled = (VJ_IMP && VJ_IMP.fase === 'subiendo') || it.estado === 'ok';
+  const busca = c.querySelector('input.vj-imp-busca');
+  if (busca) busca.disabled = (VJ_IMP && VJ_IMP.fase === 'subiendo') || it.estado === 'ok' || !!it.noAbre;
 }
 function vjImpPintarCara(it){
   if (!it.prev || !it.caja) return;
@@ -14016,6 +14102,200 @@ function vjImpRueda(e){
   if (!cv) return;
   e.preventDefault();
   vjImpZoom(cv.getAttribute('data-vj-imp-cara'), e.deltaY > 0 ? 1.06 : 1 / 1.06);
+}
+
+// ── Buscador "¿de quién es?" ── Uno abierto a la vez. Con el teclado se rotula
+// la carpeta entera sin tocar el mouse: escribir, Enter, y el foco salta a la
+// siguiente tarjeta sin dueño.
+let VJ_IMP_BUSCA = null;   // { id, lista, sel }
+// El estado se crea al primer uso, no sólo en el focus: si ese evento no llegó
+// (ventana en segundo plano), escribir o Escape igual tienen que funcionar.
+function vjImpBuscaEstado(inp){
+  const it = vjImpItem(inp.getAttribute('data-vj-imp-busca'));
+  if (!it) return null;
+  if (!VJ_IMP_BUSCA || VJ_IMP_BUSCA.id !== it.id)
+    VJ_IMP_BUSCA = { id: it.id, lista: [], sel: 0, q0: it.tr ? it.tr.nombre : '' };
+  return VJ_IMP_BUSCA;
+}
+function vjImpBuscaAbrir(inp){
+  VJ_IMP_BUSCA = null;
+  if (!vjImpBuscaEstado(inp)) return;
+  inp.select();   // lo que se escriba reemplaza el nombre entero
+  vjImpBuscaPintar(inp);
+}
+function vjImpBuscaPintar(inp){
+  const b = vjImpBuscaEstado(inp), it = vjImpItem(inp.getAttribute('data-vj-imp-busca'));
+  const sug = inp.nextElementSibling;
+  if (!b || !it || !sug) return;
+  // Mientras el campo muestra el nombre actual (recién enfocado) se ofrece la
+  // hab del archivo: lo más probable es que sea el acompañante.
+  const q = inp.value === b.q0 ? '' : inp.value;
+  b.lista = vjImpBuscar(q, it);
+  b.sel = Math.min(b.sel, Math.max(0, b.lista.length - 1));
+  if (!b.lista.length && !q.trim()){ sug.hidden = true; sug.innerHTML = ''; return; }
+  sug.innerHTML = b.lista.length ? b.lista.map((x, i) => `
+    <button type="button" class="vj-imp-sug-i${i === b.sel ? ' on' : ''}" onmousedown="event.preventDefault()" onclick="vjImpBuscaElegir('${vjEsc(it.id)}', ${i}, false)">
+      <span class="vj-imp-sug-n">${vjEsc(x.nombre)}</span>
+      <span class="vj-imp-sug-m">${[x.llega ? t('vjImpLlega') : '', x.hab ? `${t('vjHab')} ${vjEsc(x.hab)}` : t('vjImpSinHab'),
+        x.crs ? `CRS ${vjEsc(x.crs)}` : ''].filter(Boolean).join(' · ')}</span>
+    </button>`).join('') : `<span class="vj-imp-sug-nada">${t('vjImpBuscaNada')}</span>`;
+  sug.hidden = false;
+}
+function vjImpBuscaTecla(e, inp){
+  if (e.key === 'Escape'){
+    e.preventDefault(); e.stopPropagation();   // Escape acá cierra la lista, no el panel
+    vjImpBuscaCerrar(inp);
+    inp.blur();
+    return;
+  }
+  const b = vjImpBuscaEstado(inp);
+  if (!b) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    e.preventDefault();
+    if (!b.lista.length) return;
+    b.sel = (b.sel + (e.key === 'ArrowDown' ? 1 : -1) + b.lista.length) % b.lista.length;
+    vjImpBuscaPintar(inp);
+  } else if (e.key === 'Enter'){
+    e.preventDefault();
+    if (!b.lista.length) vjImpBuscaPintar(inp);
+    if (b.lista.length) vjImpBuscaElegir(b.id, b.sel, true);
+  }
+}
+function vjImpBuscaCerrar(inp){
+  const it = vjImpItem(inp.getAttribute('data-vj-imp-busca'));
+  const sug = inp.nextElementSibling;
+  if (sug){ sug.hidden = true; sug.innerHTML = ''; }
+  if (it) inp.value = it.tr ? it.tr.nombre : '';
+  if (VJ_IMP_BUSCA && it && VJ_IMP_BUSCA.id === it.id) VJ_IMP_BUSCA = null;
+}
+function vjImpBuscaElegir(id, i, teclado){
+  const b = VJ_IMP_BUSCA, x = b && b.lista[i];
+  if (!x) return;
+  VJ_IMP_BUSCA = null;
+  const it = vjImpItem(id);
+  if (it && it.tr && it.tr.pid === x.pid){
+    const inp = document.querySelector(`input[data-vj-imp-busca="${id}"]`);
+    if (inp) inp.blur();
+  } else vjImpAsignar(id, x.pid);   // repinta la tarjeta: el campo viejo desaparece
+  if (!teclado) return;
+  // Enter: a la siguiente tarjeta sin dueño, en el orden de la grilla.
+  const campos = Array.from(document.querySelectorAll('#vj-imp input.vj-imp-busca:not(:disabled)'));
+  const yo = campos.findIndex(c => c.getAttribute('data-vj-imp-busca') === id);
+  const sig = campos.slice(yo + 1).find(c => { const o = vjImpItem(c.getAttribute('data-vj-imp-busca')); return o && !o.tr; });
+  if (sig){ sig.focus(); sig.scrollIntoView({ block: 'nearest' }); }
+}
+
+// ── Guardar con nombres ── Los ORIGINALES (pasaporte + PDI), byte a byte, con
+// el nombre que pide la oficina: "CRS 713613673_NOMBRE_APELLIDO.png". No suben a
+// ningún lado: van a una carpeta del computador (Chrome/Edge) o, si el
+// navegador no deja elegir carpeta, en un .zip a Descargas.
+function vjImpNombreArchivo(it){
+  const ext = ((it.nombre.match(/\.([a-z0-9]+)$/i) || [])[1] || 'png').toLowerCase();
+  const nom = vjImpNorm(it.tr.nombre).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'SIN_NOMBRE';
+  return `${it.tr.crs ? `CRS ${it.tr.crs}_` : ''}${nom}.${ext}`;
+}
+function vjImpGuardables(){
+  return VJ_IMP ? VJ_IMP.items.filter(it => it.tr && it.blob) : [];
+}
+// Dos archivos con el mismo nombre (pasaporte y PDI por separado, o una copia)
+// no se pisan: el segundo lleva " (2)".
+function vjImpNombresUnicos(items, ocupado){
+  const usados = new Set();
+  return items.map(it => {
+    const base = vjImpNombreArchivo(it), p = base.lastIndexOf('.');
+    let n = base, k = 1;
+    while (usados.has(n.toLowerCase()) || (ocupado && ocupado(n))){ k++; n = `${base.slice(0, p)} (${k})${base.slice(p)}`; }
+    usados.add(n.toLowerCase());
+    return { it, nombre: n };
+  });
+}
+const VJ_IMP_CRC = (() => {
+  const tb = new Uint32Array(256);
+  for (let n = 0; n < 256; n++){ let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; tb[n] = c >>> 0; }
+  return tb;
+})();
+function vjImpCrc32(u8){
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < u8.length; i++) c = VJ_IMP_CRC[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+// ZIP "stored" (sin comprimir: las imágenes ya vienen comprimidas), nombres en
+// UTF-8 (bit 11). Suficiente para unos cientos de MB; más que eso no es un día.
+async function vjImpZipArmar(archivos){
+  const enc = new TextEncoder(), partes = [], central = [];
+  let off = 0;
+  const ahora = new Date();
+  const hora = (ahora.getHours() << 11) | (ahora.getMinutes() << 5) | (ahora.getSeconds() >> 1);
+  const dia = ((ahora.getFullYear() - 1980) << 9) | ((ahora.getMonth() + 1) << 5) | ahora.getDate();
+  for (const a of archivos){
+    const datos = new Uint8Array(await a.blob.arrayBuffer());
+    const nom = enc.encode(a.nombre), crc = vjImpCrc32(datos);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true);
+    h.setUint16(10, hora, true); h.setUint16(12, dia, true); h.setUint32(14, crc, true);
+    h.setUint32(18, datos.length, true); h.setUint32(22, datos.length, true); h.setUint16(26, nom.length, true);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint16(12, hora, true); c.setUint16(14, dia, true); c.setUint32(16, crc, true);
+    c.setUint32(20, datos.length, true); c.setUint32(24, datos.length, true); c.setUint16(28, nom.length, true);
+    c.setUint32(42, off, true);
+    partes.push(h, nom, datos);
+    central.push(c, nom);
+    off += 30 + nom.length + datos.length;
+  }
+  const tamC = central.reduce((s, x) => s + x.byteLength, 0);
+  const fin = new DataView(new ArrayBuffer(22));
+  fin.setUint32(0, 0x06054b50, true); fin.setUint16(8, archivos.length, true); fin.setUint16(10, archivos.length, true);
+  fin.setUint32(12, tamC, true); fin.setUint32(16, off, true);
+  return new Blob([...partes, ...central, fin], { type: 'application/zip' });
+}
+async function vjImpGuardar(){
+  const v = VJ_IMP;
+  if (!v || v.fase !== 'revisar') return;
+  const items = vjImpGuardables();
+  if (!items.length) return;
+  v.guardado = null;
+  if (typeof window.showDirectoryPicker === 'function'){
+    let dir;
+    try { dir = await window.showDirectoryPicker({ id: 'ata-rostros', mode: 'readwrite', startIn: 'desktop' }); }
+    catch(e){ if (e && e.name === 'AbortError') return; dir = null; }   // canceló: nada que hacer
+    if (dir){
+      v.fase = 'guardando'; vjImpPintarPie();
+      let n = 0;
+      try {
+        // Lo que ya está en esa carpeta no se pisa: se numera.
+        const hay = new Set();
+        for await (const k of dir.keys()) hay.add(String(k).toLowerCase());
+        for (const a of vjImpNombresUnicos(items, nom => hay.has(nom.toLowerCase()))){
+          const fh = await dir.getFileHandle(a.nombre, { create: true });
+          const w = await fh.createWritable();
+          await w.write(a.it.blob);
+          await w.close();
+          n++;
+        }
+        v.guardado = { n, donde: dir.name };
+      } catch(e){
+        console.warn('[viajeros] guardar con nombres:', e && e.message);
+        v.guardado = { n, donde: dir.name, mal: true };
+      }
+      v.fase = 'revisar'; vjImpPintarPie();
+      return;
+    }
+  }
+  // Sin carpeta (otro navegador): un .zip a Descargas.
+  v.fase = 'guardando'; vjImpPintarPie();
+  try {
+    const zip = await vjImpZipArmar(vjImpNombresUnicos(items).map(a => ({ nombre: a.nombre, blob: a.it.blob })));
+    const u = URL.createObjectURL(zip);
+    const a = document.createElement('a');
+    a.href = u; a.download = `pasaportes ${vjTodayIso()}.zip`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 60000);
+    v.guardado = { n: items.length, zip: true };
+  } catch(e){
+    v.guardado = { n: 0, mal: true };
+  }
+  v.fase = 'revisar'; vjImpPintarPie();
 }
 
 // `opts.hist:false` esconde el histórico de exploraciones. Lo usa el Comande:

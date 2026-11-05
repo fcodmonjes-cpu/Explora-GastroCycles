@@ -1081,6 +1081,25 @@ compartido por la reserva del grupo, no sirve para identificar a la persona.
 Cero llamadas nuevas a PGO. En el respaldo por HTML no hay CRS: las fichas
 salen sin él y el importador simplemente no las encuentra.
 
+**Las llegadas de mañana (2026-11-05).** La oficina escanea pasaportes a la
+llegada y a veces el día antes, así que el rotulador (§4.7) necesita el CRS de
+quien todavía no está. `--explore llegadas` (una corrida, sólo conteos) mostró:
+- `travellersInhouse(hoy)` **ya trae a quienes llegan hoy**, antes del
+  check-in (16/16 con CRS, nombre y hab a mediodía). Nada que agregar.
+- `travellersInhouse(mañana)` filtrado por `checkin == mañana` da las llegadas
+  de mañana: 23/23 con CRS y nombre; la hab puede faltar (19/23).
+- `reportInOut.travellerIn` **no sirve**: va por reserva (15 CRS en 16 filas) e
+  incluye las canceladas (`arrivalStatus: CANCELLED`, 7 de 16).
+
+`pgo_fetch_llegadas` corre esa query con la fecha de mañana (**una consulta más
+por corrida**) y el doc lleva `llegadas: [{pid, nombre, crs, hab, in, out, nac,
+nacName?}]`, **fuera de `habs`**: el corcho no los muestra en casa antes de
+tiempo. El pid se arma como en `build_doc` (por nombre), así la cara subida el
+día antes es de la misma ficha cuando entran al roster. `purgar_fotos` cuenta
+las llegadas como presentes; sin eso, esa cara caería en "fuera del roster" y a
+las 24 h se borraría como "se fue antes del OUT". Si la query falla, el sync
+sigue sin llegadas.
+
 #### Las dietas NO se migran, y esto se midió
 
 La intuición decía que `dietReq` / `foodRestrictions` / `dietReqObs` iban a
@@ -1507,23 +1526,49 @@ nombre no calza y en la misma hab hay **una** persona cuyo nombre sí, se le
 asigna a ella y la tarjeta va a revisar, desmarcada. Entre dos archivos de la
 misma persona, el principal es el que no trae números de más (el " 2").
 
-**«Para quién es la foto».** Recepción a veces nombra los archivos de la pareja
-con el CRS de uno solo y **sin nombre**: nada que cruzar, las dos fotos caen en
-el titular. Por eso, cuando la hab del titular tiene más gente, el nombre de la
-tarjeta es un `<select>` con esa hab (`vjImpCompaneros`, desde
-`cruce.habOrigen`). Elegir es decidir: se borran las dudas de nombre, la tarjeta
-queda marcada (salvo que pise una foto ya puesta o choque con otro archivo de
-esa persona) y **no cambia de grupo ni de lugar**: se repinta donde está con
-su alto conservado (`vjImpAsignar`). Si la elección arma un choque, el "segundo
-archivo" es la tarjeta recién tocada (`aMano` guarda cuándo): el aviso sale
-donde uno mira. Los motivos se derivan del estado (`vjImpMotivos`), no se
-guardan, así que cambian solos al reasignar.
+**«¿De quién es?» — el rotulador (fase 2, 2026-11-05).** El nombre de cada
+tarjeta es un **buscador** (`vjImpBuscar`): palabras del nombre desde su
+comienzo (con una letra de diferencia si es larga: "GLASSMAN" ↔ "Glasman",
+`vjImpCasi`), 1-3 dígitos = hab, 4 o más = pedazo del CRS. Busca entre los que
+están en casa y **las llegadas de mañana** (`doc.llegadas`, §4.2) —
+`vjImpGente()` junta ambos; las de hoy ya vienen en `habs`—. Con el campo
+recién enfocado ofrece la hab del archivo (lo más probable: el acompañante;
+recepción a veces nombra los archivos de la pareja con el CRS de uno solo). Con
+teclado se rotula la carpeta entera: escribir, ↑↓, **Enter asigna y salta a la
+siguiente tarjeta sin dueño**; Escape cierra la lista, no el panel. La lista
+flota encima de la grilla (absoluta): nada se corre.
+
+Asignar es decidir: se borran las dudas de nombre, la tarjeta queda marcada
+(salvo que pise una foto ya puesta o choque con otro archivo de esa persona) y
+**no cambia de grupo ni de lugar**: se repinta donde está con su alto
+conservado (`vjImpAsignar`). Si arma un choque, el "segundo archivo" es la
+tarjeta recién tocada (`aMano` guarda cuándo). Los motivos se derivan del
+estado (`vjImpMotivos`), no se guardan, así que cambian solos.
+
+**Todos los archivos son tarjeta.** Antes, lo que no cruzaba era una línea de
+texto; ahora se abre igual y va a **«sin asignar»**: sin CRS en el nombre, o
+con uno que no es de nadie en casa ni de las llegadas. El `AAAAMMDD` que pone el
+escáner ("Escáner_20261104 (4).png") no cuenta como CRS (`vjImpEsFecha`). Se
+quitó el aviso de "documento parado": los escaneos reales son la hoja A4 entera
+y salía en todas.
+
+**Guardar con nombres** (`vjImpGuardar`): los ORIGINALES (pasaporte + PDI),
+byte a byte, con el nombre que pide la oficina — `CRS 713613673_NOMBRE_APELLIDO`
+y la extensión original (`vjImpNombreArchivo`; mayúsculas, sin tildes, `_`).
+La oficina no tiene la carpeta de SharePoint sincronizada: baja al escritorio y
+sube por la web. Por eso, en Chrome/Edge, `showDirectoryPicker` escribe los
+archivos sueltos en una carpeta que se elige (o crea) en el Escritorio, lista
+para arrastrar a SharePoint; lo que ya está ahí no se pisa, se numera " (2)".
+Si el navegador no deja elegir carpeta, va un .zip "stored" armado a mano
+(`vjImpZipArmar`, CRC32 propio, nombres UTF-8) a Descargas. Nada de esto sube:
+los pasaportes no salen del computador. Subir la cara al Handbook sigue siendo
+aparte (la casilla de cada tarjeta) y funciona también para quien llega mañana
+(`vjFotoSubir` recibe `opts.tr`; la purga del servidor lo cuenta presente).
 
 **Los grupos de la grilla:** listas (marcadas) · para revisar (baja resolución,
-nombre que no calza, CRS de otro, segundo archivo, documento parado) · ya
-tienen foto · no están en casa hoy · sin CRS en el nombre. Las dos últimas no se
-pueden subir: la purga necesita el OUT del roster. Lo de mañana entra mañana;
-como lo ya subido se salta, se puede soltar la carpeta entera cada día.
+nombre que no calza, CRS de otro, segundo archivo) · sin asignar · ya tienen
+foto. Lo de pasado mañana entra mañana; como lo ya subido se salta, se puede
+soltar la carpeta entera cada día.
 
 **El recorte.** La multifuncional entrega la hoja entera: primero se ubica el
 documento sobre el blanco (proyecciones de tinta por fila y columna), por su

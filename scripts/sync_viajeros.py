@@ -544,6 +544,9 @@ PGO_EXPLORE_PATHS = {
     # Tampoco es una página: ¿trae PGO el número de confirmación (CRS) POR
     # VIAJERO? Lo necesita el importador de pasaportes. Ver pgo_probe_crs.
     "crs":      "(GraphQL travellersInhouse · sondeo CRS)",
+    # Tampoco: ¿vienen los CRS de las llegadas de hoy y mañana? Lo necesita el
+    # rotulador de pasaportes. Ver pgo_probe_llegadas.
+    "llegadas": "(GraphQL travellersInhouse hoy/mañana + reportInOut · sondeo)",
     "arrival":  PGO_ARRIVAL_PATH,
     "birthday": PGO_BIRTHDAY_PATH,
     "comedor":  PGO_COMEDOR_PATH,
@@ -2099,6 +2102,58 @@ def pgo_fetch_roster(page, date_str):
     return out, nacnames, crs
 
 
+def pgo_fetch_llegadas(page, fecha_man, crs_hoy):
+    """Quienes llegan MAÑANA, con su CRS → lista para `doc["llegadas"]`.
+
+    Lo necesita el rotulador de pasaportes: la oficina escanea a veces el día
+    antes, y el archivo se nombra con el CRS. Es la misma query del roster
+    (travellersInhouse) con la fecha de mañana: una consulta más por corrida,
+    sin campos nuevos. Se queda con los que tienen check-in ese día y que no
+    estén ya en el roster de hoy (`crs_hoy`).
+
+    Las de HOY no hacen falta: el sondeo `--explore llegadas` (2026-11-05, a
+    mediodía) mostró que travellersInhouse(hoy) ya trae a todos los que llegan
+    hoy, antes del check-in (16/16 con CRS, nombre y hab). reportInOut, en
+    cambio, va por reserva e incluye canceladas: no sirve para esto.
+    Mañana: 23/23 con CRS y nombre; la hab puede faltar (19/23) → "".
+
+    No van a `habs`: el corcho no tiene que mostrarlos en casa antes de tiempo.
+    El pid se arma igual que en build_doc (por nombre), así la foto subida hoy
+    sigue siendo de ellos cuando mañana entren al roster.
+    """
+    res = pgo_graphql(page, PGO_ROSTER_QUERY, {"hotelId": PGO_HOTEL_ID, "date": fecha_man})
+    if res.get("errors"):
+        print(f"[llegadas] errores: {str(res['errors'])[:300]}")
+    out, vistos = [], set()
+    for f in (res.get("data") or {}).get("travellersInhouse") or []:
+        conf = re.sub(r"\D", "", str(f.get("confirmationNumber") or ""))
+        ind = _iso_dt(f.get("checkin"))[:10]
+        if ind != fecha_man or not conf or conf in crs_hoy or conf in vistos:
+            continue
+        hab_raw = str(f.get("room") or "")
+        digits = re.sub(r"\D", "", hab_raw)
+        hab = fb_key(digits.zfill(2) if digits else hab_raw.strip()) if (digits or hab_raw.strip()) else ""
+        t = f.get("traveller")
+        for tr in (t if isinstance(t, list) else [t]):
+            if not isinstance(tr, dict):
+                continue
+            nombre = fix_mojibake(" ".join(str(tr.get(k) or "").strip()
+                                           for k in ("firstName", "lastName")).strip())
+            if not nombre:
+                continue
+            vistos.add(conf)
+            ll = {"pid": pid_de(nombre), "nombre": nombre, "crs": conf,
+                  "hab": hab, "in": ind, "out": _iso_dt(f.get("checkout"))[:10],
+                  "nac": str(tr.get("nationality") or "").strip().upper()}
+            nn = fix_mojibake(tr.get("nationalityName")).strip()
+            if nn and nn.upper() != ll["nac"]:
+                ll["nacName"] = nn
+            out.append(ll)
+    print(f"[sync-viajeros] llegadas de mañana ({fecha_man}): {len(out)} con CRS · "
+          f"{sum(1 for x in out if x['hab'])} con hab asignada")
+    return out
+
+
 def pgo_compara_roster(api_rows, html_rows):
     """Compara las filas de las dos vías, campo por campo. Sólo diagnóstico."""
     def key(r): return norm_key(r[1])
@@ -2257,6 +2312,98 @@ def _crs_forma(v):
     s = str(v).strip()
     tipo = "dígitos" if s.isdigit() else ("alfanum" if s.isalnum() else "mixto")
     return f"{len(s)} {tipo}"
+
+
+def pgo_probe_llegadas(page, date_str):
+    """¿Dónde están los CRS de quienes LLEGAN hoy y mañana?
+
+    El rotulador de pasaportes tiene que poder nombrar el escaneo de alguien
+    que todavía no hizo check-in (la oficina escanea a la llegada, a veces el
+    día antes). Preguntas:
+      1. ¿travellersInhouse(hoy) ya incluye a las llegadas de hoy, o sólo a
+         quien hizo check-in? (se compara contra reportInOut.travellerIn)
+      2. ¿travellersInhouse(mañana) trae a las llegadas de mañana con CRS,
+         nombre y hab? (la hab puede no estar asignada todavía)
+
+    Poco ruido: 3 consultas de datos, cero de esquema (las queries y campos
+    son los que el sync ya usa). Sólo conteos, nunca nombres ni números.
+    No escribe Firebase.
+    """
+    print("\n[llegadas] ══ Sondeo de llegadas (hoy y mañana) ══")
+    hoy = datetime.date.fromisoformat(date_str)
+    man = (hoy + datetime.timedelta(days=1)).isoformat()
+
+    def roster(fecha):
+        res = pgo_graphql(page, PGO_ROSTER_QUERY, {"hotelId": PGO_HOTEL_ID, "date": fecha})
+        if res.get("errors"):
+            print(f"[llegadas] errores en {fecha}: {str(res['errors'])[:300]}")
+        pers = []
+        for f in (res.get("data") or {}).get("travellersInhouse") or []:
+            t = f.get("traveller")
+            for tr in (t if isinstance(t, list) else [t]):
+                if isinstance(tr, dict):
+                    pers.append({
+                        "crs": re.sub(r"\D", "", str(f.get("confirmationNumber") or "")),
+                        "hab": re.sub(r"\D", "", str(f.get("room") or "")),
+                        "in": _iso_dt(f.get("checkin"))[:10],
+                        "out": _iso_dt(f.get("checkout"))[:10],
+                        "nombre": bool(str(tr.get("firstName") or "").strip()
+                                       or str(tr.get("lastName") or "").strip()),
+                    })
+        return pers
+
+    def resumen(etiqueta, pers, fecha):
+        lleg = [p for p in pers if p["in"] == fecha]
+        print(f"[llegadas] {etiqueta} ({fecha}): {len(pers)} personas · "
+              f"{len(lleg)} con check-in ese día")
+        if lleg:
+            print(f"[llegadas]   de esas: con CRS {sum(1 for p in lleg if p['crs'])} · "
+                  f"con nombre {sum(1 for p in lleg if p['nombre'])} · "
+                  f"con hab {sum(1 for p in lleg if p['hab'])} · "
+                  f"con OUT {sum(1 for p in lleg if p['out'])} · "
+                  f"CRS distintos {len({p['crs'] for p in lleg if p['crs']})}")
+        return lleg
+
+    try:
+        p_hoy = roster(date_str)
+        p_man = roster(man)
+    except Exception as e:
+        print(f"[llegadas] el roster falló: {type(e).__name__}: {e}")
+        return
+    l_hoy = resumen("hoy", p_hoy, date_str)
+    l_man = resumen("mañana", p_man, man)
+    crs_hoy = {p["crs"] for p in p_hoy if p["crs"]}
+    print(f"[llegadas] llegadas de mañana que YA están en el roster de hoy: "
+          f"{sum(1 for p in l_man if p['crs'] in crs_hoy)} (esperado: 0)")
+
+    # reportInOut del día: ¿las llegadas de hoy están en el roster de hoy?
+    q = """query ($hotelId: ID!, $date: Date!) {
+             reportInOut(hotelId: $hotelId, date: $date) {
+               cantTravellerIn travellerIn { room checkin confirmationNumber arrivalStatus }
+             }
+           }"""
+    try:
+        res = pgo_graphql(page, q, {"hotelId": str(PGO_HOTEL_ID), "date": date_str})
+    except Exception as e:
+        print(f"[llegadas] reportInOut falló: {type(e).__name__}: {e}")
+        return
+    if res.get("errors"):
+        print(f"[llegadas] reportInOut errores: {str(res['errors'])[:300]}")
+    data = (res.get("data") or {}).get("reportInOut") or {}
+    filas = data.get("travellerIn") or []
+    crs_in = [re.sub(r"\D", "", str(r.get("confirmationNumber") or "")) for r in filas]
+    estados = {}
+    for r in filas:
+        k = str(r.get("arrivalStatus"))
+        estados[k] = estados.get(k, 0) + 1
+    print(f"[llegadas] reportInOut hoy: cantTravellerIn={data.get('cantTravellerIn')} · "
+          f"{len(filas)} filas · con CRS {sum(1 for c in crs_in if c)} · "
+          f"CRS distintos {len({c for c in crs_in if c})} · arrivalStatus {estados}")
+    dentro = sum(1 for c in set(crs_in) if c and c in crs_hoy)
+    print(f"[llegadas] de esos CRS, en el roster de hoy: {dentro} · fuera: "
+          f"{len({c for c in crs_in if c}) - dentro}")
+    print(f"[llegadas] ¿coinciden con los check-in de hoy del roster? "
+          f"{len({c for c in crs_in if c} & {p['crs'] for p in l_hoy})} en común")
 
 
 def pgo_probe_crs(page, date_str):
@@ -2606,9 +2753,11 @@ def pgo_explore(paths, date_str, dump=False, trace_net=False, introspect=False):
             pgo_probe_exploraciones(page, date_str or datetime.date.today().isoformat())
         if "crs" in paths:
             pgo_probe_crs(page, date_str or datetime.date.today().isoformat())
+        if "llegadas" in paths:
+            pgo_probe_llegadas(page, date_str or ahora_chile().date().isoformat())
 
         for nombre, path in paths.items():
-            if nombre in ("inout", "exploraciones", "crs"):
+            if nombre in ("inout", "exploraciones", "crs", "llegadas"):
                 continue
             print(f"\n[explore] ===== {nombre}  ({path}) =====")
             try:
@@ -2648,6 +2797,7 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
     # operativo, que es el siguiente). Sólo se fuerza si el owner pidió --date.
     fecha = datetime.date.fromisoformat(date_str).strftime(PGO_DATE_FMT) if date_str else None
     api_calls = []
+    llegadas = []
     # PGO_CHROMIUM: ruta a un Chromium ya instalado. Útil en runners self-hosted
     # (o si PGO resulta accesible sólo desde la red corporativa) para no bajar
     # navegadores. Vacío = Playwright usa el suyo.
@@ -2740,6 +2890,17 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
             print(f"[sync-viajeros] roster por API falló ({type(e).__name__}: {e}); "
                   "vuelvo al Reporte Geos por HTML.")
             roster_api, nacnames, crs = None, {}, {}
+        # Llegadas de MAÑANA para el rotulador de pasaportes (una consulta más,
+        # la misma query). Si falla, el sync sigue: es un extra, no el roster.
+        llegadas = []
+        if roster_api:
+            try:
+                man_iso = (datetime.date.fromisoformat(fecha_iso or datetime.date.today().isoformat())
+                           + datetime.timedelta(days=1)).isoformat()
+                llegadas = pgo_fetch_llegadas(page, man_iso, set(crs.values()))
+            except Exception as e:
+                print(f"[sync-viajeros] Aviso: sin llegadas de mañana ({type(e).__name__}: {e})")
+                llegadas = []
         # El Geos se lee SIEMPRE desde el 2026-09-16, no sólo como respaldo: sus
         # columnas `exp` e `historia` son la exploración del día y el histórico
         # del viajero, y no existen en ninguna otra fuente que hoy consultemos
@@ -2872,7 +3033,7 @@ def pgo_fetch(date_str, dump=False, trace_net=False):
         for c in dict.fromkeys(api_calls):
             print("   ", c)
     return (geos, dietas, (fecha_iso or datetime.date.today().isoformat()),
-            horas, totales, comedor, cumples, roster_api, nacnames, rde, manana, crs)
+            horas, totales, comedor, cumples, roster_api, nacnames, rde, manana, crs, llegadas)
 
 
 # Mapeo encabezado de PGO (ya normalizado) → campo interno. Varios alias por si
@@ -3571,6 +3732,12 @@ def purgar_fotos(token, doc, simular=False):
     if not roster:
         print(f"{tag} roster vacío — NO se purga nada.")
         return
+    # Las llegadas de mañana cuentan como presentes: el rotulador les sube la
+    # cara el día antes, y sin esto la foto se vería "fuera del roster" (y a
+    # las 24 h, borrada como "se fue antes del OUT").
+    for x in doc.get("llegadas") or []:
+        if x.get("pid") and x["pid"] not in roster:
+            roster[x["pid"]] = x
     try:
         indice = fb_get(token, FOTOS_PATH) or {}
     except Exception as e:
@@ -3750,7 +3917,7 @@ def main():
         date_str = _arg_value("--date")   # None = usar el día que PGO ya muestra
         print("[sync-viajeros] PGO — login y lectura de reportes "
               f"({date_str or 'fecha por defecto de PGO'})...")
-        geos, dietas, date_str, horas, totales, comedor, cumples, roster_api, nacnames, rde, manana, crs = pgo_fetch(
+        geos, dietas, date_str, horas, totales, comedor, cumples, roster_api, nacnames, rde, manana, crs, llegadas = pgo_fetch(
             date_str,
             dump="--dump-html" in sys.argv,
             trace_net="--trace-net" in sys.argv)
@@ -3780,6 +3947,11 @@ def main():
             expl.setdefault(k, {})["crs"] = c
         doc = build_doc(rows, date_str, "pgo", horas, totales, comedor, cumples, nacnames, expl,
                         rde, manana)
+        # Aparte de `habs`: sólo los lee el rotulador (y la purga de fotos).
+        en_casa = {t.get("pid") for hab in doc["habs"].values() for t in hab}
+        llegadas = [x for x in (llegadas or []) if x["pid"] not in en_casa]
+        if llegadas:
+            doc["llegadas"] = llegadas
     else:
         doc = build_doc(SEED_ROWS, REPORT_DATE, "seed")
 
