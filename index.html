@@ -12674,7 +12674,7 @@ function viajerosRender(){
   // Importar rostros: sólo en el PC (mouse), en la vista de viajeros y con roster.
   const impBtn = document.getElementById('vj-imp-btn');
   if (impBtn){
-    impBtn.hidden = !(VJ_IMP_ON && VJ_FOTO_ON && VIAJEROS_DATA && VIAJEROS_VISTA === 'viajeros' && vjFotoEsPc());
+    impBtn.hidden = !(VJ_IMP_ON && VJ_FOTO_ON && VIAJEROS_DATA && VIAJEROS_VISTA === 'viajeros' && vjImpCabe());
     impBtn.textContent = t('vjImpBtn');
   }
   const esCom = VIAJEROS_VISTA === 'comedor';
@@ -13131,6 +13131,15 @@ function vjFotoEsPc(){
     return ['(pointer: fine)', '(hover: hover)', '(any-pointer: fine)', '(any-hover: hover)']
       .some(q => window.matchMedia(q).matches);
   } catch(e){ return false; }
+}
+// Importar rostros: fuera sólo en el teléfono. Preguntarle a Chrome por el
+// mouse no sirve: el 2026-11-08 el Lenovo táctil de la oficina, con touchpad,
+// respondió falso a las cuatro consultas de puntero (la noche anterior, verdadero).
+// El lado corto de la PANTALLA (no de la ventana: DevTools o media ventana no
+// cuentan) separa un teléfono (<600) de un notebook o tablet.
+function vjImpCabe(){
+  if (vjFotoEsPc()) return true;
+  try { return Math.min(screen.width, screen.height) >= 600; } catch(e){ return true; }
 }
 // "+ foto" junto a "+ agregar nota". Sólo sin foto: con foto, cambiarla o
 // borrarla está en el visor (tocar la cara), y soltar una imagen nueva sobre la
