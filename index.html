@@ -13122,11 +13122,15 @@ function vjFotoCaraEl(tr, foto, flag){
             aria-label="${t('vjFotoVer')}" onclick="event.stopPropagation();vjFotoVer('${vjEsc(tr.pid)}')"><img alt=""${src ? ` src="${src}"` : ''}>${flag ? `<span class="vj-foto-flag">${flag}</span>` : ''}</button>`;
 }
 function vjFotoEsPc(){
-  // any-*: basta con que HAYA un mouse o touchpad, aunque el puntero principal
-  // sea la pantalla. Un notebook con pantalla táctil (el Lenovo de la oficina)
-  // reporta hover:none / pointer:coarse y el importador quedaba escondido. Los
-  // teléfonos siguen fuera: no tienen ningún puntero fino.
-  try { return window.matchMedia('(any-hover: hover) and (any-pointer: fine)').matches; } catch(e){ return false; }
+  // Basta con CUALQUIER señal de mouse/touchpad. Chrome en Windows no es
+  // parejo con los notebooks con pantalla táctil: según el equipo, la señal
+  // buena viene por el puntero principal o por los any-* (el 2026-11-08 cambiar
+  // uno por otro escondió el importador en el Lenovo de la oficina). La unión
+  // nunca muestra menos que antes; los teléfonos dan falso en las cuatro.
+  try {
+    return ['(pointer: fine)', '(hover: hover)', '(any-pointer: fine)', '(any-hover: hover)']
+      .some(q => window.matchMedia(q).matches);
+  } catch(e){ return false; }
 }
 // "+ foto" junto a "+ agregar nota". Sólo sin foto: con foto, cambiarla o
 // borrarla está en el visor (tocar la cara), y soltar una imagen nueva sobre la
