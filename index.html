@@ -4953,6 +4953,13 @@ const EST_STORAGE_ON = true;
 const EST_BUCKET     = 'explora-cafe-orders.firebasestorage.app';
 const EST_CACHE      = 'ata-estudio-v1';   // Cache API propio; sw.js no lo borra
 const EST_LOCAL      = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+// Archivos del ciclo vigente. El bucket es UNO para producción, staging y
+// previews: un ciclo nuevo se sube con nombres nuevos, al lado del anterior, y
+// cada deploy lee los suyos. Así la cena 2026 se prueba en staging sin que
+// producción —que todavía muestra la carta anterior— cambie de audio. El
+// almuerzo no cambió de ciclo y conserva sus nombres.
+const EST_INDICE     = 'indice-2026-11.json';
+function estArchivo(key){ return /-cena$/.test(key) ? `audio/${key}-2026-11` : `audio/${key}`; }
 let EST_VIEW      = 'escuchar';  // 'escuchar' | 'alergenos'
 let EST_SVC       = null;        // 'almuerzo' | 'cena' — null: se decide por la hora al entrar
 let EST_IDX       = null;        // indice.json parseado (se baja una vez, al entrar)
@@ -5751,6 +5758,9 @@ const UI = {
     estTextRepaso:'Repaso en curso: el texto vuelve al terminar. Responde de memoria.',
     estTextCierre:'Suena el nombre; tú completas el plato. El texto no se muestra en la prueba.',
     estTextIntro:'El texto aparece con cada plato.',
+    estMaridaje:'Maridaje · el vino de cada plato', estNowMaridaje:'Maridaje — di el vino de memoria',
+    estTextMaridaje:'Suena el plato; tú dices el vino. El texto no se muestra en el maridaje.',
+    estAlgParcial:'Pescado, huevo, soya, sésamo, mostaza y alcohol: sin dato en la matriz de la cena — consultar cocina.',
     estMissing:'Este audio todavía no está disponible. Los platos y su texto, igual:',
     estOffline:'Sin conexión, y este audio no está descargado. Los platos y su texto, igual:',
     estNoIndex:'No se pudo cargar el índice de platos. Revisa la conexión.',
@@ -7740,9 +7750,12 @@ function menuApplyRoom(){
 //
 // ORIGEN — nada en RTDB: es contenido estático por ciclo, no estado compartido.
 //   Firebase Storage, carpeta estudio/ del bucket del proyecto:
-//     estudio/indice.json                   los platos (id d{día}{a|c}-{orden})
-//     estudio/audio/dia{N}-{servicio}.mp3   un audio por servicio
-//     estudio/audio/dia{N}-{servicio}.json  sus marcas {duracion, marcas:[{id,tipo,inicio,fin}]}
+//     estudio/indice-2026-11.json           los platos (id d{día}{a|c}-{orden})
+//     estudio/audio/dia{N}-almuerzo.mp3     un audio por servicio…
+//     estudio/audio/dia{N}-cena-2026-11.mp3 …con el sufijo del ciclo si cambió
+//     (.json al lado)                       sus marcas {duracion, marcas:[{id,tipo,inicio,fin}]}
+//   Nombres por ciclo (EST_INDICE / estArchivo): el bucket es compartido por
+//   todos los deploys, y así un ciclo nuevo no le cambia el audio a producción.
 //   Queda detrás del gate: las reglas de Storage piden auth y cada pedido lleva
 //   el token de la sesión. En localhost se lee la misma estructura desde
 //   /estudio-local/ (fuera de git y de Vercel). Cambiar de ciclo = subir
@@ -7765,10 +7778,17 @@ function menuApplyRoom(){
 //   2. nada de autoplay ni de saltar pausas: no hay +10 s ni barra arrastrable;
 //   3. ver texto va apagado por defecto.
 //
-// ALÉRGENOS — almuerzo: manda la matriz del Handbook (verificada contra el
-//   asesor), cruzada por estPlatoApp(). Cena: manda indice.json. Sin dato ≠
-//   apto y no hay verde: el mismo lenguaje de la ficha (coral · nota · punteado).
-//   Cuando la ficha es MÁS permisiva que el índice del audio, se dice.
+// ALÉRGENOS — manda la matriz del Handbook (verificada contra el asesor),
+//   cruzada por estPlatoApp(): el almuerzo por posición fija, la cena 2026 por
+//   el id de la ficha que trae el índice (`hb`). Sin dato ≠ apto y no hay verde:
+//   el mismo lenguaje de la ficha (coral · nota · punteado). Cuando la ficha es
+//   MÁS permisiva que el índice del audio, se dice. La cena 2026 no trae lista
+//   de alérgenos (sólo la matriz de 9 ejes): pescado, huevo, soya, sésamo,
+//   mostaza y alcohol salen "sin dato", nunca "no lo lleva" (`alergenos_parcial`).
+//
+// MARIDAJE (cena 2026) — después de la prueba de nombres, un bloque más
+//   (tipo 'maridaje'): suena el plato, silencio, y el vino. Es recuperación
+//   activa igual que un repaso, así que el texto tampoco se ve ahí.
 // ════════════════════════════════════════════════════════════════════════════
 
 // --- Utilidades --------------------------------------------------------------
@@ -7859,17 +7879,17 @@ async function estCargarIndice(){
     let data = null;
     if (estOnline()){
       try {
-        const r = await estFetch('indice.json');
+        const r = await estFetch(EST_INDICE);
         if (r.ok){
           const txt = await r.text();
           data = JSON.parse(txt);
           // Son 90 KB: se guardan siempre, así la búsqueda y los alérgenos
           // funcionan sin señal aunque no se haya descargado ningún audio.
-          estCachePut('indice.json', new Response(txt, { headers: { 'Content-Type': 'application/json' } }));
+          estCachePut(EST_INDICE, new Response(txt, { headers: { 'Content-Type': 'application/json' } }));
         }
       } catch(e){ data = null; }
     }
-    if (!data) data = await estCacheJson('indice.json');
+    if (!data) data = await estCacheJson(EST_INDICE);
     EST_IDX = (data && Array.isArray(data.platos)) ? data : null;
     EST_IDX_FALLO = !EST_IDX;
     EST_IDX_PROM = null;
@@ -7889,8 +7909,10 @@ function estPlatosDe(c){
 // se exige que los nombres se parezcan: si un ciclo futuro cambia el orden, el
 // cruce falla CERRADO —el plato se queda con los datos del índice y "sin dato"
 // donde el índice calla— y nunca le presta la matriz de otro plato.
-// La cena todavía es la del DISHES antiguo, sin slots: se cruza por nombre
-// dentro del mismo día.
+// La cena 2026 trae en el índice el id de su ficha (`hb`): cruce exacto, y aun
+// así se exige el mismo nombre, para que un índice viejo contra un Menú nuevo
+// (o al revés) falle cerrado. Un índice sin `hb` (el ciclo anterior) se cruza
+// por nombre dentro del mismo día, como antes.
 function estPalabras(s){ return estFold(s).replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length > 3); }
 function estParecido(a, b){
   const A = estPalabras(a), B = new Set(estPalabras(b));
@@ -7899,6 +7921,10 @@ function estParecido(a, b){
 }
 function estPlatoApp(p){
   if (!p) return null;
+  if (p.hb){
+    const d = DISHES.find(x => x.id === p.hb);
+    return d && estFold(d.name) === estFold(p.nombre) ? d : null;
+  }
   const dia = String(p.dia), o = Number(p.orden);
   if (p.servicio === 'almuerzo'){
     let course, slot = null;
@@ -7932,7 +7958,7 @@ function estNoAptoIdx(p, apt){
 // "¿Qué le puedo dar a un vegano?" → {v:'si'|'cond'|'nd'|'no', nota, conflicto}
 function estApto(p, apt){
   const noIdx = estNoAptoIdx(p, apt);
-  const d  = p.servicio === 'almuerzo' ? estPlatoApp(p) : null;
+  const d  = estPlatoApp(p);
   const ax = estEje(apt);
   if (d && menuHasMatrix(d) && ax){
     const v = dietVerdict(d, ax);
@@ -7957,17 +7983,22 @@ function estLleva(p, alg){
   // (una mantequilla puede ser apta sin lactosa y seguir siendo lácteo), así
   // que la matriz sólo SUMA lácteos cuando dice 0, nunca contradice.
   const ax  = { 'frutos secos':'fs', 'mariscos':'mar', 'gluten':'ge', 'lacteos':'lac' }[k];
-  const d   = ax && p.servicio === 'almuerzo' ? estPlatoApp(p) : null;
+  const d   = ax ? estPlatoApp(p) : null;
   const v   = d && menuHasMatrix(d) ? dietVerdict(d, ax) : undefined;
   if (v === '*') return { v:'cond', nota:(d.dietNotes || {})[ax] || '' };
   if (idx)       return { v:'si', conflicto: v === 1 && ax !== 'lac' };
   if (v === 0)   return { v:'si', soloMenu:true };
+  // Sustancia que la matriz no mide, en un plato cuyo índice sólo trae la
+  // matriz: no hay dato, y eso no es lo mismo que "no lo lleva".
+  if (p.alergenos_parcial && !ax) return { v:'nd' };
   return null;
 }
 function estAlgLinea(p){
   const a = p.alergenos || [];
-  return a.length ? `<span class="est-alg">${t('estLleva')}: ${a.map(vjEsc).join(' · ')}</span>`
-                  : `<span class="est-alg nodata">${t('estNoAlg')}</span>`;
+  const lleva = a.length ? `<span class="est-alg">${t('estLleva')}: ${a.map(vjEsc).join(' · ')}</span>` : '';
+  // Cena 2026: la lista sale de la matriz, que sólo mide cuatro sustancias.
+  if (p.alergenos_parcial) return lleva + `<span class="est-alg nodata">${t('estAlgParcial')}</span>`;
+  return lleva || `<span class="est-alg nodata">${t('estNoAlg')}</span>`;
 }
 
 // --- Reproductor: carga ---------------------------------------------------------
@@ -7993,7 +8024,7 @@ async function estCargar(c){
   if (!vivo()) return;
   if (!EST_IDX){ c.estado = estOrigenActivo() ? 'sinindice' : 'nopub'; return estRepintar(); }
 
-  const pA = `audio/${c.key}.mp3`, pJ = `audio/${c.key}.json`;
+  const pA = `${estArchivo(c.key)}.mp3`, pJ = `${estArchivo(c.key)}.json`;
   if (estOnline() && EST_AVAIL === null) EST_AVAIL = await estListar();
   if (!vivo()) return;
   const enRed  = estOnline() && EST_AVAIL !== null;
@@ -8234,12 +8265,12 @@ async function estDescargar(){
   // Que el navegador no desaloje estos datos por su cuenta cuando le falte
   // espacio. Instalada en el home screen ya es así; en una pestaña, lo pide.
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
-  const pA = `audio/${c.key}.mp3`, pJ = `audio/${c.key}.json`;
+  const pA = `${estArchivo(c.key)}.mp3`, pJ = `${estArchivo(c.key)}.json`;
   // El audio ya está en memoria (se bajó para escucharlo): no se baja dos veces.
   const okA = await estCachePut(pA, new Response(c.blob, { headers: { 'Content-Type': c.blob.type || 'audio/mpeg', 'X-Est-Dur': String(c.dur) } }));
   const okJ = okA === true ? await estCachePut(pJ, new Response(JSON.stringify(c.meta), { headers: { 'Content-Type': 'application/json' } })) : okA;
   if (okA === true && okJ === true && EST_IDX)
-    await estCachePut('indice.json', new Response(JSON.stringify(EST_IDX), { headers: { 'Content-Type': 'application/json' } }));
+    await estCachePut(EST_INDICE, new Response(JSON.stringify(EST_IDX), { headers: { 'Content-Type': 'application/json' } }));
   EST_DL[c.key] = { estado: (okA === true && okJ === true) ? 'si' : (okA === 'lleno' || okJ === 'lleno') ? 'lleno' : 'no' };
   if (EST_DL[c.key].estado === 'si') c.deCache = false;
   estPatchDl();
@@ -8302,7 +8333,11 @@ async function estDesdeFicha(appId){
   renderDishes();
   estSubirAlReproductor();
   await estCargarIndice();
-  const p = EST_IDX && EST_IDX.platos.find(q => estPlatoApp(q) === d);
+  // La canasta de pan está en los cuatro audios de cena: se abre la noche que
+  // el Menú tiene a la vista.
+  const cands = EST_IDX ? EST_IDX.platos.filter(q => estPlatoApp(q) === d) : [];
+  const noche = String(currentDay === 'all' ? menuTodayCycleDay() : currentDay);
+  const p = cands.find(q => estAppDay(q) === noche) || cands[0];
   if (p) return estAbrirPlato(p.id);
   // El índice no lo tiene (o no cruza con seguridad): se dice, no se adivina.
   if (EST_IDX){ EST_AVISO = t('estNotInAudio'); estPatchMsg(); }
@@ -8419,7 +8454,8 @@ function estNowHtml(){
     return `<div class="est-kind">${t('estPlato')} ${n}/${total}${p ? ' · ' + vjEsc(estSeccion(p)) : ''}</div>
       <div class="est-name">${vjEsc((p && p.nombre) || m.nombre || m.id)}</div>`;
   }
-  const lbl = m.tipo === 'repaso' ? t('estNowRepaso') : m.tipo === 'cierre' ? t('estNowCierre') : t('estNowIntro');
+  const lbl = m.tipo === 'repaso' ? t('estNowRepaso') : m.tipo === 'cierre' ? t('estNowCierre')
+            : m.tipo === 'maridaje' ? t('estNowMaridaje') : t('estNowIntro');
   return `<div class="est-kind">${donde}</div><div class="est-name dim">${lbl}</div>`;
 }
 function estMsgHtml(){
@@ -8439,7 +8475,7 @@ function estTicksHtml(){
   if (!c || !c.marcas || !c.dur) return '';
   return c.marcas.map(m => {
     const l = (m.inicio / c.dur * 100).toFixed(2), w = ((m.fin - m.inicio) / c.dur * 100).toFixed(2);
-    if (m.tipo === 'repaso' || m.tipo === 'cierre') return `<span class="est-seg" style="left:${l}%;width:${w}%"></span>`;
+    if (m.tipo === 'repaso' || m.tipo === 'cierre' || m.tipo === 'maridaje') return `<span class="est-seg" style="left:${l}%;width:${w}%"></span>`;
     return m.inicio > 0 ? `<span class="est-tick" style="left:${l}%"></span>` : '';
   }).join('');
 }
@@ -8461,6 +8497,7 @@ function estListaHtml(c){
     }
     else if (m.tipo === 'repaso'){ cls += ' rep'; nombre = t('estRepaso'); sub = `${t('estTras')} ${n} ${t('estResults')}`; }
     else if (m.tipo === 'cierre'){ cls += ' rep'; nombre = t('estCierre'); }
+    else if (m.tipo === 'maridaje'){ cls += ' rep'; nombre = t('estMaridaje'); }
     else { cls += ' rep'; nombre = t('estIntro'); }
     return `<button class="${cls}" data-i="${i}" onclick="estFila(${i})"><span class="est-row-t">${estMMSS(m.inicio)}</span>`
          + `<span class="est-row-n">${vjEsc(nombre)}</span>${sub ? `<span class="est-row-s">${vjEsc(sub)}</span>` : ''}</button>`;
@@ -8526,7 +8563,8 @@ function estPatchTexto(forzar){
     const p = estPlato(m.id);
     html = p ? `<span class="est-text-d">${vjEsc(p.descripcion)}</span>${estAlgLinea(p)}` : '';
   } else if (m){
-    html = `<span class="est-text-off">${m.tipo === 'repaso' ? t('estTextRepaso') : m.tipo === 'cierre' ? t('estTextCierre') : t('estTextIntro')}</span>`;
+    html = `<span class="est-text-off">${m.tipo === 'repaso' ? t('estTextRepaso') : m.tipo === 'cierre' ? t('estTextCierre')
+                                       : m.tipo === 'maridaje' ? t('estTextMaridaje') : t('estTextIntro')}</span>`;
   }
   box.innerHTML = html;
   box.scrollTop = 0;
@@ -8602,9 +8640,12 @@ function estRenderAlergenos(){
   const platos = EST_IDX.platos.filter(p => EST_ALG_CICLO || estAppDay(p) === day).sort(estOrden);
   let grupos;
   if (EST_ALG_MODE === 'lleva'){
-    const si = [], cond = [];
-    platos.forEach(p => { const v = estLleva(p, EST_ALG_SEL); if (v) (v.v === 'cond' ? cond : si).push([p, v]); });
-    grupos = [['estGrpLleva', si], ['estGrpCond', cond]];
+    const si = [], cond = [], nd = [];
+    platos.forEach(p => {
+      const v = estLleva(p, EST_ALG_SEL);
+      if (v) (v.v === 'cond' ? cond : v.v === 'nd' ? nd : si).push([p, v]);
+    });
+    grupos = [['estGrpLleva', si], ['estGrpCond', cond], ['estGrpNd', nd]];
   } else {
     const g = { si:[], cond:[], nd:[], no:[] };
     platos.forEach(p => { const v = estApto(p, EST_ALG_SEL); g[v.v].push([p, v]); });
@@ -8616,7 +8657,10 @@ function estRenderAlergenos(){
     const rows = list.map(([p, v]) => estAlgFila(p, v, k)).join('');
     // Los no aptos quedan plegados: saber qué NO servir importa, pero la
     // pregunta de pasillo es qué SÍ.
-    if (k === 'estGrpNo') return `<details class="est-grp"><summary class="mn-sec-head">${head}</summary>${rows}</details>`;
+    // Los "sin dato" de "Lleva…" (la cena 2026 entera, para lo que la matriz
+    // no mide) también: se ven contados, y se abren para revisar uno por uno.
+    if (k === 'estGrpNo' || (k === 'estGrpNd' && EST_ALG_MODE === 'lleva'))
+      return `<details class="est-grp"><summary class="mn-sec-head">${head}</summary>${rows}</details>`;
     return `<div class="est-grp"><div class="mn-sec-head">${head}</div>${rows}</div>`;
   }).join('');
   return `<div class="est">${ctl}${chips}${body || `<div class="empty-state">${t('noDishes')}</div>`}</div>`;

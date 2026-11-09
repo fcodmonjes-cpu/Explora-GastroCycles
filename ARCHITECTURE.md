@@ -386,9 +386,10 @@ repo —`index.html` incluido, con sus recetas y proveedores— es público para
 quien tenga la URL.
 
 ```
-estudio/indice.json                    los platos (id d{día}{a|c}-{orden})
-estudio/audio/dia{N}-{servicio}.mp3    un audio por servicio (8)
-estudio/audio/dia{N}-{servicio}.json   sus marcas {duracion, marcas:[{id,tipo,inicio,fin}]}
+estudio/indice-2026-11.json                 los platos (id d{día}{a|c}-{orden})
+estudio/audio/dia{N}-almuerzo.mp3           un audio por servicio (8)…
+estudio/audio/dia{N}-cena-2026-11.mp3       …con el sufijo del ciclo si cambió
+(.json al lado de cada mp3)                  sus marcas {duracion, marcas:[{id,tipo,inicio,fin}]}
 ```
 
 En `localhost` el módulo lee la misma estructura desde `/estudio-local/`
@@ -431,12 +432,22 @@ staging, 200. Así se armó, por si hay que rehacerlo:
 4. Subir `indice.json` y `audio/*` a la carpeta `estudio/` desde la consola.
 5. `EST_STORAGE_ON = true` → staging → QA en iPhone → main.
 
-**Cambiar de ciclo sin tocar código:** regenerar (`gen_guiones.py` →
-`generar_audio_menu.py`), recodificar a 64 kbps mono, y subir encima con los
-mismos nombres. Un audio que falta no rompe nada: el reproductor lo dice y
-muestra los platos con su texto. Un teléfono que ya había descargado la versión
-anterior lo detecta solo (la duración de las marcas nuevas no coincide con la
-guardada) y el botón pasa a **Actualizar**.
+**Cambiar de ciclo: archivos nuevos AL LADO, y una constante.** El bucket es
+uno solo para producción, staging y previews. Si un ciclo nuevo se sube encima
+con los mismos nombres, producción cambia de audio el mismo minuto, aunque su
+Menú siga mostrando la carta anterior (pasó a revisión el 2026-11-09, con la
+cena 2026 en staging y la de 2025 en producción). Por eso cada ciclo se sube
+con sufijo —`estudio/indice-2026-11.json`, `estudio/audio/dia{N}-cena-2026-11.mp3`
+y su `.json`— y el código dice cuál lee (`EST_INDICE` y `estArchivo()`, STATE
+TOP). Staging se prueba con los archivos nuevos mientras producción sigue con
+los viejos; el merge a main cambia los dos a la vez. Los archivos del ciclo
+anterior se borran de Storage sólo después de ese merge. Receta: regenerar
+(`gen_guiones.py` → `generar_audio_menu.py`), recodificar a 64 kbps mono, subir
+con el sufijo nuevo, cambiar las dos constantes. Un audio que falta no rompe
+nada: el reproductor lo dice y muestra los platos con su texto. Un teléfono que
+había descargado el ciclo anterior ve el nuevo como «Descargar» (otra clave de
+cache); la descarga vieja queda huérfana en `ata-estudio-v1` hasta que se
+limpie.
 
 **Carga en background, cero costo en el arranque.** Nada se pide al abrir la
 página. El índice (~90 KB) se baja la primera vez que se entra a Estudio y queda
@@ -453,16 +464,32 @@ y **no** precachea audio; sólo aprendió dos cosas: no borrar los buckets
 garzón) y no meter `/estudio-local/` en el cache del core. La clave del cache es
 una URL lógica del propio origen, no la de Storage: el token cambia cada hora.
 
-**Alérgenos: dos fuentes, una regla.** Almuerzo lee la **matriz del Handbook**
-(verificada contra el asesor, con sus notas de condición); cena lee
-`indice.json`, porque la cena del Menú todavía es el `DISHES` antiguo sin
-matriz. El cruce índice↔Menú es por **posición fija** (orden 1-6 bandejas, 7
-sopa, 8-11 principales, 12-14 postres) **más** parecido de nombre: si un ciclo
-futuro cambia el orden, falla cerrado y nunca presta la matriz de otro plato.
-Medido: 56/56 almuerzo, 44/44 cena. Sin dato ≠ apto, y no hay verde. Cuando la
-ficha del Menú es **más permisiva** que el índice del audio, el plato no sale
-como apto: sale "con condición" y la discrepancia escrita (hoy: Membrillos y
-Piña, veganos según la ficha, no aptos según el índice).
+**Alérgenos: una fuente, la matriz.** Almuerzo y cena leen la **matriz del
+Handbook** (verificada contra el asesor, con sus notas de condición). El almuerzo
+se cruza por **posición fija** (orden 1-6 bandejas, 7 sopa, 8-11 principales,
+12-14 postres) **más** parecido de nombre; la cena 2026 trae en el índice el id
+de su ficha (`hb`) y se cruza exacto, exigiendo además el mismo nombre. Los dos
+fallan cerrado: un índice de otro ciclo nunca presta la matriz de otro plato.
+Medido: 56/56 almuerzo, 52/52 cena. Sin dato ≠ apto, y no hay verde. Cuando la
+ficha del Menú es **más permisiva** que el índice, el plato sale "con condición"
+y la discrepancia escrita (hoy: Membrillos y Piña, veganos según la ficha, no
+aptos según el índice). La cena 2026 **no trae lista de alérgenos**, sólo la
+matriz de 9 ejes: el índice marca `alergenos_parcial`, la lista sale de los ejes
+que nombran sustancia (mariscos, frutos secos, gluten, lácteos) y para pescado,
+huevo, soya, sésamo, mostaza y alcohol la vista de alérgenos dice **"sin dato —
+consultar cocina"** (plegado, contado), nunca "no lo lleva".
+
+**El ciclo de cena 2026 (2026-11-09).** Fuente en `audios-menu-2026/` (al lado de
+la del ciclo anterior, que queda de archivo). Lo único escrito a mano son los
+textos narrados (`datos_cena_2026.py`); nombre, posición, matriz, condiciones y
+vinos salen de `cena_handbook.json`, exportado del `index.html`, así que el audio
+no puede contradecir a la ficha. Cada noche: la **canasta** al comienzo (en los
+cuatro audios: repetición espaciada gratis), los 5 miniplatos, 4 principales y 3
+postres; repasos cada 4; la prueba de nombres; y después un bloque nuevo,
+**maridaje** (tipo `maridaje` en las marcas): suena el plato, "¿con qué vino?",
+4 s de silencio y el vino con su porqué. Es recuperación activa, así que el texto
+no se ve ahí, igual que en un repaso. "Escuchar" en la canasta abre la noche que
+el Menú tiene a la vista. El almuerzo no cambió (ya era el de 2026).
 
 **Idioma: sólo ES, marcado como interno.** Decisión del owner: el módulo es para
 el equipo y el contenido está en español. Las claves `est*` existen sólo en
