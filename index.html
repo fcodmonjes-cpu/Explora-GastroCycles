@@ -7835,7 +7835,8 @@ async function estFetch(path){
   return fetch(estUrl(path), { headers: await estHeaders(), cache: 'no-store' });
 }
 // Qué audios existen, en UN pedido. Así un audio que todavía no se subió no
-// cuesta un 404 en la consola: simplemente no se pide.
+// cuesta un 404 en la consola: simplemente no se pide. Si la lista no contesta
+// (null), estCargar pide igual: la lista es un ahorro, no una condición.
 async function estListar(){
   try {
     if (EST_LOCAL){
@@ -7847,7 +7848,8 @@ async function estListar(){
     }
     const r = await fetch(`https://firebasestorage.googleapis.com/v0/b/${EST_BUCKET}/o?prefix=${encodeURIComponent('estudio/audio/')}`,
                           { headers: await estHeaders(), cache: 'no-store' });
-    if (!r.ok) return null;
+    // 400 = reglas de Storage sin `rules_version = '2'` (la v1 no deja listar).
+    if (!r.ok){ console.warn('[estudio] no se pudo listar estudio/audio/ — HTTP ' + r.status); return null; }
     const j = await r.json();
     return new Set((j.items || []).map(it => String(it.name).replace(/^estudio\//, '')));
   } catch(e){ return null; }
@@ -8027,17 +8029,23 @@ async function estCargar(c){
   const pA = `${estArchivo(c.key)}.mp3`, pJ = `${estArchivo(c.key)}.json`;
   if (estOnline() && EST_AVAIL === null) EST_AVAIL = await estListar();
   if (!vivo()) return;
-  const enRed  = estOnline() && EST_AVAIL !== null;
-  const aRed   = enRed && estHay(pA);
+  // Con red y sin lista (reglas que no dejan listar, un 5xx) no se sabe qué hay
+  // en Storage: se pide igual. Un 404 en la consola vale menos que un Estudio
+  // mudo diciendo "sin conexión" con señal y con los audios en su lugar
+  // (pasó el 2026-11-09).
+  const enRed  = estOnline();
+  const hay    = p => enRed && (EST_AVAIL === null || estHay(p));
+  const aRed   = hay(pA);
   const cacheA = await estCacheGet(pA);
   let meta = null, metaDeRed = false;
-  if (enRed && estHay(pJ)){
+  if (hay(pJ)){
     try { const r = await estFetch(pJ); if (r.ok){ meta = await r.json(); metaDeRed = true; } } catch(e){}
   }
   if (!meta && cacheA) meta = await estCacheJson(pJ);
   if (!vivo()) return;
   if (!meta || !Array.isArray(meta.marcas) || !meta.marcas.length || !(cacheA || aRed)){
     // Sin red no se sabe si el audio existe: el aviso dice lo que sí se sabe.
+    // "Sin conexión" sólo si de verdad no hay red.
     c.estado = 'falta'; c.sinRed = !enRed; return estRepintar();
   }
   // ¿La descarga guardada es la de este audio? Si se regeneró, sus marcas
