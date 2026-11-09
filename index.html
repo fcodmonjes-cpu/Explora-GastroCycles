@@ -2208,9 +2208,43 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
 @keyframes introRise { to { opacity:1; transform:translateY(0); } }
 @keyframes introRule { to { width:96px; } }
 @keyframes introFade { to { opacity:1; } }
+/* Aviso de la carta de cena nueva (2026-11, con fecha de caducidad). Va en
+   absoluto, debajo del centro, para que la marca no se corra cuando aparece:
+   el telón sigue siendo el mismo y el aviso se le suma abajo. */
+#intro-curtain.con-aviso { cursor:pointer; }
+.intro-aviso { position:absolute; left:50%; top:calc(50% + 62px); width:min(300px, calc(100% - 2rem)); transform:translate(-50%, 6px); display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center; opacity:0; transition:opacity .6s ease, transform .6s cubic-bezier(0.2,0.7,0.2,1); }
+.intro-aviso.in { opacity:1; transform:translate(-50%, 0); }
+.intro-aviso-k { font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#c07d2a; margin-bottom:3px; }
+.intro-aviso-t { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:21px; line-height:1.22; color:var(--text); text-wrap:balance; }
+.intro-aviso-s { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:16px; line-height:1.3; color:var(--text-secondary); text-wrap:balance; }
+.intro-aviso-cta { margin-top:16px; font-family:'Courier Prime','Courier New',monospace; font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase; color:#c07d2a; background:none; border:0.5px solid rgba(192,125,42,0.55); border-radius:999px; padding:9px 18px; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.intro-aviso-cta:active { background:rgba(192,125,42,0.14); }
+.intro-aviso-hint { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:12.5px; color:var(--text-tertiary); }
+/* La hoja arriba de la cena: doble filete dorado, como el inserto de una carta
+   impresa. El filete se dibuja una vez por sesión (.anim), no en cada render. */
+.mn-aviso { position:relative; margin:0 0 1.1rem; padding:18px 34px 15px; text-align:center; overflow:hidden; }
+.mn-aviso-fr, .mn-aviso-fr2 { position:absolute; pointer-events:none; }
+.mn-aviso-fr  { inset:0;   border:0.5px solid rgba(192,125,42,0.55); border-radius:2px; }
+.mn-aviso-fr2 { inset:3px; border:0.5px solid rgba(192,125,42,0.25); border-radius:1px; }
+.mn-aviso-k { font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.2em; text-transform:uppercase; color:#c07d2a; }
+.mn-aviso-t { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:22px; line-height:1.15; color:var(--text); margin:6px 0 5px; text-wrap:balance; }
+.mn-aviso-p { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-size:15px; line-height:1.4; color:var(--text-secondary); margin:0; text-wrap:balance; }
+.mn-aviso-x { position:absolute; top:4px; right:4px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; background:none; border:none; font-family:'Courier Prime','Courier New',monospace; font-size:15px; color:var(--text-tertiary); cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.mn-aviso.anim .mn-aviso-fr  { clip-path:inset(0 100% 100% 0); animation:mnAvisoTrazo 1.1s cubic-bezier(0.6,0,0.2,1) 0.15s forwards; }
+.mn-aviso.anim .mn-aviso-fr2 { clip-path:inset(100% 0 0 100%); animation:mnAvisoTrazo 1.1s cubic-bezier(0.6,0,0.2,1) 0.4s forwards; }
+.mn-aviso.anim .mn-aviso-k, .mn-aviso.anim .mn-aviso-t, .mn-aviso.anim .mn-aviso-p, .mn-aviso.anim .mn-aviso-x { opacity:0; animation:introFade 0.6s ease forwards; }
+.mn-aviso.anim .mn-aviso-k { animation-delay:0.7s; }
+.mn-aviso.anim .mn-aviso-t { animation-delay:0.9s; }
+.mn-aviso.anim .mn-aviso-p { animation-delay:1.1s; }
+.mn-aviso.anim .mn-aviso-x { animation-delay:1.3s; }
+@keyframes mnAvisoTrazo { to { clip-path:inset(0 0 0 0); } }
+.mn-aviso.cerrando { height:0 !important; padding-top:0; padding-bottom:0; margin-bottom:0; opacity:0; transition:height .35s ease, padding .35s ease, margin .35s ease, opacity .2s ease; }
 @media (prefers-reduced-motion: reduce) {
   .intro-mark, .intro-tagline { animation:none; opacity:1; transform:none; }
   .intro-rule { animation:none; width:96px; }
+  .intro-aviso { transition:none; }
+  .mn-aviso.anim .mn-aviso-fr, .mn-aviso.anim .mn-aviso-fr2 { animation:none; clip-path:none; }
+  .mn-aviso.anim .mn-aviso-k, .mn-aviso.anim .mn-aviso-t, .mn-aviso.anim .mn-aviso-p, .mn-aviso.anim .mn-aviso-x { animation:none; opacity:1; }
   #intro-curtain { transition:opacity .45s ease; }
   #intro-curtain.intro-lift { transform:translateY(0); opacity:0; }
   #gate-curtain .gate-dot, #gate-curtain .gate-key { transition:none; }
@@ -5742,6 +5776,13 @@ const UI = {
     slotVegana:'Vegana', slotMar:'De mar', slotAveCerdo:'Ave / cerdo', slotRes:'Carne de res',
     // Cena 2026: canasta + 5 miniplatos para compartir
     secMiniplatos:'Miniplatos para compartir', miniCount:'5 + canasta', everyNight:'Todas las noches',
+    // Aviso de la carta de cena nueva (2026-11). Interno: sólo ES.
+    avisoCenaK:'Carta de cena', avisoCenaT:'Ya están disponibles los nuevos platos de la cena,',
+    avisoCenaS:'con una amplia propuesta de maridajes.', avisoCenaCta:'Ver la cena',
+    avisoCenaHint:'o toca en cualquier parte para seguir',
+    avisoHojaT:'Nuevos platos y maridajes',
+    avisoHojaP:'Cada plato sugiere uno o dos vinos incluidos, con el porqué en su ficha.',
+    avisoCerrar:'Cerrar aviso',
     slotPan:'Canasta de pan', slotMiniVegano:'Vegano', slotDip:'Dip', slotMiniMar:'Proteína de mar',
     slotMiniCarne:'Proteína de carne', slotEnsalada:'Ensalada',
     dietVeg:'Vegano', dietVgt:'Vegetariano', dietPesc:'Pescetariano',
@@ -7340,6 +7381,50 @@ function menuRenderAlmuerzo(){
 // Misma gramática que el almuerzo: todo por posición fija. La canasta abre la
 // sección de miniplatos —la tabla del asesor la pone ahí, y llega a la mesa
 // con ellos— y con ella la grilla queda en 3 filas parejas de 2.
+// ── Aviso de la carta de cena nueva (2026-11) ─────────────────────────────
+// Dos piezas, una sola vez por aparato y con fecha de caducidad:
+//  · el telón de entrada, en el primer arranque tras el merge, dice en dos
+//    líneas que los platos nuevos y sus maridajes ya están, y se levanta con
+//    un toque en cualquier parte (el botón lleva directo a Menú › Cena);
+//  · una hoja con doble filete arriba de la cena, que se queda hasta que
+//    alguien la cierra con la ×. Es la que ve quien tiene la PWA abierta desde
+//    antes y nunca pasa por el telón.
+// Sólo para aparatos que ya habían entrado ('ata.gate.v1', el GATE_FLAG): quien
+// entra por primera vez conoce esta carta como "la carta", no como novedad.
+// Pasada la fecha nada de esto se dibuja; retirarlo en la próxima pasada.
+// Constantes como literales dentro de las funciones, a propósito: renderDishes
+// puede correr antes de que se evalúe un const de más abajo (TDZ).
+var AVISO_CENA_ANIMADA = false;   // el filete se dibuja una vez por sesión
+function avisoCenaVigente(){ return Date.now() < new Date(2026, 11, 1).getTime(); }   // hasta el 30-11 inclusive
+function avisoCenaLs(k){ try { return localStorage.getItem(k); } catch(e){ return '1'; } }   // sin storage: no avisar
+function avisoCenaPendiente(){
+  return avisoCenaVigente() && avisoCenaLs('ata.gate.v1') === '1' && !avisoCenaLs('ata.aviso.cena2026');
+}
+function avisoCenaVisto(){ try { localStorage.setItem('ata.aviso.cena2026', '1'); } catch(e){} }
+function menuIrACena(){
+  if (currentTab !== 'menus') setTab('menus', document.querySelector('.main-tabs .tab'));
+  menuSetService('cena');
+}
+function menuAvisoCena(){
+  if (!avisoCenaVigente() || avisoCenaLs('ata.gate.v1') !== '1' || avisoCenaLs('ata.aviso.cena2026.hoja')) return '';
+  const anim = !AVISO_CENA_ANIMADA; AVISO_CENA_ANIMADA = true;
+  return `<div class="mn-aviso${anim ? ' anim' : ''}" id="mn-aviso">`
+       + `<span class="mn-aviso-fr"></span><span class="mn-aviso-fr2"></span>`
+       + `<button type="button" class="mn-aviso-x" onclick="menuAvisoCerrar()" aria-label="${t('avisoCerrar')}">×</button>`
+       + `<div class="mn-aviso-k">${t('avisoCenaK')}</div>`
+       + `<div class="mn-aviso-t">${t('avisoHojaT')}</div>`
+       + `<p class="mn-aviso-p">${t('avisoHojaP')}</p></div>`;
+}
+function menuAvisoCerrar(){
+  try { localStorage.setItem('ata.aviso.cena2026.hoja', '1'); } catch(e){}
+  const el = document.getElementById('mn-aviso');
+  if (!el) return;
+  el.style.height = el.offsetHeight + 'px';
+  void el.offsetHeight;                 // fija el alto de partida antes de colapsar
+  el.classList.add('cerrando');
+  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 380);
+}
+
 function menuRenderCena(){
   const day = (currentDay === 'all') ? menuTodayCycleDay() : currentDay;
   const of  = (course) => menuOrden(DISHES.filter(d => d.day === day && d.course === course &&
@@ -7350,7 +7435,7 @@ function menuRenderCena(){
   // Sin `slot` (si se restituye la cena anterior) cada sección vuelve a la
   // lista plana sin rótulos, como ya hacían los postres.
   const plano = (list) => menuVisible(list).map(d => menuTile(d, '', false)).join('');
-  let html = '';
+  let html = menuAvisoCena();
   if (minis.length || pan.length){
     const tiles = menuSlotTiles(pan, [CENA_PAN_SLOT])
                 + (minis.some(m => m.slot) ? menuSlotTiles(minis, MINIPLATO_SLOTS) : plano(minis));
@@ -16853,10 +16938,35 @@ function cfMarkDone(id){
     curtain.classList.add('intro-lift');
     setTimeout(() => { if (curtain.parentNode) curtain.parentNode.removeChild(curtain); }, 1100);
   }
+  // Aviso de la carta de cena nueva (ver avisoCenaPendiente): en vez de
+  // levantarse solo, el telón suma dos líneas debajo de la marca y espera un
+  // toque, en cualquier parte. Una vez por aparato; el botón lleva a la cena.
+  let avisando = false;
+  function avisar(){
+    if (avisando || lifted) return; avisando = true;
+    const el = document.createElement('div');
+    el.className = 'intro-aviso';
+    el.innerHTML = `<div class="intro-aviso-k">${t('avisoCenaK')}</div>`
+                 + `<div class="intro-aviso-t">${t('avisoCenaT')}</div>`
+                 + `<div class="intro-aviso-s">${t('avisoCenaS')}</div>`
+                 + `<button type="button" class="intro-aviso-cta">${t('avisoCenaCta')}</button>`
+                 + `<div class="intro-aviso-hint">${t('avisoCenaHint')}</div>`;
+    curtain.appendChild(el);
+    curtain.classList.add('con-aviso');
+    curtain.removeAttribute('aria-hidden');
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+    curtain.addEventListener('click', e => {
+      avisoCenaVisto();
+      if (e.target.closest('.intro-aviso-cta')){ try { menuIrACena(); } catch(err){} }
+      lift();
+    });
+  }
+  let seguir = lift;
+  try { if (avisoCenaPendiente()) seguir = avisar; } catch(e){}
   Promise.allSettled([staffingFetch()]).then(() => {   // LATENTE Postres/86: fetches retirados 2026-06-22
-    setTimeout(lift, Math.max(0, MIN_MS - (clock() - START)));
+    setTimeout(seguir, Math.max(0, MIN_MS - (clock() - START)));
   });
-  setTimeout(lift, MAX_MS);
+  setTimeout(seguir, MAX_MS);
 })();
 
 // ── Comandera module ────────────────────────────────────────────────────

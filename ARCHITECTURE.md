@@ -241,6 +241,17 @@ owner** (2026-11-03) sobre los vinos incluidos, en un bloque aparte
 Los platos 2026 del almuerzo siguen sin vino. Después se edita desde la ficha
 como cualquier maridaje (§3.7).
 
+**El aviso de la carta nueva (2026-11, caduca el 30-11).** Dos piezas, una vez
+por aparato y sólo en los que ya habían entrado (`ata.gate.v1`): (1) en el
+primer arranque, el telón de intro no se levanta solo — suma debajo de la marca
+«Ya están disponibles los nuevos platos de la cena, con una amplia propuesta de
+maridajes» y espera un toque en cualquier parte; el botón «Ver la cena» lleva a
+Menú › Cena (`menuIrACena`). Marca `ata.aviso.cena2026`. (2) Una hoja con doble
+filete dorado arriba de la cena (`menuAvisoCena`, primera pieza de
+`menuRenderCena`), que se queda hasta la × (`ata.aviso.cena2026.hoja`) y es la
+que ve quien tiene la PWA abierta desde antes. Texto sólo ES (interno), sin
+color nuevo. Pasada la fecha no se dibuja nada: retirar en la próxima pasada.
+
 **El bar absorbió Cocktails.** Toda la carta de bar (comida + tragos) vive en el
 segmento BAR; la tab Cocktails desapareció de `.main-tabs` (de 7 a 6 tabs) y
 `setTab('cocktails')` quedó como alias que entra a BAR › Tragos.
