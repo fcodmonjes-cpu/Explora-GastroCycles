@@ -50,7 +50,9 @@ encima de las reglas.
 ## 2. Storage — los bytes
 
 Consola de Firebase → *Storage* → *Rules*. Agregar junto a los bloques de
-`estudio/` y `recepcion/`, dentro de `match /b/{bucket}/o { … }`:
+`estudio/` y `recepcion/`, dentro de `match /b/{bucket}/o { … }`, **sin tocar la
+primera línea `rules_version = '2';`**: sin ella Storage no deja listar y Estudio
+se queda sin audios (pasó en 2026-11; ver ARCHITECTURE.md §3.4).
 
 ```
 match /viajeros_fotos/{pid}/{archivo} {

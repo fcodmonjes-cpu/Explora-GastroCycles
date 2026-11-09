@@ -422,6 +422,12 @@ staging, 200. Así se armó, por si hay que rehacerlo:
      }
    }
    ```
+   **La primera línea, `rules_version = '2';`, no es decoración.** Sin ella las
+   reglas corren en versión 1, que prohíbe listar: el `?prefix=estudio/audio/`
+   de `estListar()` responde 400 y Estudio dice "Sin conexión, y este audio no
+   está descargado" con red y con los archivos en su lugar (almuerzo y cena).
+   Se perdió al pegar el bloque de `viajeros_fotos/` (2026-11) y se repuso el
+   2026-11-09. Al tocar las reglas: copiar las vigentes enteras, línea 1 incluida.
 3. CORS del bucket (el `fetch` con header de auth hace preflight). `origin: *`
    es deliberado: la seguridad la ponen las reglas, no el origen, y así también
    funcionan los previews por commit, que no tienen URL fija.
