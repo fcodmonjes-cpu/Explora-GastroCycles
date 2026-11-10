@@ -1,4 +1,4 @@
-// Service worker del ATA Handbook.
+// Service worker de ATA Tools (antes The ATA Handbook).
 //
 // ESTRATEGIA: network-first, cache como red de emergencia. La app es una
 // herramienta de operación en vivo: mostrar una versión vieja del handbook a
@@ -17,10 +17,12 @@
 // Al cambiar un archivo del CORE hay que subir la versión del cache: 'activate'
 // borra todo bucket que no se llame igual, y sin ese bump los teléfonos que ya
 // tienen la app siguen sirviendo la copia vieja desde el cache.
-const CACHE = 'ata-handbook-v3';
+// El nombre del bucket conserva el prefijo 'ata-handbook' a propósito: sólo
+// cambia el número. Renombrarlo no aporta nada y el activate igual lo limpia.
+const CACHE = 'ata-handbook-v4';
 const CORE  = ['/', '/index.html', '/favicon.svg', '/manifest.webmanifest',
-               '/assets/icon-180-v2.png', '/assets/icon-192-v2.png',
-               '/assets/icon-512-v2.png', '/assets/icon-512-maskable-v2.png'];
+               '/assets/icon-180-v3.png', '/assets/icon-192-v3.png',
+               '/assets/icon-512-v3.png', '/assets/icon-512-maskable-v3.png'];
 
 self.addEventListener('install', e => {
   // skipWaiting: la versión nueva toma el control en la siguiente carga, sin

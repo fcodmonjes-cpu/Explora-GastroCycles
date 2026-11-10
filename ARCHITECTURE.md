@@ -1,6 +1,8 @@
-# The ATA Handbook — Arquitectura
+# ATA Tools — Arquitectura
 
-> Un handbook digital de operaciones F&B para Explora Atacama.
+> La caja de herramientas digital de operaciones F&B para Explora Atacama.
+> Nació como manual —**The ATA Handbook**, nombre que tuvo hasta 2026-11— y
+> creció hasta ser un set de herramientas con datos diarios de PGO (§3.9).
 > Single-page, vanilla, sincronizado en tiempo real vía Firebase.
 > Sirve como referencia para extender el programa con menos fricción
 > y como documento explicativo para terceros.
@@ -84,7 +86,7 @@ servicio es peor que no mostrar nada. Siempre se pide a la red primero;
 el cache entra solo cuando se cae el wifi del lodge. Por lo mismo el SW
 **no toca Firebase ni terceros** — los datos vivos nunca se cachean.
 
-**Los íconos llevan versión en el nombre** (`icon-180-v2.png`, …). iOS y
+**Los íconos llevan versión en el nombre** (`icon-180-v3.png`, …). iOS y
 el service worker guardan el ícono por URL: un archivo reescrito en sitio
 NO se actualiza en un teléfono que ya tiene la app instalada. Al cambiar
 el arte hay que subir el sufijo en los tres lugares —
@@ -99,33 +101,39 @@ recorta a un círculo del 80 %, así que reusar ahí el ícono `any` (como se
 hacía hasta 2026-08-16) le comía los bordes a la marca.
 
 **El arte es el telón de intro destilado** — ATA en sienna sobre una regla
-dorada que mide justo el ancho de HANDBOOK. El favicon NO lo copia y sigue
-siendo la "A.": a 16 px en una pestaña un lockup de tres partes es una
-mancha. Cada contexto usa la marca que aguanta su tamaño.
+dorada que mide justo el ancho de TOOLS, con las dos O dibujadas como
+engranajes (v3, 2026-11; la v2 decía HANDBOOK). Se genera en la sesión, no en
+el repo: un HTML de 1024 px con las mismas fuentes y el mismo engranaje del
+sprite, capturado con Chrome headless y reducido con PIL (512/192/180; el
+maskable con el lockup al 78 %). El favicon NO lo copia y sigue siendo la
+"A.": a 16 px en una pestaña un lockup de tres partes es una mancha. Cada
+contexto usa la marca que aguanta su tamaño.
 
 ---
 
 ## 3. Las cinco pantallas (topología)
 
-Header común arriba (título + subtítulo + selector de idioma + logo).
-Debajo, un wrapper "ops-strip" con el **clima de terraza** (módulo `wx`,
-§3.2) y el panel de staffing (turno activo, viajeros). Después, la fila
-de tabs:
+Header común arriba: la marca **ATA Tools** en una línea y el selector de
+idioma. Debajo, el **panel Hoy** (§3.9): fecha y servicio, frescura del sync
+de PGO con su ↻, tres cifras tocables, cumpleaños y rush cuando corresponden,
+y al pie la "ops-strip" con el **clima de terraza** (módulo `wx`, §3.2; el
+panel de staffing sigue latente ahí). Después, la tira de tabs con íconos:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ The ATA Handbook                              [ES][EN][PT]  │
-│ El detalle, a mano.                                          │
-├─────────────────────────────────────────────────────────────┤
-│  22° · ráfagas 53 km/h 15:00                        2.450 m │  ← wx
-├─────────────────────────────────────────────────────────────┤
-│  AM            72 VIAJEROS                                   │
-│  Senior  Percy                                               │
-│  Comedor Nicolás · Sebastián · Diego · Viviana              │
-│  Apoyo   Victor                                              │
-├─────────────────────────────────────────────────────────────┤
-│ [Menú] [Vinos] [PGO] [Comande] [Café] [Experto] [Recepción]  │
-└─────────────────────────────────────────────────────────────┘
+  ATA T⚙⚙LS                                          ES EN PT
+╭─────────────────────────────────────────────────────────────╮
+│ MAR 10 NOV · ● ALMUERZO                  ● HACE 25 MIN ↻     │
+│ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐        │
+│ │      29       │ │       2       │ │       5       │        │  ← abren PGO
+│ │   VIAJEROS    │ │    MENORES    │ │ RESTRICCIONES │        │    filtrado
+│ └───────────────┘ └───────────────┘ └───────────────┘        │
+│ (RUSH 6:30 4 · 7:30 6 · 8:30 4 · HOTEL AM 0 — desayuno)      │
+│               ( CUMPLE HOY )                                 │
+│ ───────────────────────────────────────────────────────────  │
+│ 22° · ráfagas 53 km/h 15:00                         2.450 m  │  ← wx
+╰─────────────────────────────────────────────────────────────╯
+ (ícono)  (ícono)  (ícono)   (ícono)   (ícono)  (ícono)
+  MENÚ    VINOS     PGO     COMANDE     CAFÉ    EXPERTO   (RECEPCIÓN)
                     (contenido de la tab activa)
 ```
 
@@ -892,6 +900,83 @@ suave se cancela.
 
 **Idioma: sólo ES**, como todo lo operativo. La ops-strip se colapsa como en
 Recepción (`body.in-experto`), con la misma compensación de scroll.
+
+---
+
+### 3.9 ATA Tools: la marca y el panel Hoy (2026-11)
+
+**El cambio de nombre.** "The ATA Handbook" describía lo que la app fue al
+principio: un manual. Hoy la mayor parte de su valor está en herramientas
+(Comande, Café, Experto, Quincho, Estudio, el importador de rostros) y en el
+dato diario que PGO sincroniza, y el owner notó que eso se usaba poco: la
+identidad de "manual" ponía la consulta al frente y las herramientas al
+fondo. La marca pasa a **ATA Tools** y la parte de arriba de la pantalla se
+reordena para que lo diario y lo accionable se lea primero.
+
+**La marca.** Dos voces que la app ya tenía, sin fuente ni color nuevos: ATA
+en la Cormorant itálica sienna (el oficio, el lugar) y TOOLS en la Courier
+Prime de los contadores y las tabs (el instrumento). **Las dos O son
+engranajes** (idea del owner): un `<symbol>` en el sprite del comienzo del
+`<body>` (`#ata-gear`, y `#ata-gear-b` girado medio diente). Puntas a 42,
+raíz a 35, hueco de 27, 8 dientes; los centros a **78** de 100 unidades. Ese
+número no es estético: entre 77 y 84 la punta de uno no toca la raíz del otro
+y los dientes se cruzan. Se verificó a máquina (0 choques en todo el giro); la
+primera versión, con centros a 80 y puntas a 46, chocaba.
+
+| Dónde | Cómo gira | Por qué |
+|---|---|---|
+| Header | 40 s la vuelta | Se nota por el rabillo del ojo, como el halo del cumpleaños. |
+| Header, mientras sincroniza PGO | ×14 (`marcaGiro`) | La marca trabaja cuando la app trabaja: `viajerosFetch` y el ↻ del panel la aceleran. |
+| Telón de intro | 7 s | El telón está arriba mientras la app carga. |
+| Gate | 40 s; 3 s verificando la clave | Esperar el PIN no es trabajo; verificarlo sí. |
+| `prefers-reduced-motion` | quietos | — |
+
+`marcaGiro` cambia **`playbackRate` por asignación directa**: conserva
+`currentTime`, así no hay salto de fase y nunca se desengranan.
+`updatePlaybackRate()` quedaba "pending" en las animaciones de SVG y no se
+aplicaba (medido en Chrome headless: 1000 ms de animación por segundo antes y
+después). Cambiar `animation-duration`, en cambio, recalcula la fase y el
+engranaje salta. Es un contador y no un booleano: el ↻ y una revalidación
+pueden solaparse.
+
+La marca vive escrita en el HTML (header y telón: pinta sin JS) y en
+`marcaHtml()` para el gate. `setLang` ya no reescribe el título (un
+`innerHTML` reiniciaría la animación). El subtítulo "Detail, at hand." quedó
+sólo en el telón. **`GATE_EMAIL` y `GATE_SALT` siguen diciendo `ata-handbook`
+a propósito**: son la cuenta de Firebase y la sal del PBKDF2; renombrarlos
+cambia la contraseña derivada del PIN y deja a todos afuera. El bucket del SW
+también conserva el prefijo (`ata-handbook-v4`).
+
+**El panel Hoy.** Lo que antes era una línea mono bajo el título (el banner
+PGO) pasa a ser el primer bloque: `section.hoy` envuelve la cabecera
+(`#hoy-dia`: fecha + servicio, con un punto si está en curso; `#hoy-sync`:
+frescura del sync de PGO con el mismo punto teal/gold/coral de la tab, que es
+también el botón ↻), las tres celdas (`#pgo-banner`, mismo lenguaje que "En el
+lodge" de la tab PGO), el rush y el cumpleaños, y al pie la `ops-strip` de
+siempre (clima). Las celdas siguen siendo puertas: abren PGO ya filtrado
+(`pgoBannerOpen`). El ↻ dejó de tomar un renglón propio.
+
+**Alto reservado** (§6, "nada se mueve bajo el dedo"): las tres celdas existen
+en todos los estados —cargando `·`, sin datos `—`, con cifras— con alto fijo de
+62 px, y el estado vive en el botón de la cabecera. Medido: el Y de
+`.main-tabs` es idéntico cargando, sin datos, actualizando, con falla y
+cargado. Cumpleaños y rush siguen siendo renglones que aparecen con el dato,
+como antes. La cabecera se repinta sola cada minuto (`hoyHeadRender`) sin
+tocar las celdas. En Experto, Recepción y Checklist se esconde el pie (el
+clima ya se escondía; sin él quedaba la regla sola).
+
+**Íconos en la tira.** Monolínea, en `currentColor` (gris en reposo, ámbar en
+la activa), arriba del rótulo y no al lado: así el ancho de cada tab sigue
+siendo el de su palabra y las seis entran en una fila a 375 px (323 de 343,
+medido también en EN y PT). Viven en el mismo sprite (`#i-menu`, `#i-vino`,
+`#i-pgo`, …). El rótulo va en `.tab-l` y `setLang` lo cambia con
+`tabSetLabel`: un `textContent` sobre el botón se llevaría el ícono.
+
+**Lo que no se tocó:** el orden de las tabs y la tab por defecto (Menú). El
+protagonismo de PGO lo da el panel, que está arriba en todas las tabs; mover
+la tira habría costado la memoria muscular del equipo. Una barra inferior fija
+quedó evaluada y diferida: choca con la bandeja del Comande, el editor de la
+carta y los visores.
 
 ---
 
@@ -2395,7 +2480,7 @@ historial: `git show <commit>:"<archivo>"` los recupera.
 - No introducir dependencias (npm, build tools, frameworks) sin discutirlo.
 - No cambiar paleta o tipografías sin aviso.
 - No traducir automáticamente — preguntar si falta un idioma.
-- No borrar contenido del ATA Handbook sin confirmar.
+- No borrar contenido de ATA Tools sin confirmar.
 - No commitear secretos (tokens, credenciales) ni dejarlos en plain text en `.git/config`. Si se necesita autenticar, usar Windows Credential Manager.
 - No commitear material de trabajo pesado (audios, Excel, PDFs de referencia): cada deployment de Vercel lo copia entero y suma contra la cuota.
 

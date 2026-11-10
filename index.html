@@ -6,7 +6,7 @@
      el contenido llega hasta los bordes del iPhone. El respiro contra el notch
      y la barra inferior lo pone .app con env(safe-area-inset-*). -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>The ATA Handbook</title>
+<title>ATA Tools</title>
 <!-- Favicon: A italic gold + dot, eco visual del subtítulo "el detalle, a
      mano". SVG escala sin pérdida; usa Georgia italic como fallback robusto
      porque el contexto del favicon no carga la webfont del documento. El
@@ -15,21 +15,22 @@
      el bg del programa. -->
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <meta name="theme-color" content="#0f0f10">
-<!-- PWA — "Agregar a pantalla de inicio" abre el handbook sin la chrome del
+<!-- PWA — "Agregar a pantalla de inicio" abre ATA Tools sin la chrome del
      browser, como una app. En iOS mandan las metas apple-*; el manifest es
      para Android/Chrome. El apple-touch-icon tiene que ser PNG: iOS ignora el
      SVG y cae a una captura de pantalla como ícono.
      El ícono de la app es el telón de intro destilado: ATA en sienna sobre una
-     regla dorada que mide justo el ancho de HANDBOOK. El favicon NO lo copia y
+     regla dorada que mide justo el ancho de TOOLS, con las O como engranajes
+     (2026-11, ATA Tools; hasta entonces decía HANDBOOK). El favicon NO lo copia y
      sigue siendo la "A." — a 16 px en una pestaña el lockup de tres partes es
      una mancha; cada contexto usa la marca que aguanta su tamaño.
-     Los nombres llevan -v2 a propósito: iOS y el service worker guardan el
+     Los nombres llevan -v3 a propósito: iOS y el service worker guardan el
      ícono por URL, así que un archivo reescrito en sitio no se actualiza.
-     Si algún día cambia el arte, subir a -v3 acá, en el manifest y en sw.js.
+     Si algún día cambia el arte, subir a -v4 acá, en el manifest y en sw.js.
      black-translucent = el fondo del programa pasa por debajo de la barra de
      estado; el texto no se mete ahí gracias al safe-area de .app. -->
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon-180-v2.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon-180-v3.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -131,7 +132,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
        padding: calc(1.5rem + env(safe-area-inset-top)) calc(1rem + env(safe-area-inset-right))
                 calc(1.5rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left)); }
 
-.header { padding: 1rem 0 1.5rem; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between; }
+/* (2026-11) 1rem/1.5rem → 0.35rem/1.15rem: sin subtítulo, la marca va en una
+   sola línea y le deja el alto al panel Hoy. */
+.header { padding: 0.35rem 0 1.15rem; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between; }
 /* Brand title — italic Cormorant Garamond. Bigger than before so the
    serif italic gets the room it needs to feel composed rather than cramped. */
 .header-text h1 { font-family: 'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style: italic; font-weight: 500; font-size: 28px; line-height: 1.15; color: var(--text); letter-spacing: 0.005em; }
@@ -140,6 +143,76 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    three letters anchor the title visually. */
 .ata-emphasis { font-family: 'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style: italic; font-weight: 700; color: #c75c2a; letter-spacing: 0.04em; }
 .header-text p { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+/* ── ATA Tools: la marca (2026-11) ─────────────────────────────────────────
+   Dos voces que la app ya tenía: ATA en la serif itálica sienna (el oficio,
+   el lugar) y TOOLS en la mono de los contadores y las tabs (el instrumento).
+   Las O son engranajes que engranan: giran en sentidos opuestos, lento — una
+   vuelta cada 40 s, se nota por el rabillo del ojo — y se aceleran mientras
+   se sincroniza PGO (marcaGiro, por playbackRate: cambia la velocidad sin
+   saltar de fase, así nunca se desengranan). Sin color ni fuente nuevos.
+   Todo en em: la misma marca sirve al header, al telón y al gate cambiando
+   sólo el font-size del contenedor. */
+.marca { display:inline-flex; align-items:center; gap:0.36em; white-space:nowrap; line-height:1; }
+.marca-ata { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:700; color:#c75c2a; letter-spacing:0.04em; }
+.marca-tools { display:inline-flex; align-items:center; font-family:'Courier Prime','Courier New',monospace; font-style:normal; font-weight:400; font-size:0.6em; letter-spacing:0.22em; color:var(--text); }
+/* Cada engranaje ocupa lo que una O de la mono (0,6em + tracking) y el
+   segundo se monta 0,198em sobre el primero: centros a 78 de 100 unidades
+   (entre 77 y 84: la punta de uno no toca la raíz del otro y los dientes se
+   cruzan; verificado a máquina, 0 choques en todo el giro),
+   el diente de uno entra en el hueco del otro. El translateY baja el par al
+   centro de las mayúsculas (la caja de línea incluye el descendente). */
+.marca-oo { display:inline-flex; align-items:center; margin-right:0.22em; transform:translateY(-0.02em); }
+.marca-gear { display:block; width:0.9em; height:0.9em; fill:currentColor; overflow:visible; }
+.marca-gear.g2 { margin-left:-0.198em; }
+.marca-gear.g1 { animation:marcaGiroH 40s linear infinite; }
+.marca-gear.g2 { animation:marcaGiroA 40s linear infinite; }
+@keyframes marcaGiroH { to { transform:rotate(360deg); } }
+@keyframes marcaGiroA { to { transform:rotate(-360deg); } }
+@media (prefers-reduced-motion: reduce){ .marca-gear.g1, .marca-gear.g2 { animation:none; } }
+.header .marca { font-size:30px; }
+.ata-sprite { position:absolute; width:0; height:0; overflow:hidden; }
+
+/* ── Panel Hoy (2026-11) ────────────────────────────────────────────────────
+   Lo diario de PGO al frente: antes era una línea mono bajo el título y se
+   leía como metadato; ahora es el primer bloque de la pantalla. Mismo
+   lenguaje que las celdas "En el lodge" de la tab PGO (fondo secundario,
+   borde fino, cifra mono), sin color nuevo: teal = menores y gold =
+   restricciones, como siempre. */
+.hoy { margin:0 0 1.35rem; padding:10px 11px 9px; border:0.5px solid var(--border); border-radius:14px; background:rgba(255,255,255,0.018); }
+.hoy-head { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:22px; margin-bottom:8px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; }
+.hoy-dia { color:var(--text-tertiary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.hoy-srv { color:var(--gold); }
+.hoy-srv.is-proximo { opacity:0.7; }
+/* El punto del servicio en curso respira como el AM/PM del staffing: está
+   pasando ahora. Sin el punto, el servicio que viene. */
+.hoy-vivo { display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--gold); margin-right:6px; vertical-align:1px; animation:staffShiftPulse 1800ms ease-in-out infinite; }
+.hoy-sync-slot { flex-shrink:0; }
+.hoy-sync { display:inline-flex; align-items:center; gap:6px; background:none; border:0; padding:4px 0 4px 6px; margin:-4px 0; font:inherit; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; }
+.hoy-sync:active { opacity:0.6; }
+.hoy-sync .vj-dot { width:6px; height:6px; }
+.hoy-sync .pgo-b-icon { font-size:12px; }
+.hoy-sync.is-busy .pgo-b-icon { color:var(--gold); animation:pgoSpin .9s linear infinite; }
+.hoy-sync.is-nueva, .hoy-sync.is-nueva .pgo-b-icon { color:var(--gold); }
+.hoy-sync.is-fallo, .hoy-sync.is-fallo .pgo-b-icon { color:var(--coral); }
+@media (prefers-reduced-motion: reduce){ .hoy-sync.is-busy .pgo-b-icon { animation:none; opacity:0.55; } }
+/* Las tres celdas: alto fijo (62px) en todos los estados — cargando "·",
+   sin datos "—", con cifras — así nada se corre al llegar PGO. */
+.hoy .pgo-banner { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin:0; padding:0; border:0; overflow:visible; }
+.pgo-b-cell { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; height:62px; min-width:0; padding:0 4px; background:var(--bg-secondary); border:0.5px solid var(--border); border-radius:var(--radius-md); font-family:'Courier Prime','Courier New',monospace; color:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:border-color .15s; }
+.pgo-b-cell:active { border-color:var(--gold); }
+@media (hover:hover){ .pgo-b-cell:hover { border-color:var(--border-md); } }
+.pgo-b-cell .pgo-b-num { font-size:25px; line-height:1; }
+.pgo-b-cell .pgo-b-label { font-size:9px; letter-spacing:0.1em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.pgo-b-cell .pgo-b-num.is-espera { color:var(--text-tertiary); }
+.hoy .pgo-b-rush { grid-column:1 / -1; margin-top:2px; }
+.hoy .pgo-cumple-line { margin:9px 0 0; }
+/* La ops-strip (clima) pasa a ser el pie del panel: una regla fina arriba en
+   vez de abajo, y sin el margen que la separaba de las tabs. */
+.hoy .ops-strip { margin:9px 0 0; padding:8px 1px 0; border-bottom:0; border-top:0.5px solid var(--border); }
+/* En Checklist, Experto y Recepción el clima ya se escondía; ahora se va el
+   pie entero (sin él quedaba la regla sola). setTab compensa el scroll. */
+body.in-checklist .hoy .ops-strip, body.in-experto .hoy .ops-strip, body.in-recepcion .hoy .ops-strip { display:none; }
 /* Ops strip wrapper — owns the divider line so its children (staffing panel,
    desserts strip) can each be empty without losing the visual separator. */
 .ops-strip { margin: 0 0 1.5rem; padding: 0 0 0.9rem; border-bottom: 0.5px solid var(--border); }
@@ -1108,6 +1181,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
      cubre lo más angosto. */ padding: 11px 7px 9px; font-family: 'Courier Prime','Courier New',monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); white-space: nowrap; }
 .main-tabs .tab:hover { background: none; color: #c07d2a; }
 .main-tabs .tab.active { background: none; border-color: transparent; border-bottom-color: #c07d2a; color: #c07d2a; font-weight: 400; box-shadow: none; }
+/* (2026-11, ATA Tools) Ícono de línea sobre el rótulo: la tira se lee como
+   caja de herramientas. Arriba y no al lado, para no sumar ancho (la fila de
+   seis sigue entrando a 375 px); el rótulo manda el ancho de cada tab. El
+   ícono hereda currentColor: gris en reposo, ámbar en la activa. */
+.main-tabs .tab { display:inline-flex; flex-direction:column; align-items:center; gap:5px; padding-top:9px; }
+.main-tabs .tab[hidden] { display:none; }
+.tab-i { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.35; stroke-linecap:round; stroke-linejoin:round; opacity:0.8; transition:opacity .15s; }
+.main-tabs .tab.active .tab-i { opacity:1; }
 /* (2026-06-09) Las clases .tab-pairings / .tab-premium quedaron sin uso al
    reemplazar la fila de filtros de Vinos por .wine-nav-btn (ver más abajo).
    Se removieron — usaban el viejo --wine-red (violeta), fuera de la paleta
@@ -2202,6 +2283,12 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
 #intro-curtain { position:fixed; inset:0; z-index:9990; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:13px; padding:1rem; transform:translateY(0); transition:transform 1s cubic-bezier(0.7,0,0.2,1); will-change:transform; }
 #intro-curtain.intro-lift { transform:translateY(-100%); }
 .intro-mark { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:31px; color:var(--text); letter-spacing:0.005em; opacity:0; transform:translateY(10px); animation:introRise 0.55s cubic-bezier(0.2,0.7,0.2,1) 0.08s forwards; }
+/* ATA Tools en el telón y en el gate: la marca a 44px. Mientras el telón está
+   arriba la app está cargando, así que los engranajes giran a ritmo de
+   trabajo (7 s la vuelta) y no al de reposo del header. */
+.intro-mark .marca { font-size:44px; }
+#intro-curtain .marca-gear.g1 { animation-duration:7s; }
+#intro-curtain .marca-gear.g2 { animation-duration:7s; }
 .intro-mark .ata { color:#c75c2a; font-weight:700; letter-spacing:0.04em; }
 .intro-rule { width:0; height:0.5px; background:rgba(192,125,42,0.6); animation:introRule 0.5s cubic-bezier(0.6,0,0.2,1) 0.34s forwards; }
 .intro-tagline { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-tertiary); opacity:0; animation:introFade 0.45s ease 0.46s forwards; }
@@ -2281,6 +2368,8 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
 .gate-msg.calm { color:var(--text-tertiary); }
 .gate-hint { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:13px; color:var(--text-tertiary); text-align:center; margin-top:2px; }
 #gate-curtain.busy .gate-pad { opacity:0.45; pointer-events:none; }
+/* Verificando la clave: los engranajes trabajan. */
+#gate-curtain.busy .marca-gear.g1, #gate-curtain.busy .marca-gear.g2 { animation-duration:3s; }
 .chk-pin-overlay { position:fixed; inset:0; background:rgba(15,15,16,0.85); backdrop-filter:blur(4px); z-index:9000; display:flex; align-items:center; justify-content:center; padding:1rem; }
 .chk-pin-modal { background:var(--bg); border:0.5px solid var(--border); border-radius:14px; padding:1.5rem 1.25rem; max-width:300px; width:100%; animation:chkPinPop 0.42s cubic-bezier(0.34,1.56,0.64,1) both; }
 .chk-pin-title { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:24px; color:#c07d2a; margin-bottom:6px; text-align:center; }
@@ -3158,8 +3247,43 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
      al toque, el feed de Firebase llega después) y bloquea taps accidentales.
      Se levanta deslizándose hacia arriba cuando los datos del header llegaron
      (ver boot). Vive en el HTML para pintar sin flash, antes de cualquier JS. -->
+<!-- Sprite de la marca y de los íconos de la tira (2026-11, ATA Tools). Un solo
+     <svg> invisible con los <symbol>; cada uso es un <use href="#…">, así el
+     dibujo existe una vez y el telón lo pinta antes de cualquier JS.
+     El ENGRANAJE es la O de TOOLS: 8 dientes (puntas a 42), aro de 35 con hueco de 27 (se lee
+     como una O de Courier Prime a la altura de las mayúsculas). La versión -b
+     va girada medio diente (22,5°): puestos a 78 unidades de distancia, el
+     diente de uno cae en el hueco del otro y engranan al girar en sentidos
+     opuestos a la misma velocidad.
+     Los íconos de las tabs son de línea fina en currentColor — sin color
+     propio: heredan el gris de la tab y el ámbar de la activa. -->
+<svg class="ata-sprite" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <path id="ata-gear-p" fill-rule="evenodd" d="M-6.56 -34.38L-4.94 -41.71L4.94 -41.71L6.56 -34.38A35 35 0 0 1 19.67 -28.95L19.67 -28.95L26 -32.98L32.98 -26L28.95 -19.67A35 35 0 0 1 34.38 -6.56L34.38 -6.56L41.71 -4.94L41.71 4.94L34.38 6.56A35 35 0 0 1 28.95 19.67L28.95 19.67L32.98 26L26 32.98L19.67 28.95A35 35 0 0 1 6.56 34.38L6.56 34.38L4.94 41.71L-4.94 41.71L-6.56 34.38A35 35 0 0 1 -19.67 28.95L-19.67 28.95L-26 32.98L-32.98 26L-28.95 19.67A35 35 0 0 1 -34.38 6.56L-34.38 6.56L-41.71 4.94L-41.71 -4.94L-34.38 -6.56A35 35 0 0 1 -28.95 -19.67L-28.95 -19.67L-32.98 -26L-26 -32.98L-19.67 -28.95A35 35 0 0 1 -6.56 -34.38ZM27 0A27 27 0 1 0 -27 0A27 27 0 1 0 27 0Z"/>
+  </defs>
+  <symbol id="ata-gear"   viewBox="-50 -50 100 100"><use href="#ata-gear-p"/></symbol>
+  <symbol id="ata-gear-b" viewBox="-50 -50 100 100"><use href="#ata-gear-p" transform="rotate(22.5)"/></symbol>
+  <!-- Menú: campana de plato (cloche) -->
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3.5 17.5h17M5 17.5a7 7 0 0 1 14 0"/><circle cx="12" cy="9.3" r="1"/></symbol>
+  <!-- Vinos: copa con el nivel del vino -->
+  <symbol id="i-vino" viewBox="0 0 24 24"><path d="M8 3.5h8c0 4.6-1.7 7.6-4 7.6s-4-3-4-7.6zM8.3 6.6h7.4M12 11.1v8.4M8.6 20.5h6.8"/></symbol>
+  <!-- PGO: viajeros (dos personas) -->
+  <symbol id="i-pgo" viewBox="0 0 24 24"><circle cx="9" cy="8.4" r="2.7"/><path d="M3.8 19.3c.6-3.5 2.7-5.2 5.2-5.2s4.6 1.7 5.2 5.2"/><circle cx="16.3" cy="9.3" r="2.1"/><path d="M15.6 14.2c2.4-.3 4.3 1.2 4.8 4.4"/></symbol>
+  <!-- Comande: libreta de comandas -->
+  <symbol id="i-comande" viewBox="0 0 24 24"><path d="M6.5 4.8h11v15.2h-11zM9 3.2v3M12 3.2v3M15 3.2v3M9.2 10h5.6M9.2 13.3h5.6M9.2 16.6h3.2"/></symbol>
+  <!-- Café: taza con vapor -->
+  <symbol id="i-cafe" viewBox="0 0 24 24"><path d="M5 10.2h10.6v3.6a4.8 4.8 0 0 1-4.8 4.8h-1a4.8 4.8 0 0 1-4.8-4.8zM15.6 11.4h1.3a2.2 2.2 0 0 1 0 4.4h-1.6M8.6 4.4c-.8 1 .8 1.8 0 3M12 4.4c-.8 1 .8 1.8 0 3M4.2 21h13"/></symbol>
+  <!-- Experto: estrella (el estándar) -->
+  <symbol id="i-experto" viewBox="0 0 24 24"><path d="M12 3.9l2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z"/></symbol>
+  <!-- Rol: calendario -->
+  <symbol id="i-rol" viewBox="0 0 24 24"><path d="M4.5 6h15v13.5h-15zM4.5 10h15M8.5 4v4M15.5 4v4"/></symbol>
+  <!-- Checklist: lista con marcas -->
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.8 6.6l1.5 1.5 2.5-3M11.5 7h7.7M4.8 12.6l1.5 1.5 2.5-3M11.5 13h7.7M5 18.6h3.8M11.5 18.6h7.7"/></symbol>
+  <!-- Recepción: llave -->
+  <symbol id="i-recepcion" viewBox="0 0 24 24"><circle cx="7.8" cy="12" r="3.4"/><path d="M11.2 12h9M17.2 12v3M19.6 12v2.2"/></symbol>
+</svg>
 <div id="intro-curtain" aria-hidden="true">
-  <div class="intro-mark">The <span class="ata">ATA</span> Handbook</div>
+  <div class="intro-mark"><span class="marca"><span class="marca-ata">ATA</span><span class="marca-tools">T<span class="marca-oo"><svg class="marca-gear g1"><use href="#ata-gear"/></svg><svg class="marca-gear g2"><use href="#ata-gear-b"/></svg></span>LS</span></span></div>
   <div class="intro-rule"></div>
   <div class="intro-tagline">Detail, at hand.</div>
 </div>
@@ -3171,9 +3295,11 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
 
 <div class="app">
   <div class="header">
+    <!-- ATA Tools (2026-11). La marca cede el protagonismo al panel Hoy: una
+         sola línea, sin subtítulo — "Detail, at hand." queda en el telón.
+         Las O de TOOLS son engranajes (ver el sprite arriba del telón). -->
     <div class="header-text">
-      <h1 id="app-title">The <em class="ata-emphasis">ATA</em> Handbook</h1>
-      <p id="app-subtitle">Detail, at hand.</p>
+      <h1 id="app-title" aria-label="ATA Tools"><span class="marca" aria-hidden="true"><span class="marca-ata">ATA</span><span class="marca-tools">T<span class="marca-oo"><svg class="marca-gear g1"><use href="#ata-gear"/></svg><svg class="marca-gear g2"><use href="#ata-gear-b"/></svg></span>LS</span></span></h1>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
       <!-- Logo temporalmente oculto para impresión de stickers QR — restaurar
@@ -3190,6 +3316,22 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
     </div>
   </div>
 
+  <!-- PANEL HOY (2026-11, ATA Tools). Lo que PGO sincroniza deja de ser una
+       línea de metadatos bajo el título y pasa a ser lo primero que se lee:
+       cabecera (fecha · servicio · frescura del sync con su ↻), tres celdas
+       tocables que abren PGO ya filtrado, el cumpleaños y el rush cuando
+       corresponden, y al pie la ops-strip de siempre (clima).
+       ALTO RESERVADO: las celdas existen desde el primer paint con "·" y
+       pgoBannerRender() sólo cambia las cifras — al llegar PGO la tira de tabs
+       no se mueve. Cumpleaños y rush siguen siendo renglones que aparecen con
+       el dato, igual que antes. -->
+  <section class="hoy" id="hoy">
+    <div class="hoy-head">
+      <span class="hoy-dia" id="hoy-dia"></span>
+      <span class="hoy-sync-slot" id="hoy-sync"></span>
+    </div>
+    <div class="pgo-banner" id="pgo-banner"></div>
+    <div class="pgo-cumple-line" id="pgo-cumple-line" hidden></div>
   <!-- Operational header zone: shift roster + service desserts. The wrapper
        owns the bottom divider so either child can be empty without losing
        the visual separator before the tabs. -->
@@ -3252,6 +3394,7 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
     </div>
     </template>
   </div>
+  </section>
 
   <!-- Wine tips — ventana viva que reemplazó a Postres/86 (2026-06-22).
        Desde 2026-08-16 ya NO vive en la ops-strip: se aloja dentro del listado
@@ -3277,28 +3420,26 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
 
   
 
-  <!-- Banner PGO — ocupa el lugar que dejó el botón de Checklist. Una sola
-       línea mono, sin cajas: el mismo lenguaje de la ops-strip, no las
-       tarjetas de la tab. Tap = abre PGO. Lo puebla pgoBannerRender() desde
-       VIAJEROS_DATA (ya se baja en el boot, no agrega un fetch). Cada contador
-       es un botón: abre PGO ya filtrado por eso mismo. -->
-  <!-- Cumpleaños del día: línea propia sobre las estadísticas. Aparece pocos
-       días al mes, así que cuando aparece se le da aire en vez de comprimirla
-       entre contadores que están siempre. -->
-  <div class="pgo-cumple-line" id="pgo-cumple-line" hidden></div>
-  <div class="pgo-banner" id="pgo-banner" hidden></div>
+  <!-- El banner PGO y la línea de cumpleaños viven desde 2026-11 dentro del
+       panel Hoy (arriba). Lo puebla pgoBannerRender() desde VIAJEROS_DATA (ya
+       se baja en el boot, no agrega un fetch). -->
 
+  <!-- Tira de tabs con íconos de línea (2026-11, ATA Tools): el ícono va
+       ARRIBA del rótulo para que el ancho de cada tab siga siendo el de su
+       palabra — la fila entra igual que antes a 375 px. El rótulo vive en
+       .tab-l y setLang() sólo cambia ese span (tabSetLabel), nunca el botón
+       entero, o se llevaría el ícono. -->
   <div class="main-tabs">
-    <button class="tab active" onclick="setTab('menus',this)">Menú</button>
-    <button class="tab" onclick="setTab('vinos',this)">Vinos</button>
+    <button class="tab active" onclick="setTab('menus',this)"><svg class="tab-i" aria-hidden="true"><use href="#i-menu"/></svg><span class="tab-l">Menú</span></button>
+    <button class="tab" onclick="setTab('vinos',this)"><svg class="tab-i" aria-hidden="true"><use href="#i-vino"/></svg><span class="tab-l">Vinos</span></button>
     <!-- Cocktails dejó de ser tab el 2026-08-10: todo lo del bar (comida +
          tragos) vive en el segmento BAR de Menú. La fila baja de 7 a 6 tabs. -->
 
     <!-- PGO ocupa el 4º lugar (era de Café) para quedar a la vista sin scroll:
          es lo que más se consulta a hora de servicio. El badge "nuevo" invita
          a descubrirla y se retira cuando deje de serlo. -->
-    <button class="tab" onclick="setTab('viajeros',this)" id="tab-btn-viajeros">PGO</button>
-    <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera">Comande</button>
+    <button class="tab" onclick="setTab('viajeros',this)" id="tab-btn-viajeros"><svg class="tab-i" aria-hidden="true"><use href="#i-pgo"/></svg><span class="tab-l">PGO</span></button>
+    <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera"><svg class="tab-i" aria-hidden="true"><use href="#i-comande"/></svg><span class="tab-l">Comande</span></button>
     <!-- (2026-09-16) ROL OCULTO. La tab no cumple función operativa hoy: el
          turno activo ya se lee en el panel de staffing del header, así que el
          lector semanal duplicaba información sin agregar decisión. Se oculta
@@ -3307,24 +3448,24 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
          revivirla, borrar el atributo hidden — nada más.
          Efecto lateral buscado: con 5 tabs la tira se acorta y deja de
          cruzarse con la isla flotante del selector de idioma. -->
-    <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol" hidden>Rol</button>
-    <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe">Café</button>
+    <button class="tab" onclick="setTab('rol',this)" id="tab-btn-rol" hidden><svg class="tab-i" aria-hidden="true"><use href="#i-rol"/></svg><span class="tab-l">Rol</span></button>
+    <button class="tab" onclick="setTab('cafe',this)" id="tab-btn-cafe"><svg class="tab-i" aria-hidden="true"><use href="#i-cafe"/></svg><span class="tab-l">Café</span></button>
     <!-- Checklist (2026-09-30): una tab más, al final de la fila. Antes era un
          botón destacado sobre las tabs y estuvo oculto desde el 2026-08-01;
          el owner lo quiso visible pero sin destacar, junto a Café.
          (2026-11) OCULTO otra vez: su lugar lo toma Experto. Se oculta el
          ACCESO, no el módulo — chkEnter(), las plantillas en Firebase y la guía
          del Quincho siguen intactas. Revivirla = borrar el atributo hidden. -->
-    <button class="tab" onclick="setTab('checklist',this)" id="tab-btn-checklist" hidden>Checklist</button>
+    <button class="tab" onclick="setTab('checklist',this)" id="tab-btn-checklist" hidden><svg class="tab-i" aria-hidden="true"><use href="#i-check"/></svg><span class="tab-l">Checklist</span></button>
     <!-- Experto (2026-11): los estándares de comedor para estudiarlos y
          practicarlos — el servicio de cada GEO por servicio, más lo general del
          equipo y el salón. Ocupa el lugar de Checklist. -->
-    <button class="tab" onclick="setTab('experto',this)" id="tab-btn-experto">Experto</button>
+    <button class="tab" onclick="setTab('experto',this)" id="tab-btn-experto"><svg class="tab-i" aria-hidden="true"><use href="#i-experto"/></svg><span class="tab-l">Experto</span></button>
     <!-- Recepción (2026-10): primera área fuera de A&B. Séptima tab, al final.
          Si el aparato la dejó abierta, el arranque vuelve a ella (el PC de
          recepción abre directo en la guía). Cuando llegue otra área, esto se
          promueve a un selector de área. -->
-    <button class="tab" onclick="setTab('recepcion',this)" id="tab-btn-recepcion" hidden>Recepción</button>
+    <button class="tab" onclick="setTab('recepcion',this)" id="tab-btn-recepcion" hidden><svg class="tab-i" aria-hidden="true"><use href="#i-recepcion"/></svg><span class="tab-l">Recepción</span></button>
   </div>
 
   <!-- MENÚS TAB — desde el cambio de menú 2026 la vista corta primero por
@@ -5628,6 +5769,7 @@ let VIAJEROS_VISTA         = 'viajeros';   // 'viajeros' | 'comedor'   // salien
 // declararlo abajo lo dejaría en TDZ y haltearía el programa entero (§5).
 let PGO_REFRESH_BUSY  = false;   // hay una revalidación en curso
 let PGO_SW_NUEVA      = false;   // el service worker tiene una versión esperando
+let MARCA_GIRO        = 0;       // fetch de PGO en curso → engranajes rápidos (marcaGiro)
 let PGO_REFRESH_FALLO = false;   // el último refresco manual no pudo traer datos
 let VJ_NOTAS               = {};     // { pid: { notaId: {txt, ts, chip} } }
 let VJ_NOTA_OPEN           = null;   // pid con el editor abierto (uno a la vez)
@@ -5737,7 +5879,7 @@ let MED_LP_HASTA = 0;                    // hasta cuándo se traga el click que 
 // ── UI STRINGS ──────────────────────────────────────────────────────────────
 const UI = {
   es: {
-    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'Detail, at hand.',
+    appTitle:'ATA Tools', appSubtitle:'Detail, at hand.',
     tabMenus:'Menú', tabWines:'Vinos', tabGuiones:'Maridajes generales', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
     wineFilterPremium:'Vinos Premium', wineFilterPairings:'Maridajes generales',
     momentAllDay:'Todo el día', momentPreDinner:'Pre Dinner · Aperitivos', momentAfterDinner:'After Dinner', momentNotice:'Próximamente · Esta carta aún no está disponible en el bar',
@@ -5941,7 +6083,7 @@ const UI = {
     rcInterno:'Uso interno · guía preliminar, se corrige turno a turno',
     rcCargando:'Cargando la guía…', rcReintentar:'Reintentar',
     rcErrNoPub:'La guía de recepción todavía no está publicada.',
-    rcErrSesion:'Este aparato todavía no entró con la clave del Handbook, y la guía queda detrás de ella.',
+    rcErrSesion:'Este aparato todavía no entró con la clave del salón, y la guía queda detrás de ella.',
     rcErrRed:'Sin red y sin copia guardada en este aparato. Hace falta abrir Recepción una vez con conexión.',
     rcErrFormato:'El índice de la guía no tiene el formato esperado (revisar gen_indice.py).',
     rcCopiaGuardada:'Sin conexión con la guía: copia guardada en este aparato',
@@ -6122,7 +6264,7 @@ const UI = {
     vjTagDiabetico:'Diabético', vjTagEmbarazada:'Embarazada'
   },
   en: {
-    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'Detail, at hand.',
+    appTitle:'ATA Tools', appSubtitle:'Detail, at hand.',
     tabMenus:'Menu', tabWines:'Wines', tabGuiones:'General pairings', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Coffee',
     wineFilterPremium:'Premium Wines', wineFilterPairings:'General pairings',
     momentAllDay:'All Day', momentPreDinner:'Before Dinner · Aperitifs', momentAfterDinner:'After Dinner', momentNotice:'Coming Soon · This menu is not yet available at the bar',
@@ -6367,7 +6509,7 @@ const UI = {
     vjTagDiabetico:'Diabetic', vjTagEmbarazada:'Pregnant'
   },
   pt: {
-    appTitle:'The <em class="ata-emphasis">ATA</em> Handbook', appSubtitle:'Detail, at hand.',
+    appTitle:'ATA Tools', appSubtitle:'Detail, at hand.',
     tabMenus:'Menu', tabWines:'Vinhos', tabGuiones:'Harmonizações gerais', tabCocktails:'Cocktails', tabMomentos:'Momentos', tabCafe:'Café',
     wineFilterPremium:'Vinhos Premium', wineFilterPairings:'Harmonizações gerais',
     momentAllDay:'Todo o dia', momentPreDinner:'Antes do Jantar · Aperitivos', momentAfterDinner:'Após o Jantar', momentNotice:'Em breve · Este cardápio ainda não está disponível no bar',
@@ -7048,17 +7190,16 @@ function setLang(lang, el) {
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   // update static UI
-  // innerHTML (not textContent) — the title carries the <em class="ata-emphasis">
-  // span that paints "ATA" in desert sienna. Static text → safe to set as HTML.
-  document.getElementById('app-title').innerHTML = t('appTitle');
-  document.getElementById('app-subtitle').textContent = t('appSubtitle');
+  // (2026-11) ATA Tools: la marca no se traduce y vive estática en el HTML
+  // (con sus engranajes); setLang ya no la reescribe — un innerHTML acá
+  // reiniciaría la animación en cada cambio de idioma. Sin subtítulo.
   // Menú y Vinos son los dos únicos tabs sin id propio; el resto se actualiza
   // por id más abajo. NO agregar más índices acá: cuando Cocktails dejó de ser
   // tab (2026-08-10), el índice 2 pasó a ser PGO y este bloque le pisaba el
   // label y le borraba el badge. Tab nuevo → id nuevo → actualizar por id.
   const mainTabs = document.querySelectorAll('.main-tabs .tab');
-  if (mainTabs[0]) mainTabs[0].textContent = t('tabMenus');
-  if (mainTabs[1]) mainTabs[1].textContent = t('tabWines');
+  if (mainTabs[0]) tabSetLabel(mainTabs[0], t('tabMenus'));
+  if (mainTabs[1]) tabSetLabel(mainTabs[1], t('tabWines'));
   // Momentos banner, ahora dentro del segmento BAR › Tragos
   const mLbl = document.getElementById('momentos-banner-label');
   if (mLbl) mLbl.textContent = t('tabMomentos');
@@ -7089,17 +7230,17 @@ function setLang(lang, el) {
   if (currentTab === 'cafe') renderCafeTab();
   if (currentTab === 'comandera' && typeof comandaRender === 'function') comandaRender();
   const cafeBtn = document.getElementById('tab-btn-cafe');
-  if (cafeBtn) cafeBtn.textContent = t('tabCafe');
+  if (cafeBtn) tabSetLabel(cafeBtn, t('tabCafe'));
   const cmdBtn = document.getElementById('tab-btn-comandera');
-  if (cmdBtn) cmdBtn.textContent = t('tabComandera');
+  if (cmdBtn) tabSetLabel(cmdBtn, t('tabComandera'));
   const rolBtn = document.getElementById('tab-btn-rol');
-  if (rolBtn) rolBtn.textContent = t('tabRol');
+  if (rolBtn) tabSetLabel(rolBtn, t('tabRol'));
   const vjBtn = document.getElementById('tab-btn-viajeros');
-  if (vjBtn) vjBtn.textContent = t('tabViajeros');
+  if (vjBtn) tabSetLabel(vjBtn, t('tabViajeros'));
   const chkBtn = document.getElementById('tab-btn-checklist');
-  if (chkBtn) chkBtn.textContent = t('tabChecklist');
+  if (chkBtn) tabSetLabel(chkBtn, t('tabChecklist'));
   const rcBtn = document.getElementById('tab-btn-recepcion');
-  if (rcBtn) rcBtn.textContent = t('tabRecepcion');
+  if (rcBtn) tabSetLabel(rcBtn, t('tabRecepcion'));
   const mn = document.getElementById('momentos-notice-text');
   if (mn) mn.textContent = t('momentNotice');
   // Fire i18n hooks — modules that need to re-render their labels in the
@@ -7111,6 +7252,39 @@ function setLang(lang, el) {
     if (prevSubWine) openWineFromDish(prevSubWine);
   }
   if (prevWine && currentTab === 'vinos') selectWine(prevWine);
+}
+
+// Rótulo de una tab de la tira principal. Desde 2026-11 el botón lleva un
+// ícono (svg) y el texto en .tab-l: cambiar textContent del botón se llevaría
+// el ícono. Sin .tab-l (algún botón viejo) cae al comportamiento de antes.
+function tabSetLabel(btn, txt){
+  const l = btn && btn.querySelector('.tab-l');
+  if (l) l.textContent = txt; else if (btn) btn.textContent = txt;
+}
+// La marca ATA Tools como HTML, para lo que se arma en JS (el gate). El
+// header y el telón la llevan escrita en el HTML para pintar sin JS.
+function marcaHtml(){
+  return '<span class="marca" aria-label="ATA Tools"><span class="marca-ata" aria-hidden="true">ATA</span>' +
+    '<span class="marca-tools" aria-hidden="true">T<span class="marca-oo">' +
+    '<svg class="marca-gear g1"><use href="#ata-gear"/></svg>' +
+    '<svg class="marca-gear g2"><use href="#ata-gear-b"/></svg></span>LS</span></span>';
+}
+// Los engranajes del header se aceleran mientras PGO sincroniza: la marca
+// trabaja cuando la app trabaja. Contador y no booleano, porque dos fetch
+// pueden solaparse (botón ↻ + revalidación al despertar). playbackRate y no
+// animation-duration: cambiar la duración recalcula la fase y el engranaje
+// salta; la velocidad, en cambio, sigue desde donde estaba.
+function marcaGiro(on){
+  MARCA_GIRO = Math.max(0, MARCA_GIRO + (on ? 1 : -1));
+  const rate = MARCA_GIRO ? 14 : 1;
+  document.querySelectorAll('#app-title .marca-gear').forEach(g => {
+    try {
+      // Asignación directa y no updatePlaybackRate(): éste queda "pending" en
+      // las animaciones de SVG y no llega a aplicarse (medido en Chrome).
+      // Asignar playbackRate conserva currentTime: no hay salto de fase.
+      (g.getAnimations ? g.getAnimations() : []).forEach(a => { a.playbackRate = rate; });
+    } catch(e){}
+  });
 }
 
 function setTab(tab, el) {
@@ -8392,7 +8566,7 @@ function estMediaSession(){
   try {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: `${t('estDiaN')} ${estAppDay({ servicio:c.svc, dia:c.docDay })} · ${estSvcLabel(c.svc)}`,
-      artist: 'The ATA Handbook', album: t('svcEstudio'),
+      artist: 'ATA Tools', album: t('svcEstudio'),
       artwork: [{ src:'/assets/icon-512-v2.png', sizes:'512x512', type:'image/png' }]
     });
     navigator.mediaSession.setActionHandler('play',  () => { if (estListo()) estTocar(); });
@@ -10990,8 +11164,8 @@ const CF_FIREBASE_CONFIG = {
 //   4. y sólo después cerrar las reglas por uid y apagar el proveedor anónimo.
 // Saltarse el paso 1 deja al lodge afuera en hora de servicio.
 const GATE_ON    = true;                        // válvula: false = como antes (anónimo)
-const GATE_EMAIL = 'salon@ata-handbook.local';  // usuario único; no es un buzón real
-const GATE_SALT  = 'ata-handbook/salon/2026';   // liga la derivación a este proyecto
+const GATE_EMAIL = 'salon@ata-handbook.local';  // usuario único; no es un buzón real. NO renombrar con la marca: es la cuenta en Firebase
+const GATE_SALT  = 'ata-handbook/salon/2026';   // liga la derivación a este proyecto. Tampoco: cambiarlo cambia la contraseña derivada del PIN
 const GATE_ITER  = 200000;                      // ~0,3 s en un iPhone; una sola vez
 const GATE_FLAG  = 'ata.gate.v1';               // "este aparato ya entró alguna vez"
 
@@ -11034,7 +11208,7 @@ const GATE = {
     d.setAttribute('role','dialog');
     d.setAttribute('aria-modal','true');
     d.innerHTML =
-      '<div class="intro-mark">The <span class="ata">ATA</span> Handbook</div>' +
+      '<div class="intro-mark">' + marcaHtml() + '</div>' +
       '<div class="intro-rule"></div>' +
       '<div class="gate-sub">' + t('gateSub') + '</div>' +
       '<div class="gate-dots" id="gate-dots"></div>' +
@@ -12045,7 +12219,14 @@ setInterval(() => wxFetch(true), WX_REFRESH_MS);
 
 function viajerosUrl(){ return `${CF_FIREBASE_CONFIG.databaseURL}/${VIAJEROS_PATH}.json${fbQS()}`; }
 
+// Envoltorio: mientras PGO sincroniza, los engranajes de la marca se aceleran.
+// El finally garantiza que vuelvan a su ritmo aunque el fetch falle.
 async function viajerosFetch(){
+  marcaGiro(true);
+  try { return await viajerosFetchCuerpo(); }
+  finally { marcaGiro(false); }
+}
+async function viajerosFetchCuerpo(){
   await fbAuthInit();   // la URL lleva el token; sin sesión sale igual
   try {
     // no-store: el doc de viajeros es dato vivo. Sin esto, un tablet que
@@ -12181,54 +12362,82 @@ setInterval(() => {
   PGO_RUSH_CLAVE = k;
 }, 60000);
 // El botón, aparte del render principal: lo dibujan los DOS estados del banner.
+// El botón de sincronización del panel Hoy (2026-11): frescura del sync +
+// ↻ en un solo control, arriba a la derecha. Reemplaza al "↻ actualizar" que
+// tomaba un renglón propio bajo los contadores. Los estados son los mismos:
+// actualizando · versión nueva · no se pudo · y en reposo "● hace 25 min",
+// con el punto teal/gold/coral de la tab PGO (vjFreshness). Sin datos de
+// PGO dice "sin datos de PGO"; antes del primer fetch, los puntos del clima.
 function pgoRefreshBtn(){
-  const etiqueta = PGO_SW_NUEVA    ? t('pgoRefreshNew')
-                 : PGO_REFRESH_BUSY  ? t('pgoRefreshing')
-                 : PGO_REFRESH_FALLO ? t('pgoRefreshFail')
-                 : t('pgoRefresh');
-  return `<button type="button" class="pgo-b-item pgo-b-refresh${PGO_REFRESH_BUSY ? ' is-busy' : ''}${PGO_SW_NUEVA ? ' is-nueva' : ''}${PGO_REFRESH_FALLO && !PGO_REFRESH_BUSY ? ' is-fallo' : ''}"
-            onclick="pgoRefrescar()" title="${vjEsc(t('pgoRefreshTitle'))}">
-      <span class="pgo-b-icon">&#8635;</span><span class="pgo-b-label">${vjEsc(etiqueta)}</span></button>`;
+  let cls = '', cuerpo;
+  if (PGO_SW_NUEVA){ cls = ' is-nueva'; cuerpo = vjEsc(t('pgoRefreshNew')); }
+  else if (PGO_REFRESH_BUSY){ cls = ' is-busy'; cuerpo = vjEsc(t('pgoRefreshing')); }
+  else if (PGO_REFRESH_FALLO){ cls = ' is-fallo'; cuerpo = vjEsc(t('pgoRefreshFail')); }
+  else if (VIAJEROS_DATA){
+    const f = vjFreshness(VIAJEROS_DATA.updatedAt);
+    cuerpo = f ? `<span class="vj-dot ${f.cls}" title="${vjEsc(f.estado)}"></span>${vjEsc(f.texto)}` : vjEsc(t('pgoRefresh'));
+  }
+  else if (VIAJEROS_FETCHED_AT > 0){ cls = ' is-fallo'; cuerpo = vjEsc(t('pgoNoData')); }
+  else cuerpo = '·  ·  ·';
+  return `<button type="button" class="hoy-sync${cls}" onclick="pgoRefrescar()" title="${vjEsc(t('pgoRefreshTitle'))}" aria-label="${vjEsc(t('pgoRefreshTitle'))}">${cuerpo}<span class="pgo-b-icon">&#8635;</span></button>`;
+}
+// "MAR 10 NOV" en el idioma activo, sin puntos ni comas de la abreviatura.
+function hoyFechaTxt(){
+  const loc = { es:'es-CL', en:'en-US', pt:'pt-BR' }[currentLang] || 'es-CL';
+  try {
+    return new Date().toLocaleDateString(loc, { weekday:'short', day:'numeric', month:'short' })
+      .replace(/[.,]/g, '').replace(/\s+/g, ' ').trim();
+  } catch(e){ return ''; }
+}
+// Cabecera del panel: fecha · servicio, y el botón de sync. Se repinta sola
+// cada minuto (el "hace X min" envejece) sin tocar las celdas de abajo.
+function hoyHeadRender(c){
+  const dia = document.getElementById('hoy-dia');
+  if (dia){
+    let srv = '';
+    if (c && c.srv) srv = ` · <span class="hoy-srv${c.enCurso ? '' : ' is-proximo'}">${c.enCurso ? '<i class="hoy-vivo"></i>' : ''}${vjEsc(t('vjSrv' + c.srv.key))}</span>`;
+    dia.innerHTML = vjEsc(hoyFechaTxt()) + srv;
+  }
+  const sync = document.getElementById('hoy-sync');
+  if (sync) sync.innerHTML = pgoRefreshBtn();
+}
+setInterval(() => { try { hoyHeadRender(VIAJEROS_DATA ? pgoBannerCounts() : null); } catch(e){} }, 60000);
+// Una celda del panel. num = cifra, o null para "esperando" (· mientras
+// carga, — si PGO no trajo nada).
+function pgoCelda(filtro, num, cls, label){
+  const espera = num === null;
+  const txt = espera ? (VIAJEROS_FETCHED_AT > 0 ? '—' : '·') : num;
+  return `<button type="button" class="pgo-b-cell" onclick="pgoBannerOpen(${filtro ? `'${filtro}'` : 'null'})">
+      <span class="pgo-b-num${cls ? ' ' + cls : ''}${espera ? ' is-espera' : ''}">${txt}</span><span class="pgo-b-label">${vjEsc(label)}</span></button>`;
 }
 function pgoBannerRender(){
   const el = document.getElementById('pgo-banner');
   if (!el) return;
-  // SIN DATOS EL BANNER YA NO SE ESCONDE (2026-09-15). Antes hacía
-  // `el.hidden = true` y se llevaba puesto el botón de refresco — es decir, el
-  // botón desaparecía exactamente en el caso para el que existe: "PGO no
-  // cargó". Ahora queda la línea con el aviso y el botón, que es lo único
-  // accionable que se puede ofrecer ahí.
+  el.hidden = false;
+  // SIN DATOS LAS CELDAS NO DESAPARECEN (regla de 2026-09-15, heredada del
+  // banner de una línea): se quedan con "·" o "—" y el botón de sync dice qué
+  // pasa. Así el panel mide lo mismo con y sin PGO, y el ↻ —lo único
+  // accionable cuando PGO no cargó— sigue a la vista.
   if (!VIAJEROS_DATA){
-    el.hidden = false;
-    el.classList.add('is-vacio');
-    // Mientras no se haya pedido nunca esto es carga normal, no una falla: se
-    // usan los puntos suspensivos del módulo de clima en vez de un aviso que
-    // asuste. Recién con un fetch ya cumplido se dice que no hay datos.
-    const yaSePidio = VIAJEROS_FETCHED_AT > 0;
-    el.innerHTML = `<span class="pgo-b-vacio">${yaSePidio ? vjEsc(t('pgoNoData')) : '·  ·  ·'}</span>${pgoRefreshBtn()}`;
+    hoyHeadRender(null);
+    el.innerHTML = pgoCelda(null, null, '', t('vjStatViajeros')) +
+                   pgoCelda('ninos', null, 'ninos', t('vjStatNinos')) +
+                   pgoCelda('dietas', null, 'dietas', t('vjStatRestric'));
     const cumVacio = document.getElementById('pgo-cumple-line');
     if (cumVacio) cumVacio.hidden = true;
     return;
   }
-  el.classList.remove('is-vacio');
   const c = pgoBannerCounts();
-  el.hidden = false;
-  // El servicio abre la línea: es el CONTEXTO de los números que siguen, no una
-  // etiqueta al final. Antes iba último y en chico, y se leía como un apéndice.
-  el.innerHTML = `
-    ${c.srv ? `<span class="pgo-b-srv">${t('vjSrv' + c.srv.key)}${c.enCurso ? '' : ' ·'}</span>` : ''}
-    <button type="button" class="pgo-b-item" onclick="pgoBannerOpen(null)">
-      <span class="pgo-b-num">${c.viajeros}</span><span class="pgo-b-label">${t('vjStatViajeros')}</span></button>
-    <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('ninos')">
-      <span class="pgo-b-num ninos">${c.menores}</span><span class="pgo-b-label">${t('vjStatNinos')}</span></button>
-    <button type="button" class="pgo-b-item" onclick="pgoBannerOpen('dietas')">
-      <span class="pgo-b-num dietas">${c.dietas}</span><span class="pgo-b-label">${t('vjStatRestric')}</span></button>
-    ${pgoRushHtml()}
-    ${pgoRefreshBtn()}
-`;
-  // El cumpleaños va en su PROPIA línea, centrada y sobre las estadísticas: no
-  // compite con los contadores porque no es del mismo orden — aparece pocos
-  // días al mes y cuando aparece hay que hacer algo esa noche.
+  // El servicio va en la cabecera: es el CONTEXTO de las cifras (sin él, "29
+  // viajeros" no dice si es ahora, hoy o el almuerzo).
+  hoyHeadRender(c);
+  el.innerHTML = pgoCelda(null, c.viajeros, '', t('vjStatViajeros')) +
+                 pgoCelda('ninos', c.menores, 'ninos', t('vjStatNinos')) +
+                 pgoCelda('dietas', c.dietas, 'dietas', t('vjStatRestric')) +
+                 pgoRushHtml();
+  // El cumpleaños va en su PROPIA línea, centrada bajo las cifras: no compite
+  // con los contadores porque no es del mismo orden — aparece pocos días al
+  // mes y cuando aparece hay que hacer algo esa noche.
   const cum = document.getElementById('pgo-cumple-line');
   if (cum){
     cum.hidden = !c.cumples;
@@ -12254,6 +12463,7 @@ function pgoRefrescar(){
   if (PGO_REFRESH_BUSY) return;
   PGO_REFRESH_BUSY = true;
   PGO_REFRESH_FALLO = false;
+  marcaGiro(true);   // la marca trabaja también durante el piso de 600 ms
   pgoBannerRender();
   // Piso de 600ms para el giro: si la red contesta al instante el ícono
   // parpadearía sin que nadie lo vea, y el garzón vuelve a tocar creyendo que
@@ -12264,6 +12474,7 @@ function pgoRefrescar(){
   catch(e){ console.warn('[pgo] refresco', e); trabajo = Promise.resolve(); }
   Promise.all([trabajo.catch(() => {}), minimo]).then(() => {
     PGO_REFRESH_BUSY = false;
+    marcaGiro(false);
     // Un tap que no trajo nada tiene que decirlo: si no, el garzón vuelve a
     // tocar creyendo que el problema es suyo. El aviso se borra solo, para no
     // dejar una alarma pegada cuando la red vuelva.
@@ -15862,7 +16073,7 @@ function qnExcel(){
     [`Salón de izquierda a derecha: ${mesas.map(m => m.n).join(' · ')}. Para mover a alguien, cambia su Mesa. «-» = no va.`], [],
     ['Hab', 'Viajero', 'Mesa', 'Grupo', 'Fijo', 'Propuesta', 'pid'].map(B)];
   qnTodos().forEach(p => porHab.push([p.hab, p.nombre, p.m ? p.m : '-', p.grupo || '', p.mov ? 'x' : '', p.m ? p.m : '-', p.pid]));
-  const porMesa = [[B(`Quincho · plano de mesas · ${qnFechaTxt(doc.fecha)}`)], ['Generado por el Handbook: los cambios se hacen en «Por habitación».'], []];
+  const porMesa = [[B(`Quincho · plano de mesas · ${qnFechaTxt(doc.fecha)}`)], ['Generado por ATA Tools: los cambios se hacen en «Por habitación».'], []];
   mesas.filter(m => qnGente(m.n).length).forEach(m => {
     porMesa.push([B(`Mesa ${m.n}`), B(`${qnTitulo(m.n)}  ·  ${qnGente(m.n).length}/${m.puestos}`)]);
     qnHabsDe(m.n).forEach(([h, ns]) => porMesa.push([h, ns.join(' · ')]));

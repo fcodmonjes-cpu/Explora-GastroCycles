@@ -1,14 +1,15 @@
 # CLAUDE.md — Cómo trabajamos en este repo
 
 > Guía operativa para cualquier asistente (Fable, Opus, Sonnet, o el que sea)
-> que colabore en **The ATA Handbook**. No repite la arquitectura del código:
+> que colabore en **ATA Tools** (hasta 2026-11, *The ATA Handbook*). No repite la arquitectura del código:
 > para eso, **`ARCHITECTURE.md` es la fuente de verdad** — léela completa antes
 > de tocar el área que vas a modificar. Este archivo cubre el *flujo de trabajo*
 > y las convenciones que no se derivan del código.
 
 ## El proyecto en una línea
 
-Handbook digital de operaciones F&B para Explora Atacama: single-page vanilla
+Caja de herramientas digital de operaciones F&B para Explora Atacama (nació
+como manual, *The ATA Handbook*; la marca ATA Tools es de 2026-11, §3.9): single-page vanilla
 HTML/CSS/JS (`index.html`, un solo archivo), Firebase Realtime Database para
 datos vivos, deploy en Vercel por branch. Sin framework, sin build step.
 Trilingüe ES/EN/PT. Ver `ARCHITECTURE.md` §1-§11.
