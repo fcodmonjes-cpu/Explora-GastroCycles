@@ -927,7 +927,7 @@ primera versión, con centros a 80 y puntas a 46, chocaba.
 |---|---|---|
 | Header | 40 s la vuelta | Se nota por el rabillo del ojo, como el halo del cumpleaños. |
 | Header, mientras sincroniza PGO | ×14 (`marcaGiro`) | La marca trabaja cuando la app trabaja: `viajerosFetch` y el ↻ del panel la aceleran. |
-| Telón de intro | 7 s | El telón está arriba mientras la app carga. |
+| Telón de intro | arranque (0 → ~370°/s → crucero) y 7 s; al salir frena por inercia | El telón está arriba mientras la app carga. Ver "El telón" abajo. |
 | Gate | 40 s; 3 s verificando la clave | Esperar el PIN no es trabajo; verificarlo sí. |
 | `prefers-reduced-motion` | quietos | — |
 
@@ -972,6 +972,39 @@ siendo el de su palabra y las seis entran en una fila a 375 px (323 de 343,
 medido también en EN y PT). Viven en el mismo sprite (`#i-menu`, `#i-vino`,
 `#i-pgo`, …). El rótulo va en `.tab-l` y `setLang` lo cambia con
 `tabSetLabel`: un `textContent` sobre el botón se llevaría el ícono.
+
+**El telón (2026-11).** El momento de apertura se aprovecha una vez por día
+operativo (corte 04:00, `ata.telon.dia` en localStorage); las demás aperturas
+del día ven el telón de siempre (`.corto`). Lo decide un `<script>` inline
+pegado al markup del telón, antes del primer pintado, porque la coreografía es
+CSS y arranca sola: el script grande llega cientos de ms después y no puede
+mandar sobre ella. `ATA_TELON_T0` es el cero, y MIN/MAX se cuentan desde ahí.
+
+| t (desde el pintado) | Qué pasa |
+|---|---|
+| 0,05 s | Aparece el par de engranajes, quieto, desde escala 0,5. |
+| 0,2 – 1,45 s | Arrancan: `telonArranqueH/A`, 40 tramos de un perfil de velocidad suave (pico ~370°/s, se asienta en el crucero de 7 s). |
+| 0,48 s | La T y las LS salen de detrás de los engranajes (van debajo: `z-index` de los engranajes). |
+| 0,66 s | ATA se entinta de izquierda a derecha: `mask-image` con borde blando que se corre. |
+| 1 s | La regla dorada se tira desde el eje del par (`transform-origin` 68 %, medido). |
+| 1,15 s | La frase. Mínimo para levantar: 1,65 s (corto y movimiento reducido: 0,9 s). |
+
+El arranque suma **270°, múltiplo de 45°** (el paso de 8 dientes): el crucero
+entra desde 0° y el engranaje se ve idéntico, sin salto. Todo es transform,
+opacity o máscara: corre en el compositor mientras el hilo principal está
+ocupado con el boot.
+
+**La salida** (`telonVuelo`): la marca del telón vuela y se achica hasta la del
+header (mismo markup, 44 → 30 px), el fondo —que vive en `::before` justamente
+para esto— se disuelve y la app aparece detrás. Los engranajes frenan por
+inercia desde el crucero hasta la velocidad del header (reposo, o ×14 si PGO
+sincroniza): una bezier cuya pendiente inicial es la de una velocidad y la final
+la de la otra. Al aterrizar el header toma el ángulo exacto (`currentTime`) y se
+cruza en 200 ms con la que voló: la capa escalada se rasteriza más delgada que
+el texto nítido, y el cambio seco se veía como un "pop" de grosor. Sin Web
+Animations, con movimiento reducido o con el header fuera de vista, el telón
+se levanta como antes. El aviso de la cena sigue igual: espera el toque y
+después vuela.
 
 **Lo que no se tocó:** el orden de las tabs y la tab por defecto (Menú). El
 protagonismo de PGO lo da el panel, que está arriba en todas las tabs; mover

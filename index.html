@@ -2288,8 +2288,19 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
    feed de Firebase llega después) y evita taps accidentales. Se levanta
    deslizándose hacia arriba (.intro-lift) cuando los datos del header ya
    llegaron — coordinado en el boot, con mínimo elegante y tope de seguridad. */
-#intro-curtain { position:fixed; inset:0; z-index:9990; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:13px; padding:1rem; transform:translateY(0); transition:transform 1s cubic-bezier(0.7,0,0.2,1); will-change:transform; }
+#intro-curtain { position:fixed; inset:0; z-index:9990; background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:13px; padding:1rem; transform:translateY(0); transition:transform 1s cubic-bezier(0.7,0,0.2,1); will-change:transform; }
 #intro-curtain.intro-lift { transform:translateY(-100%); }
+/* El fondo vive en ::before y no en el telón: al salir, el fondo se disuelve y
+   la marca vuela al header (telonVuelo); si fuera el fondo del telón, la marca
+   se iría con él. z-index:-1 queda dentro del contexto del telón (9990). */
+#intro-curtain::before { content:''; position:absolute; inset:0; z-index:-1; background:var(--bg); transition:opacity .55s ease .2s; }
+#intro-curtain.telon-sale { pointer-events:none; }
+#intro-curtain.telon-sale::before { opacity:0; }
+/* Relevo con fundido cruzado y no cambio seco: la marca que vuela es una capa
+   escalada (44 → 30 px) y se rasteriza más delgada que el texto nítido del
+   header; el cambio seco se veía como un "pop" de grosor (grabación headless). */
+#app-title .marca { transition:opacity .2s ease; }
+body.telon-vuela #app-title .marca { opacity:0; transition:none; }
 .intro-mark { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:500; font-size:31px; color:var(--text); letter-spacing:0.005em; opacity:0; transform:translateY(10px); animation:introRise 0.55s cubic-bezier(0.2,0.7,0.2,1) 0.08s forwards; }
 /* ATA Tools en el telón y en el gate: la marca a 44px. Mientras el telón está
    arriba la app está cargando, así que los engranajes giran a ritmo de
@@ -2297,6 +2308,39 @@ body.in-checklist .ops-strip, body.in-experto .ops-strip { margin-bottom:0.9rem;
 .intro-mark .marca { font-size:44px; }
 #intro-curtain .marca-gear.g1 { animation-duration:7s; }
 #intro-curtain .marca-gear.g2 { animation-duration:7s; }
+/* ── Telón completo (primera apertura del día) ─────────────────────────────
+   La marca se arma desde los engranajes: el par aparece quieto, arranca con
+   un tirón (pico ~370°/s, una vuelta por segundo) y se asienta en el crucero
+   de 7 s; la T y las LS salen de detrás de los engranajes; ATA se entinta de
+   izquierda a derecha con borde blando; la regla dorada se tira desde el eje
+   del par; al final la frase. Todo transform/opacity/mask, en el compositor:
+   el telón está arriba justo mientras el script grande corre.
+   telonArranque* son 40 tramos lineales generados de un perfil de velocidad
+   suave, y suman 270° —múltiplo de 45°, el paso de los 8 dientes—: cuando
+   entra el crucero (que parte de 0°) el engranaje se ve idéntico, sin salto.
+   La versión corta (.corto) es el telón de siempre. */
+@media (prefers-reduced-motion: no-preference) {
+  #intro-curtain:not(.corto) .intro-mark { animation:none; opacity:1; transform:none; }
+  #intro-curtain:not(.corto) .marca-oo { animation:telonPar .55s cubic-bezier(0.2,0.7,0.2,1) .05s both; }
+  #intro-curtain:not(.corto) .marca-gear { position:relative; z-index:1; }
+  #intro-curtain:not(.corto) .marca-gear.g1 { animation:telonArranqueH 1.25s linear .2s both, marcaGiroH 7s linear 1.45s infinite; }
+  #intro-curtain:not(.corto) .marca-gear.g2 { animation:telonArranqueA 1.25s linear .2s both, marcaGiroA 7s linear 1.45s infinite; }
+  #intro-curtain:not(.corto) .tl-t  { animation:telonT  .55s cubic-bezier(0.2,0.7,0.2,1) .48s both; }
+  #intro-curtain:not(.corto) .tl-ls { animation:telonLS .6s cubic-bezier(0.2,0.7,0.2,1) .52s both; }
+  /* Padding con margen negativo: la máscara recorta en la caja, y la itálica
+     se sale de su caja por la derecha. */
+  #intro-curtain:not(.corto) .marca-ata { padding:0.12em 0.14em; margin:-0.12em -0.14em; -webkit-mask-image:linear-gradient(90deg,#000 0 42%,transparent 58% 100%); mask-image:linear-gradient(90deg,#000 0 42%,transparent 58% 100%); -webkit-mask-size:300% 100%; mask-size:300% 100%; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; animation:telonTinta .8s cubic-bezier(0.55,0,0.3,1) .66s both; }
+  #intro-curtain:not(.corto) .intro-rule { width:96px; transform:scaleX(0); transform-origin:var(--regla-o, 68%) 50%; animation:telonRegla .6s cubic-bezier(0.6,0,0.2,1) 1s both; }
+  #intro-curtain:not(.corto) .intro-tagline { animation:telonFrase .5s ease 1.15s both; }
+}
+@keyframes telonPar   { from { opacity:0; transform:translateY(-0.02em) scale(0.5); } to { opacity:1; transform:translateY(-0.02em) scale(1); } }
+@keyframes telonT     { from { opacity:0; transform:translateX(0.6em); } to { opacity:1; transform:none; } }
+@keyframes telonLS    { from { opacity:0; transform:translateX(-0.9em); } to { opacity:1; transform:none; } }
+@keyframes telonTinta { from { -webkit-mask-position:100% 0; mask-position:100% 0; transform:translateX(-0.05em); } to { -webkit-mask-position:0 0; mask-position:0 0; transform:none; } }
+@keyframes telonRegla { to { transform:scaleX(1); } }
+@keyframes telonFrase { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+@keyframes telonArranqueH { 0.0%{transform:rotate(0.0deg)} 2.5%{transform:rotate(0.3deg)} 5.0%{transform:rotate(1.4deg)} 7.5%{transform:rotate(3.7deg)} 10.0%{transform:rotate(7.2deg)} 12.5%{transform:rotate(12.0deg)} 15.0%{transform:rotate(18.1deg)} 17.5%{transform:rotate(25.2deg)} 20.0%{transform:rotate(33.5deg)} 22.5%{transform:rotate(42.7deg)} 25.0%{transform:rotate(52.7deg)} 27.5%{transform:rotate(63.4deg)} 30.0%{transform:rotate(74.7deg)} 32.5%{transform:rotate(86.4deg)} 35.0%{transform:rotate(98.3deg)} 37.5%{transform:rotate(110.4deg)} 40.0%{transform:rotate(122.5deg)} 42.5%{transform:rotate(134.5deg)} 45.0%{transform:rotate(146.2deg)} 47.5%{transform:rotate(157.7deg)} 50.0%{transform:rotate(168.7deg)} 52.5%{transform:rotate(179.3deg)} 55.0%{transform:rotate(189.3deg)} 57.5%{transform:rotate(198.6deg)} 60.0%{transform:rotate(207.4deg)} 62.5%{transform:rotate(215.4deg)} 65.0%{transform:rotate(222.8deg)} 67.5%{transform:rotate(229.5deg)} 70.0%{transform:rotate(235.4deg)} 72.5%{transform:rotate(240.8deg)} 75.0%{transform:rotate(245.5deg)} 77.5%{transform:rotate(249.5deg)} 80.0%{transform:rotate(253.1deg)} 82.5%{transform:rotate(256.2deg)} 85.0%{transform:rotate(258.8deg)} 87.5%{transform:rotate(261.2deg)} 90.0%{transform:rotate(263.2deg)} 92.5%{transform:rotate(265.0deg)} 95.0%{transform:rotate(266.8deg)} 97.5%{transform:rotate(268.4deg)} 100.0%{transform:rotate(270.0deg)} }
+@keyframes telonArranqueA { 0.0%{transform:rotate(0.0deg)} 2.5%{transform:rotate(-0.3deg)} 5.0%{transform:rotate(-1.4deg)} 7.5%{transform:rotate(-3.7deg)} 10.0%{transform:rotate(-7.2deg)} 12.5%{transform:rotate(-12.0deg)} 15.0%{transform:rotate(-18.1deg)} 17.5%{transform:rotate(-25.2deg)} 20.0%{transform:rotate(-33.5deg)} 22.5%{transform:rotate(-42.7deg)} 25.0%{transform:rotate(-52.7deg)} 27.5%{transform:rotate(-63.4deg)} 30.0%{transform:rotate(-74.7deg)} 32.5%{transform:rotate(-86.4deg)} 35.0%{transform:rotate(-98.3deg)} 37.5%{transform:rotate(-110.4deg)} 40.0%{transform:rotate(-122.5deg)} 42.5%{transform:rotate(-134.5deg)} 45.0%{transform:rotate(-146.2deg)} 47.5%{transform:rotate(-157.7deg)} 50.0%{transform:rotate(-168.7deg)} 52.5%{transform:rotate(-179.3deg)} 55.0%{transform:rotate(-189.3deg)} 57.5%{transform:rotate(-198.6deg)} 60.0%{transform:rotate(-207.4deg)} 62.5%{transform:rotate(-215.4deg)} 65.0%{transform:rotate(-222.8deg)} 67.5%{transform:rotate(-229.5deg)} 70.0%{transform:rotate(-235.4deg)} 72.5%{transform:rotate(-240.8deg)} 75.0%{transform:rotate(-245.5deg)} 77.5%{transform:rotate(-249.5deg)} 80.0%{transform:rotate(-253.1deg)} 82.5%{transform:rotate(-256.2deg)} 85.0%{transform:rotate(-258.8deg)} 87.5%{transform:rotate(-261.2deg)} 90.0%{transform:rotate(-263.2deg)} 92.5%{transform:rotate(-265.0deg)} 95.0%{transform:rotate(-266.8deg)} 97.5%{transform:rotate(-268.4deg)} 100.0%{transform:rotate(-270.0deg)} }
 .intro-mark .ata { color:#c75c2a; font-weight:700; letter-spacing:0.04em; }
 .intro-rule { width:0; height:0.5px; background:rgba(192,125,42,0.6); animation:introRule 0.5s cubic-bezier(0.6,0,0.2,1) 0.34s forwards; }
 .intro-tagline { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-size:14px; color:var(--text-tertiary); opacity:0; animation:introFade 0.45s ease 0.46s forwards; }
@@ -3291,10 +3335,15 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
   <symbol id="i-recepcion" viewBox="0 0 24 24"><circle cx="7.8" cy="12" r="3.4"/><path d="M11.2 12h9M17.2 12v3M19.6 12v2.2"/></symbol>
 </svg>
 <div id="intro-curtain" aria-hidden="true">
-  <div class="intro-mark"><span class="marca"><span class="marca-ata">ATA</span><span class="marca-tools">T<span class="marca-oo"><svg class="marca-gear g1"><use href="#ata-gear"/></svg><svg class="marca-gear g2"><use href="#ata-gear-b"/></svg></span>LS</span></span></div>
+  <div class="intro-mark"><span class="marca"><span class="marca-ata">ATA</span><span class="marca-tools"><span class="tl-t">T</span><span class="marca-oo"><svg class="marca-gear g1"><use href="#ata-gear"/></svg><svg class="marca-gear g2"><use href="#ata-gear-b"/></svg></span><span class="tl-ls">LS</span></span></span></div>
   <div class="intro-rule"></div>
   <div class="intro-tagline">Detail, at hand.</div>
 </div>
+<!-- Telón completo una vez por día operativo (corte a las 04:00); las demás
+     aperturas del día, la versión corta. Se decide acá, antes del primer
+     pintado, porque la coreografía es CSS y arranca sola: el script grande
+     llega cientos de ms después. ATA_TELON_T0 es el cero de esa coreografía. -->
+<script>try{window.ATA_TELON_T0=performance.now();var d=new Date(Date.now()-144e5);window.ATA_TELON_DIA=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();if(localStorage.getItem('ata.telon.dia')===window.ATA_TELON_DIA)document.getElementById('intro-curtain').classList.add('corto')}catch(e){}</script>
 <!-- Banda que protege la zona de la status bar del sistema (reloj, señal,
      batería) del contenido que scrollea por debajo. Vive acá, hermana de .app
      y no adentro, porque es chrome del viewport y no contenido de la app.
@@ -17301,14 +17350,85 @@ function cfMarkDone(id){
   const curtain = document.getElementById('intro-curtain');
   if (!curtain){ staffingFetch(); return; }   // LATENTE Postres/86: fetches retirados 2026-06-22
   const clock = () => (window.performance && performance.now) ? performance.now() : Date.now();
-  const START = clock();
-  const MIN_MS = 900;   // deja cerrar la animación de entrada (~0.9s) antes de levantar
-  const MAX_MS = 2200;  // red de seguridad: levanta aunque los datos no lleguen
+  // El cero es el del telón (script inline junto al markup), no el de este
+  // script: la coreografía CSS arranca con el primer pintado.
+  const START = (typeof window.ATA_TELON_T0 === 'number') ? window.ATA_TELON_T0 : clock();
+  // Con movimiento reducido no hay coreografía (es CSS bajo no-preference):
+  // rige el mínimo del telón corto.
+  const QUIETO = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const CORTO = curtain.classList.contains('corto') || QUIETO;
+  const MIN_MS = CORTO ? 900 : 1650;   // deja cerrar la entrada (corta ~0,9 s; completa ~1,65 s)
+  const MAX_MS = CORTO ? 2200 : 2700;  // red de seguridad: levanta aunque los datos no lleguen
   let lifted = false;
+  function quitar(){ if (curtain.parentNode) curtain.parentNode.removeChild(curtain); }
   function lift(){
     if (lifted) return; lifted = true;
+    try { if (window.ATA_TELON_DIA) localStorage.setItem('ata.telon.dia', window.ATA_TELON_DIA); } catch(e){}
+    let ms = 0;
+    try { ms = telonVuelo(); } catch(e){ ms = 0; }
+    if (ms){ setTimeout(quitar, ms); return; }
     curtain.classList.add('intro-lift');
-    setTimeout(() => { if (curtain.parentNode) curtain.parentNode.removeChild(curtain); }, 1100);
+    setTimeout(quitar, 1100);
+  }
+  // Ángulo actual de un engranaje, leído de su transform computado (sirve
+  // esté en el arranque, en el crucero o en una animación de JS).
+  function gearAng(g){
+    const m = /matrix\(([^)]+)\)/.exec(getComputedStyle(g).transform || '');
+    if (!m) return 0;
+    const v = m[1].split(',').map(parseFloat);
+    return Math.atan2(v[1], v[0]) * 180 / Math.PI;
+  }
+  // Salida: la marca del telón vuela y se achica hasta la del header (mismo
+  // markup, 44 → 30 px) mientras el fondo se disuelve; al aterrizar se cambia
+  // por la del header, que estuvo oculta. Los engranajes frenan por inercia
+  // desde el crucero (7 s) hasta la velocidad del header —la de reposo, o ×14
+  // si PGO está sincronizando—: la curva empieza con la pendiente de una y
+  // termina con la de la otra, y al aterrizar el header toma el ángulo exacto
+  // (currentTime), así el relevo no salta. Devuelve los ms hasta quitar el
+  // telón, o 0 si no corresponde (movimiento reducido, sin Web Animations,
+  // header fuera de vista): entonces el telón se levanta como siempre.
+  function telonVuelo(){
+    if (QUIETO) return 0;
+    const m = curtain.querySelector('.intro-mark .marca');
+    const d = document.querySelector('#app-title .marca');
+    if (!m || !d || !m.animate) return 0;
+    const a = m.getBoundingClientRect(), b = d.getBoundingClientRect();
+    if (!a.width || !b.width || b.bottom < 0 || b.top > innerHeight) return 0;
+    const D = CORTO ? 760 : 900;
+    const esc = b.width / a.width;
+    const dx = (b.left + b.width/2) - (a.left + a.width/2);
+    const dy = (b.top + b.height/2) - (a.top + a.height/2);
+    document.body.classList.add('telon-vuela');
+    curtain.classList.add('telon-sale');
+    m.style.transformOrigin = '50% 50%';
+    m.animate([{ transform:'none' }, { transform:`translate(${dx}px,${dy}px) scale(${esc})` }],
+              { duration:D, easing:'cubic-bezier(0.55,0,0.15,1)', fill:'forwards' });
+    curtain.querySelectorAll('.intro-rule, .intro-tagline, .intro-aviso').forEach(el => {
+      el.animate([{ opacity:getComputedStyle(el).opacity }, { opacity:0 }], { duration:220, easing:'ease', fill:'forwards' });
+    });
+    // Inercia: v0 crucero, v1 la del header; Δ y la curva salen de las dos
+    // pendientes (bezier: arranque y1/x1, final (1-y2)/(1-x2)).
+    const v0 = 360/7, v1 = 9 * (MARCA_GIRO ? 14 : 1), Ds = D/1000;
+    const delta = Ds * (v0 + 2*v1) / 3;
+    const ez = `cubic-bezier(0.25,${(0.25 * v0*Ds/delta).toFixed(3)},0.5,${(1 - 0.5 * v1*Ds/delta).toFixed(3)})`;
+    const gs = m.querySelectorAll('.marca-gear');
+    const th = gs[0] ? gearAng(gs[0]) : 0;
+    gs.forEach((g, i) => {
+      const sg = i ? -1 : 1;
+      g.animate([{ transform:`rotate(${sg*th}deg)` }, { transform:`rotate(${sg*(th+delta)}deg)` }],
+                { duration:D, easing:ez, fill:'forwards' });
+    });
+    setTimeout(() => {
+      try {
+        const fin = (((th + delta) % 360) + 360) % 360;
+        document.querySelectorAll('#app-title .marca-gear').forEach(g => {
+          (g.getAnimations ? g.getAnimations() : []).forEach(an => { an.currentTime = fin / 360 * 40000; });
+        });
+      } catch(e){}
+      document.body.classList.remove('telon-vuela');
+      m.animate([{ opacity:1 }, { opacity:0 }], { duration:200, easing:'ease', fill:'forwards' });
+    }, D);
+    return D + 230;
   }
   // Aviso de la carta de cena nueva (ver avisoCenaPendiente): en vez de
   // levantarse solo, el telón suma dos líneas debajo de la marca y espera un
