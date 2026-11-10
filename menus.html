@@ -70,7 +70,8 @@ button.chico{padding:2px 8px;font-size:12px}
 button.ghost{background:none;border-color:transparent;color:var(--tx2)}
 button.ghost:hover{color:var(--tx);border-color:var(--bd2)}
 button:disabled{opacity:.45;cursor:default}
-input[type=text],input[type=search],textarea{resize:vertical;font:inherit;background:var(--bg2);border:1px solid var(--bd2);border-radius:7px;padding:6px 9px;min-width:0}
+/* 16px como en la app: por debajo de eso iOS hace zoom al enfocar y descuadra la pantalla. */
+input[type=text],input[type=search],textarea{resize:vertical;font:inherit;font-size:16px;background:var(--bg2);border:1px solid var(--bd2);border-radius:7px;padding:6px 9px;min-width:0}
 input:focus,textarea:focus{outline:none;border-color:var(--oro)}
 
 header.app{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--bd);
@@ -759,6 +760,7 @@ document.addEventListener("keydown", e => {   // "/" salta al buscador global
 function escalaPapel() { return window.innerWidth < 560 ? Math.min(1, (window.innerWidth - 36) / 528) : window.innerWidth < 980 ? 0.9 : 0.95; }
 function dibujarLado() {
   const t = vista.tipo, d = vista.dia, T = TIPOS[t], man = estado.manual[t + "|" + d] != null;
+  sinZoom(false);   // redibujar el lado siempre sale de la edición a mano
   $("lado").style.setProperty("--k", escalaPapel());
   $("lado").innerHTML = `<div class="papel" id="papel"></div>
     ${T.pie ? `<label class="txtpie">Pie (${esc(T.nombre)}, todos los días)<input type="text" id="in-pie" value="${esc(pieDe(t))}"></label>` : ""}
@@ -767,8 +769,8 @@ function dibujarLado() {
   dibujarPapel();
   $("b-mano").onclick = () => {
     const m = document.querySelector("#papel .menu"), c = m.querySelector(".cuerpo");
-    if (c.isContentEditable) { c.contentEditable = false; dibujarTodo(); return; }
-    c.contentEditable = true; m.classList.add("manual"); c.focus();
+    if (c.isContentEditable) { c.contentEditable = false; sinZoom(false); dibujarTodo(); return; }
+    sinZoom(true); c.contentEditable = true; m.classList.add("manual"); c.focus();
     $("b-mano").textContent = "Terminar edición a mano";
   };
   $("b-solo").onclick = () => imprimir([`${t}|${d}`]);
@@ -777,6 +779,12 @@ function dibujarLado() {
     if (v === T.pie.txt) delete estado.pie[t]; else estado.pie[t] = v;
     guardar(); dibujarPapel();
   });
+}
+// El papel va en pt reales (9pt): no se puede subir a 16px sin romper la plantilla, así que
+// mientras se edita a mano se fija la escala del viewport (iOS sigue dejando pellizcar).
+function sinZoom(on) {
+  const v = document.querySelector('meta[name="viewport"]');
+  if (v) v.content = "width=device-width,initial-scale=1" + (on ? ",maximum-scale=1" : "");
 }
 function dibujarPapel() {
   const t = vista.tipo, d = vista.dia, p = $("papel"); if (!p) return;
