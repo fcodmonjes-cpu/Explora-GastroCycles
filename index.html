@@ -1195,6 +1195,19 @@ body.in-checklist .hoy .ops-strip, body.in-experto .hoy .ops-strip, body.in-rece
    ícono hereda currentColor: gris en reposo, ámbar en la activa. */
 .main-tabs .tab { display:inline-flex; flex-direction:column; align-items:center; gap:4px; padding-top:7px; }
 .main-tabs .tab[hidden] { display:none; }
+/* (2026-11) La tira se reparte a todo el ancho (space-between) y el padding
+   lateral baja de 7 a 3 px: con "PGO Tools" la suma de rótulos ya no entraba
+   con 7, y repartida la fila queda llena, centrada, en vez de cargada a la
+   izquierda con un hueco a la derecha. El wrap sigue cubriendo lo angosto. */
+.main-tabs { justify-content:space-between; }
+.main-tabs .tab { padding-left:3px; padding-right:3px; }
+/* PGO Tools: el dato diario es la herramienta que más rinde y la que menos se
+   abría. Brillo sutil en el oro de la casa (el del halo del cumpleaños), fijo,
+   sin respirar: ya giran los engranajes y respira el cumpleaños. */
+#tab-btn-viajeros { color:var(--gold); }
+#tab-btn-viajeros .tab-l { text-shadow:0 0 10px rgba(186,117,23,0.6); }
+#tab-btn-viajeros .tab-i { opacity:1; filter:drop-shadow(0 0 4px rgba(186,117,23,0.6)); }
+#tab-btn-viajeros.active { color:#c07d2a; }
 .tab-i { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.35; stroke-linecap:round; stroke-linejoin:round; opacity:0.8; transition:opacity .15s; }
 .main-tabs .tab.active .tab-i { opacity:1; }
 /* (2026-06-09) Las clases .tab-pairings / .tab-premium quedaron sin uso al
@@ -3495,7 +3508,7 @@ html.rc-visor-on, html.rc-visor-on body { overflow:hidden; }
     <!-- PGO ocupa el 4º lugar (era de Café) para quedar a la vista sin scroll:
          es lo que más se consulta a hora de servicio. El badge "nuevo" invita
          a descubrirla y se retira cuando deje de serlo. -->
-    <button class="tab" onclick="setTab('viajeros',this)" id="tab-btn-viajeros"><svg class="tab-i" aria-hidden="true"><use href="#i-pgo"/></svg><span class="tab-l">PGO</span></button>
+    <button class="tab" onclick="setTab('viajeros',this)" id="tab-btn-viajeros"><svg class="tab-i" aria-hidden="true"><use href="#i-pgo"/></svg><span class="tab-l">PGO Tools</span></button>
     <button class="tab" onclick="setTab('comandera',this)" id="tab-btn-comandera"><svg class="tab-i" aria-hidden="true"><use href="#i-comande"/></svg><span class="tab-l">Comande</span></button>
     <!-- (2026-09-16) ROL OCULTO. La tab no cumple función operativa hoy: el
          turno activo ya se lee en el panel de staffing del header, así que el
@@ -6195,7 +6208,7 @@ const UI = {
     gateNet:'Sin conexión. Revisa el wifi del lodge.',
     chkPinError:'Código incorrecto', chkPinClose:'Cerrar',
     // Viajeros module
-    tabViajeros:'PGO',
+    tabViajeros:'PGO Tools',
     vjReportOf:'Reporte del',
     // Frescura del sync (2026-08-14) — EN/PT propuestas, a revisar.
     vjSyncAgoNow:'recién', vjSyncAgoMin:'hace {n} min', vjSyncAgoHours:'hace {n} h', vjSyncAgoDays:'hace {n} d',
@@ -6513,7 +6526,7 @@ const UI = {
     gateNet:'No connection. Check the lodge wifi.',
     chkPinError:'Wrong code', chkPinClose:'Close',
     // Viajeros module
-    tabViajeros:'PGO',
+    tabViajeros:'PGO Tools',
     vjReportOf:'Report of',
     vjSyncAgoNow:'just now', vjSyncAgoMin:'{n} min ago', vjSyncAgoHours:'{n} h ago', vjSyncAgoDays:'{n} d ago',
     vjSyncFresh:'Up to date', vjSyncStale:'Behind', vjSyncDown:'Not syncing',
@@ -6758,7 +6771,7 @@ const UI = {
     gateNet:'Sem conexão. Verifique o wifi do lodge.',
     chkPinError:'Código incorreto', chkPinClose:'Fechar',
     // Viajeros module
-    tabViajeros:'PGO',
+    tabViajeros:'PGO Tools',
     vjReportOf:'Relatório de',
     vjSyncAgoNow:'agora', vjSyncAgoMin:'há {n} min', vjSyncAgoHours:'há {n} h', vjSyncAgoDays:'há {n} d',
     vjSyncFresh:'Em dia', vjSyncStale:'Atrasado', vjSyncDown:'Sem sincronizar',
