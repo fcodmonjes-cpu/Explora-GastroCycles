@@ -2799,11 +2799,23 @@ body.telon-vuela #app-title .marca { opacity:0; transition:none; }
    flags vacía y se leía como una hab sin novedades. */
 .vj-flag.revisar { color:var(--coral); }
 
-/* Roster de la tarjeta: primer nombre + banderita de nacionalidad, en vez de
-   las esferas de iniciales (leían crípticas). La cuenta se lee sola por líneas. */
-.vj-hab-people { display:flex; flex-direction:column; gap:1px; margin:8px 0 7px; }
-.vj-hab-person { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary); line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.vj-hab-flag { flex:0 0 auto; font-size:12px; line-height:1; }
+/* Roster de la tarjeta (2026-11-10): una burbuja por persona con el primer
+   nombre abajo. Con foto, la miniatura en el borde gold de la casa y la bandera
+   de insignia (como la fila del detalle); sin foto, la bandera adentro y un
+   borde neutro — nunca iniciales (se sacaron por crípticas). El hueco es FIJO:
+   la imagen se parcha al llegar y nada se corre. */
+.vj-hab-people { display:flex; flex-wrap:wrap; gap:7px 8px; margin:9px 0 8px; }
+.vj-burb { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:34px; max-width:64px; }
+.vj-burb-cara { position:relative; flex:0 0 auto; width:34px; height:34px; border-radius:50%;
+  border:0.5px solid var(--border-md); background:var(--bg-secondary);
+  display:flex; align-items:center; justify-content:center; }
+.vj-burb-cara.foto { border-color:var(--gold); }
+.vj-burb-cara img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
+.vj-burb-cara img:not([src]) { visibility:hidden; }
+.vj-burb-nac { font-size:15px; line-height:1; color:var(--text-tertiary); letter-spacing:0.04em; }
+.vj-burb-flag { position:absolute; right:-5px; bottom:-3px; font-size:11px; line-height:1; pointer-events:none; }
+.vj-burb-nom { max-width:100%; font-size:11px; line-height:1.25; color:var(--text-secondary);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* Búsqueda: toggle del teclado numérico incorporado + el pad plegable. */
 .vj-search-bar input { padding-right:48px; }
@@ -2962,7 +2974,6 @@ body.telon-vuela #app-title .marca { opacity:0; transition:none; }
 .vj-foto img:not([src]) { visibility:hidden; }
 .vj-foto.falla { border-style:dashed; border-color:var(--border-md); }
 .vj-foto-flag { position:absolute; right:-6px; bottom:-4px; font-size:15px; line-height:1; pointer-events:none; }
-.vj-flag.foto { color:var(--text-tertiary); }
 .vj-foto-add { margin-left:6px; }
 .vj-foto-panel { margin-top:7px; }
 .vj-foto-zona { position:relative; display:flex; align-items:center; justify-content:center;
@@ -5864,8 +5875,17 @@ let VJ_FIRMA               = '';
 // si el reloj del aparato coincide con el día del reporte, también las borra.
 const VJ_FOTO_ON           = true;   // válvula: en false la ficha queda como antes
 const VJ_FOTOS_PATH        = 'viajeros_fotos';
-const VJ_FOTO_LADO         = 800;    // px del lado mayor: nítida al agrandarla en el iPhone
-const VJ_FOTO_MAX_BYTES    = 450 * 1024;   // las reglas de Storage cortan en 500 KB
+// 640 px y no 800 (2026-11-10): la cara viene de un escaneo de pasaporte o de
+// una foto de celular recortada, y rara vez trae más detalle que eso. En el
+// visor del iPhone (~360 pt) sigue nítida; cada foto pesa ~60-90 KB y no ~150+.
+const VJ_FOTO_LADO         = 640;    // px del lado mayor
+const VJ_FOTO_MAX_BYTES    = 200 * 1024;   // tope propio; las reglas de Storage cortan en 500 KB
+// La miniatura de la grilla (2026-11-10): {ts}-m.jpg junto a {ts}.jpg. 108 px
+// de lado menor = la burbuja de 34 pt a 3× del iPhone; ~3-5 KB. Sin ella, ver
+// las caras en la grilla bajaría la foto entera de cada viajero.
+const VJ_FOTO_MINI_LADO    = 108;
+const VJ_FOTO_MINI_MAX     = 20 * 1024;   // las reglas de Storage cortan la -m en 24 KB
+const VJ_FOTO_MINI_PARALELO = 4;          // descargas de miniaturas a la vez
 const VJ_FOTO_CORTE_SIN_HORA = '18:00';    // sin outAt de PGO, la purga espera a esta hora
 let VJ_FOTOS               = {};     // { pid: { path, ts, out, outAt?, hab, autor?, w, h } }
 let VJ_FOTO_OPEN           = null;   // pid con el panel de subida abierto (uno a la vez)
@@ -5877,6 +5897,12 @@ const VJ_FOTO_BUSY         = {};     // pid → true mientras sube o borra
 const VJ_FOTO_BLOB         = {};
 const VJ_FOTO_PIDIENDO     = new Set();   // paths con la descarga en curso
 const VJ_FOTO_FALLO        = {};     // path → ms del último intento fallido (se reintenta al minuto)
+const VJ_MINI_FALTA        = {};     // path de la -m → true: no existe (foto anterior a las miniaturas)
+const VJ_MINI_COLA         = [];     // paths (de la foto) esperando su miniatura
+let   VJ_MINI_ACTIVAS      = 0;
+let   VJ_MINI_IO           = null;   // IntersectionObserver de las burbujas de la grilla
+const VJ_MINI_RELLENO      = new Set();   // paths a los que este PC ya les generó la -m
+let   VJ_MINI_RELLENO_FILA = Promise.resolve();
 // Importar rostros (2026-11): el .zip que la oficina baja de SharePoint con los
 // escaneos de pasaportes y cédulas → una cara por viajero, cruzando el CRS que
 // trae el nombre de cada archivo con el `crs` del roster. Todo pasa en la
@@ -13520,7 +13546,7 @@ function vjNotasBloque(tr){
 // ── Fotos del viajero (2026-11) ───────────────────────────────────────────
 // Una foto por persona, para reconocerla. Subirla tiene que ser trivial desde
 // el PC de recepción: arrastrarla a la fila, pegarla con Ctrl+V o elegir el
-// archivo. Se achica y se recomprime ACÁ (canvas → JPEG ~800 px, sin EXIF: ni
+// archivo. Se achica y se recomprime ACÁ (canvas → JPEG ~640 px + su miniatura -m, sin EXIF: ni
 // GPS ni modelo de cámara viajan) y recién entonces sube.
 //
 //   bytes   → Storage  viajeros_fotos/{pid}/{ts}.jpg  (reglas: get con sesión,
@@ -13612,9 +13638,11 @@ function vjFotosPurgaCliente(){
   });
 }
 function vjFotoSoltarBlob(path){
-  const u = VJ_FOTO_BLOB[path];
-  if (u) { try { URL.revokeObjectURL(u); } catch(e){} }
-  delete VJ_FOTO_BLOB[path];
+  [path, vjFotoMiniPath(path)].forEach(p => {
+    const u = VJ_FOTO_BLOB[p];
+    if (u) { try { URL.revokeObjectURL(u); } catch(e){} }
+    delete VJ_FOTO_BLOB[p];
+  });
 }
 // Descarga diferida: la cara se dibuja con su hueco fijo (44 px) y la imagen
 // se parcha en el lugar cuando llega — nada se mueve bajo el dedo.
@@ -13641,6 +13669,110 @@ function vjFotoParchar(path){
     const img = el.querySelector('img');
     if (url){ if (img && img.getAttribute('src') !== url) img.src = url; el.classList.remove('falla'); }
     else el.classList.add('falla');
+  });
+  vjMiniParchar(path);   // la foto entera también sirve para la burbuja
+}
+
+// ── Burbujas de la grilla (2026-11-10) ──────────────────────────────────────
+// Cada persona de la tarjeta es una burbuja con su primer nombre abajo. Con
+// foto, la MINIATURA ({ts}-m.jpg, ~4 KB), nunca la foto entera. Nada de esto
+// toca el arranque: la grilla se dibuja con los huecos y las miniaturas se
+// piden después, sólo las de tarjetas a la vista (IntersectionObserver; con la
+// tab oculta no se pide ninguna) y de a VJ_FOTO_MINI_PARALELO. Sin foto, la
+// bandera adentro: las esferas de iniciales se sacaron por crípticas, y el
+// nombre ya va abajo.
+function vjBurbuja(tr){
+  const flag = vjFlag(tr.nac);
+  const nom = `<span class="vj-burb-nom">${vjEsc(vjFirstName(tr.nombre))}</span>`;
+  const f = vjFotoDe(tr);
+  if (!f) return `<span class="vj-burb"><span class="vj-burb-cara">${flag ? `<span class="vj-burb-nac">${flag}</span>` : ''}</span>${nom}</span>`;
+  const src = VJ_FOTO_BLOB[vjFotoMiniPath(f.path)] || VJ_FOTO_BLOB[f.path] || '';
+  return `<span class="vj-burb"><span class="vj-burb-cara foto" data-vj-mini="${vjEsc(f.path)}"><img alt=""${src ? ` src="${src}"` : ''}>${flag ? `<span class="vj-burb-flag">${flag}</span>` : ''}</span>${nom}</span>`;
+}
+function vjMiniParchar(path){
+  const url = VJ_FOTO_BLOB[vjFotoMiniPath(path)] || VJ_FOTO_BLOB[path];
+  if (!url) return;
+  document.querySelectorAll('[data-vj-mini]').forEach(el => {
+    if (el.getAttribute('data-vj-mini') !== path) return;
+    const img = el.querySelector('img');
+    if (img && img.getAttribute('src') !== url) img.src = url;
+  });
+}
+// Después de cada repintado de la grilla: se vuelven a mirar las burbujas
+// nuevas (innerHTML las reemplaza enteras). Las que ya tienen imagen, no.
+function vjMiniObservar(){
+  if (!VJ_FOTO_ON) return;
+  const els = document.querySelectorAll('#vj-body [data-vj-mini]');
+  if (VJ_MINI_IO) VJ_MINI_IO.disconnect();
+  if (!els.length) return;
+  if (typeof IntersectionObserver === 'undefined'){
+    els.forEach(el => { if (!el.querySelector('img[src]')) vjMiniPedir(el.getAttribute('data-vj-mini')); });
+    return;
+  }
+  if (!VJ_MINI_IO) VJ_MINI_IO = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    VJ_MINI_IO.unobserve(e.target);
+    vjMiniPedir(e.target.getAttribute('data-vj-mini'));
+  }), { rootMargin: '240px 0px' });
+  els.forEach(el => { if (!el.querySelector('img[src]')) VJ_MINI_IO.observe(el); });
+}
+function vjMiniPedir(path){
+  const mp = vjFotoMiniPath(path);
+  if (!path || VJ_FOTO_BLOB[mp] || VJ_FOTO_BLOB[path] || VJ_FOTO_PIDIENDO.has(mp)) return;
+  if (VJ_MINI_FALTA[mp]){ vjMiniRellenar(path); return; }
+  if (VJ_FOTO_FALLO[mp] && Date.now() - VJ_FOTO_FALLO[mp] < 60000) return;
+  VJ_FOTO_PIDIENDO.add(mp);
+  VJ_MINI_COLA.push(path);
+  vjMiniBombear();
+}
+function vjMiniBombear(){
+  while (VJ_MINI_ACTIVAS < VJ_FOTO_MINI_PARALELO && VJ_MINI_COLA.length){
+    const path = VJ_MINI_COLA.shift();
+    VJ_MINI_ACTIVAS++;
+    vjMiniBajar(path).finally(() => { VJ_MINI_ACTIVAS--; vjMiniBombear(); });
+  }
+}
+async function vjMiniBajar(path){
+  const mp = vjFotoMiniPath(path);
+  let url = '', falta = false;
+  try {
+    const r = await fetch(vjFotoObjUrl(mp) + '?alt=media', { headers: await vjFotoAuth(), cache: 'no-store' });
+    if (r.ok) url = URL.createObjectURL(await r.blob());
+    else if (r.status === 404) falta = true;   // foto de antes de las miniaturas
+  } catch(e){}
+  VJ_FOTO_PIDIENDO.delete(mp);
+  // La foto pudo cambiar o borrarse mientras bajaba: no se guarda un blob huérfano.
+  if (url && !Object.values(VJ_FOTOS).some(f => f && f.path === path)){ URL.revokeObjectURL(url); return; }
+  if (url){ VJ_FOTO_BLOB[mp] = url; delete VJ_FOTO_FALLO[mp]; vjMiniParchar(path); }
+  else if (falta){ VJ_MINI_FALTA[mp] = true; vjMiniRellenar(path); }
+  else VJ_FOTO_FALLO[mp] = Date.now();
+}
+// Fotos subidas antes de las miniaturas (o cuya -m no alcanzó a subir): un PC
+// —nunca el teléfono, que pagaría la foto entera con datos— baja la foto, saca
+// la -m y la sube, de a una. Una vez por foto y por sesión. Si la subida falla
+// (reglas sin publicar), la -m queda en memoria y la burbuja igual se ve acá.
+function vjMiniRellenar(path){
+  if (!vjImpCabe() || VJ_MINI_RELLENO.has(path)) return;
+  VJ_MINI_RELLENO.add(path);
+  VJ_MINI_RELLENO_FILA = VJ_MINI_RELLENO_FILA.then(async () => {
+    if (!Object.values(VJ_FOTOS).some(f => f && f.path === path)) return;
+    try {
+      let blob = null;
+      if (VJ_FOTO_BLOB[path]) blob = await (await fetch(VJ_FOTO_BLOB[path])).blob();
+      else {
+        const r = await fetch(vjFotoObjUrl(path) + '?alt=media', { headers: await vjFotoAuth(), cache: 'no-store' });
+        if (r.ok) blob = await r.blob();
+      }
+      if (!blob) return;
+      const img = await vjFotoDecodificar(blob);
+      const mini = await vjFotoMiniDe(img, img.naturalWidth, img.naturalHeight);
+      if (!mini) return;
+      const mp = vjFotoMiniPath(path);
+      if (await vjFotoMiniSubir(path, mini)) delete VJ_MINI_FALTA[mp];
+      if (!Object.values(VJ_FOTOS).some(f => f && f.path === path)) return;
+      if (!VJ_FOTO_BLOB[mp]) VJ_FOTO_BLOB[mp] = URL.createObjectURL(mini);
+      vjMiniParchar(path);
+    } catch(e){ /* queda la bandera; la próxima sesión reintenta */ }
   });
 }
 function vjFotoCaraEl(tr, foto, flag){
@@ -13733,12 +13865,59 @@ async function vjFotoComprimir(file){
   ctx.fillRect(0, 0, w, h);
   ctx.drawImage(img, 0, 0, w, h);
   let blob = null;
-  for (const q of [0.82, 0.72, 0.6, 0.5]){
+  for (const q of [0.8, 0.72, 0.62, 0.5]){
     blob = await new Promise(r => c.toBlob(r, 'image/jpeg', q));
     if (blob && blob.size <= VJ_FOTO_MAX_BYTES) break;
   }
   if (!blob || blob.size > VJ_FOTO_MAX_BYTES) throw new Error('encode');
-  return { blob, w, h };
+  // La miniatura sale del mismo canvas (ya sin EXIF). Si falla, la foto sube igual.
+  let mini = null;
+  try { mini = await vjFotoMiniDe(c, w, h); } catch(e){}
+  return { blob, w, h, mini };
+}
+// Lienzo (canvas o <img>) → JPEG de VJ_FOTO_MINI_LADO de lado menor. Se achica
+// a mitades hasta quedar cerca: de 640 a 108 de un salto el canvas deja la cara
+// granulada.
+async function vjFotoMiniDe(fuente, w0, h0){
+  if (!w0 || !h0) return null;
+  const k = Math.min(1, VJ_FOTO_MINI_LADO / Math.min(w0, h0));
+  const w = Math.max(1, Math.round(w0 * k)), h = Math.max(1, Math.round(h0 * k));
+  let src = fuente, sw = w0, sh = h0;
+  while (sw / 2 >= w * 1.5){
+    const m = document.createElement('canvas');
+    m.width = Math.round(sw / 2); m.height = Math.round(sh / 2);
+    const mx = m.getContext('2d');
+    mx.imageSmoothingQuality = 'high';
+    mx.drawImage(src, 0, 0, m.width, m.height);
+    src = m; sw = m.width; sh = m.height;
+  }
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(src, 0, 0, w, h);
+  for (const q of [0.74, 0.62, 0.5]){
+    const b = await new Promise(r => c.toBlob(r, 'image/jpeg', q));
+    if (b && b.size <= VJ_FOTO_MINI_MAX) return b;
+  }
+  return null;
+}
+function vjFotoMiniPath(path){ return String(path || '').replace(/\.jpg$/, '-m.jpg'); }
+// Sube la -m de una foto. Best-effort: sin ella la burbuja muestra la bandera
+// y un PC la rellena después (vjMiniRellenar). Devuelve si quedó guardada.
+async function vjFotoMiniSubir(path, blob){
+  if (!path || !blob) return false;
+  try {
+    const mp = vjFotoMiniPath(path);
+    const r = await fetch(`https://firebasestorage.googleapis.com/v0/b/${EST_BUCKET}/o?name=${encodeURIComponent(mp)}`, {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'image/jpeg' }, await vjFotoAuth()),
+      body: blob
+    });
+    return r.ok;
+  } catch(e){ return false; }
 }
 async function vjFotoBorrarObjeto(path){
   try {
@@ -13775,6 +13954,8 @@ async function vjFotoSubir(pid, file, opts){
     });
     if (!up.ok) throw new Error('storage ' + up.status);
     subida = true;
+    // La miniatura ANTES del índice: cuando la grilla vea la foto, la -m ya está.
+    const miniOk = await vjFotoMiniSubir(path, img.mini);
     const entrada = { path, ts, out: tr.out || '', hab: String(tr.hab || ''), w: img.w, h: img.h };
     if (tr.outAt && tr.outAt.length > 10) entrada.outAt = tr.outAt.slice(0, 16);
     if (opts.autor) entrada.autor = String(opts.autor).slice(0, 24);
@@ -13788,16 +13969,20 @@ async function vjFotoSubir(pid, file, opts){
     const previa = VJ_FOTOS[pid];
     VJ_FOTOS[pid] = entrada;
     VJ_FOTO_BLOB[path] = URL.createObjectURL(img.blob);   // ya la tenemos: no se vuelve a bajar
+    if (img.mini) VJ_FOTO_BLOB[vjFotoMiniPath(path)] = URL.createObjectURL(img.mini);
+    // No subió (reglas sin publicar, red): que un PC la rellene más tarde.
+    if (!miniOk) VJ_MINI_FALTA[vjFotoMiniPath(path)] = true;
     if (previa && previa.path && previa.path !== path){
       vjFotoSoltarBlob(previa.path);
       vjFotoBorrarObjeto(previa.path);   // si falla, la recoge la purga de huérfanas del servidor
+      vjFotoBorrarObjeto(vjFotoMiniPath(previa.path));
     }
     if (!opts.silencioso) VJ_FOTO_OPEN = null;
     ok = true;
   } catch(e){
     console.warn('[viajeros] la foto no se guardó:', e && e.message);
     // Subió el archivo pero no el índice: se deshace, para no dejar una foto que nadie ve ni nadie borra.
-    if (subida && path) vjFotoBorrarObjeto(path);
+    if (subida && path){ vjFotoBorrarObjeto(path); vjFotoBorrarObjeto(vjFotoMiniPath(path)); }
     avisar('vjFotoSinGuardar');
   } finally {
     delete VJ_FOTO_BUSY[pid];
@@ -13813,6 +13998,8 @@ async function vjFotoBorrar(pid, silencioso){
   try {
     // Primero los bytes: lo que importa borrar es la foto, no el índice.
     if (!(await vjFotoBorrarObjeto(f.path))) throw new Error('storage');
+    // La miniatura, sin trabar: si falla, la purga del servidor la ve sin su foto.
+    await vjFotoBorrarObjeto(vjFotoMiniPath(f.path));
     await fbTokenRefrescar();
     // Si la base no contesta, el índice queda apuntando a nada: la ficha muestra
     // el hueco punteado y lo limpia la purga de huérfanas del servidor.
@@ -15063,6 +15250,7 @@ function vjRenderBody(){
   let html = filtered ? vjRenderPersonas() : vjRenderHabs();
   if (VIAJEROS_HAB_OPEN) html += vjRenderHabModal();
   el.innerHTML = html;
+  vjMiniObservar();
 }
 
 // Vista general: una tarjeta por hab. Compacta a propósito — el detalle
@@ -15113,14 +15301,12 @@ function vjRenderHabs(){
     // habitación por habitación para descubrir que alguien dejó un dato.
     const nNo = list.reduce((a, tr) => a + vjNotasDe(tr).length, 0);
     if (nNo) flags.push(`<span class="vj-flag nota">✎ ${nNo}</span>`);
-    // Fotos: sólo la marca. Bajar las imágenes de toda la grilla costaría un
-    // pedido por viajero cada vez que se abre PGO; la foto vive un tap adentro.
-    const nFo = list.filter(tr => vjFotoDe(tr)).length;
-    if (nFo) flags.push(`<span class="vj-flag foto">◉ ${nFo}</span>`);
+    // Fotos: ya no hay marca "◉ N" — la cara está en la burbuja (vjBurbuja),
+    // con su miniatura de ~4 KB y no la foto entera.
     return `
       <div class="vj-hab-card" onclick="vjOpenHab('${h}')">
         <div class="vj-hab-top"><span class="vj-hab-num">${vjEsc(h)}</span><span class="vj-hab-grupo">${vjEsc(grupo)}</span></div>
-        <div class="vj-hab-people">${list.map(tr => `<span class="vj-hab-person">${vjFlag(tr.nac) ? `<span class="vj-hab-flag">${vjFlag(tr.nac)}</span>` : ''}${vjEsc(vjFirstName(tr.nombre))}</span>`).join('')}</div>
+        <div class="vj-hab-people">${list.map(vjBurbuja).join('')}</div>
         <div class="vj-hab-flags">${flags.join('')}</div>
       </div>`;
   }).join('') + `</div>`;

@@ -3613,6 +3613,7 @@ def purgar_notas(token, doc):
 #     última vez que se lo vio. El margen es para un sync que trajo un roster
 #     incompleto: un solo hueco no borra nada.
 #   · roster vacío: no se purga NADA (la misma regla que las notas).
+#   · miniatura ({ts}-m.jpg, la burbuja de la grilla): va y viene con su foto.
 #   · huérfanas: un archivo en Storage sin índice (subió y la base no contestó,
 #     o el reemplazo no alcanzó a borrar la vieja) se borra a las 2 h; un índice
 #     que apunta a un archivo que ya no existe, también.
@@ -3671,6 +3672,13 @@ def decidir_foto(entrada, tr, ahora_iso, ahora_ms):
     if isinstance(visto, (int, float)) and ahora_ms - visto > FOTOS_GRACIA_AUSENTE:
         return "borrar", "se fue antes del OUT", None
     return "esperar", None, None
+
+
+def foto_mini(path):
+    """La miniatura de la grilla vive junto a su foto: {ts}.jpg → {ts}-m.jpg
+    (index.html, vjFotoMiniPath). Se borra con ella y nunca cuenta como huérfana
+    mientras su foto esté viva."""
+    return path[:-4] + "-m.jpg" if isinstance(path, str) and path.endswith(".jpg") else ""
 
 
 def _gcs_obj(nombre):
@@ -3759,8 +3767,13 @@ def purgar_fotos(token, doc, simular=False):
                 if not simular:
                     # Primero los bytes: si eso falla, el índice queda y se reintenta.
                     gcs_borrar(token, ent["path"])
+                    try:
+                        gcs_borrar(token, foto_mini(ent["path"]))
+                    except Exception as e:     # queda como huérfana: la corrida siguiente
+                        print(f"{tag} no pude borrar la miniatura de '{pid}' ({e}).")
                     fb_delete(token, f"{FOTOS_PATH}/{pid}")
                 ya_borrados.add(ent["path"])
+                ya_borrados.add(foto_mini(ent["path"]))
                 borradas += 1
                 continue
             vivas[ent["path"]] = (pid, ent)
@@ -3781,10 +3794,11 @@ def purgar_fotos(token, doc, simular=False):
         objetos = None
     if objetos is not None:
         existentes = set()
+        minis_vivas = {foto_mini(p) for p in vivas}
         for o in objetos:
             nombre = o.get("name") or ""
             existentes.add(nombre)
-            if nombre in vivas or nombre in ya_borrados:
+            if nombre in vivas or nombre in minis_vivas or nombre in ya_borrados:
                 continue
             creado = _ms_iso(o.get("timeCreated"))
             if creado is None or ahora_ms - creado < FOTOS_HUERFANA_MS:

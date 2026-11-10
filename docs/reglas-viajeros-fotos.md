@@ -3,6 +3,7 @@
 > **Estado (2026-11-03): publicado.** 1 (RTDB) y 2 (Storage) publicados por el
 > owner; 3 (CORS) resultó innecesario; 5 (ciclo de vida a 30 días) aplicado.
 > Queda 4 por comprobar en el log de la primera corrida del sync en `main`.
+> **2026-11-10: hay que volver a publicar 2** (el `create` suma la miniatura `-m.jpg`).
 > Este archivo sirve para rehacerlo si hiciera falta.
 
 Cosas que se publican **desde la consola**, una sola vez. Las hace el
@@ -59,18 +60,27 @@ match /viajeros_fotos/{pid}/{archivo} {
   // Ver UNA foto: con sesión (el gate). Listar la carpeta: nunca, ni con sesión.
   allow get: if request.auth != null;
   allow list: if false;
-  // Subir: sólo un JPEG chico, con el nombre que arma la app ({ms}.jpg).
-  // Nunca pisar uno existente: reemplazar = subir otro y borrar el viejo.
+  // Subir: sólo un JPEG chico, con el nombre que arma la app ({ms}.jpg), o
+  // su miniatura de la grilla ({ms}-m.jpg, desde 2026-11-10), que es mucho más
+  // chica. Nunca pisar uno existente: reemplazar = subir otro y borrar el viejo.
   allow create: if request.auth != null
                 && pid.matches('[a-z0-9-]{1,80}')
-                && archivo.matches('[0-9]{13}[.]jpg')
-                && request.resource.size < 500 * 1024
-                && request.resource.contentType == 'image/jpeg';
+                && request.resource.contentType == 'image/jpeg'
+                && ((archivo.matches('[0-9]{13}[.]jpg') && request.resource.size < 500 * 1024)
+                 || (archivo.matches('[0-9]{13}-m[.]jpg') && request.resource.size < 24 * 1024));
   allow update: if false;
   // Borrar: cualquiera con el gate (decisión del owner, 2026-11-03).
   allow delete: if request.auth != null;
 }
 ```
+
+**La miniatura (`-m.jpg`, 2026-11-10).** Es la cara de la burbuja en la grilla
+de habs (~4 KB). Lo único que cambia es el `create`: **reemplazar ese bloque**
+por el de arriba. `get`, `list` y `delete` ya la cubren. Mientras no esté
+publicado nada se rompe: la foto sube igual, la miniatura no (403), la burbuja
+de un teléfono queda con el aro gold vacío y un PC la genera en memoria para sí.
+Al publicar, el primer PC que abra PGO sube las que falten. Sin cambio en la
+RTDB: el índice no guarda nada nuevo (la ruta de la -m sale de la de la foto).
 
 **Por qué `list: false`.** Son fotos de huéspedes. Con `get` hace falta saber el
 nombre exacto del archivo, y ese nombre sólo está en el índice de la RTDB, que

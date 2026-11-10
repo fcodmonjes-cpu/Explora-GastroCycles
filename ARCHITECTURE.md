@@ -1624,13 +1624,14 @@ que la foto exista lo justo, detrás de la misma llave que el resto.
 |---|---|
 | ¿Quién sube, cambia o borra? | **Cualquiera con el gate**, como las notas. El PIN supervisor está en el código público: sería fricción, no protección. |
 | ¿Cuándo se purga? | **El día del OUT, pasada la hora de salida** (`outAt` de PGO); sin hora, **desde las 18:00**. |
-| ¿Cómo se ve? | **En la fila**: redonda, 44 px, borde fino gold; la bandera baja a insignia; tocarla abre el visor. En la vista general, **sólo la marca `◉ N`** junto a `✎ N`. |
+| ¿Cómo se ve? | **En la fila**: redonda, 44 px, borde fino gold; la bandera baja a insignia; tocarla abre el visor. En la vista general, desde 2026-11-10, **una burbuja por persona con su miniatura** (ver "Las burbujas de la grilla", abajo); antes era sólo la marca `◉ N`. |
 | ¿Cuántas? | **Una por viajero**; subir otra la reemplaza. |
 
 **Dónde vive cada cosa.**
 
 ```
-Storage  viajeros_fotos/{pid}/{ts}.jpg     los bytes (JPEG ~800 px, < 450 KB)
+Storage  viajeros_fotos/{pid}/{ts}.jpg     los bytes (JPEG 640 px, ≤ 200 KB; ~60-90 KB)
+         viajeros_fotos/{pid}/{ts}-m.jpg   la miniatura de la grilla (108 px, ~4 KB)
 RTDB     /viajeros_fotos/{pid}             el índice {path, ts, out, outAt?, hab, autor?, w, h, _visto?}
 ```
 
@@ -1655,8 +1656,8 @@ anterior.
 
 Un archivo que cae dentro del módulo pero fuera de una fila no hace que el
 navegador abra la imagen y se vaya de la página. La imagen se achica en el
-cliente (canvas → JPEG, lado mayor 800 px, calidad 0,82 → 0,5 hasta entrar en
-450 KB). Sale **sin EXIF**: ni GPS ni modelo de cámara viajan. Se decodifica
+cliente (canvas → JPEG, lado mayor 640 px, calidad 0,8 → 0,5 hasta entrar en
+200 KB; hasta 2026-11-10 eran 800 px y 450 KB, ver abajo). Sale **sin EXIF**: ni GPS ni modelo de cámara viajan. Se decodifica
 por `<img>` y no por `createImageBitmap` porque así respeta la rotación de las
 fotos del iPhone. Un HEIC en Chrome/Windows no decodifica, y avisa.
 
@@ -1723,6 +1724,44 @@ El texto exacto y la verificación están en `docs/reglas-viajeros-fotos.md`.
 - El script suma el scope `devstorage.read_write` al mismo `FIREBASE_KEY`. Si
   el log dice `no pude listar Storage (403)`, al service account le falta
   `roles/storage.objectAdmin` sobre el bucket. Ningún secret nuevo.
+
+**Las burbujas de la grilla (2026-11-10).** El pedido: ver las caras sin abrir
+la hab, sin sumar carga al arranque. Cada persona de la tarjeta es una burbuja
+de 34 px con el primer nombre abajo (`vjBurbuja`). Con foto: la miniatura, el
+borde gold y la bandera de insignia, como en la fila. Sin foto: la bandera
+adentro y borde neutro; **nunca iniciales** (las esferas de iniciales ya se
+habían sacado por crípticas). El hueco es fijo y la imagen se parcha al llegar.
+La marca `◉ N` se fue: la cara ya está a la vista.
+
+- **Por qué una miniatura aparte.** La grilla con la foto entera bajaría ~90
+  fotos cada vez que se abre PGO. Dentro del índice tampoco: `viajerosFetch`
+  corre en el boot y en cada refresco. La `-m.jpg` sale del mismo canvas al
+  subir (`vjFotoMiniDe`, achicando a mitades) y sube **antes** del índice. Si
+  falla, la foto sube igual. **El índice no cambia**: la ruta de la miniatura
+  se deriva de la de la foto (`vjFotoMiniPath`), así que la RTDB no se tocó.
+- **Cuándo se pide.** Nunca en el arranque. Después de cada repintado,
+  `vjMiniObservar` mira las burbujas con un `IntersectionObserver`: sólo las
+  tarjetas a la vista (con la tab oculta, ninguna), de a 4 (`vjMiniBombear`),
+  en memoria como las fotos. Si la foto entera ya está en memoria, la burbuja
+  la usa.
+- **Fotos de antes (o -m que no subió).** Un 404 la marca como faltante y un
+  **PC** (`vjImpCabe`, nunca el teléfono, que pagaría con datos) baja la foto,
+  saca la miniatura y la sube, de a una y una vez por sesión
+  (`vjMiniRellenar`). En un teléfono, mientras tanto, la burbuja es el aro gold
+  vacío.
+- **Borrar y purgar.** Borrar, reemplazar o deshacer una subida también borra
+  la `-m`. En el servidor, `foto_mini()` la borra con su foto y no la cuenta
+  como huérfana mientras la foto viva; una `-m` sin foto se va a las 2 h como
+  cualquier huérfana (probado con la red simulada).
+- **Reglas.** Storage necesita el `create` nuevo (la `-m`, < 24 KB), que
+  publica el owner: `docs/reglas-viajeros-fotos.md` §2. Sin él nada se rompe:
+  la miniatura no sube y queda la bandera o el aro vacío.
+
+**La foto entera bajó a 640 px / 200 KB (2026-11-10).** La cara viene de un
+escaneo o de una foto de celular recortada y rara vez trae más detalle que eso;
+en el visor del iPhone (~360 pt) sigue nítida. Vale también para el importador,
+que recorta hasta `VJ_FOTO_LADO`. Las fotos ya subidas quedan como están y se
+purgan en días.
 
 **Válvula `VJ_FOTO_ON`** (STATE TOP): en `false`, la ficha queda exactamente
 como antes y no se pide nada.
@@ -1827,7 +1866,7 @@ forma se distingue cédula (≈1,59) de pasaporte (≈1,42) y se toma la zona de
 foto según ICAO 9303 (`VJ_IMP_FORMATOS`, **por calibrar con escaneos reales**),
 cuadrada y con margen —"PP antes que PPP": la ficha lo muestra en un círculo—.
 La vista previa sale de una copia chica del documento; **la cara final se corta
-del original, a resolución nativa** (nunca agrandada; tope 800 px). Bajo 300 px
+del original, a resolución nativa** (nunca agrandada; tope `VJ_FOTO_LADO`, 640 px). Bajo 300 px
 nativos, aviso de baja resolución: viene del escaneo, no se arregla después.
 En la grilla: arrastrar mueve, la rueda o + / − acercan, «girar», «centrar».
 
