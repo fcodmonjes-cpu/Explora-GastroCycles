@@ -132,9 +132,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
        padding: calc(1.5rem + env(safe-area-inset-top)) calc(1rem + env(safe-area-inset-right))
                 calc(1.5rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left)); }
 
-/* (2026-11) 1rem/1.5rem → 0.35rem/1.15rem: sin subtítulo, la marca va en una
+/* (2026-11) 1rem/1.5rem → 0.35rem/0.8rem: sin subtítulo, la marca va en una
    sola línea y le deja el alto al panel Hoy. */
-.header { padding: 0.35rem 0 1.15rem; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between; }
+.header { padding: 0.35rem 0 0.8rem; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between; }
 /* Brand title — italic Cormorant Garamond. Bigger than before so the
    serif italic gets the room it needs to feel composed rather than cramped. */
 .header-text h1 { font-family: 'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style: italic; font-weight: 500; font-size: 28px; line-height: 1.15; color: var(--text); letter-spacing: 0.005em; }
@@ -147,6 +147,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* ── ATA Tools: la marca (2026-11) ─────────────────────────────────────────
    Dos voces que la app ya tenía: ATA en la serif itálica sienna (el oficio,
    el lugar) y TOOLS en la mono de los contadores y las tabs (el instrumento).
+   (QA iPhone 2026-11-10: con 0,22em de tracking TOOLS se leía "T O O L S",
+   desarmado, y los engranajes como dos iconitos sueltos; a 0,12em y 0,66em
+   se lee como una palabra.)
    Las O son engranajes que engranan: giran en sentidos opuestos, lento — una
    vuelta cada 40 s, se nota por el rabillo del ojo — y se aceleran mientras
    se sincroniza PGO (marcaGiro, por playbackRate: cambia la velocidad sin
@@ -155,14 +158,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    sólo el font-size del contenedor. */
 .marca { display:inline-flex; align-items:center; gap:0.36em; white-space:nowrap; line-height:1; }
 .marca-ata { font-family:'Cormorant Garamond','Palatino Linotype',Georgia,serif; font-style:italic; font-weight:700; color:#c75c2a; letter-spacing:0.04em; }
-.marca-tools { display:inline-flex; align-items:center; font-family:'Courier Prime','Courier New',monospace; font-style:normal; font-weight:400; font-size:0.6em; letter-spacing:0.22em; color:var(--text); }
+.marca-tools { display:inline-flex; align-items:center; font-family:'Courier Prime','Courier New',monospace; font-style:normal; font-weight:400; font-size:0.66em; letter-spacing:0.12em; color:var(--text); }
 /* Cada engranaje ocupa lo que una O de la mono (0,6em + tracking) y el
    segundo se monta 0,198em sobre el primero: centros a 78 de 100 unidades
    (entre 77 y 84: la punta de uno no toca la raíz del otro y los dientes se
    cruzan; verificado a máquina, 0 choques en todo el giro),
    el diente de uno entra en el hueco del otro. El translateY baja el par al
    centro de las mayúsculas (la caja de línea incluye el descendente). */
-.marca-oo { display:inline-flex; align-items:center; margin-right:0.22em; transform:translateY(-0.02em); }
+.marca-oo { display:inline-flex; align-items:center; margin-right:0.12em; transform:translateY(-0.02em); }
 .marca-gear { display:block; width:0.9em; height:0.9em; fill:currentColor; overflow:visible; }
 .marca-gear.g2 { margin-left:-0.198em; }
 .marca-gear.g1 { animation:marcaGiroH 40s linear infinite; }
@@ -179,8 +182,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
    lenguaje que las celdas "En el lodge" de la tab PGO (fondo secundario,
    borde fino, cifra mono), sin color nuevo: teal = menores y gold =
    restricciones, como siempre. */
-.hoy { margin:0 0 1.35rem; padding:10px 11px 9px; border:0.5px solid var(--border); border-radius:14px; background:rgba(255,255,255,0.018); }
-.hoy-head { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:22px; margin-bottom:8px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; }
+.hoy { margin:0 0 0.9rem; padding:9px 10px 8px; border:0.5px solid var(--border); border-radius:14px; background:rgba(255,255,255,0.018); }
+.hoy-head { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:22px; margin-bottom:6px; font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; }
 .hoy-dia { color:var(--text-tertiary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
 .hoy-srv { color:var(--gold); }
 .hoy-srv.is-proximo { opacity:0.7; }
@@ -196,20 +199,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .hoy-sync.is-nueva, .hoy-sync.is-nueva .pgo-b-icon { color:var(--gold); }
 .hoy-sync.is-fallo, .hoy-sync.is-fallo .pgo-b-icon { color:var(--coral); }
 @media (prefers-reduced-motion: reduce){ .hoy-sync.is-busy .pgo-b-icon { animation:none; opacity:0.55; } }
-/* Las tres celdas: alto fijo (62px) en todos los estados — cargando "·",
-   sin datos "—", con cifras — así nada se corre al llegar PGO. */
+/* Las tres celdas: alto fijo (52px) en todos los estados — cargando "·",
+   sin datos "—", con cifras — así nada se corre al llegar PGO. Eran 62 px:
+   en el iPhone real, con la barra de Safari, el primer plato quedaba al pie
+   de la pantalla (QA 2026-11-10); la cifra baja de 25 a 22 px. */
 .hoy .pgo-banner { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin:0; padding:0; border:0; overflow:visible; }
-.pgo-b-cell { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; height:62px; min-width:0; padding:0 4px; background:var(--bg-secondary); border:0.5px solid var(--border); border-radius:var(--radius-md); font-family:'Courier Prime','Courier New',monospace; color:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:border-color .15s; }
+.pgo-b-cell { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; height:52px; min-width:0; padding:0 4px; background:var(--bg-secondary); border:0.5px solid var(--border); border-radius:var(--radius-md); font-family:'Courier Prime','Courier New',monospace; color:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:border-color .15s; }
 .pgo-b-cell:active { border-color:var(--gold); }
 @media (hover:hover){ .pgo-b-cell:hover { border-color:var(--border-md); } }
-.pgo-b-cell .pgo-b-num { font-size:25px; line-height:1; }
+.pgo-b-cell .pgo-b-num { font-size:22px; line-height:1; }
 .pgo-b-cell .pgo-b-label { font-size:9px; letter-spacing:0.1em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
 .pgo-b-cell .pgo-b-num.is-espera { color:var(--text-tertiary); }
 .hoy .pgo-b-rush { grid-column:1 / -1; margin-top:2px; }
-.hoy .pgo-cumple-line { margin:9px 0 0; }
+.hoy .pgo-cumple-line { margin:7px 0 0; }
+/* Dentro del panel la píldora del cumpleaños va más baja: el halo y el gold
+   la siguen destacando, el alto lo necesita el menú. */
+.hoy .pgo-cumple-btn { padding:3px 12px; font-size:10px; }
 /* La ops-strip (clima) pasa a ser el pie del panel: una regla fina arriba en
    vez de abajo, y sin el margen que la separaba de las tabs. */
-.hoy .ops-strip { margin:9px 0 0; padding:8px 1px 0; border-bottom:0; border-top:0.5px solid var(--border); }
+.hoy .ops-strip { margin:7px 0 0; padding:6px 1px 0; border-bottom:0; border-top:0.5px solid var(--border); }
 /* En Checklist, Experto y Recepción el clima ya se escondía; ahora se va el
    pie entero (sin él quedaba la regla sola). setTab compensa el scroll. */
 body.in-checklist .hoy .ops-strip, body.in-experto .hoy .ops-strip, body.in-recepcion .hoy .ops-strip { display:none; }
@@ -1167,7 +1175,7 @@ body.in-checklist .hoy .ops-strip, body.in-experto .hoy .ops-strip, body.in-rece
    IMPOSIBLE: si no entra, baja a una segunda fila — visible e inofensivo, en
    vez de invisible y molesto. El gap y el padding se ajustaron para que en los
    tres idiomas entre en una sola fila hasta 360px. */
-.main-tabs { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 1.5rem; border-bottom: 0.5px solid var(--border); }
+.main-tabs { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 1.1rem; border-bottom: 0.5px solid var(--border); }
 /* .tab base (look "card") la siguen usando los filtros de vino (.wine-filter-tabs);
    por eso NO se toca acá — los overrides van scopeados a .main-tabs más abajo. */
 .tab { padding: 8px 6px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; text-align: center; }
@@ -1185,7 +1193,7 @@ body.in-checklist .hoy .ops-strip, body.in-experto .hoy .ops-strip, body.in-rece
    caja de herramientas. Arriba y no al lado, para no sumar ancho (la fila de
    seis sigue entrando a 375 px); el rótulo manda el ancho de cada tab. El
    ícono hereda currentColor: gris en reposo, ámbar en la activa. */
-.main-tabs .tab { display:inline-flex; flex-direction:column; align-items:center; gap:5px; padding-top:9px; }
+.main-tabs .tab { display:inline-flex; flex-direction:column; align-items:center; gap:4px; padding-top:7px; }
 .main-tabs .tab[hidden] { display:none; }
 .tab-i { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.35; stroke-linecap:round; stroke-linejoin:round; opacity:0.8; transition:opacity .15s; }
 .main-tabs .tab.active .tab-i { opacity:1; }
@@ -6254,7 +6262,7 @@ const UI = {
     vjNoResults:'Sin resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Borrar', vjClear:'Limpiar',
     // --- Clima de terraza (wx) ---
-    vjCumpleHoy:'cumple hoy', vjCumpleEn:'cumple en {n}d',
+    vjCumpleHoy:'cumple hoy', vjCumplenHoy:'cumplen hoy', vjCumpleEn:'cumple en {n}d',
     vjSrvdesayuno:'desayuno', vjSrvalmuerzo:'almuerzo', vjSrvcena:'cena',
     wxUpTo:'hasta',
     wxMasl:'m', wxWind:'viento', wxGusts:'ráfagas',
@@ -6499,7 +6507,7 @@ const UI = {
     vjNoResults:'No matches for this filter',
     vjNumpadToggle:'Number pad', vjDelete:'Delete', vjClear:'Clear',
     // --- Clima de terraza (wx) — EN/PT propuestos, pendientes de revisión ---
-    vjCumpleHoy:'birthday today', vjCumpleEn:'birthday in {n}d',
+    vjCumpleHoy:'birthday today', vjCumplenHoy:'birthdays today', vjCumpleEn:'birthday in {n}d',
     vjSrvdesayuno:'breakfast', vjSrvalmuerzo:'lunch', vjSrvcena:'dinner',
     wxUpTo:'up to',
     wxMasl:'m', wxWind:'wind', wxGusts:'gusts',
@@ -6744,7 +6752,7 @@ const UI = {
     vjNoResults:'Sem resultados para este filtro',
     vjNumpadToggle:'Teclado numérico', vjDelete:'Apagar', vjClear:'Limpar',
     // --- Clima de terraça (wx) — EN/PT propostos, pendentes de revisão ---
-    vjCumpleHoy:'aniversário hoje', vjCumpleEn:'aniversário em {n}d',
+    vjCumpleHoy:'aniversário hoje', vjCumplenHoy:'aniversários hoje', vjCumpleEn:'aniversário em {n}d',
     vjSrvdesayuno:'café da manhã', vjSrvalmuerzo:'almoço', vjSrvcena:'jantar',
     wxUpTo:'até',
     wxMasl:'m', wxWind:'vento', wxGusts:'rajadas',
@@ -12443,7 +12451,7 @@ function pgoBannerRender(){
     cum.hidden = !c.cumples;
     if (c.cumples) cum.innerHTML =
       `<button type="button" class="pgo-cumple-btn" onclick="pgoBannerOpen('cumplehoy')">
-         ${vjCakeSvg()}<span>${c.cumples > 1 ? c.cumples + ' ' : ''}${t('vjCumpleHoy')}</span>
+         ${vjCakeSvg()}<span>${c.cumples > 1 ? c.cumples + ' ' + t('vjCumplenHoy') : t('vjCumpleHoy')}</span>
        </button>`;
   }
 }

@@ -958,7 +958,8 @@ siempre (clima). Las celdas siguen siendo puertas: abren PGO ya filtrado
 
 **Alto reservado** (§6, "nada se mueve bajo el dedo"): las tres celdas existen
 en todos los estados —cargando `·`, sin datos `—`, con cifras— con alto fijo de
-62 px, y el estado vive en el botón de la cabecera. Medido: el Y de
+52 px (eran 62: en el iPhone real, con la barra de Safari, el primer plato
+quedaba al pie — QA del 2026-11-10), y el estado vive en el botón de la cabecera. Medido: el Y de
 `.main-tabs` es idéntico cargando, sin datos, actualizando, con falla y
 cargado. Cumpleaños y rush siguen siendo renglones que aparecen con el dato,
 como antes. La cabecera se repinta sola cada minuto (`hoyHeadRender`) sin
