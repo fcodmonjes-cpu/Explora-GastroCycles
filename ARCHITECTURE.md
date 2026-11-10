@@ -1014,6 +1014,73 @@ carta y los visores.
 
 ---
 
+### 3.10 Menús imprimibles (`menus.html`, 2026-11)
+
+La segunda página del repo. Arma los menús impresos de la mesa (almuerzo,
+cena y postres en 4 días; bar fijo; desayuno) y los exporta a **PDF carta
+horizontal con el mismo menú dos veces por cara**, igual que los originales de
+`FORMATO MENÚS`. Se abre desde la vista Menú (enlace discreto "Imprimir menús ↗"
+bajo Almuerzo/Cena/Bar, oculto en Estudio). Va en la misma ventana a propósito,
+porque en la PWA de iOS una pestaña nueva abre Safari, y Safari no comparte el
+`localStorage` del gate.
+
+**Por qué es otra página y no un módulo de `index.html`:** sólo la usa quien
+imprime, una o dos veces al día y desde el PC. Cuesta ~73 KB de HTML y ~108 KB
+de fuentes que la app no tiene por qué cargar en cada boot del iPhone. Sigue
+las reglas de la app: vanilla, sin build y con un único archivo.
+
+**El catálogo es el impreso, no `DISHES`** (decisión del owner, 2026-11-10).
+Los nombres y la estructura de la carta impresa (la cena trae Entradas + Platos
+de fondo, no miniplatos) no calzan con el catálogo de la app. `BASE` vive dentro
+de `menus.html`, transcrito de los PDFs. Los íconos (`mar lac nue glu vgn veg`)
+dicen **"contiene"/"es"**, que es la polaridad opuesta a la matriz "apto" de la
+app, así que se transcriben y nunca se derivan (ver §3.1 y la regla de la
+matriz).
+
+**Slots y buscador.** Cada día de cada tipo es una lista de casillas. Una
+casilla abre su editor, donde el buscador "Cambiar por…" busca en *todo* el
+catálogo (cualquier tipo y día, sin acentos) y reemplaza con un Enter. Ahí
+también están los 6 toggles de íconos, el texto libre es/en (lo que falte en
+inglés sale en rojo), ↑ ↓, Quitar y ↺. El buscador global (`/`) salta niveles
+directo a la casilla. La leyenda de la hoja se extiende sola si un plato trae un
+ícono que el tipo no usa.
+
+**Estado.** Sólo se guardan las diferencias con `BASE`, en `localStorage`
+`ata.menus.v1` (`ov` por `tipo|dia|sec`, `manual` por `tipo|dia`, `pie`,
+`imprimir`), y hay respaldo JSON para bajar y subir. **No toca Firebase**: los
+cambios viven en el aparato que imprime. Sincronizarlos entre aparatos sería
+una fase 2.
+
+**Plantilla = vista previa = PDF** (patrón de las notas de check-out). `menuHtml(t,d)`
+dibuja la media hoja en pt reales y la misma función alimenta la vista previa y
+la impresión (`@page{size:11in 8.5in;margin:0}`, `armarHojas` pone el menú dos
+veces por hoja). `TIPOS` guarda la geometría de cada tipo, calibrada contra los
+originales renderizados a 2× con cobertura de tinta dentro de ±1 pt (98,6–99,8%):
+líneas base, interlineado, tracking del título, reglas y centros de la leyenda.
+`Flujo` posiciona por deltas de línea base porque Objektiv usa
+`USE_TYPO_METRICS` (asc 810 / desc 254). `desborda()` mide fuera de pantalla y
+el diálogo de impresión marca ⚠ lo que no cabe. "✎ Editar a mano" pasa la
+página a `contentEditable` (saneado) con vuelta a la plantilla.
+`?imprimir=cena|2,postres|2` arma las hojas al cargar (útil para Chrome
+headless `--print-to-pdf`).
+
+**Los errores del original se corrigen, no se copian** (owner, 2026-11-10).
+Logo y posiciones canónicas por tipo, una sola longitud de regla, la geometría
+de postres tomada de D2/D4, el logo que faltaba en almuerzo D3 y el pie y las
+erratas corregidos. El desayuno salió de Word/Calibri y pasó al diseño
+Objektiv. El espaciado del bar es el promedio de los saltos irregulares del
+original.
+
+**La fuente.** `assets/fuentes/objektiv-{Lt,LtIt,Rg,It,Md,Bd}.woff`, un
+subset Latin-1 + puntuación con kern/liga (~108 KB los seis) de la Objektiv Mk1
+que usan los PDFs de Explora. Es la build Trial y va en el deploy por decisión
+del owner: es una herramienta interna de operación.
+
+**Gate.** Fuera de localhost, si el aparato no tiene `ata.gate.v1` vuelve a `/`.
+Es el mismo filtro liviano de la app, no seguridad (el repo es público).
+
+---
+
 ## 4. Arquitectura de datos en Firebase
 
 Cinco paths bajo el mismo proyecto Firebase. Cada uno con su propio
@@ -2305,7 +2372,9 @@ Hay decisiones conscientes de prototipo. Listarlas explícitas:
 tras los módulos Checklist y Viajeros): todo el CSS, el markup y el JS
 viven ahí. Lo acompañan, en la raíz, los tres archivos de la PWA
 (`manifest.webmanifest`, `sw.js`, `favicon.svg` — ver §2.1) y `assets/`
-con los íconos; ninguno tiene lógica de la app.
+con los íconos y `assets/fuentes/` (Objektiv para los menús impresos);
+ninguno tiene lógica de la app. La excepción es `menus.html`, la imprenta de
+menús (§3.10): una página aparte, autocontenida, enlazada desde la vista Menú.
 Antes existía un duplicado `explora_atacama_app.V2.html`
 como fuente de verdad mientras `index.html` quedaba como copia desplegada
 — esa convención fue retirada el 2026-05-22 cuando la arquitectura de

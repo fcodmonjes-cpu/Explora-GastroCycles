@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Menús · ATA Tools</title>
+<!-- Menús imprimibles de ATA Tools (2026-11). Página aparte de index.html a
+     propósito: es una herramienta de PC/supervisor y no tiene por qué pesarle
+     a cada garzón en cada actualización de la app. Ver ARCHITECTURE.md §3.10.
+
+     Mismo patrón que las notas de check-out de ata-tools: UNA plantilla dibuja
+     la vista previa y el PDF (lo que se ve es lo que se imprime), lo que falta
+     va en rojo, "Editar a mano" sobre el papel para lo que los slots no cubren,
+     y se mide a tamaño real si el menú cabe en su media hoja. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Courier+Prime&display=swap" rel="stylesheet">
+<style>
+/* ── Objektiv Mk1: la de los menús de Explora. Subconjunto latino (~108 KB los 6
+      pesos); sólo se descarga en esta página. ── */
+@font-face{font-family:Objektiv;src:url(assets/fuentes/objektiv-Lt.woff) format("woff");font-weight:300;font-style:normal}
+@font-face{font-family:Objektiv;src:url(assets/fuentes/objektiv-LtIt.woff) format("woff");font-weight:300;font-style:italic}
+@font-face{font-family:Objektiv;src:url(assets/fuentes/objektiv-Rg.woff) format("woff");font-weight:400;font-style:normal}
+@font-face{font-family:Objektiv;src:url(assets/fuentes/objektiv-It.woff) format("woff");font-weight:400;font-style:italic}
+@font-face{font-family:Objektiv;src:url(assets/fuentes/objektiv-Md.woff) format("woff");font-weight:500;font-style:normal}
+@font-face{font-family:Objektiv;src:url(assets/fuentes/objektiv-Bd.woff) format("woff");font-weight:700;font-style:normal}
+
+/* ── El papel: media carta horizontal = 5.5in × 8.5in = 396 × 612 pt. Todas las
+      medidas en pt, tomadas de los PDF de diseño (ver TIPOS). ── */
+.hoja{width:792pt;height:612pt;display:flex;background:#fff;overflow:hidden}
+.menu{position:relative;width:396pt;height:612pt;flex:none;overflow:hidden;background:#fff;color:#000;
+  font-family:Objektiv,sans-serif;font-kerning:normal;font-synthesis:none;-webkit-font-smoothing:antialiased}
+.menu .abs{position:absolute;left:42.5pt;white-space:nowrap}
+.menu .tit{font-size:12pt;line-height:12pt;letter-spacing:4pt;text-transform:uppercase}
+.menu .logo{position:absolute}
+.menu .logo svg{display:block;width:100%;height:100%}
+.menu .cuerpo{position:absolute;left:42.5pt;width:312pt;outline:none}
+.menu .sec{position:relative;font-weight:500;text-transform:uppercase}
+.menu .sec::after{content:"";position:absolute;left:0;top:var(--regla);width:var(--rw);border-top:.45pt solid #000}
+.menu .es{font-weight:700}
+.menu .en{font-style:italic}
+.menu .opc{font-weight:400}
+.menu .ics{white-space:nowrap}
+/* margen superior negativo: el ícono (9,8 pt) es más alto que la caja del renglón y si no lo empuja 1,3 pt */
+.menu .ics svg{display:inline-block;vertical-align:baseline;margin:-6pt 0 0 2.6pt;overflow:visible}
+.menu .ics svg:first-child{margin-left:4.6pt}
+.menu .filete{position:absolute;left:42.7pt;border-top:.5pt solid #000}
+.menu .ley{position:absolute;left:0;display:flex}
+.menu .ley .c{display:flex;flex-direction:column;align-items:center;flex:none}
+.menu .ley svg{display:block}
+.menu .ley span{font-weight:400;white-space:nowrap;position:absolute}
+.menu .falta{background:#ffd9d4;color:#a8231a;border-radius:1pt;padding:0 1pt}
+.menu.desborda{box-shadow:inset 0 0 0 2pt #d8452f}
+
+@page{size:11in 8.5in;margin:0}
+
+/* ── La herramienta: paleta de ATA Tools (dark amber), sin colores nuevos. ── */
+:root{--bg:#1a1917;--bg2:#242220;--sup:#2a2825;--bd:rgba(255,255,255,.1);--bd2:rgba(255,255,255,.18);
+  --tx:#f0eeea;--tx2:#aaa;--tx3:#777;--oro:#BA7517;--oro-bg:#3a2a05;--coral:#D85A30;--coral-bg:#3a1a0a}
+html{color-scheme:dark;background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,"Segoe UI",sans-serif}
+.serif{font-family:"Cormorant Garamond",Georgia,serif}
+.mono{font-family:"Courier Prime",ui-monospace,monospace}
+button,input,select{font:inherit;color:inherit}
+button{border:1px solid var(--bd2);background:var(--sup);border-radius:7px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--tx3)}
+button.prim{background:var(--oro);border-color:var(--oro);color:#1a1917;font-weight:600}
+button.chico{padding:2px 8px;font-size:12px}
+button.ghost{background:none;border-color:transparent;color:var(--tx2)}
+button.ghost:hover{color:var(--tx);border-color:var(--bd2)}
+button:disabled{opacity:.45;cursor:default}
+input[type=text],input[type=search],textarea{resize:vertical;font:inherit;background:var(--bg2);border:1px solid var(--bd2);border-radius:7px;padding:6px 9px;min-width:0}
+input:focus,textarea:focus{outline:none;border-color:var(--oro)}
+
+header.app{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--bd);
+  padding:10px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.marca{font-size:22px;font-style:italic;color:#c9a27a;margin-right:4px;text-decoration:none}
+.marca b{font-family:"Courier Prime",monospace;font-style:normal;font-weight:400;font-size:13px;letter-spacing:.18em;color:var(--tx2);margin-left:6px}
+.buscador{position:relative;flex:1;min-width:220px;max-width:460px}
+.buscador input{width:100%;box-sizing:border-box}
+.esp{flex:1}
+#estado{color:var(--tx3);font-size:12px;min-width:70px;text-align:right}
+#estado.error{color:var(--coral)}
+
+.res{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--bd2);border-radius:9px;
+  max-height:min(60vh,420px);overflow:auto;z-index:30;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+.res[hidden]{display:none}
+.res button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--bd);border-radius:0;background:none;padding:7px 11px}
+.res button:last-child{border-bottom:0}
+.res button:hover,.res button.sel{background:var(--sup)}
+.res .n{display:block}
+.res .t{display:block;color:var(--tx2);font-size:12px;font-style:italic}
+.res .d{float:right;color:var(--tx3);font-size:11px;font-family:"Courier Prime",monospace;margin-left:8px}
+.res .vacio{padding:10px 12px;color:var(--tx3);font-size:13px}
+.res .libre{color:#c9a27a}
+mark{background:none;color:#e0b070;font-weight:600}
+
+nav.sel{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:12px 18px 0;max-width:1320px;margin:0 auto}
+.seg{display:flex;border:1px solid var(--bd2);border-radius:9px;overflow-x:auto;max-width:100%;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none;border:0;border-radius:0;background:none;padding:7px 13px;font-family:"Courier Prime",monospace;font-size:13px;letter-spacing:.04em;color:var(--tx2)}
+.seg button+button{border-left:1px solid var(--bd)}
+.seg button.on{background:var(--oro-bg);color:#e8c48e}
+.seg button .hoy{font-size:10px;color:var(--oro);margin-left:5px;letter-spacing:.06em}
+.seg button .mod{color:var(--oro);margin-left:3px}
+.dias[hidden]{display:none}
+
+main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;padding:14px 18px 80px;max-width:1320px;margin:0 auto;align-items:start}
+.slots{min-width:0}
+.pag-cab{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.pag-cab h2{margin:0;font-size:26px;font-weight:500}
+.pag-cab .sub{color:var(--tx3);font-size:12px}
+.aviso{border-left:2px solid var(--coral);background:var(--coral-bg);color:#f3b49e;padding:7px 11px;border-radius:0 7px 7px 0;font-size:13px;margin:0 0 10px}
+.aviso.oro{border-color:var(--oro);background:var(--oro-bg);color:#e8c48e}
+.aviso[hidden]{display:none}
+.aviso button{margin-left:6px}
+.seccion-t{font-family:"Courier Prime",monospace;font-size:12px;letter-spacing:.14em;color:var(--tx3);text-transform:uppercase;
+  margin:16px 0 6px;display:flex;align-items:center;gap:8px}
+.seccion-t::after{content:"";flex:1;border-top:1px solid var(--bd)}
+
+.slot{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;margin-bottom:7px}
+.slot.cambio{border-color:rgba(186,117,23,.55)}
+.slot.vacio{border-style:dashed}
+.slot .fila{display:flex;align-items:center;gap:10px;padding:8px 10px}
+.slot .num{font-family:"Courier Prime",monospace;color:var(--tx3);font-size:12px;width:16px;text-align:right;flex:none}
+.slot .txt{flex:1;min-width:0;cursor:pointer;padding:2px 0}
+.slot .txt .n{font-weight:600}
+.slot .txt .t{color:var(--tx2);font-style:italic;font-size:13px}
+.slot .txt .o{color:var(--tx3);font-size:12px}
+.slot .txt .ori{color:#c9a27a;font-size:12px}
+.slot .rojo{color:#f0877c;font-style:normal}
+.ics-ed{display:flex;gap:3px;flex:none}
+.ics-ed button{width:28px;height:28px;padding:0;display:grid;place-items:center;border-radius:6px;background:none;border-color:transparent;color:var(--tx3);opacity:.45}
+.ics-ed button svg{height:15px;width:auto;max-width:18px}
+.ics-ed button:hover{opacity:.8;border-color:var(--bd2)}
+.ics-ed button.on{opacity:1;color:#f0eeea;background:var(--sup);border-color:var(--bd2)}
+.slot .ed{padding:2px 12px 12px 36px;display:grid;gap:8px}
+.slot .ed[hidden]{display:none}
+.slot .ed .busca{position:relative}
+.slot .ed .busca input{width:100%;box-sizing:border-box}
+.slot .ed .busca .res{position:static;margin-top:4px;box-shadow:none;max-height:260px}
+.slot .ed label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--tx3)}
+.slot .ed .dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slot .ed .acc{display:flex;gap:6px;flex-wrap:wrap}
+.agregar{margin:2px 0 4px}
+
+.lado{position:sticky;top:64px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.papel{width:calc(396pt*var(--k));height:calc(612pt*var(--k));box-shadow:0 2px 18px rgba(0,0,0,.55);border-radius:2px;overflow:hidden;background:#fff}
+.papel .menu{transform:scale(var(--k));transform-origin:0 0}
+.papel .menu.manual .cuerpo{box-shadow:0 0 0 1.5pt #e9b949}
+.lado .acc{display:flex;gap:8px;flex-wrap:wrap}
+.lado .txtpie{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--tx3);width:calc(396pt*var(--k))}
+
+/* Modal de impresión */
+dialog{background:var(--bg2);color:var(--tx);border:1px solid var(--bd2);border-radius:12px;padding:0;width:min(560px,94vw)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog .cab{padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px}
+dialog h3{margin:0;font-size:22px;font-weight:500}
+dialog .cuerpo-d{padding:12px 18px;display:grid;gap:10px;max-height:62vh;overflow:auto}
+dialog .grupo{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+dialog .grupo .g{width:84px;font-family:"Courier Prime",monospace;font-size:13px;color:var(--tx2)}
+dialog .chk{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--bd2);border-radius:7px;padding:4px 9px;cursor:pointer;font-size:13px}
+dialog .chk.on{background:var(--oro-bg);border-color:var(--oro);color:#e8c48e}
+dialog .chk.mal{border-color:var(--coral)}
+dialog .chk input{display:none}
+dialog .pie-d{padding:12px 18px;border-top:1px solid var(--bd);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+dialog .nota{color:var(--tx3);font-size:12px}
+
+#impresion{display:none}
+@media print{
+  html,body{background:#fff !important}
+  body>*:not(#impresion){display:none !important}
+  #impresion{display:block}
+  #impresion .hoja{break-after:page}
+  #impresion .falta{background:none;color:inherit;padding:0}
+  #impresion .menu.desborda{box-shadow:none}
+}
+@media (max-width:980px){
+  main{grid-template-columns:1fr}
+  .lado{position:static;order:-1;align-items:center;width:100%}
+  header.app{position:static}
+}
+@media (max-width:560px){
+  .seg button{padding:7px 10px}
+  .ics-ed button{width:24px;height:24px}
+  .slot .ed{padding-left:12px}
+  .slot .ed .dos{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header class="app">
+  <a class="marca serif" href="/" title="Volver a ATA Tools">ATA<b>MENÚS</b></a>
+  <div class="buscador">
+    <input id="q" type="search" placeholder="Buscar plato en todos los menús…" autocomplete="off" spellcheck="false">
+    <div class="res" id="q-res" hidden></div>
+  </div>
+  <span class="esp"></span>
+  <span id="estado"></span>
+  <button class="ghost chico" id="b-respaldo" title="Descarga un .json con todos los cambios">Respaldo</button>
+  <button class="ghost chico" id="b-importar" title="Carga un respaldo .json">Importar</button>
+  <input type="file" id="f-importar" accept=".json,application/json" hidden>
+  <button class="prim" id="b-pdf">Imprimir PDF</button>
+</header>
+<nav class="sel">
+  <div class="seg" id="seg-tipo"></div>
+  <div class="seg dias" id="seg-dia"></div>
+</nav>
+<main>
+  <section class="slots" id="slots"></section>
+  <aside class="lado" id="lado"></aside>
+</main>
+<dialog id="dlg-pdf">
+  <div class="cab"><h3 class="serif">Imprimir</h3><span class="esp"></span><button class="ghost chico" id="dlg-cerrar">✕</button></div>
+  <div class="cuerpo-d" id="dlg-cuerpo"></div>
+  <div class="pie-d">
+    <button class="chico" id="dlg-hoy"></button>
+    <button class="chico ghost" id="dlg-nada">Ninguno</button>
+    <span class="esp"></span>
+    <button class="prim" id="dlg-ok">Imprimir</button>
+  </div>
+  <div class="pie-d" style="border-top:0;padding-top:0"><span class="nota">Cada menú sale dos veces por hoja, carta horizontal, como los originales. En el diálogo del navegador: destino «Guardar como PDF», márgenes «Ninguno», escala 100 %.</span></div>
+</dialog>
+<div id="impresion"></div>
+<script>
+"use strict";
+// Si este aparato nunca pasó el gate de ATA Tools, vuelve a la portada. Es una
+// puerta blanda (los menús no son secretos); evita que la URL suelta sirva de entrada.
+try {
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) || location.protocol === "file:";
+  if (!local && localStorage.getItem("ata.gate.v1") !== "1") location.replace("/");
+} catch (e) {}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATOS BASE — transcritos a máquina de los PDF de diseño (2026-11-10):
+//   Menu Cena / Almuerzo / Postres Almuerzo / Bar ATA 2026.pdf  y  DESAYUNO-A (Word).
+// Texto y posición de cada ícono salen del PDF: cada ícono se asignó al plato cuya
+// línea cruza (0 inferencias). Correcciones: "Orange"→"orange", "menu"→"menú",
+// "Champiñon"→"Champiñón". El desayuno no traía diseño: se pasa al de la carta.
+// ═══════════════════════════════════════════════════════════════════════════════
+const BASE = {"cena":{"1":[[{"es":"Sopa de choclo, jengibre y cilantro","en":"Corn, ginger and cilantro soup","ic":["lac"]},{"es":"Ceviche nikkei","en":"Nikkei-style ceviche","ic":["glu"]},{"es":"Tiradito de kana kana","en":"Kana kana tiradito"},{"es":"Mix verde acompañado de zapallo camote cocido con leche de coco\ny mix de quinoa con menta","en":"Green salad with sweet pumpkin, coconut milk and quinoa"}],[{"es":"Costillar de cerdo con miel, soya, taro y cebollas","en":"Pork ribs with honey, soy, taro and onions","ic":["glu"]},{"es":"Pescado del día con puré de zanahoria y encurtidos","en":"Fish of the day with carrot purée and pickles"},{"es":"Hummus con coliflor asada y pistachos","en":"Hummus with roasted cauliflower and pistachios","ic":["nue"]},{"es":"Risotto de champiñones silvestres","en":"Wild mushroom risotto","ic":["lac"]}]],"2":[[{"es":"Zanahoria con manzanilla","en":"Carrot with chamomile"},{"es":"Ceviche estilo Rapa Nui","en":"Rapa Nui-style ceviche"},{"es":"Causita de camote con pulpo anticuchero","en":"Sweet potato causa with anticuchero octopus","ic":["glu","lac"]},{"es":"Mix de hojas verdes acompañado de vegetales asados,\ncamote y mix de semillas","en":"Green leaves with roasted vegetables, sweet potato and seeds"}],[{"es":"Filete de vacuno grillado, zapallo, cebollines y hongos","en":"Grilled beef fillet with pumpkin, spring onions and mushrooms"},{"es":"Pescado del día con guiso de porotos y cilantro fresco","en":"Fish of the day with bean stew and cilantro"},{"es":"Curry de lentejas","en":"Lentil curry"},{"es":"Lasaña de cordero","en":"Lamb lasagna","ic":["glu","lac"]}]],"3":[[{"es":"Zapallo, coco y albahaca","en":"Pumpkin with coconut and basil"},{"es":"Tártaro de atún con palta y mango","en":"Tuna tartare with avocado and mango"},{"es":"Ceviche de camarón al rocoto","en":"Shrimp ceviche with rocoto","ic":["mar"]},{"es":"Mix verde con tostones o chips de plátano acompañado de lentejas\nde colores spicy","en":"Green salad with plantain chips and spiced lentils"}],[{"es":"Pato con quinoa, manzanas y naranja","en":"Duck with quinoa, apples and orange"},{"es":"Pescado del día con mango, arvejas, lychee y almendras","en":"Fish of the day with mango, peas, lychee and almonds","ic":["nue"]},{"es":"Gnocchi de camotes con salsa de tomates y albahaca fresca","en":"Sweet potato gnocchi with tomato and basil","ic":["glu","lac"]},{"es":"Arroz caldoso con camarón y pulpo / chalaquita","en":"Seafood rice with shrimp and octopus","ic":["mar"]}]],"4":[[{"es":"Sopa thai de mariscos","en":"Thai seafood soup","ic":["mar"]},{"es":"Pulpo al olivo","en":"Octopus with olive sauce","ic":["mar"]},{"es":"Tataki de atún, taro, ají y maracuyá","en":"Tuna tataki with taro, chili and passion fruit"},{"es":"Mix verde con puré de berenjenas asadas, queso ricotta y habas","en":"Green salad with roasted eggplant purée, ricotta and broad beans","ic":["lac"]}],[{"es":"Garrón de cordero, polenta, cebollín, tomates y champiñones","en":"Lamb shank with creamy polenta, spring onion, tomato and mushrooms","ic":["lac"]},{"es":"Pesca del día con mantequilla de alcaparras y eneldo, acompañada\nde camote y taro","en":"Fish of the day with caper butter, dill, sweet potato and taro","ic":["lac"]},{"es":"Cremoso de quinoa y vegetales con leche de coco","en":"Creamy quinoa with vegetables and coconut milk"},{"es":"Pasta larga al curry, leche de coco, castañas de cajú y cilantro","en":"Long pasta with curry, coconut milk, cashews and cilantro","ic":["glu","nue"]}]]},"almuerzo":{"1":[[{"es":"Fideos de arroz con hongos y entraña de vacuno","en":"Rice noodles with mushrooms and skirt steak"},{"es":"Curry rojo de pescado con arroz al vapor","en":"Red fish curry with steamed rice","ic":["mar"]},{"es":"Milanesa de cerdo con salsa tonkatsu y arroz blanco","en":"Pork milanese with tonkatsu sauce and white rice","ic":["glu"]},{"es":"Coliflor frita en salsa de sésamo y cacho de cabra","en":"Fried cauliflower with sesame and cacho de cabra sauce","ic":["vgn"]}]],"2":[[{"es":"Flat Iron de Vacuno a la Brasa con Papas al Ajillo","en":"Grilled beef flat iron steak with garlic potatoes"},{"es":"Pescado al vapor, habas y rúcula salteada, salsa de habas","en":"Steamed fish with broad beans, sautéed arugula and broad bean sauce"},{"es":"Cerdo salteado con pimientos, cebolla y hierbas aromáticas","en":"Stir-fried pork with peppers, onion and aromatic herbs"},{"es":"Ñoquis de papa y brócoli con hierbas aromáticas","en":"Potato and broccoli gnocchi with aromatic herbs","ic":["glu","vgn"]}]],"3":[[{"es":"Plateada de cocción larga, puré de pallares y pebre","en":"Slow-cooked beef with lima bean purée and pebre"},{"es":"Pescado al pil pil, con papas a la importancia","en":"Pil pil fish with potatoes","ic":["glu"]},{"es":"Pasta con pollo, mantequilla y queso de cabra añejado","en":"Pasta with chicken, butter and aged goat cheese","ic":["glu","lac"]},{"es":"Fideos de arroz con berenjena, miso y cebollita encurtida","en":"Rice noodles with eggplant, miso and pickled spring onion","ic":["vgn"]}]],"4":[[{"es":"Tomaticán de filete con tomates asados y choclo salteado","en":"Beef tomaticán with roasted tomatoes and sautéed corn"},{"es":"Pasta con crustáceos al limón","en":"Pasta with shellfish and lemon","ic":["mar","glu","lac"]},{"es":"Pollo escabechado con repollo y zanahoria","en":"Escabeche chicken with cabbage and carrot"},{"es":"Arroz salteado de hongos","en":"Stir-fried mushroom rice","ic":["vgn"]}]]},"postres":{"1":[[{"es":"Leche con plátano y pimienta rosa","en":"Milk with banana and pink pepper","ic":["lac"]},{"es":"Mote con huesillo","en":"Mote with dried peach","ic":["glu"]},{"es":"Pera al vino blanco, nuez tostada y yogurt","en":"White wine pear with toasted walnut and yogurt","ic":["nue","lac"]},{"es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"es":"Fruta de la estación","en":"Seasonal fruit"}]],"2":[[{"es":"Duraznos a la brasa con crema","en":"Grilled peaches with cream","ic":["lac"]},{"es":"Almendrado","en":"Almond dessert","ic":["glu"]},{"es":"Limón, miel y quinua","en":"Lemon, honey and quinoa"},{"es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"es":"Fruta de la estación","en":"Seasonal fruit"}]],"3":[[{"es":"Peras al vino tinto con pistacho","en":"Red wine pears with pistachio","ic":["nue"]},{"es":"Coulant de chocolate con helado de chocolate","en":"Chocolate coulant with chocolate ice cream","ic":["glu","lac"]},{"es":"Piña asada, jengibre y mote suflado","en":"Roasted pineapple with ginger and puffed mote","ic":["glu"]},{"es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"es":"Fruta de la estación","en":"Seasonal fruit"}]],"4":[[{"es":"Mil hojas de manzana con vainilla","en":"Apple mille-feuille with vanilla","ic":["glu"]},{"es":"Arroz con leche, pera asada y canela","en":"Rice pudding with roasted pear and cinnamon","ic":["lac"]},{"es":"Membrillos asados con sésamo","en":"Roasted quinces with sesame"},{"es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"es":"Fruta de la estación","en":"Seasonal fruit"}]]},"bar":{"1":[[{"es":"Hamburguesa de la casa con queso cheddar, tocino, tomate, lechuga y\npepinillos, con salsa especial y papas fritas","en":"House burger with cheddar cheese, bacon, tomato, lettuce, pickles, special\nsauce and french fries","ic":["glu","lac"]},{"es":"Sándwich de milanesa de cerdo, repollo, chucrut y salsa de chañar","en":"Pork milanese sandwich with roasted cabbage, sauerkraut and chañar sauce","ic":["glu"]},{"es":"Pizza estilo napolitana; de pepperoni o margarita","en":"Individual Neapolitan-style pizza, available as pepperoni or margherita","ic":["glu","lac"]},{"es":"Planchadito relleno de jamón, queso y mostaza, cebolla encurtida","en":"Grilled ham and cheese sandwich with whole-grain mustard and pickled onion","ic":["glu","lac"]},{"es":"Ensalada César; con pechuga de pollo ahumada o milanesa de cerdo","en":"Caesar salad; optional smoked chicken breast or pork milanese","ic":["glu","lac"]},{"es":"Poke bowl de arroz y quinoa, verduras encurtidas, palta, choclo, salsa de soya\ndulce; con pescado, milanesa de cerdo o pollo ahumado","en":"Rice and quinoa poke bowl with pickled vegetables, avocado, corn and sweet\nsoy sauce; with fish, pork milanese or smoked chicken","ic":["glu"]},{"es":"Coliflor frita, en salsa de sésamo y cacho de cabra, con pomelo y cebollín","en":"Fried cauliflower in sesame and goat pepper sauce, grapefruit and spring onion","ic":["veg"]},{"es":"Tabla de quesos y embutidos para compartir","en":"Cheese and charcuterie board for sharing","ic":["lac"]},{"es":"Torta helada de frutos rojos, sorbete de frambuesa, merengue y crema\nchiboust de vainilla","en":"Berry ice cream cake, raspberry sorbet, meringue and vanilla chiboust cream","ic":["lac","veg"]}]]},"desayuno":{"1":[[{"es":"BEBIDAS CALIENTES","en":"HOT BEVERAGES","des_es":"Espresso. Cappuccino. Latte. Americano. Té. Chocolate.","des_en":""},{"es":"LECHE","en":"MILK","des_es":"Soya. Sin lactosa. Entera. Descremada. Almendras.","des_en":"Soy. Lactose-free. Whole. Skim. Almond."},{"es":"PANQUEQUES CLÁSICOS","en":"PANCAKES","des_es":"Miel de maple. Miel de abeja. Manjar. Chocolate. Nutella.","des_en":"Maple syrup. Honey. Dulce de leche. Chocolate. Nutella."},{"es":"QUINOA TIBIA","en":"WARM QUINOA PORRIDGE","des_es":"Manzana. Jugo de naranja.","des_en":"Apple. Orange juice."},{"es":"HUEVOS","en":"EGGS","des_es":"Duros. A la copa. Fritos. Revueltos. Pochados.","des_en":"Hard-boiled. Soft-boiled. Sunny side-up. Scrambled. Poached."},{"es":"OMELETTE","en":"WHITE OMELETTE","des_es":"Queso. Jamón. Tocino. Champiñón. Tomate. Cebolla.","des_en":"Cheese. Ham. Bacon. Mushroom. Tomato. Onion."},{"es":"TOSTADAS FRANCESAS","en":"FRENCH TOAST","des_es":"Miel de maple. Miel de abeja. Manjar. Chocolate. Nutella.","des_en":"Maple syrup. Honey. Dulce de leche. Chocolate. Nutella."},{"es":"TOSTADA CON QUESO CREMA Y TRUCHA","en":"TROUT AND CREAM CHEESE OPEN TOAST","des_es":"Tostada integral. Queso crema. Palta. Trucha ahumada.","des_en":"Whole wheat bread. Cream cheese. Avocado. Smoked salmon trout."}]]}};
+const SVG = {"mar":{"vb":[58.36,554.7,10.82,9.74],"p":"<path d=\"M65.68 563.96 L64.79 563.95 C64.15 564.43 63.41 564.41 62.77 563.95 L61.85 563.96 C61.54 563.95 61.28 563.72 61.27 563.41 C61.26 563.13 61.32 562.87 61.40 562.61 C61.20 562.39 61.00 562.19 60.78 561.98 L60.02 561.29 L59.39 560.67 C59.14 560.41 58.92 560.15 58.72 559.85 C58.40 559.35 58.36 558.72 58.65 558.20 C58.82 557.91 59.10 557.64 59.43 557.63 C59.51 557.63 59.55 557.66 59.58 557.72 L62.16 562.15 L62.71 563.06 C62.75 563.12 62.82 563.13 62.88 563.10 C62.92 563.08 62.97 563.00 62.94 562.94 L62.29 561.76 L59.79 557.47 C59.70 557.31 59.71 557.11 59.74 556.95 C59.77 556.80 59.82 556.66 59.90 556.53 C60.25 555.94 60.98 555.56 61.66 555.73 C61.75 555.76 61.77 555.81 61.79 555.90 L62.30 558.40 L63.02 561.77 L63.30 562.94 C63.32 563.01 63.40 563.03 63.46 563.01 C63.51 562.99 63.56 562.94 63.55 562.87 L63.24 561.34 L62.08 555.75 C62.05 555.63 62.13 555.51 62.19 555.43 C62.34 555.23 62.55 555.10 62.78 554.99 C63.41 554.70 64.24 554.70 64.85 555.03 C65.02 555.12 65.18 555.22 65.30 555.37 C65.37 555.45 65.47 555.58 65.44 555.71 L65.01 557.92 L64.18 562.00 L64.02 562.88 C64.01 562.95 64.07 563.01 64.13 563.02 C64.19 563.03 64.25 562.99 64.27 562.92 L64.52 561.87 L64.94 559.84 L65.38 557.66 L65.75 555.80 C65.77 555.77 65.83 555.74 65.87 555.72 C66.10 555.66 66.33 555.66 66.56 555.72 C67.02 555.84 67.41 556.13 67.64 556.54 C67.79 556.79 67.88 557.19 67.75 557.42 L67.44 557.96 L65.30 561.71 L64.62 562.95 C64.59 563.01 64.64 563.08 64.68 563.10 C64.73 563.13 64.81 563.12 64.84 563.07 L65.48 562.01 L66.98 559.38 L67.98 557.64 C68.28 557.55 68.62 557.78 68.80 558.03 C69.17 558.55 69.18 559.23 68.86 559.77 L68.51 560.25 C68.27 560.55 68.03 560.82 67.75 561.09 L66.95 561.88 L66.43 562.38 L66.16 562.64 C66.23 562.89 66.28 563.13 66.28 563.39 C66.27 563.72 66.01 563.96 65.68 563.96\"/>"},"lac":{"vb":[108.18,554.96,4.94,9.16],"p":"<path d=\"M109.01 556.00 L108.98 555.96 C108.83 555.75 108.83 555.47 108.97 555.26 L108.99 555.24 C109.10 555.06 109.30 554.96 109.51 554.96 L111.76 554.97 C111.95 554.97 112.13 555.06 112.25 555.20 L112.29 555.26 C112.47 555.47 112.48 555.77 112.33 555.99 C112.22 556.14 112.19 556.33 112.24 556.50 L112.81 558.60 C112.81 558.62 112.81 558.64 112.82 558.65 L113.11 560.30 C113.12 560.33 113.12 560.37 113.12 560.40 L113.12 563.50 C113.12 563.84 112.84 564.12 112.49 564.12 L108.81 564.12 C108.46 564.12 108.18 563.84 108.18 563.50 L108.18 560.37 C108.18 560.33 108.18 560.29 108.19 560.25 L108.50 558.65 C108.50 558.64 108.51 558.62 108.51 558.60 L109.10 556.52 C109.15 556.34 109.11 556.15 109.01 556.00\" fill-rule=\"evenodd\"/><path d=\"M109.22 556.22 L112.61 556.22\" fill=\"none\" stroke=\"#fff\" stroke-width=\"0.30\"/>"},"nue":{"vb":[154.09,554.76,8.53,9.55],"p":"<path d=\"M161.85 560.40 C161.78 561.70 161.05 562.91 159.91 563.54 L158.87 564.12 C158.54 564.30 158.16 564.31 157.83 564.13 L156.79 563.55 C155.64 562.92 154.92 561.75 154.84 560.46 C154.82 560.21 154.83 559.97 154.83 559.71 C154.90 559.71 154.98 559.73 155.07 559.73 L161.61 559.73 L161.85 559.70 L161.85 560.40\"/><path d=\"M161.54 559.33 L155.21 559.34 C154.56 559.34 154.09 558.84 154.13 558.19 C154.18 557.32 154.90 556.59 155.80 556.56 L157.89 556.55 C157.82 555.81 158.24 555.11 158.93 554.83 C159.11 554.76 159.31 554.88 159.37 555.03 C159.44 555.21 159.37 555.40 159.18 555.48 C158.76 555.67 158.51 556.10 158.61 556.55 L160.92 556.57 C161.80 556.61 162.45 557.30 162.55 558.14 C162.62 558.74 162.20 559.33 161.54 559.33\"/>"},"glu":{"vb":[204.26,554.88,4.12,9.2],"p":"<path d=\"M206.88 555.94 C206.91 556.53 206.55 557.02 206.28 557.03 C206.02 557.04 205.67 556.58 205.64 555.99 C205.62 555.40 205.91 554.91 206.20 554.90 C206.48 554.88 206.86 555.35 206.88 555.94\"/><path d=\"M207.81 557.74 C207.41 558.23 206.78 558.43 206.56 558.30 C206.35 558.17 206.41 557.62 206.80 557.13 C207.19 556.64 207.76 556.40 208.00 556.55 C208.23 556.69 208.20 557.26 207.81 557.74\"/><path d=\"M207.88 559.50 C207.48 559.99 206.85 560.19 206.64 560.06 C206.42 559.93 206.47 559.38 206.87 558.89 C207.26 558.41 207.83 558.17 208.07 558.31 C208.30 558.45 208.27 559.02 207.88 559.50\"/><path d=\"M207.95 561.39 C207.55 561.87 206.92 562.08 206.71 561.95 C206.49 561.82 206.54 561.26 206.94 560.78 C207.33 560.30 207.91 560.05 208.14 560.20 C208.38 560.35 208.35 560.90 207.95 561.39\"/><path d=\"M204.77 557.86 C205.21 558.31 205.85 558.47 206.06 558.32 C206.26 558.17 206.17 557.62 205.73 557.17 C205.30 556.72 204.71 556.52 204.49 556.68 C204.26 556.84 204.34 557.41 204.77 557.86\"/><path d=\"M204.84 559.62 C205.28 560.07 205.92 560.23 206.13 560.08 C206.33 559.94 206.24 559.39 205.80 558.94 C205.37 558.48 204.78 558.29 204.56 558.45 C204.34 558.60 204.41 559.17 204.84 559.62\"/><path d=\"M204.92 561.50 C205.35 561.95 206.00 562.11 206.20 561.96 C206.40 561.82 206.31 561.26 205.88 560.82 C205.44 560.37 204.86 560.17 204.63 560.33 C204.41 560.49 204.48 561.05 204.92 561.50\"/><path d=\"M206.45 562.31 L206.59 562.30 C206.74 562.30 206.86 562.41 206.87 562.56 L206.92 563.79 C206.92 563.94 206.81 564.06 206.66 564.07 L206.52 564.08 C206.37 564.08 206.24 563.97 206.23 563.82 L206.19 562.59 C206.18 562.44 206.30 562.32 206.45 562.31\"/>"},"vgn":{"vb":[247.32,555.19,12.77,8.17],"p":"<path d=\"M251.82 559.74 C251.91 559.83 252.01 559.92 252.10 560.01 C252.30 559.78 252.57 559.40 252.61 558.82 C252.65 558.52 252.54 557.79 252.20 557.30 C251.65 556.52 250.59 556.26 249.65 556.03 C248.94 555.86 247.85 555.25 247.85 555.25 C247.73 555.19 247.71 555.33 247.70 555.41 C247.68 555.51 247.32 557.74 248.40 559.36 C249.06 560.36 249.71 560.67 250.28 560.67 C250.73 560.67 251.49 560.50 251.83 560.30 C251.86 560.27 251.74 560.36 251.83 560.30 C251.88 560.35 251.77 560.24 251.83 560.30 C252.56 561.03 253.24 562.00 253.51 563.20 C253.51 563.20 253.51 563.21 253.51 563.21 C253.52 563.22 253.52 563.23 253.52 563.24 C253.53 563.25 253.53 563.26 253.54 563.27 C253.54 563.28 253.54 563.28 253.55 563.29 C253.56 563.30 253.57 563.30 253.57 563.31 C253.58 563.32 253.59 563.33 253.60 563.33 C253.61 563.34 253.62 563.34 253.63 563.35 C253.64 563.35 253.65 563.35 253.66 563.36 C253.68 563.36 253.69 563.36 253.70 563.36 C253.72 563.36 253.73 563.36 253.75 563.36 C253.76 563.35 253.77 563.35 253.78 563.35 C253.79 563.34 253.80 563.34 253.81 563.33 C253.83 563.32 253.85 563.30 253.87 563.27 C253.87 563.26 253.88 563.25 253.88 563.24 C253.89 563.23 253.89 563.22 253.89 563.21 C253.89 563.21 253.89 563.21 253.89 563.20 C254.16 562.00 254.85 561.03 255.58 560.30 C255.64 560.24 255.69 560.19 255.75 560.14 C255.83 560.20 255.90 560.25 255.94 560.27 C256.27 560.48 256.67 560.67 257.13 560.67 C257.70 560.67 258.34 560.36 259.01 559.36 C260.09 557.74 259.73 555.51 259.71 555.41 C259.70 555.33 259.65 555.22 259.55 555.25 C259.55 555.25 258.47 555.85 257.76 556.03 C256.82 556.26 255.75 556.52 255.21 557.30 C254.87 557.79 254.75 558.30 254.85 558.80 C254.93 559.17 255.26 559.63 255.46 559.86 C255.55 559.77 255.69 559.66 255.78 559.57 C256.83 558.62 256.64 558.79 255.59 559.74 C255.50 559.83 255.40 559.92 255.31 560.01 C254.67 560.65 254.06 561.47 253.70 562.47 C253.35 561.47 252.74 560.65 252.10 560.01 C252.01 559.92 251.91 559.83 251.82 559.74\"/>"},"veg":{"vb":[297.77,555.23,8.51,8.42],"p":"<path d=\"M303.62 558.47 C301.85 559.93 300.27 561.30 299.82 563.65 C301.54 562.48 303.82 562.20 305.03 560.78 C306.27 559.31 306.05 557.28 306.12 555.23 C304.67 555.90 303.24 556.28 301.77 556.61 C298.96 557.24 297.77 560.23 299.19 563.01 C300.77 560.22 301.92 559.00 303.62 558.47\"/>"},"logo":{"vb":[322.35,47.71,29.46,29.46],"p":"<path d=\"M339.14 64.16 L335.86 64.16 L335.86 59.50 L334.41 59.50 L334.41 65.39 L339.14 65.39 L339.14 64.16\"/><path d=\"M339.14 52.52 L335.80 52.52 L335.80 51.14 L338.90 51.14 L338.90 50.06 L335.80 50.06 L335.80 48.79 L339.08 48.79 L339.08 47.71 L334.41 47.71 L334.41 53.60 L339.14 53.60 L339.14 52.52\"/><path d=\"M346.99 53.60 L348.49 51.56 L349.97 53.60 L351.77 53.60 L349.40 50.54 L351.56 47.71 L350.03 47.71 L348.61 49.60 L347.26 47.71 L345.48 47.71 L347.71 50.66 L345.42 53.60 L346.99 53.60\"/><path d=\"M335.83 74.83 L336.76 72.33 L337.66 74.83 L335.83 74.83 M335.95 71.28 L333.57 77.17 L334.95 77.17 L335.44 75.91 L338.08 75.91 L338.53 77.17 L340.07 77.17 L337.69 71.28 L335.95 71.28\"/><path d=\"M325.05 73.96 L323.76 73.96 L323.76 72.30 L325.05 72.30 C325.72 72.30 326.05 72.60 326.05 73.09 C326.05 73.63 325.72 73.96 325.05 73.96 M327.55 73.12 C327.55 71.97 326.74 71.28 325.36 71.28 L322.35 71.28 L322.35 77.18 L323.76 77.18 L323.76 75.04 L324.90 75.04 L326.05 77.18 L327.67 77.18 L326.35 74.83 C327.07 74.59 327.55 73.90 327.55 73.12\"/><path d=\"M323.79 60.55 L325.05 60.55 C325.69 60.55 326.05 60.91 326.05 61.45 C326.05 61.99 325.69 62.32 325.05 62.32 L323.79 62.32 L323.79 60.55 M323.79 63.41 L325.36 63.41 C326.71 63.41 327.58 62.65 327.58 61.39 C327.58 60.22 326.74 59.50 325.39 59.50 L322.35 59.50 L322.35 65.39 L323.79 65.39 L323.79 63.41\"/><path d=\"M348.55 64.43 C347.50 64.43 346.81 63.62 346.81 62.41 C346.81 61.24 347.50 60.46 348.55 60.46 C349.61 60.46 350.30 61.24 350.30 62.44 C350.30 63.62 349.61 64.43 348.55 64.43 M348.55 59.32 C346.63 59.32 345.30 60.61 345.30 62.41 C345.30 64.28 346.60 65.57 348.55 65.57 C350.48 65.57 351.80 64.25 351.80 62.44 C351.80 60.58 350.51 59.32 348.55 59.32\"/>"}};
+
+// Íconos: mismo orden que la leyenda de los originales.
+const IC = ["mar", "lac", "nue", "glu", "vgn", "veg"];
+const IC_NOM = {mar: "Mariscos", lac: "Lactosa", nue: "Frutos secos", glu: "Gluten", vgn: "Vegano", veg: "Vegetariano"};
+
+// ── Tipos de menú. Todas las medidas son las del PDF (pt, desde arriba de la media
+//    hoja): `base` es la línea de base del texto; dy = distancia entre líneas de
+//    base. Así se lee contra el PDF sin traducir nada. ──────────────────────────────
+// Leyenda: centro de cada columna (pt), en el orden en que aparecen los íconos.
+const LEY_CENA = {fs: 5.96, centros: [63.3, 110.2, 158.5, 206.5, 253.4, 301.5], esc: 1, color: "#231f20"};
+const TIPOS = {
+  cena: {
+    nombre: "Cena", dias: 4, es: "CENA", en: "DINNER",
+    logo: {x: 322.2, y: 30.2, l: 29.46}, titulo: [56.2, 73.4],   // logo: el de D2-D4 (D1 lo trae 8,6 pt más abajo)
+    secs: [{es: "ENTRADAS", en: "STARTERS"}, {es: "PLATOS DE FONDO", en: "MAIN COURSES"}],
+    // Por sección: en el PDF la primera queda 1,9 pt fuera de la grilla de 12,95 (filete y primer plato).
+    sec: {fs: 9.12, w: 500, ls: ".1em", base: 110.4, tras: 38.7, regla: [11.3, 13.6], rw: 276.5, primero: [34.6, 38.8]},   // filete: uno solo (el PDF los trae de 309,5 y 276,5 por los guiones bajos tecleados)
+    plato: {fs: 9.12, L: 12.95, Len: 12.95, en: 12.95, gap: 25.9, ls: "-.045pt"},
+    pie: {txt: "*Disponible menú de bar", fs: 9.12, w: 300, it: true, ls: ".1em", dy: 25.9},
+    ley: {...LEY_CENA, top: 554.8, base: 573.3, set: IC},
+  },
+  almuerzo: {
+    nombre: "Almuerzo", dias: 4, es: "ALMUERZO", en: "LUNCH", titLs: ["3.14pt", "4pt"],
+    logo: {x: 322.5, y: 49.5, l: 29.46}, titulo: [82.1, 108],
+    secs: [{es: "PLATOS DE FONDO", en: "MAIN COURSES"}],
+    sec: {fs: 7.84, w: 300, ls: "1.27pt", ws: "-.23pt", base: 161.6, tras: 38.7, regla: 18.1, rw: 277.8, primero: 70.5},
+    plato: {fs: 9.12, L: 12.95, Len: 12.95, en: 19.4, gap: 39.6, ls: "-.045pt"},
+    pie: {txt: "*Disponible menú de bar", fs: 9.12, w: 400, it: true, ls: ".02em", dy: 39},
+    ley: {...LEY_CENA, top: 544.1, base: 562.6, set: IC},
+  },
+  postres: {
+    nombre: "Postres", dias: 4, es: "POSTRES", en: "DESSERTS",
+    // Las 4 páginas del PDF no coinciden (el bloque baja 13-30 pt según el día): va la de D2 y D4, iguales entre sí.
+    logo: {x: 322.2, y: 60.8, l: 29.46}, titulo: [86.4, 103.7], filete: {y: 130.2, w: 273.7},
+    secs: [null], primero: 191.0,
+    plato: {fs: 9.12, L: 12.95, Len: 12.95, en: 19.4, gap: 38.9, ls: "-.045pt"},
+    pie: null,
+    ley: {fs: 6.57, centros: [60.8, 109.2, 156.5, 197.05], esc: 1.31, color: "#1d1d1b", top: 511.1, base: 535.0, set: ["lac", "nue", "glu", "vgn"]},
+  },
+  bar: {
+    nombre: "Bar", dias: 1, es: "MENÚ BAR", en: "BAR MENU", unaLinea: true, titLs: "2.64pt", titWs: "-2.64pt",
+    logo: {x: 313.4, y: 29.4, l: 32.3}, titulo: [56.2],
+    secs: [null], primero: 91.9,
+    plato: {fs: 7.92, L: 14.2, Len: 13.2, en: 13.3, gap: 27.0, ls: ".045pt"},   // el PDF varía 26,4-27,6: promedio
+    pie: {txt: "HORARIO/SCHEDULE 12:00 H. A 21:30 H.", fs: 7.44, w: 400, it: false, ls: ".145em", dy: 36.5},
+    ley: {...LEY_CENA, centros: LEY_CENA.centros.map(x => x - 6.5), top: 555.5, base: 575.0, set: IC},   // en el PDF es una imagen, 6,5 pt más a la izquierda
+  },
+  desayuno: {
+    // Sin diseño original (era un Word en Calibri): misma gramática que Postres.
+    nombre: "Desayuno", dias: 1, es: "DESAYUNO", en: "BREAKFAST", desayuno: true,
+    logo: {x: 322.2, y: 60.8, l: 29.46}, titulo: [86.4, 103.7], filete: {y: 130.2, w: 273.7},
+    secs: [null], primero: 163,
+    plato: {fs: 9.12, L: 12.95, Len: 12.95, cab: {fs: 7.92, w: 500, ls: ".1em"}, dyEs: 14.2, en: 12.95, gap: 24},
+    pie: null,
+    ley: {...LEY_CENA, top: 554.8, base: 573.3, set: []},
+  },
+};
+const ORDEN_TIPOS = ["cena", "almuerzo", "postres", "bar", "desayuno"];
+
+// ── Utilidades ─────────────────────────────────────────────────────────────────
+const br = s => esc(s).replace(/\n/g, "<br>");         // los cortes de línea son los del diseñador
+const plano = s => String(s ?? "").replace(/\s*\n\s*/g, " ");
+const pick = (v, i) => Array.isArray(v) ? (v[i] ?? v[v.length - 1]) : v;   // valor por sección
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const norm = s => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const clon = o => JSON.parse(JSON.stringify(o));
+const igual = (a, b) => JSON.stringify(limpio(a)) === JSON.stringify(limpio(b));
+function limpio(it) {           // forma canónica de un plato (para comparar y guardar)
+  if (!it) return null;
+  const o = {es: (it.es || "").trim(), en: (it.en || "").trim()};
+  if ((it.des_es || "").trim()) o.des_es = it.des_es.trim();
+  if ((it.des_en || "").trim()) o.des_en = it.des_en.trim();
+  const ic = [...new Set((it.ic || []).filter(k => IC.includes(k)))];   // el orden es el del plato (el PDF no sigue el de la leyenda)
+  if (ic.length) o.ic = ic;
+  return o;
+}
+// Ubicación del texto dentro de un bloque: línea de base desde el borde superior.
+// Objektiv trae USE_TYPO_METRICS (asc 810, desc 254 /1000), que es lo que usa Chrome.
+const bOf = (L, fs) => (L - 1.064 * fs) / 2 + 0.81 * fs;
+function svgIc(k, h) {
+  const s = SVG[k], [x, y, w, hh] = s.vb, alto = h ?? hh;
+  return `<svg viewBox="${x} ${y} ${w} ${hh}" style="height:${alto.toFixed(2)}pt;width:${(w * alto / hh).toFixed(2)}pt" fill="currentColor" aria-label="${IC_NOM[k] || ""}">${s.p}</svg>`;
+}
+function hoyCiclo() {           // el mismo cálculo que menuTodayCycleDay() de index.html
+  const anchor = new Date(2026, 3, 14), n = new Date();
+  const d = Math.round((new Date(n.getFullYear(), n.getMonth(), n.getDate()) - anchor) / 86400000);
+  return String(((d + 3) % 4 + 4) % 4 + 1);
+}
+const HOY = hoyCiclo();
+
+// ── Estado: sólo lo cambiado (la base vive en el código). ───────────────────────
+// estado.ov["cena|2|0"] = lista completa de esa sección cuando se tocó.
+// estado.manual["cena|2"] = HTML escrito a mano sobre el papel.
+// estado.pie["cena"] = texto del pie (vale para todos los días de ese tipo).
+const LS = "ata.menus.v1";
+let estado = {v: 1, ov: {}, manual: {}, pie: {}, imprimir: null};
+try { const g = JSON.parse(localStorage.getItem(LS) || "null"); if (g && g.v === 1) estado = Object.assign(estado, g); } catch (e) {}
+let vista = {tipo: "cena", dia: HOY, abierto: null};
+try { const v = JSON.parse(sessionStorage.getItem(LS + ".vista") || "null"); if (v && TIPOS[v.tipo]) vista = {...vista, ...v, abierto: null}; } catch (e) {}
+
+let reloj = null;
+function guardar() {
+  clearTimeout(reloj);
+  reloj = setTimeout(() => {
+    try { localStorage.setItem(LS, JSON.stringify(estado)); avisar("Guardado"); }
+    catch (e) { avisar("No se pudo guardar en este navegador: usa Respaldo", true); }
+  }, 250);
+}
+function avisar(t, err) { const e = document.getElementById("estado"); e.textContent = t; e.className = err ? "error" : ""; }
+function recordarVista() { try { sessionStorage.setItem(LS + ".vista", JSON.stringify({tipo: vista.tipo, dia: vista.dia})); } catch (e) {} }
+
+const diasDe = t => Array.from({length: TIPOS[t].dias}, (_, i) => String(i + 1));
+const claveSec = (t, d, s) => `${t}|${d}|${s}`;
+const baseSec = (t, d, s) => (BASE[t][d] || [])[s] || [];
+function secActual(t, d, s) { const k = claveSec(t, d, s); return estado.ov[k] || baseSec(t, d, s); }
+function secEscribir(t, d, s, lista) {
+  const k = claveSec(t, d, s), b = baseSec(t, d, s);
+  if (lista.length === b.length && lista.every((x, i) => igual(x, b[i]))) delete estado.ov[k];
+  else estado.ov[k] = lista.map(limpio);
+  guardar();
+}
+function pieDe(t) { return estado.pie[t] ?? (TIPOS[t].pie ? TIPOS[t].pie.txt : ""); }
+function cambiosPagina(t, d) {
+  let n = TIPOS[t].secs.reduce((a, _, s) => a + (estado.ov[claveSec(t, d, s)] ? 1 : 0), 0);
+  if (estado.manual[t + "|" + d] != null) n++;
+  return n;
+}
+
+// ── Índice para buscar: todos los platos de la base y los cambiados ──────────────
+function indice() {
+  const vistos = new Map();
+  const sumar = (it, donde) => {
+    const c = limpio(it); if (!c || !c.es) return;
+    const k = norm(c.es) + "|" + norm(c.des_es || "");
+    if (!vistos.has(k)) vistos.set(k, {it: c, donde: []});
+    if (donde && !vistos.get(k).donde.includes(donde)) vistos.get(k).donde.push(donde);
+  };
+  for (const t of ORDEN_TIPOS) for (const d of diasDe(t)) TIPOS[t].secs.forEach((_, s) => baseSec(t, d, s).forEach(it => sumar(it, rotulo(t, d))));
+  for (const k in estado.ov) estado.ov[k].forEach(it => sumar(it, null));
+  return [...vistos.values()];
+}
+function rotulo(t, d) { return TIPOS[t].dias > 1 ? `${TIPOS[t].nombre} D${d}` : TIPOS[t].nombre; }
+function buscar(q, lista) {
+  const p = norm(q).trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return [];
+  const out = [];
+  for (const e of lista) {
+    const h = norm([e.it.es, e.it.en, e.it.des_es, e.it.des_en].join(" "));
+    if (!p.every(w => h.includes(w))) continue;
+    const n = norm(e.it.es);
+    out.push({...e, pts: (n.startsWith(p[0]) ? 0 : n.includes(p[0]) ? 1 : 2)});
+  }
+  return out.sort((a, b) => a.pts - b.pts || a.it.es.localeCompare(b.it.es)).slice(0, 40);
+}
+function resaltar(txt, q) {
+  const p = norm(q).trim().split(/\s+/).filter(Boolean); let s = esc(txt);
+  if (!p.length) return s;
+  const n = norm(txt), marcas = new Array(txt.length).fill(false);
+  for (const w of p) { let i = n.indexOf(w); while (i >= 0) { for (let j = i; j < i + w.length; j++) marcas[j] = true; i = n.indexOf(w, i + 1); } }
+  let r = "", dentro = false;
+  [...txt].forEach((ch, i) => { if (marcas[i] && !dentro) { r += "<mark>"; dentro = true; } if (!marcas[i] && dentro) { r += "</mark>"; dentro = false; } r += esc(ch); });
+  return r + (dentro ? "</mark>" : "");
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLANTILLA — dibuja una media hoja. Es la única: vista previa y PDF.
+// ═══════════════════════════════════════════════════════════════════════════════
+function Flujo() {
+  // Bloques apilados por línea de base: cada uno dice a cuánto queda su primera
+  // línea de base de la última del bloque anterior, y el margen sale de ahí.
+  const partes = []; let prev = null, top = 0;
+  return {
+    add(html, fs, L, dy, cls, style = "") {
+      let mt = 0;
+      if (!prev) top = dy - bOf(L, fs);           // primer bloque: dy = base absoluta
+      else mt = dy - (prev.L - bOf(prev.L, prev.fs)) - bOf(L, fs);
+      partes.push(`<div class="${cls}" style="margin-top:${mt.toFixed(2)}pt;font-size:${fs}pt;line-height:${L}pt;${style}">${html}</div>`);
+      prev = {fs, L};
+    },
+    get top() { return top; }, get html() { return partes.join(""); }, get vacio() { return !prev; },
+  };
+}
+const falta = t => `<span class="falta">${t}</span>`;
+function icsHtml(ic, fs) {
+  const k = 1.07 * fs / 9.12;          // los íconos del texto miden 1,07× los de la leyenda
+  return (ic || []).length ? `<span class="ics">${ic.filter(x => SVG[x]).map(x => svgIc(x, SVG[x].vb[3] * k)).join("")}</span>` : "";
+}
+
+function cuerpoHtml(t, d) {
+  const T = TIPOS[t], P = T.plato, f = Flujo();
+  let primeroSec = true;
+  T.secs.forEach((S, s) => {
+    const items = secActual(t, d, s).filter(it => it && ((it.es || "").trim() || (it.en || "").trim()));
+    if (S) {
+      const C = T.sec, L = C.fs;
+      const style = `letter-spacing:${C.ls};${C.ws ? "word-spacing:" + C.ws + ";" : ""}font-weight:${C.w};--regla:${(bOf(L, C.fs) + pick(C.regla, s)).toFixed(2)}pt;--rw:${pick(C.rw, s)}pt`;
+      f.add(`${esc(S.es)} / ${esc(S.en)}`, C.fs, L, primeroSec ? C.base : C.tras, "sec", style);
+      primeroSec = false;
+    }
+    items.forEach((it, i) => {
+      const dy = i === 0 ? (S ? pick(T.sec.primero, s) : T.primero) : P.gap;
+      if (T.desayuno) {
+        const C = P.cab;
+        // Título largo: corta después de la barra (como el Word original), no a mitad de frase.
+        const sep = plano(it.es).length + plano(it.en).length > 50 ? " /<br>" : " / ";
+        f.add(`${br(it.es) || falta("Título")}${it.en ? sep + br(it.en) : ""}${icsHtml(it.ic, C.fs)}`, C.fs, P.L, dy, "sec", `font-weight:${C.w};letter-spacing:${C.ls};text-transform:uppercase`);
+        if ((it.des_es || "").trim()) f.add(br(it.des_es), P.fs, P.L, P.dyEs, "opc");
+        if ((it.des_en || "").trim()) f.add(br(it.des_en), P.fs, P.Len, it.des_es ? P.en : P.dyEs, "en");
+      } else {
+        const trk = P.ls ? `letter-spacing:${P.ls}` : "";   // medido contra el PDF, glifo a glifo
+        f.add(`${br(it.es) || falta("Nombre")}${icsHtml(it.ic, P.fs)}`, P.fs, P.L, dy, "es", trk);
+        f.add(br(it.en) || falta("English"), P.fs, P.Len, P.en, "en", trk);
+      }
+    });
+  });
+  const pie = pieDe(t);
+  if (T.pie && pie.trim()) {
+    const C = T.pie;
+    f.add(esc(pie), C.fs, C.fs * 1.3, f.vacio ? 300 : C.dy, "pie", `font-weight:${C.w};${C.it ? "font-style:italic;" : ""}letter-spacing:${C.ls}`);
+  }
+  return {top: f.top, html: f.html};
+}
+
+function leyendaHtml(t, d) {
+  const T = TIPOS[t], Y = T.ley;
+  // La leyenda lleva los íconos del tipo y además cualquiera que se use en la página:
+  // un ícono en un plato nunca queda sin explicar.
+  const usados = new Set(Y.set);
+  T.secs.forEach((_, s) => secActual(t, d, s).forEach(it => (it.ic || []).forEach(k => usados.add(k))));
+  const set = IC.filter(k => usados.has(k));
+  if (!set.length) return "";
+  const lb = bOf(Y.fs, Y.fs), C = Y.centros, paso = (C[C.length - 1] - C[0]) / Math.max(1, C.length - 1);
+  // Columnas centradas en las posiciones del PDF; si la página usa más íconos que
+  // los de su leyenda, las que sobran siguen con el mismo paso.
+  return `<div class="ley" style="top:${Y.top}pt;color:${Y.color}">${set.map((k, i) => {
+    const cx = C[i] ?? C[C.length - 1] + paso * (i - C.length + 1), w = 44;
+    return `<div class="c" style="position:absolute;left:${(cx - w / 2).toFixed(2)}pt;width:${w}pt">${svgIc(k, SVG[k].vb[3] * Y.esc)}<span style="font-size:${Y.fs}pt;line-height:${Y.fs}pt;top:${(Y.base - Y.top - lb).toFixed(2)}pt">${esc(IC_NOM[k])}</span></div>`;
+  }).join("")}</div>`;
+}
+
+function menuHtml(t, d, opts = {}) {
+  const T = TIPOS[t], b12 = bOf(12, 12);
+  // Tracking del título: 4 pt en cena y postres; el almuerzo y el bar lo traen distinto (medido glifo a glifo).
+  const trk = (i = 0) => (T.titLs ? `letter-spacing:${pick(T.titLs, i)};` : "") + (T.titWs ? `word-spacing:${T.titWs};` : "");
+  const titulo = T.unaLinea
+    ? `<div class="abs tit" style="top:${(T.titulo[0] - b12).toFixed(2)}pt;${trk()}"><span style="font-weight:500">${esc(T.es)}</span><span style="font-style:italic;font-weight:400;margin-left:${pick(T.titLs, 0)}"> /${esc(T.en)}</span></div>`
+    : `<div class="abs tit" style="top:${(T.titulo[0] - b12).toFixed(2)}pt;font-weight:500;${trk(0)}">${esc(T.es)}</div>
+       <div class="abs tit" style="top:${(T.titulo[1] - b12).toFixed(2)}pt;font-weight:300;${trk(1)}">${esc(T.en)}</div>`;
+  const L = SVG.logo, lg = T.logo;
+  const logo = `<div class="logo" style="left:${lg.x}pt;top:${lg.y}pt;width:${lg.l}pt;height:${lg.l}pt;color:#231f20"><svg viewBox="${L.vb.join(" ")}" fill="currentColor" aria-label="explora">${L.p}</svg></div>`;
+  const filete = T.filete ? `<div class="filete" style="top:${T.filete.y}pt;width:${T.filete.w}pt"></div>` : "";
+  const man = estado.manual[t + "|" + d];
+  const c = cuerpoHtml(t, d);
+  const cuerpo = `<div class="cuerpo" style="top:${c.top.toFixed(2)}pt">${man != null ? sanear(man) : c.html}</div>`;
+  return `<div class="menu${man != null ? " manual" : ""}" data-p="${t}|${d}">${logo}${titulo}${filete}${cuerpo}${leyendaHtml(t, d)}</div>`;
+}
+
+// HTML escrito a mano: sólo texto con formato; nada de scripts ni atributos de evento.
+function sanear(html) {
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
+  doc.querySelectorAll("script,style,iframe,object,embed,link,meta").forEach(n => n.remove());
+  doc.querySelectorAll("*").forEach(n => [...n.attributes].forEach(a => { if (/^on/i.test(a.name) || /javascript:/i.test(a.value)) n.removeAttribute(a.name); }));
+  return doc.body.firstChild.innerHTML;
+}
+
+// ¿Cabe? Se mide la página a tamaño real fuera de pantalla: el cuerpo no puede
+// pisar la leyenda (ni el borde de la hoja si no hay leyenda).
+const medidor = document.createElement("div");
+medidor.style.cssText = "position:fixed;left:-10000px;top:0;visibility:hidden;pointer-events:none";
+document.body.appendChild(medidor);
+function desborda(t, d) {
+  medidor.innerHTML = menuHtml(t, d);
+  const m = medidor.firstElementChild, c = m.querySelector(".cuerpo"), ley = m.querySelector(".ley");
+  const r0 = m.getBoundingClientRect(), rc = c.getBoundingClientRect();
+  const limite = ley ? ley.getBoundingClientRect().top - 4 : r0.bottom - 20;
+  // Ancho: un nombre largo sin espacios podría salirse del margen derecho.
+  const ancho = [...c.querySelectorAll("div")].some(x => x.scrollWidth > c.clientWidth + 1);
+  return rc.bottom > limite + 0.5 || ancho;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EDITOR
+// ═══════════════════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+
+function dibujarSelectores() {
+  $("seg-tipo").innerHTML = ORDEN_TIPOS.map(t => {
+    const n = diasDe(t).reduce((a, d) => a + cambiosPagina(t, d), 0);
+    return `<button data-t="${t}" class="${t === vista.tipo ? "on" : ""}">${TIPOS[t].nombre}${n ? '<span class="mod">•</span>' : ""}</button>`;
+  }).join("");
+  const T = TIPOS[vista.tipo];
+  $("seg-dia").hidden = T.dias < 2;
+  $("seg-dia").innerHTML = T.dias < 2 ? "" : diasDe(vista.tipo).map(d =>
+    `<button data-d="${d}" class="${d === vista.dia ? "on" : ""}" title="${d === HOY ? "Hoy va el día " + d + " del ciclo" : ""}">D${d}${d === HOY ? '<span class="hoy">hoy</span>' : ""}${cambiosPagina(vista.tipo, d) ? '<span class="mod">•</span>' : ""}</button>`).join("");
+}
+document.addEventListener("click", e => {
+  const bt = e.target.closest("#seg-tipo button"), bd = e.target.closest("#seg-dia button");
+  if (bt) ir(bt.dataset.t, TIPOS[bt.dataset.t].dias > 1 ? (TIPOS[bt.dataset.t].dias >= +vista.dia ? vista.dia : HOY) : "1");
+  if (bd) ir(vista.tipo, bd.dataset.d);
+});
+function ir(t, d, abrir = null) {
+  vista = {tipo: t, dia: TIPOS[t].dias > 1 ? d : "1", abierto: abrir};
+  recordarVista(); dibujarTodo();
+  if (abrir) requestAnimationFrame(() => {
+    const el = document.querySelector(`.slot[data-k="${abrir}"]`);
+    el?.scrollIntoView({block: "center", behavior: "smooth"});
+    el?.querySelector(".busca input")?.focus();
+  });
+}
+
+function dibujarTodo() { dibujarSelectores(); dibujarSlots(); dibujarLado(); }
+
+function dibujarSlots() {
+  const t = vista.tipo, d = vista.dia, T = TIPOS[t];
+  const man = estado.manual[t + "|" + d] != null;
+  const n = cambiosPagina(t, d);
+  let h = `<div class="pag-cab"><h2 class="serif">${esc(T.nombre)}${T.dias > 1 ? ` · Día ${d}` : ""}</h2>
+    <span class="sub">${d === HOY && T.dias > 1 ? "hoy · " : ""}${n ? n + (n === 1 ? " cambio" : " cambios") : "como el original"}</span>
+    <span class="esp"></span>${n ? `<button class="chico ghost" data-a="restaurar-pag">↺ Volver al original</button>` : ""}</div>
+    <p class="aviso" id="av-largo" hidden>No cabe en la media hoja: acorta un texto o quita un plato.</p>
+    ${man ? `<p class="aviso oro">✎ Esta página tiene texto escrito a mano: los slots ya no la cambian.<button class="chico" data-a="volver-plantilla">Volver a los slots</button></p>` : ""}`;
+  T.secs.forEach((S, s) => {
+    const lista = secActual(t, d, s), base = baseSec(t, d, s);
+    h += `<div class="seccion-t">${S ? esc(S.es) + " / " + esc(S.en) : T.desayuno ? "Secciones" : "Platos"}</div>`;
+    lista.forEach((it, i) => { h += slotHtml(t, d, s, i, it, base[i]); });
+    h += `<button class="chico ghost agregar" data-a="agregar" data-s="${s}">+ Agregar ${T.desayuno ? "sección" : "plato"}</button>`;
+  });
+  $("slots").innerHTML = h;
+}
+
+function slotHtml(t, d, s, i, it, orig) {
+  const k = `${s}.${i}`, T = TIPOS[t], abierto = vista.abierto === k;
+  const cambiado = !igual(it, orig);
+  const vacio = !(it.es || "").trim();
+  const ori = cambiado && orig ? `<div class="ori">original: ${esc(plano(orig.es))}</div>` : cambiado && !orig ? `<div class="ori">agregado</div>` : "";
+  const ics = IC.map(x => `<button class="${(it.ic || []).includes(x) ? "on" : ""}" data-a="ic" data-ic="${x}" title="${IC_NOM[x]}">${svgIc(x, 14)}</button>`).join("");
+  return `<div class="slot${cambiado ? " cambio" : ""}${vacio ? " vacio" : ""}" data-k="${k}" data-s="${s}" data-i="${i}">
+    <div class="fila">
+      <span class="num">${i + 1}</span>
+      <div class="txt" data-a="abrir" title="Cambiar o editar">
+        <div class="n">${vacio ? '<span class="rojo">Vacío: toca para elegir un plato</span>' : esc(plano(it.es))}${T.desayuno && it.en ? ` <span class="t">/ ${esc(plano(it.en))}</span>` : ""}</div>
+        ${T.desayuno ? (it.des_es ? `<div class="o">${esc(plano(it.des_es))}</div>` : "") : `<div class="t">${it.en ? esc(plano(it.en)) : vacio ? "" : '<span class="rojo">falta el inglés</span>'}</div>`}
+        ${ori}
+      </div>
+      <div class="ics-ed">${ics}</div>
+    </div>
+    <div class="ed" ${abierto ? "" : "hidden"}>
+      <div class="busca"><input type="search" placeholder="Cambiar por… (busca en todos los menús)" autocomplete="off" spellcheck="false"><div class="res" hidden></div></div>
+      <div class="dos">
+        <label>${T.desayuno ? "Título (es)" : "Nombre (es)"}<textarea rows="2" data-f="es">${esc(it.es)}</textarea></label>
+        <label>${T.desayuno ? "Título (en)" : "English"}<textarea rows="2" data-f="en">${esc(it.en)}</textarea></label>
+        ${T.desayuno ? `<label>Opciones (es)<input type="text" data-f="des_es" value="${esc(it.des_es || "")}"></label>
+        <label>Opciones (en)<input type="text" data-f="des_en" value="${esc(it.des_en || "")}"></label>` : ""}
+      </div>
+      <div class="acc">
+        <button class="chico" data-a="subir" ${i === 0 ? "disabled" : ""}>↑ Subir</button>
+        <button class="chico" data-a="bajar">↓ Bajar</button>
+        ${cambiado && orig ? `<button class="chico" data-a="restaurar">↺ Original</button>` : ""}
+        <span class="esp"></span>
+        <button class="chico ghost" data-a="quitar">Quitar</button>
+        <button class="chico" data-a="cerrar">Listo</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Edición en sitio: cambiar un campo no redibuja la lista (el foco y el scroll
+// no se mueven); sólo se parchan la ficha y el papel.
+function editarSlot(s, i, fn, redibujar = false) {
+  const t = vista.tipo, d = vista.dia;
+  const lista = clon(secActual(t, d, s));
+  fn(lista);
+  secEscribir(t, d, s, lista);
+  if (redibujar) { dibujarSlots(); dibujarSelectores(); }
+  else parcharSlot(s, i);
+  dibujarPapel();
+}
+function parcharSlot(s, i) {
+  const t = vista.tipo, d = vista.dia, el = document.querySelector(`.slot[data-s="${s}"][data-i="${i}"]`);
+  if (!el) return;
+  const it = secActual(t, d, s)[i], orig = baseSec(t, d, s)[i];
+  const tmp = document.createElement("div"); tmp.innerHTML = slotHtml(t, d, s, i, it, orig);
+  const nuevo = tmp.firstElementChild;
+  el.className = nuevo.className;
+  el.querySelector(".fila").replaceWith(nuevo.querySelector(".fila"));
+  const accV = el.querySelector(".acc"), accN = nuevo.querySelector(".acc");
+  if (accV && accN) accV.replaceWith(accN);
+  dibujarSelectores();
+  const sub = document.querySelector(".pag-cab .sub"), n = cambiosPagina(t, d);
+  if (sub) sub.textContent = `${d === HOY && TIPOS[t].dias > 1 ? "hoy · " : ""}${n ? n + (n === 1 ? " cambio" : " cambios") : "como el original"}`;
+}
+
+$("slots").addEventListener("click", e => {
+  const a = e.target.closest("[data-a]"); if (!a) return;
+  const slot = a.closest(".slot"), s = slot ? +slot.dataset.s : +a.dataset.s, i = slot ? +slot.dataset.i : -1;
+  const t = vista.tipo, d = vista.dia;
+  switch (a.dataset.a) {
+    case "abrir": {
+      const ed = slot.querySelector(".ed"), abrir = ed.hidden;
+      document.querySelectorAll(".slot .ed").forEach(x => x.hidden = true);
+      ed.hidden = !abrir; vista.abierto = abrir ? slot.dataset.k : null;
+      if (abrir) ed.querySelector(".busca input").focus();
+      break;
+    }
+    case "cerrar": slot.querySelector(".ed").hidden = true; vista.abierto = null; break;
+    case "ic": editarSlot(s, i, l => { const ic = new Set(l[i].ic || []); ic.has(a.dataset.ic) ? ic.delete(a.dataset.ic) : ic.add(a.dataset.ic); l[i].ic = [...ic]; }); break;
+    case "subir": if (i > 0) { vista.abierto = `${s}.${i - 1}`; editarSlot(s, i, l => l.splice(i - 1, 0, l.splice(i, 1)[0]), true); } break;
+    case "bajar": {
+      const n = secActual(t, d, s).length;
+      if (i < n - 1) { vista.abierto = `${s}.${i + 1}`; editarSlot(s, i, l => l.splice(i + 1, 0, l.splice(i, 1)[0]), true); }
+      break;
+    }
+    case "restaurar": editarSlot(s, i, l => { l[i] = clon(baseSec(t, d, s)[i]); }, true); break;
+    case "quitar": vista.abierto = null; editarSlot(s, i, l => l.splice(i, 1), true); break;
+    case "agregar": {
+      const n = secActual(t, d, s).length;
+      vista.abierto = `${s}.${n}`;
+      editarSlot(s, n, l => l.push({es: "", en: ""}), true);
+      document.querySelector(`.slot[data-k="${s}.${n}"] .busca input`)?.focus();
+      break;
+    }
+    case "restaurar-pag":
+      if (!confirm(`¿Volver ${TIPOS[t].nombre}${TIPOS[t].dias > 1 ? " día " + d : ""} al original? Se pierden sus cambios.`)) return;
+      TIPOS[t].secs.forEach((_, s2) => delete estado.ov[claveSec(t, d, s2)]);
+      delete estado.manual[t + "|" + d]; guardar(); dibujarTodo(); break;
+    case "volver-plantilla":
+      delete estado.manual[t + "|" + d]; guardar(); dibujarTodo(); break;
+  }
+});
+$("slots").addEventListener("input", e => {
+  const inp = e.target, slot = inp.closest(".slot"); if (!slot) return;
+  const s = +slot.dataset.s, i = +slot.dataset.i;
+  if (inp.dataset.f) {
+    const f = inp.dataset.f;
+    editarSlot(s, i, l => { l[i][f] = inp.value; });
+  } else if (inp.closest(".busca")) {
+    pintarResultados(inp.closest(".busca").querySelector(".res"), inp.value, true);
+  }
+});
+
+// ── Resultados de búsqueda (en un slot: reemplazan el plato) ─────────────────────
+let IDX = null;
+function pintarResultados(cont, q, enSlot) {
+  if (!q.trim()) { cont.hidden = true; cont.innerHTML = ""; return; }
+  IDX = IDX || indice();
+  const r = enSlot ? buscar(q, IDX) : buscarUbicaciones(q);
+  let h;
+  if (enSlot) {
+    h = r.map((e, n) => `<button data-n="${n}" class="${n === 0 ? "sel" : ""}"><span class="d">${esc(e.donde.slice(0, 2).join(" · ") || "editado")}</span>
+      <span class="n">${resaltar(plano(e.it.es), q)} ${icsMini(e.it.ic)}</span><span class="t">${esc(plano(e.it.en || e.it.des_es || ""))}</span></button>`).join("");
+    h += `<button data-libre="1" class="${r.length ? "" : "sel"}"><span class="n libre">✎ Usar «${esc(q.trim())}» como texto libre</span><span class="t">Para un plato que no está en ningún menú; el inglés se escribe abajo.</span></button>`;
+    cont._r = r;
+  } else {
+    h = r.length ? r.map((e, n) => `<button data-n="${n}" class="${n === 0 ? "sel" : ""}"><span class="d">${esc(e.donde)}</span>
+      <span class="n">${resaltar(plano(e.it.es), q)} ${icsMini(e.it.ic)}</span><span class="t">${esc(plano(e.it.en || ""))}</span></button>`).join("")
+      : `<div class="vacio">No aparece en ningún menú de hoy. Para ponerlo, abre un slot y búscalo ahí.</div>`;
+    cont._r = r;
+  }
+  cont.innerHTML = h; cont.hidden = false;
+}
+const icsMini = ic => (ic || []).length ? `<span style="color:var(--tx3);margin-left:4px">${ic.filter(x => SVG[x]).map(x => svgIc(x, 10)).join(" ")}</span>` : "";
+
+$("slots").addEventListener("click", e => {
+  const b = e.target.closest(".busca .res button"); if (!b) return;
+  elegir(b.closest(".slot"), b);
+});
+function elegir(slot, b) {
+  const s = +slot.dataset.s, i = +slot.dataset.i, cont = b.closest(".res"), inp = slot.querySelector(".busca input");
+  if (b.dataset.libre) {
+    const txt = inp.value.trim();
+    editarSlot(s, i, l => { l[i] = {es: txt, en: "", ...(TIPOS[vista.tipo].desayuno ? {des_es: "", des_en: ""} : {})}; }, true);
+    const el = document.querySelector(`.slot[data-s="${s}"][data-i="${i}"]`);
+    el.querySelector(".ed").hidden = false; el.querySelector('[data-f="en"]').focus();
+    vista.abierto = `${s}.${i}`;
+    return;
+  }
+  const e = cont._r[+b.dataset.n];
+  editarSlot(s, i, l => { l[i] = clon(e.it); }, true);
+  vista.abierto = null;
+  avisar(`Cambiado: ${e.it.es}`);
+}
+// Teclado en los buscadores: ↑↓ para moverse, Enter elige, Esc cierra.
+document.addEventListener("keydown", e => {
+  const inp = e.target; if (!(inp instanceof HTMLInputElement) || inp.type !== "search") return;
+  const cont = inp.parentElement.querySelector(".res"); if (!cont) return;
+  if (e.key === "Escape") { cont.hidden = true; if (inp.id === "q") inp.blur(); return; }
+  if (cont.hidden) return;
+  const bs = [...cont.querySelectorAll("button")]; let n = bs.findIndex(b => b.classList.contains("sel"));
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault(); bs[n]?.classList.remove("sel");
+    n = Math.max(0, Math.min(bs.length - 1, n + (e.key === "ArrowDown" ? 1 : -1)));
+    bs[n]?.classList.add("sel"); bs[n]?.scrollIntoView({block: "nearest"});
+  } else if (e.key === "Enter" && bs[n]) {
+    e.preventDefault();
+    if (inp.id === "q") irA(cont._r[+bs[n].dataset.n]); else elegir(inp.closest(".slot"), bs[n]);
+  }
+});
+
+// ── Buscador global: ¿dónde está este plato HOY (con los cambios)? ───────────────
+function buscarUbicaciones(q) {
+  const lista = [];
+  for (const t of ORDEN_TIPOS) for (const d of diasDe(t)) TIPOS[t].secs.forEach((S, s) =>
+    secActual(t, d, s).forEach((it, i) => { if (it.es) lista.push({it, donde: rotulo(t, d) + (S ? " · " + S.es.toLowerCase() : ""), t, d, k: `${s}.${i}`}); }));
+  return buscar(q, lista.map(x => ({...x, donde: x.donde}))).map(r => r);
+}
+function irA(r) { $("q-res").hidden = true; $("q").value = ""; ir(r.t, r.d, r.k); }
+$("q").addEventListener("input", e => pintarResultados($("q-res"), e.target.value, false));
+$("q").addEventListener("focus", e => { if (e.target.value) pintarResultados($("q-res"), e.target.value, false); });
+$("q-res").addEventListener("click", e => { const b = e.target.closest("button[data-n]"); if (b) irA($("q-res")._r[+b.dataset.n]); });
+document.addEventListener("click", e => { if (!e.target.closest(".buscador")) $("q-res").hidden = true; });
+document.addEventListener("keydown", e => {   // "/" salta al buscador global
+  if (e.key === "/" && !/input|textarea/i.test(document.activeElement.tagName) && !document.activeElement.isContentEditable) { e.preventDefault(); $("q").focus(); }
+});
+
+// ── Columna del papel ──────────────────────────────────────────────────────────
+function escalaPapel() { return window.innerWidth < 560 ? Math.min(1, (window.innerWidth - 36) / 528) : window.innerWidth < 980 ? 0.9 : 0.95; }
+function dibujarLado() {
+  const t = vista.tipo, d = vista.dia, T = TIPOS[t], man = estado.manual[t + "|" + d] != null;
+  $("lado").style.setProperty("--k", escalaPapel());
+  $("lado").innerHTML = `<div class="papel" id="papel"></div>
+    ${T.pie ? `<label class="txtpie">Pie (${esc(T.nombre)}, todos los días)<input type="text" id="in-pie" value="${esc(pieDe(t))}"></label>` : ""}
+    <div class="acc"><button class="chico" id="b-mano">${man ? "Terminar edición a mano" : "✎ Editar a mano"}</button>
+    <button class="chico ghost" id="b-solo">Imprimir sólo esta</button></div>`;
+  dibujarPapel();
+  $("b-mano").onclick = () => {
+    const m = document.querySelector("#papel .menu"), c = m.querySelector(".cuerpo");
+    if (c.isContentEditable) { c.contentEditable = false; dibujarTodo(); return; }
+    c.contentEditable = true; m.classList.add("manual"); c.focus();
+    $("b-mano").textContent = "Terminar edición a mano";
+  };
+  $("b-solo").onclick = () => imprimir([`${t}|${d}`]);
+  $("in-pie")?.addEventListener("input", e => {
+    const v = e.target.value;
+    if (v === T.pie.txt) delete estado.pie[t]; else estado.pie[t] = v;
+    guardar(); dibujarPapel();
+  });
+}
+function dibujarPapel() {
+  const t = vista.tipo, d = vista.dia, p = $("papel"); if (!p) return;
+  if (p.querySelector(".cuerpo")?.isContentEditable) return;   // no pisar lo que se está escribiendo
+  p.innerHTML = menuHtml(t, d);
+  const largo = desborda(t, d);
+  p.firstElementChild.classList.toggle("desborda", largo);
+  const av = $("av-largo"); if (av) av.hidden = !largo;
+  const c = p.querySelector(".cuerpo");
+  c.addEventListener("input", () => {
+    estado.manual[t + "|" + d] = c.innerHTML; guardar();
+    if (!document.querySelector(".aviso.oro")) dibujarSlots();
+  });
+  IDX = null;
+}
+window.addEventListener("resize", () => $("lado")?.style.setProperty("--k", escalaPapel()));
+
+// ── Imprimir ───────────────────────────────────────────────────────────────────
+function paginas() { const o = []; for (const t of ORDEN_TIPOS) for (const d of diasDe(t)) o.push(`${t}|${d}`); return o; }
+function abrirDialogo() {
+  let sel = new Set(estado.imprimir || [`cena|${HOY}`, `almuerzo|${HOY}`, `postres|${HOY}`]);
+  const pintar = () => {
+    $("dlg-cuerpo").innerHTML = ORDEN_TIPOS.map(t => `<div class="grupo"><span class="g">${TIPOS[t].nombre}</span>${diasDe(t).map(d => {
+      const k = `${t}|${d}`, mal = desborda(t, d), n = cambiosPagina(t, d);
+      return `<label class="chk${sel.has(k) ? " on" : ""}${mal ? " mal" : ""}" title="${mal ? "No cabe en la media hoja" : ""}"><input type="checkbox" data-k="${k}" ${sel.has(k) ? "checked" : ""}>${TIPOS[t].dias > 1 ? "D" + d : "Carta"}${d === HOY && TIPOS[t].dias > 1 ? " · hoy" : ""}${n ? " •" : ""}${mal ? " ⚠" : ""}</label>`;
+    }).join("")}</div>`).join("") + `<p class="nota">${sel.size} ${sel.size === 1 ? "hoja" : "hojas"} · • = con cambios · ⚠ = no cabe</p>`;
+    $("dlg-ok").disabled = !sel.size;
+  };
+  $("dlg-cuerpo").onchange = e => { const k = e.target.dataset.k; if (!k) return; e.target.checked ? sel.add(k) : sel.delete(k); pintar(); };
+  $("dlg-hoy").textContent = `Hoy (D${HOY}): cena, almuerzo y postres`;
+  $("dlg-hoy").onclick = () => { sel = new Set([`cena|${HOY}`, `almuerzo|${HOY}`, `postres|${HOY}`]); pintar(); };
+  $("dlg-nada").onclick = () => { sel = new Set(); pintar(); };
+  $("dlg-ok").onclick = () => {
+    const lista = paginas().filter(k => sel.has(k));
+    estado.imprimir = lista; guardar(); $("dlg-pdf").close(); imprimir(lista);
+  };
+  pintar(); $("dlg-pdf").showModal();
+}
+$("dlg-cerrar").onclick = () => $("dlg-pdf").close();
+$("b-pdf").onclick = abrirDialogo;
+
+function armarHojas(lista) {
+  // Una hoja por menú, con el menú dos veces (se corta al medio), como los originales.
+  $("impresion").innerHTML = lista.map(k => { const [t, d] = k.split("|"), m = menuHtml(t, d); return `<div class="hoja">${m}${m}</div>`; }).join("");
+}
+async function imprimir(lista) {
+  const malas = lista.filter(k => desborda(...k.split("|")));
+  if (malas.length && !confirm(`No caben en su media hoja: ${malas.map(k => rotulo(...k.split("|"))).join(", ")}.\n¿Imprimir igual?`)) return;
+  armarHojas(lista);
+  await document.fonts.ready;
+  const f = new Date(), dd = String(f.getDate()).padStart(2, "0"), mm = String(f.getMonth() + 1).padStart(2, "0");
+  const titulo = document.title;
+  document.title = lista.length === 1 ? `Menú ${rotulo(...lista[0].split("|"))} ${dd}-${mm}` : `Menús ${dd}-${mm}`;   // nombre sugerido del PDF
+  window.print();
+  document.title = titulo;
+}
+
+// ── Respaldo ───────────────────────────────────────────────────────────────────
+$("b-respaldo").onclick = () => {
+  const b = new Blob([JSON.stringify(estado, null, 1)], {type: "application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(b);
+  a.download = `menus-ata-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+$("b-importar").onclick = () => $("f-importar").click();
+$("f-importar").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const g = JSON.parse(await f.text());
+    if (!g || g.v !== 1 || typeof g.ov !== "object") throw 0;
+    if (!confirm("¿Reemplazar los cambios actuales por los del respaldo?")) return;
+    estado = Object.assign({v: 1, ov: {}, manual: {}, pie: {}, imprimir: null}, g);
+    for (const k in estado.ov) estado.ov[k] = (estado.ov[k] || []).map(limpio).filter(Boolean);
+    guardar(); dibujarTodo(); avisar("Respaldo cargado");
+  } catch (err) { avisar("Ese archivo no es un respaldo de Menús", true); }
+};
+
+// ── Arranque ───────────────────────────────────────────────────────────────────
+// ?imprimir=cena|2,postres|2 deja armadas las hojas al cargar (sin abrir el
+// diálogo): sirve para sacar el PDF por línea de comandos, como las notas de check-out.
+const PEDIDO = new URLSearchParams(location.search).get("imprimir");
+if (PEDIDO) armarHojas(PEDIDO.split(",").filter(k => paginas().includes(k)));
+if (TIPOS[vista.tipo].dias < +vista.dia) vista.dia = "1";
+dibujarTodo();
+document.fonts.ready.then(() => { dibujarPapel(); if (!document.fonts.check('12px Objektiv')) avisar("Sin la fuente Objektiv: revisa la conexión", true); });
+</script>
+</body>
+</html>

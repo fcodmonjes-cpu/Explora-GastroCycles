@@ -10,7 +10,7 @@
 
 Caja de herramientas digital de operaciones F&B para Explora Atacama (nació
 como manual, *The ATA Handbook*; la marca ATA Tools es de 2026-11, §3.9): single-page vanilla
-HTML/CSS/JS (`index.html`, un solo archivo), Firebase Realtime Database para
+HTML/CSS/JS (`index.html`, un solo archivo; más `menus.html`, la imprenta de menús, §3.10), Firebase Realtime Database para
 datos vivos, deploy en Vercel por branch. Sin framework, sin build step.
 Trilingüe ES/EN/PT. Ver `ARCHITECTURE.md` §1-§11.
 

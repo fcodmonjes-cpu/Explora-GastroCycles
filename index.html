@@ -1283,6 +1283,12 @@ body.in-checklist .hoy .ops-strip, body.in-experto .hoy .ops-strip, body.in-rece
 .mn-svc { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:2px; padding:3px; margin:0 0 1.1rem; background:rgba(255,255,255,0.02); border:0.5px solid var(--border); border-radius:9px; }
 .mn-svc-btn { background:none; border:none; border-radius:6px; padding:9px 6px; font-family:'Courier Prime','Courier New',monospace; font-size:11px; letter-spacing:0.11em; text-transform:uppercase; color:var(--text-tertiary); cursor:pointer; transition:background .15s, color .15s; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
 .mn-svc-btn.active { background:rgba(192,125,42,0.14); color:#f3b572; box-shadow:0 0 0 0.5px rgba(192,125,42,0.4) inset; }
+/* Acceso a Menús imprimibles (menus.html, §3.10): vive DENTRO del margen inferior
+   de la fila de servicios, alineado a la derecha, así no suma alto y nada se mueve
+   al cambiar de servicio. En BAR/Estudio convive con las píldoras de la izquierda. */
+#mn-svc { position:relative; }
+.mn-imprimir { position:absolute; right:2px; top:calc(100% + 3px); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.08em; color:var(--text-tertiary); text-decoration:none; line-height:12px; padding:0 2px; -webkit-tap-highlight-color:transparent; }
+.mn-imprimir:hover, .mn-imprimir:active { color:#f3b572; }
 /* Segundo nivel (comida / tragos), sólo dentro de BAR: más chico y sin caja,
    para que se lea como sub-navegación y no compita con el selector de arriba. */
 .mn-svc2 { grid-template-columns:repeat(2,1fr); background:none; border:none; padding:0; margin:-0.6rem 0 1.1rem; width:fit-content; gap:6px; }
@@ -6020,6 +6026,7 @@ const UI = {
     guionMore:'Explicación completa', guionLess:'Cerrar explicación',
     barTwin:'También en el Bar', lunchTwin:'También en almuerzo', dinnerTwin:'También en la cena',
     svcBar:'Bar', barFixed:'Carta fija · todos los días',
+    mnImprimir:'Imprimir menús ↗',   // operativo: sólo ES (t() cae al español)
     barFood:'Comida', barDrinks:'Tragos', barSalado:'Salado', barDulce:'Dulce',
     barDraft:'Ficha pendiente', recipeDayLabel:'Receta día',
     // Edición de la carta (módulo med)
@@ -7862,7 +7869,10 @@ function menuRenderChrome(searching){
   if (svc){
     const btn = (key, label) => `<button class="mn-svc-btn${MENU_SERVICE === key ? ' active' : ''}" onclick="menuSetService('${key}')">${label}</button>`;
     svc.innerHTML = btn('almuerzo', t('lunch')) + btn('cena', t('dinner')) + btn('bar', t('svcBar'))
-                  + btn('estudio', t('svcEstudio'));
+                  + btn('estudio', t('svcEstudio'))
+                  // Misma ventana (no _blank): en la PWA de iOS una pestaña nueva abre
+                  // Safari, que no comparte el localStorage del gate.
+                  + (MENU_SERVICE === 'estudio' ? '' : `<a class="mn-imprimir" href="/menus.html">${t('mnImprimir')}</a>`);
   }
   // En Estudio la misma barra busca en los platos del ciclo (indice.json), no en
   // la carta: una sola caja de búsqueda, que cambia de alcance con el segmento.
