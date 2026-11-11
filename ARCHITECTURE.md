@@ -278,7 +278,7 @@ intacto. La "comanda completa" es ahora una **vista única** (sin toggle):
 tira de totales por producto para cocina + detalle por asiento con las
 notas/pedidos especiales siempre visibles y sin hora de envío.
 
-**El riel de días es `D1..D4` plano; el halo de hoy depende del servicio.**
+**El riel de días es `D1..D4` plano, sin JS.**
 Desde que cocina sincronizó los dos ciclos (22-09-2026) el almuerzo y la cena
 comparten numeración de documento, así que los botones estáticos del HTML sirven
 igual en los dos servicios. Entre agosto y septiembre de 2026, mientras los
@@ -286,20 +286,18 @@ ciclos corrían desfasados, el riel se re-rotulaba y se reordenaba por servicio 
 llevaba un pie que explicaba por qué el mismo día se llamaba distinto en cada
 uno; todo eso se retiró.
 
-**La cena va un día adelante (2026-11-11).** Cocina corrió la cena: ese día el
-almuerzo siguió en su menú 3 y la cena pasó al 4 (almuerzo 4 → cena 1, y así).
-Los platos **conservan su número de documento** —el que dice cocina, el del audio
-de Estudio y el de la imprenta—; lo que se corre es qué día es *hoy* en la cena:
-`MENU_CENA_DESFASE = 1` y `menuTodayCycleDay(svc)`. Se eligió mover el *hoy* y
-no la numeración (`MENU_CYCLE_OFFSET`, que sigue traduciendo el día del
-documento del almuerzo) para que el D que ve el garzón sea el que dice cocina.
-El halo (`day-btn-today`) lo pone `menuSeguirHoy()` al principio de cada
-`renderDishes`, sobre el hoy del servicio activo; mientras la selección sea
-"hoy" (`MENU_DIA_ES_HOY`), pasar de Almuerzo a Cena lleva al hoy de la cena, y un
-día elegido a mano se respeta. Todo cambio de día pasa por `menuElegirDia`.
-Comande, Experto ("hoy D…") y Estudio piden el hoy de su servicio. `menus.html`
-tiene la misma constante (`CENA_DESFASE`): si cocina vuelve a sincronizar, son
-dos ceros.
+**La cena va corrida un día (2026-11-11).** Cocina corrió la cena: el menú de
+cena N se sirve el día N+1 del ciclo (el 12-11, D4, va la cena 3; el 13-11, D1,
+la cena 4). El almuerzo no se movió. El riel sigue siendo el día del ciclo, igual
+para los dos servicios, y es la traducción documento → app la que se corre:
+`MENU_CENA_OFFSET = 1` se suma a `MENU_CYCLE_OFFSET` en `menuDocDayToApp` sólo
+para los platos de cena, que entran a `DISHES` con su `day` ya corrido. Por eso
+riel, halo, Comande y Experto no necesitaron cambios. `docDay` conserva el menú
+de cocina; Estudio, cuyos audios se nombran por ese número, lo traduce de vuelta
+(`estOffset`, `estDocDay`, `estAppDay`): el D4 de cena abre `dia3-cena`.
+`menus.html` hace lo mismo (`CENA_OFFSET`, `docDe`). Si cocina vuelve a
+sincronizar, son dos ceros. **Ojo** (la primera versión, del mismo día, lo hizo al
+revés: dejaba los días y movía el "hoy", así que hoy mostraba la cena 4).
 
 ### 3.2 Clima de terraza (módulo `wx`)
 
@@ -1059,13 +1057,18 @@ en su propia hoja (POSTRE / DESSERT, sólo los 3, sin helado ni fruta); almuerzo
 en el orden del PDF (res, mar, ave/cerdo, vegana) y sus postres con el helado y
 la fruta del impreso. Bar y desayuno siguen siendo los del diseño.
 
-**Los íconos son la matriz de la app** (owner: "los íconos de la app mandan").
-✗ o ✓* en el eje → ícono "contiene": `mar` ← Mar, `lac` ← Lac, `nue` ← FS, `glu`
-← **GE** (el estricto: un plato que no es apto para celíacos lleva el ícono
-aunque el gluten no sea ingrediente), vegano si Veg = ✓, vegetariano si Vgt = ✓.
-Un eje sin dato conserva el ícono del PDF (pasa sólo en el bar, de matriz
-parcial). Consecuencia buscada: el papel dice lo mismo que la ficha del garzón,
-incluidos los ✗ por contacto cruzado (p. ej. Mar en la milanesa de cerdo).
+**Los íconos son la matriz de la app, por ingrediente** (owner: "los íconos de la
+app mandan", pero "la contaminación cruzada no va, sino todo estaría
+contaminado"). ✗ o ✓* en el eje → ícono "contiene" **si la ficha nombra el
+ingrediente** (nombre, guion breve/extendido o nota): `mar` ← Mar, `lac` ← Lac,
+`nue` ← FS, `glu` ← **GS** (gluten como ingrediente; GE, el de celíacos, marca
+también trazas y ponía gluten en casi todo), vegano si Veg = ✓, vegetariano si
+Vgt = ✓. Un ✗ sin ingrediente a la vista se toma como contaminación y no lleva
+ícono; el generador los lista. Al 2026-11-11 eran dos: Mar en el Pescado al pil
+pil del almuerzo (sólo caldo de pescado) y Lac en la Milanesa de cerdo. Casi
+todo lo demás sí tenía su ingrediente (la Mar de la milanesa es la salsa de
+ostra). Un eje sin dato conserva el ícono del PDF (pasa sólo en el bar, de
+matriz parcial).
 Al regenerar: cambiar `BASE_VER` si cambia la estructura de algún tipo. Las
 ediciones de la carta hechas desde la app (`/menu_ediciones`, §3.7) **no** llegan
 solas a la imprenta: se cruzó contra el catálogo del código.
@@ -1081,9 +1084,12 @@ directo a la casilla. La leyenda de la hoja se extiende sola si un plato trae un
 **Estado.** Sólo se guardan las diferencias con `BASE`, en `localStorage`
 `ata.menus.v1` (`ov` por `tipo|dia|sec`, `manual` por `tipo|dia`, `pie`,
 `imprimir`, `base`), y hay respaldo JSON para bajar y subir. `base` es la versión
-de la base: al pasar a la cena de la app (`BASE_VER = "2026-11-11"`) los cambios
-guardados sobre la cena vieja se descartan (apuntarían a otros platos), también
-al importar un respaldo anterior; almuerzo y postres conservan los suyos. **No toca Firebase**: los
+de la base (`BASE_VER`): cuando cambia, los cambios guardados de la cena y de sus
+postres se descartan (apuntarían a otros platos o a otro día), también al
+importar un respaldo anterior; almuerzo y postres de almuerzo conservan los
+suyos. `BASE` guarda la cena por **menú de cocina** y `docDe(t, d)` aplica el
+desfase al leerla: D1-D4 son los días del ciclo, y el renglón gris de la página
+dice "menú N de cocina" cuando no coinciden. **No toca Firebase**: los
 cambios viven en el aparato que imprime. Sincronizarlos entre aparatos sería
 una fase 2.
 
@@ -2180,8 +2186,8 @@ que se empujan a `DISHES` al final del bloque de datos (`menuToDish`), más
   id:'bf1-hojas',            // id estable y legible (no correlativo)
   day:'1',                   // DÍA DEL DOCUMENTO — pasa por MENU_CYCLE_OFFSET
                              // al entrar a DISHES; hoy el offset es 0, así que
-                             // coincide con el día de la app (la cena se corre
-                             // con MENU_CENA_DESFASE, que mueve el "hoy", §3.1)
+                             // coincide con el día de la app (la cena suma
+                             // además MENU_CENA_OFFSET, §3.1)
   slot:'hojas',              // slot fijo: ver BUFFET_SLOTS / POSTRE_SLOTS
   recipeDay:'1',             // ficha técnica de cocina (≠ día de servicio)
   name:'César de Lechuga Costina, Pollo Ahumado y Pan Gratato',
