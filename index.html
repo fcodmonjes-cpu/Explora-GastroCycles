@@ -3848,6 +3848,17 @@ const BUFFET_SLOTS = [
 // compararlo con el D que la app marca con el halo azul.
 const MENU_CYCLE_OFFSET = 0;
 
+// --- Desfase de la cena (2026-11-11) ----------------------------------------
+// Cocina adelantó la cena un día: el 11-11 el almuerzo siguió en su día 3 y la
+// cena pasó al menú 4 (y así sucesivamente: almuerzo 4 → cena 1…). Los platos
+// conservan su número de DOCUMENTO —el que dice cocina, el del audio de Estudio
+// y el de la imprenta de menús—; lo que se corre es qué día es HOY en la cena
+// (menuTodayCycleDay('cena')). El riel D1..D4 sigue siendo uno, pero el halo de
+// hoy cae en un botón distinto según el servicio. Si cocina vuelve a
+// sincronizar los ciclos, esto es 0. La imprenta (menus.html) tiene la misma
+// constante: cambiar las dos.
+const MENU_CENA_DESFASE = 1;
+
 // La traducción se aplica UNA sola vez, al entrar los platos nuevos al catálogo:
 // a partir de ahí todo el resto de la app ve un único sistema de numeración
 // (el de la app) y ningún consumidor necesita saber que el offset existe.
@@ -5148,6 +5159,11 @@ const SERVICE_ORDER = ['Almuerzo','Cena','Almuerzo y Cena'];
 
 let currentTab = 'menus';
 let currentDay = 'all';
+// ¿La selección del riel es "hoy"? Mientras lo sea, sigue al servicio: con la
+// cena desfasada (MENU_CENA_DESFASE) hoy no es el mismo D en almuerzo y cena, y
+// pasar de un servicio al otro tiene que llevar al día de hoy del nuevo. Elegir
+// a mano otro día lo apaga (menuElegirDia).
+let MENU_DIA_ES_HOY = true;
 let wineFilter = 'todos';
 let selectedDish = null;
 let selectedWine = null;
@@ -7441,9 +7457,7 @@ function setTab(tab, el) {
 }
 
 function setDay(day, el) {
-  currentDay = day;
-  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
-  if (el) el.classList.add('active');
+  menuElegirDia(day);
   selectedDish = null;
   renderDishes();
 }
@@ -7664,7 +7678,7 @@ function menuVisible(list){
 const MENU_PHOTOS_WARMED = new Set();
 
 function menuPhotosForView(){
-  const day   = (currentDay === 'all') ? menuTodayCycleDay() : currentDay;
+  const day   = (currentDay === 'all') ? menuHoyDe(MENU_SERVICE) : currentDay;
   const match = (d) => MENU_SERVICE === 'cena'
     ? (d.service === 'Cena'     || d.service === 'Almuerzo y Cena')
     : (d.service === 'Almuerzo' || d.service === 'Almuerzo y Cena');
@@ -7696,6 +7710,10 @@ function renderDishes(){
   const searching = q.length > 0;
   const grid      = document.getElementById('dish-grid');
   if (!grid) return;
+
+  // El día primero: si la selección era "hoy", sigue al servicio activo (la
+  // cena va desfasada del almuerzo, MENU_CENA_DESFASE).
+  menuSeguirHoy();
 
   // Se dispara con el día y el servicio ya resueltos, antes de cualquier rama
   // de la vista: buscar, BAR o cena tampoco pierden la precarga del día.
@@ -7736,7 +7754,7 @@ function renderDishes(){
 
 // --- Almuerzo: buffet (6 bandejas) + sopa + principales + postres ----------
 function menuRenderAlmuerzo(){
-  const day = (currentDay === 'all') ? menuTodayCycleDay() : currentDay;
+  const day = (currentDay === 'all') ? menuTodayCycleDay('almuerzo') : currentDay;
   const of  = (course) => menuOrden(DISHES.filter(d => d.day === day && d.course === course &&
                                              (d.service === 'Almuerzo' || d.service === 'Almuerzo y Cena')));
   const buffet = of('Buffet'), sopa = of('Sopa'), mains = of('Plato principal'), postres = of('Postre');
@@ -7814,7 +7832,7 @@ function menuAvisoCerrar(){
 }
 
 function menuRenderCena(){
-  const day = (currentDay === 'all') ? menuTodayCycleDay() : currentDay;
+  const day = (currentDay === 'all') ? menuTodayCycleDay('cena') : currentDay;
   const of  = (course) => menuOrden(DISHES.filter(d => d.day === day && d.course === course &&
                                              (d.service === 'Cena' || d.service === 'Almuerzo y Cena')));
   const minis = of('Entrada'), mains = of('Plato principal'), postres = of('Postre');
@@ -7986,12 +8004,36 @@ function menuLensHtml(){
 }
 
 // --- Acciones de la vista ---------------------------------------------------
-function menuTodayCycleDay(){
-  const anchor = new Date(2026, 3, 14); // 2026-04-14 = Día 4
+// Día de hoy del ciclo PARA UN SERVICIO ('almuerzo'/'Almuerzo', 'cena'/'Cena').
+// El ancla es la del almuerzo; la cena va MENU_CENA_DESFASE días adelante.
+function menuTodayCycleDay(svc){
+  const anchor = new Date(2026, 3, 14); // 2026-04-14 = Día 4 (almuerzo)
   const now    = new Date();
   const today  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const diff   = Math.round((today - anchor) / 86400000);
+  const diff   = Math.round((today - anchor) / 86400000)
+               + (String(svc || '').toLowerCase() === 'cena' ? MENU_CENA_DESFASE : 0);
   return String(((diff + 3) % 4 + 4) % 4 + 1);
+}
+// El "hoy" del riel según lo que la vista Menú tiene a la vista: Estudio usa su
+// propio servicio (almuerzo/cena); BAR no tiene riel y queda en el almuerzo.
+function menuHoyDe(svc){
+  return menuTodayCycleDay(svc === 'estudio' ? estSvc() : svc);
+}
+// Única puerta para cambiar el día del riel: deja anotado si quedó en "hoy".
+function menuElegirDia(day){
+  currentDay = String(day);
+  MENU_DIA_ES_HOY = currentDay === menuHoyDe(MENU_SERVICE);
+  document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', String(i + 1) === currentDay));
+}
+// Antes de cada render: si la selección era "hoy", sigue al servicio activo, y
+// el halo (day-btn-today) se pone sobre el hoy de ese servicio.
+function menuSeguirHoy(){
+  const hoy = menuHoyDe(MENU_SERVICE);
+  if (MENU_DIA_ES_HOY && currentDay !== hoy && currentDay !== 'all') menuElegirDia(hoy);
+  document.querySelectorAll('.day-btn').forEach((b, i) => {
+    const es = String(i + 1) === hoy;
+    if (b.classList.contains('day-btn-today') !== es) b.classList.toggle('day-btn-today', es);
+  });
 }
 
 function menuSetService(svc){
@@ -8062,10 +8104,7 @@ function menuJumpTwin(id){
     if (!d) return;
     MENU_SERVICE = (d.service === 'Cena') ? 'cena' : 'almuerzo';
     // La canasta (`fija`) se ve en cualquier día: se queda en el que está.
-    if (d.day){
-      currentDay = d.day;
-      document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', String(i + 1) === d.day));
-    }
+    if (d.day) menuElegirDia(d.day);
   }
   selectedDish = id;
   MENU_GUION_OPEN = null;
@@ -8177,7 +8216,7 @@ function menuApplyRoom(){
 function estFold(s){ return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
 function estMMSS(s){ s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 function estCap(s){ s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
-function estDay(){ return (currentDay === 'all') ? menuTodayCycleDay() : currentDay; }
+function estDay(){ return (currentDay === 'all') ? menuTodayCycleDay(estSvc()) : currentDay; }
 function estSvc(){
   if (!EST_SVC) EST_SVC = new Date().getHours() < 16 ? 'almuerzo' : 'cena';
   return EST_SVC;
@@ -8693,9 +8732,7 @@ function estAbrirPlato(id){
   MENU_SERVICE = 'estudio'; EST_VIEW = 'escuchar'; EST_AVISO = '';
   selectedDish = null; MENU_GUION_OPEN = null;
   EST_SVC = p.servicio;
-  const day = estAppDay(p);
-  currentDay = day;
-  document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', String(i + 1) === day));
+  menuElegirDia(estAppDay(p));
   const input = document.getElementById('dish-search');
   if (input) input.value = '';
   EST_OPEN_ROW = id;            // si el audio falta, el plato queda abierto con su texto
@@ -8725,7 +8762,7 @@ async function estDesdeFicha(appId){
   // La canasta de pan está en los cuatro audios de cena: se abre la noche que
   // el Menú tiene a la vista.
   const cands = EST_IDX ? EST_IDX.platos.filter(q => estPlatoApp(q) === d) : [];
-  const noche = String(currentDay === 'all' ? menuTodayCycleDay() : currentDay);
+  const noche = String(currentDay === 'all' ? menuTodayCycleDay('cena') : currentDay);
   const p = cands.find(q => estAppDay(q) === noche) || cands[0];
   if (p) return estAbrirPlato(p.id);
   // El índice no lo tiene (o no cruza con seguridad): se dice, no se adivina.
@@ -9263,17 +9300,12 @@ setLang(currentLang, document.querySelectorAll('.lang-btn')[['es','en','pt'].ind
 // solo togglea .active, no toca .day-btn-today. Corre bajo el telón de
 // intro, así que el re-render inicial no se ve. Selección por atributo del
 // onclick (no por índice), robusta tras quitar la sub-tab "Todos".
+// Desde el desfase de la cena (2026-11-11) el halo lo mueve menuSeguirHoy en
+// cada render: cae sobre el hoy del servicio activo.
 (function() {
-  const anchor = new Date(2026, 3, 14); // 2026-04-14 = Día 4
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const diff = Math.round((today - anchor) / 86400000);
-  const cycleDay = ((diff + 3) % 4 + 4) % 4 + 1; // anchor→4, +1→1, +2→2, +3→3
+  const cycleDay = menuHoyDe(MENU_SERVICE);
   const todayBtn = document.querySelector(`.day-btn[onclick*="'${cycleDay}'"]`);
-  if (todayBtn) {
-    todayBtn.classList.add('day-btn-today'); // rastro permanente del día de hoy
-    setDay(String(cycleDay), todayBtn);      // selección automática
-  }
+  if (todayBtn) setDay(cycleDay, todayBtn);  // selección automática (queda "hoy")
 })();
 
 // Servicio del momento: la misma ventana horaria que ya usa el catálogo del
@@ -17773,15 +17805,13 @@ const COMANDA_SOURCES = [
       // Resolve today's cycle day (D1-D4) using the same anchor logic
       // as the existing day-highlighter, then return today's dishes
       // filtered by the active service window (lunch / dinner).
-      const anchor = new Date(2026, 3, 14); // 2026-04-14 = Día 4
       const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const diff = Math.round((today - anchor) / 86400000);
-      const cycleDay = String(((diff + 3) % 4 + 4) % 4 + 1);
       const minOfDay = now.getHours() * 60 + now.getMinutes();
       // Lunch: 11:30 – 17:59 · Dinner: 18:00 – 00:59 (post-midnight)
       const isLunch  = minOfDay >= (11*60+30) && minOfDay < (18*60);
       const isDinner = (minOfDay >= 18*60) || (minOfDay < 60);
+      // La cena va desfasada del almuerzo (MENU_CENA_DESFASE): su hoy es otro D.
+      const cycleDay = menuTodayCycleDay(isDinner ? 'cena' : 'almuerzo');
       const list = DISHES.filter(d => {
         if (d.day !== cycleDay) return false;
         // El buffet es autoservicio: el viajero se sirve solo y nunca entra
@@ -24733,7 +24763,7 @@ function expServiciosDe(src){
     .map(k => ({ d:'desayuno', a:'almuerzo', c:'cena' })[k]);
 }
 function expPlatosHoy(h){
-  const day = menuTodayCycleDay();
+  const day = menuTodayCycleDay(h.svc);
   return DISHES.filter(d => d.service === h.svc && d.day === day && h.courses.includes(d.course));
 }
 
@@ -24836,7 +24866,7 @@ function expTipHtml(tp, segKey, i, k){
   if (tp.hoy){
     const lista = expPlatosHoy(tp.hoy);
     if (!lista.length) return '';
-    label += ' · hoy D' + menuTodayCycleDay();
+    label += ' · hoy D' + menuTodayCycleDay(tp.hoy.svc);
     platos = lista.map(d => `<button class="exp-plato" onclick="expAbrirPlato('${d.id}')">${vjEsc(d.name)}</button>`).join('');
   }
   if (tp.alergenos){

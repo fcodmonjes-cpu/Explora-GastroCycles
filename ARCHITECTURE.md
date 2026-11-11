@@ -278,14 +278,28 @@ intacto. La "comanda completa" es ahora una **vista única** (sin toggle):
 tira de totales por producto para cocina + detalle por asiento con las
 notas/pedidos especiales siempre visibles y sin hora de envío.
 
-**El riel de días es `D1..D4` plano, sin JS.** Desde que cocina sincronizó los
-dos ciclos (22-09-2026) el almuerzo y la cena comparten numeración, así que los
-botones estáticos del HTML sirven igual en los dos servicios y el halo de hoy cae
-sobre el mismo botón en ambos. Entre agosto y septiembre de 2026, mientras los
+**El riel de días es `D1..D4` plano; el halo de hoy depende del servicio.**
+Desde que cocina sincronizó los dos ciclos (22-09-2026) el almuerzo y la cena
+comparten numeración de documento, así que los botones estáticos del HTML sirven
+igual en los dos servicios. Entre agosto y septiembre de 2026, mientras los
 ciclos corrían desfasados, el riel se re-rotulaba y se reordenaba por servicio y
 llevaba un pie que explicaba por qué el mismo día se llamaba distinto en cada
-uno; todo eso se retiró. Si los ciclos vuelven a separarse, el punto único sigue
-siendo `MENU_CYCLE_OFFSET` (§ bloque de datos).
+uno; todo eso se retiró.
+
+**La cena va un día adelante (2026-11-11).** Cocina corrió la cena: ese día el
+almuerzo siguió en su menú 3 y la cena pasó al 4 (almuerzo 4 → cena 1, y así).
+Los platos **conservan su número de documento** —el que dice cocina, el del audio
+de Estudio y el de la imprenta—; lo que se corre es qué día es *hoy* en la cena:
+`MENU_CENA_DESFASE = 1` y `menuTodayCycleDay(svc)`. Se eligió mover el *hoy* y
+no la numeración (`MENU_CYCLE_OFFSET`, que sigue traduciendo el día del
+documento del almuerzo) para que el D que ve el garzón sea el que dice cocina.
+El halo (`day-btn-today`) lo pone `menuSeguirHoy()` al principio de cada
+`renderDishes`, sobre el hoy del servicio activo; mientras la selección sea
+"hoy" (`MENU_DIA_ES_HOY`), pasar de Almuerzo a Cena lleva al hoy de la cena, y un
+día elegido a mano se respeta. Todo cambio de día pasa por `menuElegirDia`.
+Comande, Experto ("hoy D…") y Estudio piden el hoy de su servicio. `menus.html`
+tiene la misma constante (`CENA_DESFASE`): si cocina vuelve a sincronizar, son
+dos ceros.
 
 ### 3.2 Clima de terraza (módulo `wx`)
 
@@ -1029,13 +1043,32 @@ imprime, una o dos veces al día y desde el PC. Cuesta ~73 KB de HTML y ~108 KB
 de fuentes que la app no tiene por qué cargar en cada boot del iPhone. Sigue
 las reglas de la app: vanilla, sin build y con un único archivo.
 
-**El catálogo es el impreso, no `DISHES`** (decisión del owner, 2026-11-10).
-Los nombres y la estructura de la carta impresa (la cena trae Entradas + Platos
-de fondo, no miniplatos) no calzan con el catálogo de la app. `BASE` vive dentro
-de `menus.html`, transcrito de los PDFs. Los íconos (`mar lac nue glu vgn veg`)
-dicen **"contiene"/"es"**, que es la polaridad opuesta a la matriz "apto" de la
-app, así que se transcriben y nunca se derivan (ver §3.1 y la regla de la
-matriz).
+**El catálogo es el de la app** (auditoría del 2026-11-11, revierte la decisión
+del 2026-11-10). La primera versión transcribía los PDF de diseño, y la cena de
+esos PDF era una carta anterior: ninguno de sus platos estaba en la app. El
+almuerzo traía arroz donde la base dice quinoa, salsa tonkatsu donde dice chañar,
+"Limón, miel y quinua" en vez de Pomelo y los membrillos en el día equivocado.
+Ahora `BASE` de **cena, postres de cena, almuerzo y postres de almuerzo** sale a
+máquina de `DISHES` + `DISH_TRANS` (script en el scratchpad, no en el repo):
+nombre en oración (mayúscula sólo al comienzo, salvo Flat Iron / Mont Blanc), el
+inglés de la ficha y el orden de la carta impresa vigente (fotos del owner):
+cena = ENTRADAS / ENTRÉE (ensalada, carne, vegano, dip, mar) + PLATO PRINCIPAL /
+MAIN COURSE (mar, res, ave/cerdo, vegana), sin canasta ni el pie "*Disponible
+menú de bar" (con 5 + 4 no cabía y la carta vigente no lo trae); postres de cena
+en su propia hoja (POSTRE / DESSERT, sólo los 3, sin helado ni fruta); almuerzo
+en el orden del PDF (res, mar, ave/cerdo, vegana) y sus postres con el helado y
+la fruta del impreso. Bar y desayuno siguen siendo los del diseño.
+
+**Los íconos son la matriz de la app** (owner: "los íconos de la app mandan").
+✗ o ✓* en el eje → ícono "contiene": `mar` ← Mar, `lac` ← Lac, `nue` ← FS, `glu`
+← **GE** (el estricto: un plato que no es apto para celíacos lleva el ícono
+aunque el gluten no sea ingrediente), vegano si Veg = ✓, vegetariano si Vgt = ✓.
+Un eje sin dato conserva el ícono del PDF (pasa sólo en el bar, de matriz
+parcial). Consecuencia buscada: el papel dice lo mismo que la ficha del garzón,
+incluidos los ✗ por contacto cruzado (p. ej. Mar en la milanesa de cerdo).
+Al regenerar: cambiar `BASE_VER` si cambia la estructura de algún tipo. Las
+ediciones de la carta hechas desde la app (`/menu_ediciones`, §3.7) **no** llegan
+solas a la imprenta: se cruzó contra el catálogo del código.
 
 **Slots y buscador.** Cada día de cada tipo es una lista de casillas. Una
 casilla abre su editor, donde el buscador "Cambiar por…" busca en *todo* el
@@ -1047,7 +1080,10 @@ directo a la casilla. La leyenda de la hoja se extiende sola si un plato trae un
 
 **Estado.** Sólo se guardan las diferencias con `BASE`, en `localStorage`
 `ata.menus.v1` (`ov` por `tipo|dia|sec`, `manual` por `tipo|dia`, `pie`,
-`imprimir`), y hay respaldo JSON para bajar y subir. **No toca Firebase**: los
+`imprimir`, `base`), y hay respaldo JSON para bajar y subir. `base` es la versión
+de la base: al pasar a la cena de la app (`BASE_VER = "2026-11-11"`) los cambios
+guardados sobre la cena vieja se descartan (apuntarían a otros platos), también
+al importar un respaldo anterior; almuerzo y postres conservan los suyos. **No toca Firebase**: los
 cambios viven en el aparato que imprime. Sincronizarlos entre aparatos sería
 una fase 2.
 
@@ -2144,7 +2180,8 @@ que se empujan a `DISHES` al final del bloque de datos (`menuToDish`), más
   id:'bf1-hojas',            // id estable y legible (no correlativo)
   day:'1',                   // DÍA DEL DOCUMENTO — pasa por MENU_CYCLE_OFFSET
                              // al entrar a DISHES; hoy el offset es 0, así que
-                             // coincide con el día de la app
+                             // coincide con el día de la app (la cena se corre
+                             // con MENU_CENA_DESFASE, que mueve el "hoy", §3.1)
   slot:'hojas',              // slot fijo: ver BUFFET_SLOTS / POSTRE_SLOTS
   recipeDay:'1',             // ficha técnica de cocina (≠ día de servicio)
   name:'César de Lechuga Costina, Pollo Ahumado y Pan Gratato',
