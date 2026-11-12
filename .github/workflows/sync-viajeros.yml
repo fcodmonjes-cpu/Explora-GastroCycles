@@ -12,11 +12,15 @@ name: Sync Viajeros (PGO)
 # (5-20 min), atraso que a 30 min de intervalo todavía no domina.
 # También corre a mano desde la UI de Actions.
 #
-# El cron pasa la fecha de HOY EN CHILE: PGO abre por defecto en el día
-# siguiente, así que sin --date poblaría mañana. La zona horaria es esencial
-# ahora que se corre a toda hora — ver la nota en el paso "Sync desde PGO".
-# Ojo: GitHub atrasa los cron en horas de carga; si un día importa el minuto
-# exacto, disparar a mano.
+# Toda corrida sin fecha (cron, a mano o el disparador externo) usa HOY EN
+# CHILE: PGO abre por defecto en el día siguiente, así que sin --date poblaría
+# mañana. La zona horaria es esencial ahora que se corre a toda hora — ver la
+# nota en el paso "Sync desde PGO".
+# Ojo: GitHub atrasa y DESCARTA cron en horas de carga (2026-11-12: seis
+# corridas seguidas perdidas de madrugada). Por eso el disparador principal es
+# externo: cron-job.org llama a la API (workflow_dispatch, que GitHub no
+# descarta) con un token fine-grained de sólo Actions. El `schedule` de abajo
+# queda de respaldo.
 # Nota: el botón "Run workflow" recién aparece en la UI de Actions cuando este
 # archivo llega a la rama default (main) — igual que seed-viajeros.yml.
 #
@@ -56,7 +60,7 @@ on:
   workflow_dispatch:
     inputs:
       date:
-        description: "Fecha del reporte (YYYY-MM-DD). Vacío = la que PGO trae por defecto (mañana)."
+        description: "Fecha del reporte (YYYY-MM-DD). Vacío = hoy en Chile."
         required: false
         default: ""
       dump_html:
@@ -140,7 +144,15 @@ jobs:
           # Y la app no valida la fecha, sólo la muestra como etiqueta, así que
           # el error sería invisible. America/Santiago además absorbe solo el
           # cambio de horario de verano (UTC-4 en invierno, UTC-3 en verano).
-          if [ -z "$FECHA" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+          #
+          # 2026-11-12: vale para CUALQUIER corrida sin fecha, no sólo el cron.
+          # Antes el default de hoy era exclusivo de `schedule`, y un "Run
+          # workflow" a mano con el campo vacío traía el día por defecto de
+          # PGO —mañana— y lo escribía como el roster actual (pasó esa mañana:
+          # el panel Hoy mostró las cifras del 13). Además el disparador
+          # externo (cron-job.org → workflow_dispatch) no manda fecha: sin esto
+          # poblaría mañana en cada corrida. Para traer otro día, escribirlo.
+          if [ -z "$FECHA" ]; then
             FECHA="$(TZ='America/Santiago' date +%F)"
           fi
           if [ -n "$FECHA" ]; then ARGS="$ARGS --date $FECHA"; fi
