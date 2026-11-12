@@ -1029,7 +1029,7 @@ carta y los visores.
 ### 3.10 Menús imprimibles (`menus.html`, 2026-11)
 
 La segunda página del repo. Arma los menús impresos de la mesa (almuerzo,
-cena y postres en 4 días; bar fijo; desayuno) y los exporta a **PDF carta
+cena y postres en 4 días; bar, vinos incluidos y premium fijos; desayuno) y los exporta a **PDF carta
 horizontal con el mismo menú dos veces por cara**, igual que los originales de
 `FORMATO MENÚS`. Se abre desde la vista Menú (enlace discreto "Imprimir menús ↗"
 bajo Almuerzo/Cena/Bar, oculto en Estudio). Va en la misma ventana a propósito,
@@ -1069,6 +1069,23 @@ pil del almuerzo (sólo caldo de pescado) y Lac en la Milanesa de cerdo. Casi
 todo lo demás sí tenía su ingrediente (la Mar de la milanesa es la salsa de
 ostra). Un eje sin dato conserva el ícono del PDF (pasa sólo en el bar, de
 matriz parcial).
+**Cartas de vino** (2026-11-12, tipos `vinos` y `vinosPremium`, "Carta" de un
+solo día). Los originales eran Word en A4: los incluidos ("ATACAMA HOUSE WINES",
+lista centrada de vino / cepa, en Calibri Light) y los premium ("VINOS
+ESPECIALES / WINE SELECTION", secciones Blancos / Espumantes / Tintos, vino /
+*origen – cepa* / "Price: …", en Objektiv Light). Se conserva el formato de cada
+una, en Objektiv sobre la media carta, con el logo de las otras hojas; sin
+íconos ni leyenda. La premium calza con Objektiv Light al 0,5 pt; la de incluidos
+va a 9,12 pt como los platos (nombre Regular, cepa Light). Se cruzaron a máquina
+contra `WINES` y los errores del Word se corrigieron con la ficha: Tabalí,
+Longaví, Clos de Luz, SOLdeSOL, Pura Fe, Rosé, Pierre Péters, "WINE SELECTION",
+"D.O." completo, Seña en D.O. Valle de Aconcagua (el Word repetía el "Aconcagua
+Costa" de Las Pizarras) y Rukumilla como Assemblage (una copia decía Cabernet).
+Errázuriz Las Pizarras no tiene ficha en la app; Aquitania Chardonnay
+(Casablanca) está en la app y no en la carta. El modelo de un vino es
+`{es: línea 1, en: línea 2, precio}`; el buscador de una casilla ofrece platos
+para platos y vinos para vinos (`catDe`).
+
 Al regenerar: cambiar `BASE_VER` si cambia la estructura de algún tipo. Las
 ediciones de la carta hechas desde la app (`/menu_ediciones`, §3.7) **no** llegan
 solas a la imprenta: se cruzó contra el catálogo del código.
