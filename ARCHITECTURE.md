@@ -1029,7 +1029,7 @@ carta y los visores.
 ### 3.10 Menús imprimibles (`menus.html`, 2026-11)
 
 La segunda página del repo. Arma los menús impresos de la mesa (almuerzo,
-cena y postres en 4 días; bar, tragos, vinos incluidos y premium fijos; desayuno) y los exporta a **PDF carta
+cena y postres en 4 días; bar, tragos, vinos incluidos y premium fijos; desayuno; masajes del spa) y los exporta a **PDF carta
 horizontal con el mismo menú dos veces por cara**, igual que los originales de
 `FORMATO MENÚS`. Se abre desde la vista Menú (enlace discreto "Imprimir menús ↗"
 bajo Almuerzo/Cena/Bar, oculto en Estudio). Va en la misma ventana a propósito,
@@ -1096,7 +1096,19 @@ carta alta entre páginas al imprimir. El título va como el del menú del bar
 y los ingredientes rectos. Sin íconos. Se cruzó contra `COCKTAILS`/`MOCKTAILS`:
 cinco tragos de la carta no tienen receta en la app y cuatro dicen otra cosa que
 la receta (ver el commit). Se transcribió la carta y se corrigieron sólo las
-erratas. El modelo de un vino es
+erratas (owner: "aquí es mejor respetar lo que dicen los PDF").
+
+**Carta de masajes** (2026-11-12, tipo `masajes`). Es lo único de la imprenta
+que no viene de la app: vive sólo en `BASE`, para tenerla a mano y editar algo
+puntual. El original ya era Objektiv en carta vertical con dos copias, así que
+usa el mismo formato alto y calca sus medidas (`margen` propio de 42,6 pt).
+Cada masaje es `{es, en, tarifas, des_es, des_en}`: nombre en Medium + "/ Name"
+en itálica, una línea por tarifa (`tarifas` = "50 $120 · 90 $200", la lee
+`tarifas()`; lo que no entienda sale tal cual) y las descripciones es / en
+justificadas, como el Word. Erratas corregidas: "ntenso", "tissue,ideal", el
+salto de línea dentro de Piedras Calientes, el peso de los nombres (el Word
+mezclaba Light y Medium) y los $1200 del Drenaje de 90 minutos en la copia
+derecha (la izquierda dice $200). El modelo de un vino es
 `{es: línea 1, en: línea 2, precio}`; el buscador de una casilla ofrece platos
 para platos y vinos para vinos (`catDe`).
 
