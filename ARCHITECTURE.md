@@ -1029,7 +1029,7 @@ carta y los visores.
 ### 3.10 Menús imprimibles (`menus.html`, 2026-11)
 
 La segunda página del repo. Arma los menús impresos de la mesa (almuerzo,
-cena y postres en 4 días; bar, vinos incluidos y premium fijos; desayuno) y los exporta a **PDF carta
+cena y postres en 4 días; bar, tragos, vinos incluidos y premium fijos; desayuno) y los exporta a **PDF carta
 horizontal con el mismo menú dos veces por cara**, igual que los originales de
 `FORMATO MENÚS`. Se abre desde la vista Menú (enlace discreto "Imprimir menús ↗"
 bajo Almuerzo/Cena/Bar, oculto en Estudio). Va en la misma ventana a propósito,
@@ -1081,8 +1081,22 @@ contra `WINES` y los errores del Word se corrigieron con la ficha: Tabalí,
 Longaví, Clos de Luz, SOLdeSOL, Pura Fe, Rosé, Pierre Péters, "WINE SELECTION",
 "D.O." completo, Seña en D.O. Valle de Aconcagua (el Word repetía el "Aconcagua
 Costa" de Las Pizarras) y Rukumilla como Assemblage (una copia decía Cabernet).
-Errázuriz Las Pizarras no tiene ficha en la app; Aquitania Chardonnay
-(Casablanca) está en la app y no en la carta. El modelo de un vino es
+Errázuriz Las Pizarras tiene ficha en la app desde el mismo día (de la ficha
+técnica de la viña); Aquitania Chardonnay (Casablanca) está en la app y no en
+la carta.
+
+**Carta de tragos** (2026-11-12, tipo `tragos`, "Carta"). El original es un Word
+en A4 vertical cortado al medio: dos cartas angostas y altas. Se conserva ese
+formato (`alto: true`, 306 × 792 pt, media carta vertical): su hoja es una
+página **vertical** con nombre (`.hoja.alta{page:vertical}` + `@page vertical`),
+con las dos copias lado a lado, y en el mismo PDF conviven con las apaisadas.
+Girar las dos copias dentro de la hoja apaisada no sirve, porque Chrome parte la
+carta alta entre páginas al imprimir. El título va como el del menú del bar
+("MENÚ BAR /BAR MENU"); las secciones en itálica, sin filete; el nombre en negrita
+y los ingredientes rectos. Sin íconos. Se cruzó contra `COCKTAILS`/`MOCKTAILS`:
+cinco tragos de la carta no tienen receta en la app y cuatro dicen otra cosa que
+la receta (ver el commit). Se transcribió la carta y se corrigieron sólo las
+erratas. El modelo de un vino es
 `{es: línea 1, en: línea 2, precio}`; el buscador de una casilla ofrece platos
 para platos y vinos para vinos (`catDe`).
 
