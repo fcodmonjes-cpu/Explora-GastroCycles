@@ -2617,6 +2617,67 @@ body.telon-vuela #app-title .marca { opacity:0; transition:none; }
 .qn-arm-res.is-mal, .qn-arm-error { color:var(--coral); }
 .qn-arm-error { font-family:'Courier Prime',monospace; font-size:11.5px; line-height:1.45; margin:8px 0; }
 .qn-arm-acc { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px; }
+/* Vista anfitrión: la tablet de la entrada (2026-11-21) */
+html.qn-anf-on, html.qn-anf-on body { overflow:hidden; }
+.qn-anf { position:fixed; inset:0; z-index:950; background:var(--bg); overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+.qn-anf-in { max-width:1000px; margin:0 auto; padding:18px 16px 48px; }
+.qn-anf-top { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.qn-anf-tit { flex:1; font-family:'Courier Prime',monospace; font-size:12px; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); }
+.qn-anf-tit span { display:block; margin-top:4px; font-size:10.5px; letter-spacing:0.1em; color:var(--text-tertiary); }
+.qn-anf-off { font-family:'Courier Prime',monospace; font-size:10.5px; color:var(--coral); }
+.qn-anf-buscar { position:relative; margin-bottom:14px; }
+.qn-anf-buscar input { width:100%; box-sizing:border-box; padding:12px 54px 12px 16px; background:var(--surface);
+  border:0.5px solid var(--border-md); border-radius:var(--radius-md); color:var(--text);
+  font-family:'Cormorant Garamond',serif; font-size:26px; -webkit-appearance:none; appearance:none; }
+.qn-anf-buscar input:focus { outline:none; border-color:var(--gold); }
+.qn-anf-buscar input::-webkit-search-cancel-button { display:none; }
+.qn-anf-x { position:absolute; right:6px; top:50%; transform:translateY(-50%); width:44px; height:44px; background:none; border:0;
+  color:var(--text-tertiary); font-size:28px; line-height:1; cursor:pointer; touch-action:manipulation; }
+.qn-tira.qn-anf-tira { margin:0 0 4px; }
+.qn-anf-pie { text-align:center; margin-bottom:14px; }
+.qn-anf-modos { display:flex; gap:6px; margin-bottom:12px; }
+.qn-anf-modos button { background:none; border:0.5px solid var(--border-md); border-radius:999px; color:var(--text-tertiary);
+  font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; padding:8px 15px;
+  cursor:pointer; touch-action:manipulation; }
+.qn-anf-modos button.on { color:var(--gold); border-color:var(--gold); background:var(--gold-light); }
+.qn-anf-res { display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:10px; align-items:start; }
+.qn-anf-habs, .qn-anf-mesas, .qn-anf-vacio { grid-column:1 / -1; }
+.qn-anf-per { display:flex; align-items:center; gap:16px; background:var(--surface); border:0.5px solid var(--border);
+  border-radius:var(--radius-md); padding:14px 16px; }
+.qn-anf-m { flex:0 0 auto; width:84px; height:84px; border-radius:var(--radius-md); background:var(--gold); color:#15110d;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
+.qn-anf-m span { font-family:'Courier Prime',monospace; font-size:9.5px; letter-spacing:0.2em; text-transform:uppercase; padding-left:0.2em; }
+.qn-anf-m b { font-family:'Cormorant Garamond',serif; font-weight:400; font-size:50px; line-height:0.9;
+  font-variant-numeric:lining-nums; font-feature-settings:'lnum' 1; }
+.qn-anf-m.is-grupo { background:var(--gold-light); color:var(--gold); border:1.5px double var(--gold); }
+.qn-anf-m.is-nova { background:var(--bg-secondary); color:var(--text-tertiary); }
+.qn-anf-per-main { min-width:0; }
+.qn-anf-nom { font-family:'Cormorant Garamond',serif; font-size:24px; line-height:1.15; color:var(--text); }
+.qn-anf-sub { font-family:'Courier Prime',monospace; font-size:12px; color:var(--text-secondary); margin-top:4px; }
+.qn-anf-con { font-size:14px; line-height:1.35; color:var(--text-tertiary); margin-top:4px; }
+.qn-anf-habs { columns:3 250px; column-gap:22px; }
+.qn-anf-hb { break-inside:avoid; border-bottom:0.5px dotted var(--border-md); padding:3px 0; }
+.qn-anf-r { display:flex; align-items:baseline; gap:10px; width:100%; background:none; border:0; padding:6px 2px; text-align:left;
+  color:var(--text); font:inherit; font-size:15px; line-height:1.3; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.qn-anf-r:active { background:var(--gold-light); }
+.qn-anf-h { flex:0 0 28px; text-align:right; font-family:'Courier Prime',monospace; font-size:12px; font-weight:700; color:var(--gold); }
+.qn-anf-rn { flex:1; min-width:0; }
+.qn-anf-r b { flex:0 0 auto; min-width:26px; text-align:center; font-family:'Cormorant Garamond',serif; font-weight:400; font-size:21px;
+  line-height:1; color:var(--gold); font-variant-numeric:lining-nums; font-feature-settings:'lnum' 1; }
+.qn-anf-r b.is-nova { color:var(--text-tertiary); }
+.qn-anf-mesas { display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:10px; align-items:start; }
+.qn-anf-mesas.uno { grid-template-columns:minmax(0, 560px); }
+.qn-anf-mesa { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:10px 14px 12px; }
+.qn-anf-mesa.is-grupo { border:1.5px double rgba(186,117,23,0.55); }
+.qn-anf-mesa-cab { display:flex; align-items:baseline; gap:10px; margin-bottom:6px; }
+.qn-anf-mesa-cab b { font-family:'Cormorant Garamond',serif; font-weight:400; font-size:32px; line-height:1; color:var(--gold);
+  font-variant-numeric:lining-nums; font-feature-settings:'lnum' 1; }
+.qn-anf-mesa-cab span { flex:1; font-family:'Cormorant Garamond',serif; font-size:18px; line-height:1.2; color:var(--text); }
+.qn-anf-mesa-cab em { font-style:normal; font-family:'Courier Prime',monospace; font-size:11px; color:var(--text-tertiary); }
+.qn-anf-fila { display:flex; gap:10px; font-size:14px; line-height:1.3; color:var(--text-secondary); padding:3px 0; }
+.qn-anf-fila .qn-anf-h { flex-basis:24px; }
+.qn-anf-vacio { font-family:'Courier Prime',monospace; font-size:13px; color:var(--text-tertiary); text-align:center; padding:24px 0; }
 /* Salón editable del armado (2026-11-21) */
 .qn-sal-head { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
 .qn-sal-rehacer { background:none; border:0; padding:4px 0; cursor:pointer; color:var(--text-tertiary);
@@ -6325,6 +6386,8 @@ const UI = {
     qnResumen:'{v} viajeros en {m} mesas · {s} sin nadie con quien compartieron una exploración · {x} mesas sin vínculo',
     qnCambios:'{c} cambian de mesa · carteles a reimprimir: mesa {l}', qnSinCambios:'Nadie cambia de mesa.',
     qnCarteles:'Carteles', qnListado:'Listado', qnExcel:'Excel',
+    qnAnf:'Vista anfitrión', qnAnfPh:'nombre o habitación', qnAnfCerrar:'cerrar', qnAnfBorrar:'borrar',
+    qnAnfPorHab:'por habitación', qnAnfPorMesa:'por mesa',
     qnNoVa:'no va', qnNoVan:'No van',
     qnBorrar:'Borrar quincho', qnBorrando:'Borrando…', qnBorrarPregunta:'¿Borrar el quincho del {f}?',
     qnBorrarAyuda:'Se borra para todos los teléfonos y no se puede deshacer. Si quieres guardar las mesas, descarga antes el Excel.',
@@ -15461,7 +15524,9 @@ async function qnFetch(){
 function qnFirma(){ return QN_DATA ? JSON.stringify(QN_DATA.asig) + '|' + (QN_DATA.updatedAt || '') : ''; }
 function qnRepintarSiCambio(){
   if (VIAJEROS_VISTA !== 'quincho' || QN_ARMADO) return;   // armando: nada se mueve bajo el dedo
-  if (qnFirma() !== QN_FIRMA_DOC) viajerosRender();
+  const off = document.getElementById('qn-anf-off');
+  if (off) off.textContent = QN_OFFLINE ? t('qnOffline') : '';
+  if (qnFirma() !== QN_FIRMA_DOC){ viajerosRender(); qnAnfPintar(); }
 }
 
 // ── El doc que se mira: el borrador mientras se arma, si no el publicado ──
@@ -16416,48 +16481,85 @@ window.addEventListener('beforeprint',ajustarTodo);
 document.addEventListener('input',e=>{const c=e.target.closest('.cara');if(!c)return;const g=[...c.closest('.hoja').querySelectorAll('.cara')].find(x=>x!==c);if(g)g.innerHTML=c.innerHTML;ajustar(c);if(g)ajustar(g);});
 <\/script></body></html>`);
 }
-// Para quien no usa el Handbook: por habitación (lo que consulta el anfitrión
-// en la puerta) y el plano por mesa (lo que se mira al montar).
+// Para quien no usa la app: DOS hojas carta. La primera, por habitación (lo
+// que consulta el anfitrión en la puerta), en tres columnas; la segunda, el
+// salón dibujado y el plano por mesa. Si una hoja no alcanza, el contenido se
+// achica lo justo: nunca sale una tercera hoja ni nada cortado (2026-11-21).
 function qnListado(){
   const doc = qnDoc();
   if (!doc) return;
   const e = vjEsc;
-  const orden = qnMesas().map(m => m.n).join(' · ');
-  const filas = qnTodos().map(p => `<tr><td class="h">${e(p.hab)}</td><td>${e(p.nombre)}</td>
-    <td class="m">${p.m ? p.m : 'no va'}</td></tr>`).join('');
-  const plano = qnMesas().filter(m => qnGente(m.n).length).map(m => `
+  const todos = qnTodos();
+  const van = todos.filter(p => p.m).length;
+  const porHab = new Map();
+  todos.forEach(p => { if (!porHab.has(p.hab)) porHab.set(p.hab, []); porHab.get(p.hab).push(p); });
+  const habs = [...porHab].map(([h, ps]) => `<div class="hb">${ps.map((p, i) => `
+    <div class="r"><span class="h">${i ? '' : e(h)}</span><span class="nom">${e(p.nombre)}</span><b class="${p.m ? '' : 'nova'}">${p.m || 'no va'}</b></div>`).join('')}</div>`).join('');
+  const mesas = qnMesas();
+  const tira = mesas.map(m => `<div class="t${m.grupo ? ' g' : ''}" style="flex-grow:${m.fisicas || 1}"><b>${m.n}</b><span>${qnGente(m.n).length}/${m.puestos}</span></div>`).join('');
+  const plano = mesas.filter(m => qnGente(m.n).length).map(m => `
     <div class="mesa${m.fisicas > 1 ? ' g' : ''}"><div class="cab"><span class="n">${m.n}</span>
       <b>${e(qnTitulo(m.n))}</b><span class="c">${qnGente(m.n).length}/${m.puestos}</span></div>
-      ${qnHabsDe(m.n).map(([h, ns]) => `<div class="u"><span class="h">${e(h)}</span>${e(ns.join(' · '))}</div>`).join('')}
+      ${qnHabsDe(m.n).map(([h, ns]) => `<div class="u"><span class="h">${e(h)}</span><span>${e(ns.join(' · '))}</span></div>`).join('')}
       ${m.nota ? `<div class="nota">${e(m.nota)}</div>` : ''}</div>`).join('');
+  const nova = todos.filter(p => !p.m);
+  const cabeza = sub => `<div class="cabeza"><div><h1>Quincho · ${qnFechaTxt(doc.fecha)}</h1><div class="sub">${sub}</div></div>
+    <img src="${qnLogoUrl()}" alt="explora"></div>`;
   qnAbrirHtml(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Listado · Quincho ${qnFechaTxt(doc.fecha)}</title>
 <style>
 @page{size:letter;margin:12mm}
-body{font-family:system-ui,sans-serif;color:#23201C;font-size:10.5pt;margin:0 auto;max-width:190mm;padding:10px}
-h1{font-size:16pt;margin:0 0 2mm} .sub{color:#7A7267;font-size:9pt;margin-bottom:5mm}
-h2{font-size:12pt;margin:7mm 0 2mm;border-bottom:1pt solid #23201C;padding-bottom:1mm}
-table{width:100%;border-collapse:collapse} td,th{padding:1.2mm 2mm;border-bottom:0.4pt solid #D8D2C6;text-align:left}
-th{font-size:8.5pt;text-transform:uppercase;letter-spacing:.08em;color:#7A7267}
-td.h{width:14mm;font-weight:700;color:#B5832B} td.m{width:16mm;font-weight:700;font-size:13pt;text-align:center}
-.plano{columns:2;column-gap:6mm} .mesa{break-inside:avoid;border:0.6pt solid #D8D2C6;padding:2mm 3mm;margin-bottom:3mm}
-.mesa.g{border:1.4pt solid #B5832B} .cab{display:flex;gap:2mm;align-items:baseline;margin-bottom:1mm}
-.cab .n{font-weight:700;font-size:13pt;color:#B5832B} .cab .c{margin-left:auto;color:#7A7267}
-.u{font-size:9.5pt;padding:.5mm 0} .u .h{display:inline-block;width:12mm;font-weight:700;color:#B5832B}
-.nota{font-size:8.5pt;color:#7A7267;font-style:italic;margin-top:1mm}
+*{box-sizing:border-box}
+body{font-family:system-ui,sans-serif;color:#23201C;margin:0;background:#E9E6E0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pag{width:191.9mm;height:255.4mm;margin:12px auto;background:#fff;overflow:hidden;box-shadow:0 0 0 12mm #fff,0 1px 6px 12mm #0002}
+.pag + .pag{break-before:page;margin-top:calc(24mm + 24px)}
+.cabeza{display:flex;align-items:flex-start;justify-content:space-between;gap:6mm;margin-bottom:3mm}
+.cabeza img{width:11mm;height:auto;flex:0 0 auto}
+h1{font-size:14pt;margin:0} .sub{color:#7A7267;font-size:8.5pt;margin-top:.8mm}
+h2{font-size:8pt;text-transform:uppercase;letter-spacing:.14em;color:#7A7267;font-weight:600;margin:0 0 1.5mm;
+  border-bottom:0.8pt solid #23201C;padding-bottom:1mm}
+.habs{columns:3;column-gap:5mm;column-rule:0.4pt solid #E4DFD6}
+.hb{break-inside:avoid;border-bottom:0.4pt solid #E4DFD6;padding:.7mm 0}
+.r{display:flex;align-items:baseline;gap:1.8mm;font-size:9.8pt;line-height:1.3;padding:.45mm 0}
+.r .h{flex:0 0 7mm;font-weight:700;color:#B5832B;text-align:right}
+.r .nom{flex:1;min-width:0}
+.r b{flex:0 0 auto;min-width:6mm;text-align:center;font-size:11.5pt}
+.r b.nova{font-size:7.5pt;font-weight:600;color:#7A7267}
+.tira{display:flex;gap:1.2mm;margin:0 0 1mm}
+.t{flex:1 1 0;border:0.6pt solid #CFC8BB;border-radius:1.2mm;text-align:center;padding:1.2mm 0 1mm}
+.t.g{border:1.4pt solid #B5832B}
+.t b{display:block;font-size:12pt;line-height:1} .t span{display:block;font-size:6.8pt;color:#7A7267;margin-top:.6mm}
+.tira-pie{font-size:7pt;color:#7A7267;text-align:center;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3mm}
+.plano{columns:2;column-gap:5mm}
+.mesa{break-inside:avoid;border:0.6pt solid #D8D2C6;border-radius:1.2mm;padding:1.6mm 2.4mm;margin-bottom:2.4mm}
+.mesa.g{border:1.4pt solid #B5832B}
+.cab{display:flex;gap:2mm;align-items:baseline;margin-bottom:.6mm;font-size:9.5pt}
+.cab .n{font-weight:700;font-size:13pt;color:#B5832B;line-height:1} .cab .c{margin-left:auto;color:#7A7267;font-size:8pt}
+.u{display:flex;gap:1.8mm;font-size:8.4pt;line-height:1.25;padding:.25mm 0} .u .h{flex:0 0 6mm;font-weight:700;color:#B5832B;text-align:right}
+.nota{font-size:7.4pt;line-height:1.3;color:#7A7267;font-style:italic;margin-top:.8mm}
+.nova-l{font-size:8pt;color:#7A7267;margin-top:2mm}
 .imp{position:fixed;bottom:12px;right:12px;padding:9px 16px;background:#B5832B;color:#fff;border:0;border-radius:4px;font:inherit;cursor:pointer;box-shadow:0 2px 8px #0003}
-.cabeza{display:flex;align-items:flex-start;justify-content:space-between;gap:6mm}
-.cabeza img{width:14mm;height:auto;flex:0 0 auto}
-@media print{.imp{display:none}} h2.plano-t{break-before:page}
+@media print{body{background:none}.imp{display:none}.pag,.pag + .pag{margin:0;box-shadow:none}}
 </style></head><body>
 <button class="imp" onclick="window.print()">Imprimir</button>
-<div class="cabeza"><div><h1>Quincho · ${qnFechaTxt(doc.fecha)}</h1>
-<div class="sub">${qnTodos().filter(p => p.m).length} viajeros · salón de izquierda a derecha: ${orden}</div></div>
-<img src="${qnLogoUrl()}" alt="explora"></div>
-<h2>Por habitación</h2><table><tr><th>Hab</th><th>Viajero</th><th>Mesa</th></tr>${filas}</table>
-<h2 class="plano-t">Por mesa</h2><div class="plano">${plano}</div>
-</body></html>`);
+<section class="pag"><div class="fit">
+${cabeza(`${van} viajeros · por habitación · hoja 1 de 2`)}
+<h2>Habitación · viajero · mesa</h2>
+<div class="habs">${habs}</div>
+</div></section>
+<section class="pag"><div class="fit">
+${cabeza(`${mesas.filter(m => qnGente(m.n).length).length} mesas · plano del salón · hoja 2 de 2`)}
+<div class="tira">${tira}</div><div class="tira-pie">salón · de izquierda a derecha</div>
+<div class="plano">${plano}</div>
+${nova.length ? `<div class="nova-l"><b>No van:</b> ${e(nova.map(p => p.nombre + ' (' + p.hab + ')').join(' · '))}</div>` : ''}
+</div></section>
+<script>
+// Cada hoja entra en UNA carta: si el contenido se pasa, se achica lo justo.
+const ajustar=()=>document.querySelectorAll('.pag').forEach(p=>{const f=p.firstElementChild;f.style.zoom='';
+  const h=f.getBoundingClientRect().height,H=p.clientHeight;if(h>H)f.style.zoom=String(Math.floor(H/h*100)/100);});
+window.addEventListener('load',ajustar);window.addEventListener('beforeprint',ajustar);
+<\/script></body></html>`);
 }
 // ── Excel sin dependencias: un .xlsx es un zip de XML. Zip sin compresión
 // (método 0) + CRC32. Misma planilla que escribía quincho.py (fila 4 de
@@ -16632,6 +16734,128 @@ function qnBotonesPapel(){
     <button type="button" class="cmd-btn" onclick="qnListado()">${t('qnListado')}</button>
     <button type="button" class="cmd-btn" onclick="qnExcel()">${t('qnExcel')}</button>`;
 }
+// ── Vista anfitrión (2026-11-21) ──
+// Para la tablet de la entrada: el viajero dice su nombre o su habitación y
+// aparece su mesa, grande. Sólo consulta (nadie mueve gente desde acá), con el
+// dato vivo: lo que se mueve en otro teléfono llega en el tick de 30 s, y sin
+// señal sigue con la copia local. Pantalla completa, encima de la app.
+let QN_ANF = null;   // { q, modo:'hab'|'mesa', mesa }
+function qnAnfAbrir(){
+  QN_ANF = { q: '', modo: 'hab', mesa: null };
+  let el = document.getElementById('qn-anf');
+  if (!el){ el = document.createElement('div'); el.id = 'qn-anf'; el.className = 'qn-anf'; document.body.appendChild(el); }
+  const doc = qnDoc();
+  const [, mo, d] = String(doc && doc.fecha || '').split('-');
+  el.innerHTML = `<div class="qn-anf-in">
+    <div class="qn-anf-top">
+      <div class="qn-anf-tit">${t('qnAnf')}<span>${t('qnTitulo')} · ${d}-${mo}</span></div>
+      <span class="qn-anf-off" id="qn-anf-off"></span>
+      <button type="button" class="cmd-btn" onclick="qnAnfCerrar()">${t('qnAnfCerrar')}</button>
+    </div>
+    <div class="qn-anf-buscar">
+      <input type="search" id="qn-anf-q" placeholder="${vjEsc(t('qnAnfPh'))}" autocomplete="off" autocorrect="off"
+        autocapitalize="off" spellcheck="false" enterkeyhint="search" oninput="qnAnfBuscar(this.value)">
+      <button type="button" class="qn-anf-x" onclick="qnAnfBuscar('', true)" aria-label="${vjEsc(t('qnAnfBorrar'))}">×</button>
+    </div>
+    <div id="qn-anf-tira"></div>
+    <div class="qn-anf-modos">
+      <button type="button" id="qn-anf-m-hab" onclick="qnAnfModo('hab')">${t('qnAnfPorHab')}</button>
+      <button type="button" id="qn-anf-m-mesa" onclick="qnAnfModo('mesa')">${t('qnAnfPorMesa')}</button>
+    </div>
+    <div class="qn-anf-res" id="qn-anf-res"></div>
+  </div>`;
+  document.documentElement.classList.add('qn-anf-on');
+  qnAnfPintar();
+  setTimeout(() => { const i = document.getElementById('qn-anf-q'); if (i) i.focus(); }, 60);
+}
+function qnAnfCerrar(){
+  QN_ANF = null;
+  const el = document.getElementById('qn-anf');
+  if (el) el.remove();
+  document.documentElement.classList.remove('qn-anf-on');
+}
+function qnAnfBuscar(v, foco){
+  if (!QN_ANF) return;
+  QN_ANF.q = v; QN_ANF.mesa = null;
+  const i = document.getElementById('qn-anf-q');
+  if (i && i.value !== v) i.value = v;
+  if (foco && i) i.focus();
+  qnAnfPintar();
+}
+function qnAnfModo(m){ if (QN_ANF){ QN_ANF.modo = m; QN_ANF.mesa = null; qnAnfPintar(); } }
+function qnAnfMesa(n){
+  if (!QN_ANF) return;
+  QN_ANF.mesa = QN_ANF.mesa === n ? null : n;
+  QN_ANF.q = '';
+  const i = document.getElementById('qn-anf-q'); if (i) i.value = '';
+  qnAnfPintar();
+}
+// Lo que dice el viajero: un número es su habitación ("11-12": las dos); un
+// texto, cualquier parte de su nombre, en cualquier orden y sin tildes.
+function qnAnfEncontrar(q){
+  const f = vjFold(q.trim());
+  if (!f) return [];
+  const todos = qnTodos();
+  const num = f.match(/^(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/);
+  if (num){
+    const nums = num[1].split(/\s*[-,]\s*/);
+    return todos.filter(p => nums.some(x => qnHabCalza(p.hab, x)));
+  }
+  const pal = f.split(/\s+/).filter(Boolean);
+  return todos.filter(p => { const n = vjFold(p.nombre) + ' ' + vjFold(p.grupo); return pal.every(w => n.indexOf(w) >= 0); });
+}
+function qnAnfPersona(p){
+  const m = qnMesa(p.m);
+  const otros = p.m ? qnGente(p.m).filter(x => x.pid !== p.pid).map(x => vjFirstName(x.nombre)) : [];
+  return `<div class="qn-anf-per">
+    <div class="qn-anf-m${m && m.grupo ? ' is-grupo' : ''}${p.m ? '' : ' is-nova'}"><span>${t('qnMesa')}</span><b>${p.m || '–'}</b></div>
+    <div class="qn-anf-per-main">
+      <div class="qn-anf-nom">${vjEsc(p.nombre)}</div>
+      <div class="qn-anf-sub">${t('vjHab')} ${vjEsc(p.hab)} · ${m ? vjEsc(qnPosTxt(m)) : t('qnNoVa')}</div>
+      ${otros.length ? `<div class="qn-anf-con">${t('qnCon')} ${vjEsc(otros.join(' · '))}</div>` : ''}
+    </div>
+  </div>`;
+}
+function qnAnfMesaCard(m){
+  return `<div class="qn-anf-mesa${m.grupo ? ' is-grupo' : ''}">
+    <div class="qn-anf-mesa-cab"><b>${m.n}</b><span>${vjEsc(qnTitulo(m.n)) || '—'}</span><em>${qnGente(m.n).length}/${m.puestos}</em></div>
+    ${qnHabsDe(m.n).map(([h, ns]) => `<div class="qn-anf-fila"><span class="qn-anf-h">${vjEsc(h)}</span><span>${vjEsc(ns.join(' · '))}</span></div>`).join('')}
+  </div>`;
+}
+// Repinta todo menos el campo de búsqueda: el teclado y el cursor no se mueven.
+function qnAnfPintar(){
+  if (!QN_ANF) return;
+  const A = QN_ANF;
+  const off = document.getElementById('qn-anf-off');
+  if (off) off.textContent = QN_OFFLINE ? t('qnOffline') : '';
+  const halladas = A.q.trim() ? qnAnfEncontrar(A.q) : null;
+  const resaltar = new Set(halladas ? halladas.map(p => p.m).filter(Boolean) : (A.mesa ? [A.mesa] : []));
+  const tira = document.getElementById('qn-anf-tira');
+  if (tira) tira.innerHTML = `<div class="qn-tira qn-anf-tira">${qnMesas().map(m => `
+    <button type="button" class="qn-casilla${m.grupo ? ' is-grupo' : ''}${resaltar.has(m.n) ? ' on' : ''}" style="flex-grow:${m.fisicas || 1}"
+      onclick="qnAnfMesa(${m.n})" aria-label="${vjEsc(t('qnMesa'))} ${m.n}">
+      <span class="qn-casilla-n">${m.n}</span><span class="qn-casilla-c">${qnGente(m.n).length}</span></button>`).join('')}</div>
+    <div class="qn-salon-lbl qn-anf-pie">${t('qnSalon')}</div>`;
+  ['hab', 'mesa'].forEach(k => { const b = document.getElementById('qn-anf-m-' + k); if (b) b.classList.toggle('on', !halladas && !A.mesa && A.modo === k); });
+  let html;
+  if (halladas){
+    html = halladas.length ? halladas.map(qnAnfPersona).join('')
+      : `<div class="qn-anf-vacio">${t('qnSinResultados').replace('{q}', vjEsc(A.q.trim()))}</div>`;
+  } else if (A.mesa && qnMesa(A.mesa)){
+    html = `<div class="qn-anf-mesas uno">${qnAnfMesaCard(qnMesa(A.mesa))}</div>`;
+  } else if (A.modo === 'mesa'){
+    html = `<div class="qn-anf-mesas">${qnMesas().filter(m => qnGente(m.n).length).map(qnAnfMesaCard).join('')}</div>`;
+  } else {
+    const por = new Map();
+    qnTodos().forEach(p => { if (!por.has(p.hab)) por.set(p.hab, []); por.get(p.hab).push(p); });
+    html = `<div class="qn-anf-habs">${[...por].map(([h, ps]) => `<div class="qn-anf-hb">${ps.map((p, i) => `
+      <button type="button" class="qn-anf-r" onclick="qnAnfBuscar(${vjEsc(JSON.stringify(p.nombre))})">
+        <span class="qn-anf-h">${i ? '' : vjEsc(h)}</span><span class="qn-anf-rn">${vjEsc(p.nombre)}</span>
+        <b class="${p.m ? '' : 'is-nova'}">${p.m || '–'}</b></button>`).join('')}</div>`).join('')}</div>`;
+  }
+  const res = document.getElementById('qn-anf-res');
+  if (res) res.innerHTML = html;
+}
 // ── Armado: formulario y borrador ──
 // La fila del salón en el armado: tocar una mesa abre su editor debajo. El
 // editor tiene siempre los mismos controles (los que no aplican, apagados):
@@ -16768,7 +16992,7 @@ function qnRenderVista(){
     if (nova.length) cuerpo += `<div class="qn-mesa"><div class="qn-mesa-sub">${t('qnNoVan')}</div>${nova.map(p => qnFilaPersona(p, false)).join('')}</div>`;
   }
   const [, mo, d] = String(doc.fecha).split('-');
-  const acciones = A ? '' : `<div class="qn-acciones">${qnBotonesPapel()}
+  const acciones = A ? '' : `<div class="qn-acciones"><button type="button" class="cmd-btn" onclick="qnAnfAbrir()">${t('qnAnf')}</button>${qnBotonesPapel()}
       <span class="qn-acc-sep"></span>
       <button type="button" class="cmd-btn" onclick="qnArmar('recalcular')">${t('qnRecalcular')}</button>
       <button type="button" class="cmd-btn" onclick="qnArmar('nuevo')">${t('qnArmarNuevo')}</button>
