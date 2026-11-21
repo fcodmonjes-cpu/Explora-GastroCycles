@@ -2617,6 +2617,19 @@ body.telon-vuela #app-title .marca { opacity:0; transition:none; }
 .qn-arm-res.is-mal, .qn-arm-error { color:var(--coral); }
 .qn-arm-error { font-family:'Courier Prime',monospace; font-size:11.5px; line-height:1.45; margin:8px 0; }
 .qn-arm-acc { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px; }
+/* Salón editable del armado (2026-11-21) */
+.qn-sal-head { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+.qn-sal-rehacer { background:none; border:0; padding:4px 0; cursor:pointer; color:var(--text-tertiary);
+  font-family:'Courier Prime',monospace; font-size:10.5px; letter-spacing:0; text-transform:none;
+  text-decoration:underline; text-underline-offset:2px; touch-action:manipulation; }
+.qn-tira.qn-tira-arm { margin:0 0 8px; }
+.qn-sal-ed { border:0.5px solid var(--border-md); border-radius:var(--radius-md); padding:2px 10px 10px; }
+.qn-sal-delta { font-style:normal; font-family:'Courier Prime',monospace; font-size:11px; color:var(--text-tertiary); margin-left:6px; }
+.qn-sal-acc { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin:10px 0 2px; }
+.qn-sal-btn { background:var(--bg-secondary); border:0.5px solid var(--border-md); border-radius:var(--radius-md);
+  color:var(--text); font-family:'Courier Prime',monospace; font-size:12px; padding:9px 4px; cursor:pointer; touch-action:manipulation; }
+.qn-sal-btn:disabled { opacity:0.35; cursor:default; }
+.qn-sal-res { display:flex; flex-wrap:wrap; gap:6px; }
 .qn-borrador { border:1px solid var(--gold); background:var(--gold-light); border-radius:var(--radius-md); padding:11px 12px; margin-bottom:14px; }
 .qn-bor-tit { font-family:'Courier Prime',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); }
 .qn-bor-res { font-size:13px; line-height:1.45; color:var(--text); margin-top:5px; }
@@ -6297,7 +6310,15 @@ const UI = {
     qnFecha:'Noche del quincho', qnRosterHoy:'Los viajeros son los que están hoy en el hotel: quien llega después todavía no aparece.',
     qnMesasLbl:'Mesas en el salón', qnPuestosLbl:'Puestos por mesa', qnPuntasLbl:'Cabeceras de una mesa unida',
     qnGruposLbl:'Grupos y familias', qnSinGrupos:'No hay grupos de 3 o más.', qnMesaPropia:'mesa propia',
-    qnCapacidad:'{v} viajeros · {p} puestos', qnFaltan:'faltan {n}: sumá mesas',
+    qnCapacidad:'{v} viajeros · {p} puestos',
+    qnFaltan:'faltan {n}: subí puestos en alguna mesa del salón o sumá mesas',
+    qnFalta1:'falta 1: subí puestos en alguna mesa del salón o sumá mesas',
+    qnEnMesa:'mesa {n}', qnSalonRehacer:'rehacer',
+    qnSalonAyuda:'Tocá una mesa para cambiarle los puestos, unirla con la de al lado o reservarla para un grupo.',
+    qnSalonBase:'base {b} {d}', qnSalonUnirIzq:'← unir', qnSalonUnirDer:'unir →', qnSalonSeparar:'separar',
+    qnSalonReservada:'reservada para', qnSalonNadie:'nadie',
+    qnErrReservaChica:'{g} son {n} y la mesa {m} tiene {p} puestos: subile puestos o unila con la de al lado.',
+    qnErrSinMesa:'{g} ({n}) no cabe en ninguna mesa libre: uní mesas en el salón y reservásela.',
     qnProponer:'Proponer', qnCalculando:'Calculando las mesas…',
     qnBorrador:'Borrador · todavía no publicado', qnDescartar:'Descartar', qnAjustar:'Ajustar salón',
     qnPublicar:'Publicar', qnPublicando:'Publicando…',
@@ -15610,8 +15631,11 @@ const QN_OPT = {
   idioma:      0.15,  // idioma y edad DESEMPATAN: juntos no alcanzan a una exploración compartida
   edad:        0.05,  // por cada 10 años de diferencia de edad promedio
   vinculo:     1.5,   // escala de la raíz de afinidad de cada unidad con su mesa
-  mesa:        4,     // cada mesa en uso: llenar antes que abrir otra
-  vacio:       0.5,   // puestos vacíos al cuadrado: repartir los huecos
+  vacio:       1.5,   // puestos vacíos al cuadrado, también en las mesas vacías:
+                      // se usan TODAS las mesas del salón y los huecos se reparten
+                      // parejo (2026-11-21: antes una mesa vacía no costaba nada y
+                      // el cálculo cerraba una para apretar las demás a tope; con
+                      // 0,5 la afinidad todavía dejaba mesas de 5 junto a mesas de 7)
   estabilidad: 3,     // al recalcular, quedarse en la mesa que ya tenía
   intentos:    200
 };
@@ -15804,7 +15828,8 @@ function qnRepartir(personas, mesas, fecha, semilla){
   // un vínculo vale más que de tres a cuatro. "Uniforme" es esto.
   const score = (n, us) => {
     const todos = ancla.get(n).concat(us);
-    if (!todos.length) return 0;
+    const vac = porN.get(n).puestos - todos.reduce((a, u) => a + u.n, 0);
+    if (!todos.length) return -QN_OPT.vacio * vac * vac;
     let s = 0;
     for (const u of todos){
       let a = 0;
@@ -15814,8 +15839,7 @@ function qnRepartir(personas, mesas, fecha, semilla){
     for (let i = 0; i < todos.length; i++)
       for (let j = i + 1; j < todos.length; j++) s += memo(cSec, qnSecundario, todos[i], todos[j]);
     for (const u of us) if (u.previa === n) s += QN_OPT.estabilidad;
-    const vac = porN.get(n).puestos - todos.reduce((a, u) => a + u.n, 0);
-    return s - QN_OPT.mesa - QN_OPT.vacio * Math.pow(Math.max(vac, 0), 2);
+    return s - QN_OPT.vacio * Math.pow(Math.max(vac, 0), 2);
   };
   const libre = (n, us) => cap.get(n) - us.reduce((a, u) => a + u.n, 0);
   let mejor = null, mejorS = -Infinity;
@@ -15965,7 +15989,14 @@ function qnDocDe(fecha, personas, mesas, salon){
 // ══ Armar, recalcular, publicar ═══════════════════════════════════════
 function qnCfgInicial(){
   const s = (QN_DATA && QN_DATA.salon) || {};
-  return { fecha: vjTodayIso(), mesas: s.mesas || 12, puestos: s.puestos || 6, puntas: s.puntas != null ? s.puntas : 2, propias: [] };
+  const cfg = { fecha: vjTodayIso(), mesas: s.mesas || 12, puestos: s.puestos || 6, puntas: s.puntas != null ? s.puntas : 2, layout: null, sel: null };
+  // El salón editado a mano se reusa al rearmar la MISMA noche; otra noche
+  // parte del automático (las reservas de la semana pasada no aplican).
+  if (Array.isArray(s.layout) && s.layout.length && QN_DATA.fecha === cfg.fecha){
+    cfg.layout = s.layout.filter(Boolean).map(l => ({ fisicas: l.fisicas || 1, extra: l.extra || 0, reservada: l.reservada || '' }));
+    qnLayoutLimpiar(cfg);
+  } else cfg.layout = qnLayoutAuto(cfg, []);
+  return cfg;
 }
 function qnArmar(modo){
   QN_ARMADO = { modo, paso: modo === 'borrar' ? 'borrar' : 'form', error: '', cfg: qnCfgInicial(), borrador: null, resumen: '' };
@@ -15975,18 +16006,133 @@ function qnArmar(modo){
   viajerosRender();
 }
 function qnArmadoCerrar(){ QN_ARMADO = null; QN_MOVER = null; viajerosRender(); }
-function qnCfgSet(k, v){ if (QN_ARMADO){ QN_ARMADO.cfg[k] = v; QN_ARMADO.error = ''; vjRenderBody(); } }
-function qnCfgPaso(k, d){
+function qnCfgSet(k, v){
   if (!QN_ARMADO) return;
-  const min = { mesas: 1, puestos: 2, puntas: 0 }[k];
-  QN_ARMADO.cfg[k] = Math.max(min, (QN_ARMADO.cfg[k] || 0) + d);
+  const cfg = QN_ARMADO.cfg;
+  cfg[k] = v;
+  // Otra noche, otros grupos: el salón se rehace conservando las mesas
+  // propias de los grupos que siguen estando.
+  if (k === 'fecha'){ cfg.layout = qnLayoutAuto(cfg, qnReservadosEn(cfg)); cfg.sel = null; }
   QN_ARMADO.error = '';
   vjRenderBody();
 }
+function qnCfgPaso(k, d){
+  if (!QN_ARMADO) return;
+  const cfg = QN_ARMADO.cfg;
+  QN_ARMADO.error = '';
+  if (k === 'mesas'){
+    // Sumar o quitar una mesa es al final del salón: lo ya editado no se toca.
+    const L = cfg.layout;
+    if (d > 0) L.push({ fisicas: 1, extra: 0, reservada: '' });
+    else if (cfg.mesas > 1){
+      const u = L[L.length - 1];
+      if (u.fisicas > 1) u.fisicas--; else L.pop();
+    }
+    cfg.mesas = L.reduce((a, l) => a + l.fisicas, 0);
+    if (cfg.sel != null && cfg.sel >= L.length) cfg.sel = null;
+  } else {
+    // Puestos y cabeceras son la base: cada mesa guarda aparte lo que se le
+    // sumó o restó (extra), así cambiar la base no borra lo editado.
+    const min = { puestos: 2, puntas: 0 }[k];
+    cfg[k] = Math.max(min, (cfg[k] || 0) + d);
+  }
+  vjRenderBody();
+}
+// ── El salón: mesas físicas en fila → mesas lógicas editables ──
+// layout = [{ fisicas, extra, reservada }]: cuántas mesas físicas van unidas,
+// los puestos que se le suman o restan a la base, y el grupo que la reserva.
+function qnPuestosDe(cfg, l){
+  return Math.max(1, l.fisicas * cfg.puestos + (l.fisicas > 1 ? cfg.puntas : 0) + (l.extra || 0));
+}
+function qnMesasDeLayout(cfg){
+  return cfg.layout.map((l, i) => ({ n: i + 1, pos: i + 1, puestos: qnPuestosDe(cfg, l), fisicas: l.fisicas, reservada: l.reservada || '' }));
+}
+function qnReservadosEn(cfg){ return cfg.layout.map(l => l.reservada).filter(Boolean); }
+// Automático: los grupos que no caben en una mesa van unidos, repartidos a lo
+// largo del salón; `propias` suma los que pidieron mesa propia.
+function qnLayoutAuto(cfg, propias){
+  const r = {};
+  qnGruposDeLaNoche(cfg).forEach(g => {
+    if (g.n > cfg.puestos || propias.indexOf(g.clave) >= 0) r[g.clave] = qnMesasPara(g.n, cfg.puestos, cfg.puntas);
+  });
+  let mesas;
+  // Si los bloques no entran, salón suelto: el aviso dice qué grupo quedó sin mesa.
+  try { mesas = qnArmarSalon(cfg.mesas, cfg.puestos, cfg.puntas, r); }
+  catch(e){ mesas = qnArmarSalon(cfg.mesas, cfg.puestos, cfg.puntas, {}); }
+  return mesas.map(m => ({ fisicas: m.fisicas, extra: 0, reservada: m.reservada || '' }));
+}
+// Reservas de grupos que ya no están esa noche: la mesa vuelve al salón.
+function qnLayoutLimpiar(cfg){
+  const hay = new Set(qnGruposDeLaNoche(cfg).map(g => g.clave));
+  cfg.layout.forEach(l => { if (l.reservada && !hay.has(l.reservada)) l.reservada = ''; });
+  cfg.mesas = cfg.layout.reduce((a, l) => a + l.fisicas, 0);
+}
+function qnSalonSel(i){
+  const cfg = QN_ARMADO.cfg;
+  cfg.sel = cfg.sel === i ? null : i;
+  vjRenderBody();
+}
+function qnSalonPuestos(d){
+  const cfg = QN_ARMADO.cfg, l = cfg.layout[cfg.sel];
+  if (!l || qnPuestosDe(cfg, l) + d < 2) return;
+  l.extra = (l.extra || 0) + d;
+  QN_ARMADO.error = '';
+  vjRenderBody();
+}
+function qnSalonUnir(dir){
+  const cfg = QN_ARMADO.cfg, L = cfg.layout, i = cfg.sel, j = i + dir;
+  if (i == null || j < 0 || j >= L.length) return;
+  const a = L[Math.min(i, j)], b = L[Math.max(i, j)];
+  // Manda la reserva de la mesa que se está editando; si no tiene, hereda la de al lado.
+  const u = { fisicas: a.fisicas + b.fisicas, extra: (a.extra || 0) + (b.extra || 0), reservada: L[i].reservada || L[j].reservada || '' };
+  L.splice(Math.min(i, j), 2, u);
+  cfg.sel = Math.min(i, j);
+  QN_ARMADO.error = '';
+  vjRenderBody();
+}
+function qnSalonSeparar(){
+  const cfg = QN_ARMADO.cfg, L = cfg.layout, l = L[cfg.sel];
+  if (!l || l.fisicas < 2) return;
+  const sueltas = Array.from({ length: l.fisicas }, (_, k) => ({ fisicas: 1, extra: 0, reservada: k ? '' : l.reservada }));
+  L.splice(cfg.sel, 1, ...sueltas);
+  QN_ARMADO.error = '';
+  vjRenderBody();
+}
+// Una reserva por grupo: reservarle esta mesa le quita la que tenía.
+function qnSalonReservar(clave){
+  const cfg = QN_ARMADO.cfg, l = cfg.layout[cfg.sel];
+  if (!l) return;
+  if (clave) cfg.layout.forEach(x => { if (x.reservada === clave) x.reservada = ''; });
+  l.reservada = clave;
+  QN_ARMADO.error = '';
+  vjRenderBody();
+}
+function qnSalonRehacer(){
+  const cfg = QN_ARMADO.cfg;
+  cfg.layout = qnLayoutAuto(cfg, qnReservadosEn(cfg));
+  cfg.mesas = cfg.layout.reduce((a, l) => a + l.fisicas, 0);
+  cfg.sel = null;
+  QN_ARMADO.error = '';
+  vjRenderBody();
+}
+// «Mesa propia» desde la lista de grupos: la mesa libre más chica en la que
+// cabe y, a igualdad, la más cerca del centro. Tocar de nuevo la suelta.
 function qnTogglePropia(clave){
-  const l = QN_ARMADO.cfg.propias;
-  const i = l.indexOf(clave);
-  if (i >= 0) l.splice(i, 1); else l.push(clave);
+  const A = QN_ARMADO, cfg = A.cfg;
+  A.error = '';
+  const ya = cfg.layout.find(l => l.reservada === clave);
+  if (ya){ ya.reservada = ''; return vjRenderBody(); }
+  const g = qnGruposDeLaNoche(cfg).find(x => x.clave === clave);
+  const medio = (cfg.layout.length - 1) / 2;
+  let mejor = -1;
+  cfg.layout.forEach((l, i) => {
+    if (l.reservada || !g || qnPuestosDe(cfg, l) < g.n) return;
+    if (mejor < 0){ mejor = i; return; }
+    const pa = qnPuestosDe(cfg, l), pb = qnPuestosDe(cfg, cfg.layout[mejor]);
+    if (pa < pb || (pa === pb && Math.abs(i - medio) < Math.abs(mejor - medio))) mejor = i;
+  });
+  if (mejor < 0) A.error = t('qnErrSinMesa').replace('{g}', g ? g.nombre : clave).replace('{n}', g ? g.n : '');
+  else cfg.layout[mejor].reservada = clave;
   vjRenderBody();
 }
 // Los grupos de la noche y lo que el salón les da: los que no caben en una
@@ -16001,12 +16147,28 @@ function qnGruposDeLaNoche(cfg){
   return [...cuenta].map(([k, ps]) => ({ clave: k, nombre: qnNombreUnidad(k, ps), n: ps.length }))
     .sort((a, b) => b.n - a.n || a.nombre.localeCompare(b.nombre));
 }
-function qnReservasDe(cfg, grupos){
-  const r = {};
-  grupos.forEach(g => {
-    if (g.n > cfg.puestos || cfg.propias.indexOf(g.clave) >= 0) r[g.clave] = qnMesasPara(g.n, cfg.puestos, cfg.puntas);
+// ¿Alcanza el salón? Los puestos de las mesas abiertas para quien no tiene
+// reserva, y cada grupo reservado dentro de su mesa. Si falta, avisa y frena
+// (decisión del owner, 2026-11-21): los puestos se suben mesa por mesa.
+function qnSalonEstado(cfg, grupos){
+  const mesas = qnMesasDeLayout(cfg);
+  const porClave = new Map(grupos.map(g => [g.clave, g]));
+  const personas = grupos.reduce((a, g) => a + g.n, 0);
+  const errores = [];
+  let reservados = 0;
+  mesas.filter(m => m.reservada).forEach(m => {
+    const g = porClave.get(m.reservada);
+    if (!g) return;
+    reservados += g.n;
+    if (g.n > m.puestos) errores.push(t('qnErrReservaChica').replace('{g}', g.nombre).replace('{n}', g.n).replace('{m}', m.n).replace('{p}', m.puestos));
   });
-  return r;
+  const abiertas = mesas.filter(m => !m.reservada);
+  const libres = abiertas.reduce((a, m) => a + m.puestos, 0);
+  const maxAb = abiertas.length ? Math.max(...abiertas.map(m => m.puestos)) : 0;
+  const conMesa = new Set(mesas.map(m => m.reservada).filter(Boolean));
+  grupos.filter(g => !conMesa.has(g.clave) && g.n > maxAb)
+    .forEach(g => errores.push(t('qnErrSinMesa').replace('{g}', g.nombre).replace('{n}', g.n)));
+  return { mesas, personas, puestos: libres + reservados, falta: Math.max(0, personas - reservados - libres), errores };
 }
 function qnProponer(){
   const A = QN_ARMADO;
@@ -16018,9 +16180,10 @@ function qnProponer(){
       const cfg = A.cfg;
       const personas = qnPersonasRoster(cfg.fecha);
       if (!personas.length) throw new Error(t('qnErrVacio'));
-      const mesas = qnArmarSalon(cfg.mesas, cfg.puestos, cfg.puntas, qnReservasDe(cfg, qnGruposDeLaNoche(cfg)));
+      const mesas = qnMesasDeLayout(cfg);
       qnRepartir(personas, mesas, cfg.fecha, 7);
-      A.borrador = qnDocDe(cfg.fecha, personas, mesas, { mesas: cfg.mesas, puestos: cfg.puestos, puntas: cfg.puntas });
+      A.borrador = qnDocDe(cfg.fecha, personas, mesas, { mesas: cfg.mesas, puestos: cfg.puestos, puntas: cfg.puntas,
+        layout: cfg.layout.map(l => ({ fisicas: l.fisicas, extra: l.extra || 0, reservada: l.reservada || '' })) });
       const met = qnMetricas(personas, mesas, cfg.fecha);
       A.resumen = t('qnResumen').replace('{v}', personas.length)
         .replace('{m}', mesas.filter(m => personas.some(p => p.mesa === m.n)).length)
@@ -16462,29 +16625,53 @@ function qnBotonesPapel(){
     <button type="button" class="cmd-btn" onclick="qnExcel()">${t('qnExcel')}</button>`;
 }
 // ── Armado: formulario y borrador ──
+// La fila del salón en el armado: tocar una mesa abre su editor debajo. El
+// editor tiene siempre los mismos controles (los que no aplican, apagados):
+// cambiar de mesa no mueve nada bajo el dedo.
+function qnSalonEditor(cfg, grupos){
+  const L = cfg.layout, i = cfg.sel, l = L[i];
+  if (!l) return `<div class="qn-arm-ayuda">${t('qnSalonAyuda')}</div>`;
+  const m = qnMesasDeLayout(cfg)[i];
+  const base = qnPuestosDe(cfg, { fisicas: l.fisicas, extra: 0 });
+  const delta = qnPuestosDe(cfg, l) - base;
+  const elegibles = grupos.filter(g => g.n >= 3 || g.clave === l.reservada);
+  return `<div class="qn-sal-ed">
+    <div class="qn-arm-fila"><span>${t('qnMesa')} ${m.n}${l.fisicas > 1 ? ' · ' + t('qnUnidas').replace('{n}', l.fisicas) : ''}
+      ${delta ? `<em class="qn-sal-delta">${t('qnSalonBase').replace('{b}', base).replace('{d}', (delta > 0 ? '+' : '−') + Math.abs(delta))}</em>` : ''}</span>
+      <div class="qn-step"><button type="button" onclick="qnSalonPuestos(-1)" aria-label="−">−</button><b>${m.puestos}</b>
+      <button type="button" onclick="qnSalonPuestos(1)" aria-label="+">+</button></div></div>
+    <div class="qn-sal-acc">
+      <button type="button" class="qn-sal-btn" onclick="qnSalonUnir(-1)" ${i > 0 ? '' : 'disabled'}>${t('qnSalonUnirIzq')}</button>
+      <button type="button" class="qn-sal-btn" onclick="qnSalonSeparar()" ${l.fisicas > 1 ? '' : 'disabled'}>${t('qnSalonSeparar')}</button>
+      <button type="button" class="qn-sal-btn" onclick="qnSalonUnir(1)" ${i < L.length - 1 ? '' : 'disabled'}>${t('qnSalonUnirDer')}</button>
+    </div>
+    <div class="qn-arm-sub">${t('qnSalonReservada')}</div>
+    <div class="qn-sal-res">
+      <button type="button" class="qn-arm-gbtn${l.reservada ? '' : ' on'}" onclick="qnSalonReservar('')">${t('qnSalonNadie')}</button>
+      ${elegibles.map(g => `<button type="button" class="qn-arm-gbtn${l.reservada === g.clave ? ' on' : ''}"
+        onclick="qnSalonReservar('${vjEsc(g.clave)}')">${vjEsc(g.nombre)} ${g.n}</button>`).join('')}
+    </div>
+  </div>`;
+}
 function qnRenderForm(){
   const A = QN_ARMADO, cfg = A.cfg;
   const grupos = qnGruposDeLaNoche(cfg);
-  const personas = grupos.reduce((a, g) => a + g.n, 0);
-  let puestos = null, errSalon = '';
-  try {
-    puestos = qnArmarSalon(cfg.mesas, cfg.puestos, cfg.puntas, qnReservasDe(cfg, grupos))
-      .filter(m => !m.reservada).reduce((a, m) => a + m.puestos, 0)
-      + grupos.filter(g => g.n > cfg.puestos || cfg.propias.indexOf(g.clave) >= 0).reduce((a, g) => a + g.n, 0);
-  } catch(e){ errSalon = e.message; }
-  const falta = puestos != null && personas > puestos;
+  const est = qnSalonEstado(cfg, grupos);
+  const malo = est.falta > 0 || est.errores.length > 0;
   const paso = (k, lbl) => `<div class="qn-arm-fila"><span>${t(lbl)}</span><div class="qn-step">
       <button type="button" onclick="qnCfgPaso('${k}',-1)" aria-label="−">−</button><b>${cfg[k]}</b>
       <button type="button" onclick="qnCfgPaso('${k}',1)" aria-label="+">+</button></div></div>`;
   const listaGrupos = grupos.filter(g => g.n >= 3).map(g => {
-    const unida = g.n > cfg.puestos;
-    const propia = cfg.propias.indexOf(g.clave) >= 0;
+    const m = est.mesas.find(x => x.reservada === g.clave);
     return `<div class="qn-arm-grupo">
       <span class="qn-arm-gn">${vjEsc(g.nombre)} <em>${g.n}</em></span>
-      ${unida ? `<span class="qn-arm-gtag">${t('qnUnidas').replace('{n}', qnMesasPara(g.n, cfg.puestos, cfg.puntas))}</span>`
-              : `<button type="button" class="qn-arm-gbtn${propia ? ' on' : ''}" onclick="qnTogglePropia('${vjEsc(g.clave)}')">${t('qnMesaPropia')}</button>`}
+      <button type="button" class="qn-arm-gbtn${m ? ' on' : ''}" onclick="qnTogglePropia('${vjEsc(g.clave)}')">${
+        m ? t('qnEnMesa').replace('{n}', m.n) + (m.fisicas > 1 ? ' · ' + t('qnUnidas').replace('{n}', m.fisicas) : '') : t('qnMesaPropia')}</button>
     </div>`;
   }).join('');
+  const res = est.errores.length ? est.errores.map(vjEsc).join('<br>')
+    : t('qnCapacidad').replace('{v}', est.personas).replace('{p}', est.puestos)
+      + (est.falta ? ' · ' + t(est.falta === 1 ? 'qnFalta1' : 'qnFaltan').replace('{n}', est.falta) : '');
   const hoy = VIAJEROS_DATA && VIAJEROS_DATA.date;
   return `<div class="qn-armado">
     <div class="qn-arm-tit">${t('qnArmar')}</div>
@@ -16494,14 +16681,20 @@ function qnRenderForm(){
     ${paso('mesas', 'qnMesasLbl')}
     ${paso('puestos', 'qnPuestosLbl')}
     ${paso('puntas', 'qnPuntasLbl')}
+    <div class="qn-arm-sub qn-sal-head"><span>${t('qnSalon')}</span>
+      <button type="button" class="qn-sal-rehacer" onclick="qnSalonRehacer()">${t('qnSalonRehacer')}</button></div>
+    <div class="qn-tira qn-tira-arm">${est.mesas.map((m, i) => `
+      <button type="button" class="qn-casilla${m.reservada ? ' is-grupo' : ''}${cfg.sel === i ? ' on' : ''}" style="flex-grow:${m.fisicas}"
+        onclick="qnSalonSel(${i})" aria-label="${vjEsc(t('qnMesa'))} ${m.n}">
+        <span class="qn-casilla-n">${m.n}</span><span class="qn-casilla-c">${m.puestos}</span></button>`).join('')}</div>
+    ${qnSalonEditor(cfg, grupos)}
     <div class="qn-arm-sub">${t('qnGruposLbl')}</div>
     ${listaGrupos || `<div class="qn-arm-ayuda">${t('qnSinGrupos')}</div>`}
-    <div class="qn-arm-res${falta || errSalon ? ' is-mal' : ''}">${errSalon ? vjEsc(errSalon)
-      : t('qnCapacidad').replace('{v}', personas).replace('{p}', puestos) + (falta ? ' · ' + t('qnFaltan').replace('{n}', personas - puestos) : '')}</div>
+    <div class="qn-arm-res${malo ? ' is-mal' : ''}">${res}</div>
     ${A.error ? `<div class="qn-arm-error">${vjEsc(A.error)}</div>` : ''}
     <div class="qn-arm-acc">
       <button type="button" class="cmd-btn" onclick="qnArmadoCerrar()">${t('qnCancelar')}</button>
-      <button type="button" class="cmd-btn primary" onclick="qnProponer()" ${personas && !falta && !errSalon ? '' : 'disabled'}>${t('qnProponer')}</button>
+      <button type="button" class="cmd-btn primary" onclick="qnProponer()" ${est.personas && !malo ? '' : 'disabled'}>${t('qnProponer')}</button>
     </div>
   </div>`;
 }

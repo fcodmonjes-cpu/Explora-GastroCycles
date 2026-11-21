@@ -105,11 +105,12 @@ PESO_VINCULO  = 1.5
 # desplazados y a quien gane claramente con el cambio, nada más. `rehacer
 # --desde-cero` lo ignora.
 ESTABILIDAD   = 3.0
-# Cada mesa en uso: empuja a llenar mesas antes que abrir una nueva.
-CASTIGO_MESA  = 4.0
-# Puestos vacíos al cuadrado en una mesa en uso: dos vacíos repartidos en dos
-# mesas (1+1) pesan menos que dos en la misma (4).
-CASTIGO_VACIO = 0.5
+# Puestos vacíos al cuadrado, también en las mesas vacías: dos vacíos
+# repartidos en dos mesas (1+1) pesan menos que dos en la misma (4), y una mesa
+# entera vacía pesa lo que pesa. Se usan todas las mesas del salón (2026-11-21:
+# antes había un castigo por mesa en uso y el cálculo cerraba una mesa para
+# apretar las demás a tope).
+CASTIGO_VACIO = 1.5   # con 0,5 la afinidad dejaba mesas de 5 junto a mesas de 7
 
 # nac de PGO → idioma de conversación. Lo que no está acá cuenta como inglés,
 # que es la lengua común de la mesa (el 21-09 los suizos y el holandés se
@@ -419,8 +420,11 @@ def repartir(personas, mesas, fecha, semilla=7, intentos=300):
 
     def score_mesa(n, us):
         todos = ancla[n] + us
+        vacios = por_n[n]["puestos"] - sum(u.n for u in todos)
         if not todos:
-            return 0.0
+            # Una mesa vacía también cuenta sus huecos: se usan todas las mesas
+            # del salón y se reparte parejo (2026-11-21, igual que la página).
+            return -CASTIGO_VACIO * vacios ** 2
         # Cada unidad suma la RAÍZ de lo que comparte con su mesa. Rendimiento
         # decreciente a propósito: pasar de nada a un vínculo vale más que pasar
         # de tres a cuatro. Sumando parejo, el cálculo juntaba todos los vínculos
@@ -431,8 +435,7 @@ def repartir(personas, mesas, fecha, semilla=7, intentos=300):
                 for u in todos)
         s += sum(memo(c_sec, secundario, a, b) for a, b in combinations(todos, 2))
         s += ESTABILIDAD * sum(1 for u in us if u.previa == n)
-        vacios = por_n[n]["puestos"] - sum(u.n for u in todos)
-        return s - CASTIGO_MESA - CASTIGO_VACIO * max(vacios, 0) ** 2
+        return s - CASTIGO_VACIO * max(vacios, 0) ** 2
 
     def libre(n, conj):
         return cap[n] - sum(u.n for u in conj)

@@ -536,13 +536,43 @@ vive en la página**, en PGO → Quincho (tercera vista, siempre presente):
 
 | Paso | Quién | Qué pasa |
 |---|---|---|
-| Armar | cualquiera, sin clave (desde 2026-10-12) | noche, mesas, puestos, cabeceras; los grupos que no caben van unidos solos, cualquier familia puede pedir mesa propia → **Proponer** calcula sobre `/viajeros/current` y muestra un **borrador** |
+| Armar | cualquiera, sin clave (desde 2026-10-12) | noche, mesas, puestos, cabeceras; los grupos que no caben van unidos solos, cualquier familia puede pedir mesa propia; el **salón es editable** mesa por mesa (abajo) → **Proponer** calcula sobre `/viajeros/current` y muestra un **borrador** |
 | Ajustar | cualquiera | en el borrador se mueve gente sin escribir nada; **Ajustar salón** vuelve al formulario |
 | Publicar | cualquiera | PUT de `/quincho/current`; desde ahí lo ven todos los teléfonos |
 | Servicio | cualquiera | buscar por hab, apellido, grupo o mesa; mover de mesa con su hab; marcar «no va» |
 | Borrar | cualquiera | **Borrar quincho**: confirmación en pantalla (ofrece bajar el Excel antes); DELETE de `/quincho/current`, la copia local de cada teléfono cae en su próximo fetch. Sin esto, la purga lo borra a los 2 días de la fecha |
 | Recalcular | cualquiera | entra quien llegó, sale quien se fue, lo movido a mano (`mov`) se respeta y el resto se queda salvo ganancia clara; dice qué carteles reimprimir |
 | Papel | cualquiera | **Carteles** (A4 plegable, logo como máscara de color elegible), **Listado** (por habitación + plano por mesa) y **Excel** (.xlsx generado en el navegador, sin dependencias: zip sin compresión + CRC32) |
+
+**El salón, mesa por mesa (desde 2026-11-21).** El caso que lo pidió: un
+grupo de 8 con dos mesas unidas y 61 personas para 10 mesas de 6 (60 puestos).
+Faltaba uno, Proponer se frenaba, y la única salida era subir a 7 los puestos de
+TODAS las mesas: el cálculo cerraba una y apretaba las demás a 7. Dos cambios:
+
+- **El salón del armado es editable.** Debajo de mesas/puestos/cabeceras va la
+  fila del salón; tocar una mesa abre su editor: puestos −/+, unir con la de
+  al lado (← / →), separar, y reservarla para un grupo. El editor tiene siempre
+  los mismos controles (los que no aplican, apagados), así que pasar de una
+  mesa a otra no mueve nada bajo el dedo. Estado: `cfg.layout = [{fisicas,
+  extra, reservada}]`; los puestos de una mesa son `fisicas·base + cabeceras (si
+  van unidas) + extra`, así que cambiar la base no borra lo editado. Sumar o
+  quitar mesas es al final de la fila; **rehacer** vuelve al automático
+  conservando las mesas propias. Una reserva por grupo: reservarle otra mesa le
+  quita la anterior. El salón editado viaja en `salon.layout` y se reusa al
+  rearmar la MISMA noche.
+- **Si faltan puestos, avisa y frena** (decisión del owner: nada de silla extra
+  automática): «falta 1: subí puestos en alguna mesa del salón». También frena
+  si un grupo reservado no cabe en su mesa o si un grupo no cabe en ninguna
+  mesa libre.
+- **Se usan todas las mesas, parejo.** Antes cada mesa en uso costaba `mesa: 4`
+  y una vacía no costaba nada: al sobrar puestos, convenía cerrar una. Ahora
+  no hay castigo por mesa y los huecos al cuadrado cuentan también en la mesa
+  vacía, con peso `vacio: 1,5` (con 0,5 la afinidad dejaba mesas de 5 junto a
+  mesas de 7). Con los datos del 21-11: 6+1 en una mesa → 7-6-6-6-6-6-6-6-6-6;
+  todas a 7 → 6-6-6-6-6-6-6-6-6-7; una familia más sin exploración compartida
+  que el reparto viejo (10 contra 9). Si sobran muchas mesas, se bajan
+  **Mesas en el salón**: las que están, se usan. `quincho.py` lleva el mismo
+  cambio.
 
 **Sin clave desde el 2026-10-12.** Armar, recalcular y borrar pedían el PIN
 de supervisor (una vez por sesión); el owner lo quitó por fricción. La puerta
@@ -575,6 +605,8 @@ objetivo:
    compartió algo, contra 10 del reparto a mano, con las mismas mesas sin vínculo.
 
 El óptimo es estable: mismas mesas con cualquier semilla y de 300 a 3000 intentos.
+(Esa calibración es anterior al reparto parejo del 2026-11-21, ver arriba: el
+castigo por mesa en uso ya no existe y el hueco pesa 1,5.)
 
 **Sin red.** El service worker no cachea Firebase (§2.1), y en el quincho la
 señal se cae: el doc se copia en `localStorage` (`ata.quincho.v1`) y la vista
