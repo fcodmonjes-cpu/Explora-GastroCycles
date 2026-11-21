@@ -16334,7 +16334,8 @@ function qnHabsDe(n){
   qnGente(n).forEach(p => { if (!por.has(p.hab)) por.set(p.hab, []); por.get(p.hab).push(p.nombre); });
   return [...por].sort((a, b) => qnHabCmp(a[0], b[0]));
 }
-// A4 vertical, se dobla al medio; la mitad de arriba va invertida. El logo es
+// Carta vertical (desde 2026-11-21: la impresora del lodge usa carta y el A4
+// salía cortado abajo), se dobla al medio; la mitad de arriba va invertida. El logo es
 // una MÁSCARA: la forma sale del PNG y el color de una variable, para que se
 // imprima del color que se elija sobre papel blanco. Todo el texto se corrige
 // con un clic, y lo que se corrige en una mitad se copia a la otra.
@@ -16361,7 +16362,7 @@ function qnCarteles(){
 <title>Carteles · Quincho ${qnFechaTxt(doc.fecha)}</title>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
 <style>
-@page { size: A4; margin: 0; }
+@page { size: letter; margin: 0; }
 :root{--tinta:#23201C;--suave:#7A7267;--linea:#D8D2C6;--ambar:#B5832B;--papel:#FFFFFF;--logo:#23201C;}
 *{box-sizing:border-box}
 body{margin:0;background:#E9E6E0;color:var(--tinta);font-family:"Source Sans 3",system-ui,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -16371,8 +16372,8 @@ body{margin:0;background:#E9E6E0;color:var(--tinta);font-family:"Source Sans 3",
 .barra .muestra{width:20px;height:20px;border-radius:50%;border:1px solid #fff5;cursor:pointer}
 .barra button{margin-left:auto;background:var(--ambar);color:#fff;border:0;border-radius:4px;padding:7px 16px;font:inherit;font-weight:600;cursor:pointer}
 .barra .pista{opacity:.7;font-size:12.5px}
-.hoja{width:210mm;height:297mm;display:flex;flex-direction:column;margin:12px auto;break-after:page;background:var(--papel);overflow:hidden;box-shadow:0 1px 6px #0002}
-.mitad{flex:1 1 50%;display:flex;align-items:center;justify-content:center;padding:10mm 14mm;min-height:0}
+.hoja{width:215.9mm;height:279.4mm;display:flex;flex-direction:column;margin:12px auto;break-after:page;background:var(--papel);overflow:hidden;box-shadow:0 1px 6px #0002}
+.mitad{flex:1 1 50%;display:flex;align-items:center;justify-content:center;padding:7mm 14mm;min-height:0}
 .invertida{transform:rotate(180deg)}
 .pliegue{height:0;border-top:0.4pt dashed var(--linea)}
 .cara{width:100%;text-align:center}
@@ -16383,8 +16384,8 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:30pt
 .cara.grande h1{font-size:52pt;letter-spacing:.01em}
 .grupo{font-size:14pt;color:var(--suave)}
 .habs{font-size:10.5pt;color:var(--ambar);font-weight:600;margin-top:2.5mm;letter-spacing:.02em}
-.logo{width:15mm;height:15mm;margin:11mm auto 0;background:var(--logo);-webkit-mask:url("${logo}") center/contain no-repeat;mask:url("${logo}") center/contain no-repeat}
-.cara.grande .logo{width:17mm;height:17mm;margin-top:14mm}
+.logo{width:15mm;height:15mm;margin:8mm auto 0;background:var(--logo);-webkit-mask:url("${logo}") center/contain no-repeat;mask:url("${logo}") center/contain no-repeat}
+.cara.grande .logo{width:17mm;height:17mm;margin-top:11mm}
 .lista{display:inline-block;text-align:left}
 .u{display:flex;gap:4mm;padding:1.1mm 0;font-size:11.5pt;line-height:1.25}
 .hab{flex:0 0 17mm;color:var(--ambar);font-weight:700;text-align:right}
@@ -16396,7 +16397,7 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:30pt
 <span class="muestra" style="background:#23201C" data-c="#23201C" title="Tinta"></span>
 <span class="muestra" style="background:#B5832B" data-c="#B5832B" title="Ámbar"></span>
 <span class="muestra" style="background:#7A7267" data-c="#7A7267" title="Gris cálido"></span>
-<span class="pista">Un clic sobre cualquier texto lo corrige. Imprimir: A4, márgenes «Ninguno», con gráficos de fondo.</span>
+<span class="pista">Un clic sobre cualquier texto lo corrige. Imprimir: Carta, márgenes «Ninguno», con gráficos de fondo.</span>
 <button type="button" onclick="window.print()">Imprimir</button></div>
 ${paginas}
 <script>
@@ -16405,7 +16406,14 @@ const pintar=c=>{document.documentElement.style.setProperty('--logo',c);input.va
 input.addEventListener('input',e=>pintar(e.target.value));
 document.querySelectorAll('.muestra').forEach(m=>m.onclick=()=>pintar(m.dataset.c));
 document.querySelectorAll('.cara .cifra,.cara h1,.cara .grupo,.cara .habs,.cara .hab,.cara .nom').forEach(el=>{el.contentEditable='true';el.spellcheck=false;});
-document.addEventListener('input',e=>{const c=e.target.closest('.cara');if(!c)return;const g=[...c.closest('.hoja').querySelectorAll('.cara')].find(x=>x!==c);if(g)g.innerHTML=c.innerHTML;});
+// Mesa muy cargada o título largo: la cara se achica lo justo para caber en su
+// mitad (hasta 70 %), en vez de salir cortada en el papel.
+const ajustar=c=>{const m=c.parentElement,cs=getComputedStyle(m);const disp=m.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  c.style.zoom='';const h=c.getBoundingClientRect().height;if(h>disp)c.style.zoom=String(Math.max(0.7,Math.floor(disp/h*100)/100));};
+const ajustarTodo=()=>document.querySelectorAll('.cara').forEach(ajustar);
+(document.fonts?document.fonts.ready:Promise.resolve()).then(ajustarTodo);
+window.addEventListener('beforeprint',ajustarTodo);
+document.addEventListener('input',e=>{const c=e.target.closest('.cara');if(!c)return;const g=[...c.closest('.hoja').querySelectorAll('.cara')].find(x=>x!==c);if(g)g.innerHTML=c.innerHTML;ajustar(c);if(g)ajustar(g);});
 <\/script></body></html>`);
 }
 // Para quien no usa el Handbook: por habitación (lo que consulta el anfitrión
@@ -16426,7 +16434,7 @@ function qnListado(){
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Listado · Quincho ${qnFechaTxt(doc.fecha)}</title>
 <style>
-@page{size:A4;margin:12mm}
+@page{size:letter;margin:12mm}
 body{font-family:system-ui,sans-serif;color:#23201C;font-size:10.5pt;margin:0 auto;max-width:190mm;padding:10px}
 h1{font-size:16pt;margin:0 0 2mm} .sub{color:#7A7267;font-size:9pt;margin-bottom:5mm}
 h2{font-size:12pt;margin:7mm 0 2mm;border-bottom:1pt solid #23201C;padding-bottom:1mm}

@@ -542,7 +542,7 @@ vive en la página**, en PGO → Quincho (tercera vista, siempre presente):
 | Servicio | cualquiera | buscar por hab, apellido, grupo o mesa; mover de mesa con su hab; marcar «no va» |
 | Borrar | cualquiera | **Borrar quincho**: confirmación en pantalla (ofrece bajar el Excel antes); DELETE de `/quincho/current`, la copia local de cada teléfono cae en su próximo fetch. Sin esto, la purga lo borra a los 2 días de la fecha |
 | Recalcular | cualquiera | entra quien llegó, sale quien se fue, lo movido a mano (`mov`) se respeta y el resto se queda salvo ganancia clara; dice qué carteles reimprimir |
-| Papel | cualquiera | **Carteles** (A4 plegable, logo como máscara de color elegible), **Listado** (por habitación + plano por mesa) y **Excel** (.xlsx generado en el navegador, sin dependencias: zip sin compresión + CRC32) |
+| Papel | cualquiera | **Carteles** (carta plegable desde 2026-11-21 —el A4 salía cortado en la impresora del lodge—, logo como máscara de color elegible), **Listado** (por habitación + plano por mesa) y **Excel** (.xlsx generado en el navegador, sin dependencias: zip sin compresión + CRC32) |
 
 **El salón, mesa por mesa (desde 2026-11-21).** El caso que lo pidió: un
 grupo de 8 con dos mesas unidas y 61 personas para 10 mesas de 6 (60 puestos).
