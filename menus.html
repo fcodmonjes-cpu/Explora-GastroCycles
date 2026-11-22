@@ -139,6 +139,9 @@ main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;padding:14px
 .slot .txt .t{color:var(--tx2);font-style:italic;font-size:13px}
 .slot .txt .o{color:var(--tx3);font-size:12px}
 .slot .txt .ori{color:#c9a27a;font-size:12px}
+.slot .txt .carta{color:#e8c48e;font-size:12px;margin-top:4px;border-left:2px solid var(--oro);padding-left:7px}
+.slot .txt .carta button{margin-left:6px}
+.aviso button+button{margin-left:4px}
 .slot .rojo{color:#f0877c;font-style:normal}
 .ics-ed{display:flex;gap:3px;flex:none}
 .ics-ed button{width:28px;height:28px;padding:0;display:grid;place-items:center;border-radius:6px;background:none;border-color:transparent;color:var(--tx3);opacity:.45}
@@ -234,6 +237,10 @@ dialog .nota{color:var(--tx3);font-size:12px}
   <div class="pie-d" style="border-top:0;padding-top:0"><span class="nota">Cada menú sale dos veces por hoja, carta horizontal, como los originales. En el diálogo del navegador: destino «Guardar como PDF», márgenes «Ninguno», escala 100 %.</span></div>
 </dialog>
 <div id="impresion"></div>
+<!-- El SDK de la app (misma versión que index.html): la sesión del gate y la base en vivo. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 "use strict";
 // Si este aparato nunca pasó el gate de ATA Tools, vuelve a la portada. Es una
@@ -255,7 +262,7 @@ try {
 // línea cruza (0 inferencias). Correcciones: "Orange"→"orange", "menu"→"menú",
 // "Champiñon"→"Champiñón". El desayuno no traía diseño: se pasa al de la carta.
 // ═══════════════════════════════════════════════════════════════════════════════
-const BASE = {"cena":{"1":[[{"es":"Berros, rabanitos, durazno y sésamo","en":"Watercress, radish, peach and sesame"},{"es":"Pichanga de mollejas","en":"Sweetbread pichanga","ic":["lac"]},{"es":"Tomates y uvas ahumadas con chancho en piedra","en":"Smoked tomatoes and grapes with chancho en piedra","ic":["vgn"]},{"es":"Crema de yogurt, pepino y hierbas","en":"Yoghurt, cucumber and herb dip"},{"es":"Tiradito de pescado, habas y cebollín","en":"Fish tiradito with broad beans and spring onion"}],[{"es":"Fideuá de caldillo de congrio","en":"Conger eel caldillo fideuá","ic":["mar","glu"]},{"es":"Asado de tira larga cocción con puré y mix de hojas de mostaza","en":"Slow-cooked short ribs with mash and mustard greens"},{"es":"Pechuga rellena con nuez, hongos y espinacas","en":"Chicken breast stuffed with walnut, mushrooms and spinach","ic":["lac","nue","glu"]},{"es":"Kebap de berenjena","en":"Aubergine kebab","ic":["glu","vgn"]}]],"2":[[{"es":"Endivia, queso de cabra, mostaza y pera","en":"Endive, goat's cheese, mustard and pear","ic":["lac","veg"]},{"es":"Albóndigas a la brasa con salsa de yogurt","en":"Ember-grilled meatballs with yoghurt sauce"},{"es":"Betarragas asadas y cítricos","en":"Roasted beetroot and citrus","ic":["vgn"]},{"es":"Pasta de pimientos asados y maní","en":"Roasted pepper and peanut dip","ic":["nue","glu","veg"]},{"es":"Tartar de camarón o centolla, apio y palta","en":"Shrimp or king crab tartare with celery and avocado","ic":["mar"]}],[{"es":"Pescado al vapor al pil pil, papas a la importancia y espinaca salteada","en":"Steamed fish al pil pil, papas a la importancia and sautéed spinach","ic":["mar","glu"]},{"es":"Entraña a la brasa con espárragos, habas y rúcula","en":"Ember-grilled skirt steak with asparagus, broad beans and rocket","ic":["glu"]},{"es":"Magret de pato con coliflor y cebollitas","en":"Duck magret with cauliflower and baby onions","ic":["glu"]},{"es":"Mil hojas de zapallito italiano con pepitas","en":"Zucchini mille-feuille with pumpkin seeds","ic":["vgn"]}]],"3":[[{"es":"Rúcula a la brasa, espinaca, manzana encurtida y nori","en":"Ember-grilled rocket, spinach, pickled apple and nori"},{"es":"Tartar de filete con mayonesa de ají ahumado","en":"Beef fillet tartare with smoked chilli mayonnaise","ic":["nue","glu"]},{"es":"Pepinos rotos con aceite de merkén","en":"Smashed cucumbers with merkén oil","ic":["nue","vgn"]},{"es":"Hummus de garbanzos","en":"Chickpea hummus"},{"es":"Escabeche de pescado, verduras escabechadas y quinoa frita","en":"Fish escabeche with pickled vegetables and fried quinoa","ic":["mar"]}],[{"es":"Pesca a la plancha, ensalada de hierbas y kale","en":"Griddled catch of the day, herb salad and kale","ic":["mar"]},{"es":"Mini paella de mollejas, albóndigas y pimientos","en":"Mini paella with sweetbreads, meatballs and peppers"},{"es":"Matambrito adobado con ñoquis a la mostaza","en":"Marinated pork flank with gnocchi in mustard sauce","ic":["glu"]},{"es":"Coliflor reventada con tomates tatemados","en":"Charred cauliflower with fire-roasted tomatoes","ic":["vgn"]}]],"4":[[{"es":"Kale asada, parmesano, pistacho y uva","en":"Roasted kale, parmesan, pistachio and grape","ic":["lac","nue","glu"]},{"es":"Tataki de vacuno a la brasa con betarragas","en":"Ember-seared beef tataki with beetroot"},{"es":"Hongos salteados con chañar","en":"Sautéed mushrooms with chañar","ic":["vgn"]},{"es":"Berenjenas asadas con gremolata","en":"Fire-roasted aubergine with gremolata","ic":["nue","vgn"]},{"es":"Ceviche de pescado, cacho de cabra, cebollita perla y maní","en":"Fish ceviche with cacho de cabra, pearl onion and peanut","ic":["nue"]}],[{"es":"Trucha al vapor, salsa de alcachofas y alcachofas asadas","en":"Steamed trout, artichoke sauce and roasted artichokes","ic":["mar","lac"]},{"es":"Flat Iron a la brasa con papas atomatadas y ensalada de tomates","en":"Ember-grilled Flat Iron with tomato potatoes and tomato salad","ic":["lac"]},{"es":"Pasta larga con choritos, mollejas y pepitas de zapallo","en":"Long pasta with mussels, sweetbreads and pumpkin seeds","ic":["mar","glu"]},{"es":"Zapallo al horno con mole amarillito","en":"Roasted squash with mole amarillito","ic":["vgn"]}]]},"postresCena":{"1":[[{"es":"Naranja, azafrán y quinoa","en":"Orange, saffron and quinoa","ic":["lac"]},{"es":"Coulant de chocolate con helado de chocolate","en":"Chocolate fondant with chocolate ice cream","ic":["lac","glu","veg"]},{"es":"Higos a la brasa, ricota, miel de ulmo y tomillo","en":"Ember-grilled figs, ricotta, ulmo honey and thyme","ic":["lac"]}]],"2":[[{"es":"Mil hojas de manzana con vainilla","en":"Apple mille-feuille with vanilla","ic":["lac","nue","glu","veg"]},{"es":"Banana con sésamo y rica-rica","en":"Banana with sesame and rica-rica","ic":["lac","veg"]},{"es":"Sandía macerada en agua de rosas y granita","en":"Watermelon steeped in rosewater with granita","ic":["lac","glu","veg"]}]],"3":[[{"es":"Frutilla, yogurt y balsámico","en":"Strawberry, yoghurt and balsamic","ic":["lac","veg"]},{"es":"Texturas de almendra","en":"Textures of almond","ic":["nue"]},{"es":"Tostada francesa de cabra","en":"Goat's milk french toast","ic":["lac","glu","veg"]}]],"4":[[{"es":"Torta helada de frutos rojos y cachiyuyo","en":"Red berry and cachiyuyo iced cake"},{"es":"Mont Blanc de nuez y vinagre balsámico","en":"Walnut and balsamic Mont Blanc","ic":["nue","veg"]},{"es":"Mango asado y arroz con leche de coco","en":"Grilled mango and coconut rice pudding","ic":["veg"]}]]},"almuerzo":{"1":[[{"es":"Sahofan con hongos y entraña","en":"Sahofan with mushrooms and skirt steak","ic":["lac"]},{"es":"Curry rojo de pescado con quinoa al vapor","en":"Red fish curry with steamed quinoa","ic":["mar"]},{"es":"Milanesa de cerdo con salsa de chañar y quinoa","en":"Pork milanesa with chañar sauce and quinoa","ic":["mar","glu"]},{"es":"Coliflor frita en salsa de sésamo y cacho de cabra","en":"Fried cauliflower in sesame and cacho de cabra sauce","ic":["vgn"]}]],"2":[[{"es":"Flat Iron a la brasa con papas al ajillo","en":"Ember-grilled Flat Iron with garlic potatoes"},{"es":"Pescado al vapor, habas y rúcula a la brasa, salsa de habas","en":"Steamed fish, broad beans and ember-grilled arugula, broad bean sauce"},{"es":"Cerdo salteado con pimientos, cebolla y hierbas aromáticas","en":"Sautéed pork with peppers, onion and fresh herbs"},{"es":"Ñoquis de papa y brócoli con hierbas aromáticas","en":"Potato and broccoli gnocchi with fresh herbs","ic":["glu","vgn"]}]],"3":[[{"es":"Plateada de cocción larga con puré de pallares y pebre","en":"Slow-cooked plateada with pallares purée and pebre","ic":["lac"]},{"es":"Pescado al pil pil con papas a la importancia","en":"Fish al pil pil with papas a la importancia","ic":["glu"]},{"es":"Pasta con pollo, mantequilla y queso de cabra","en":"Pasta with chicken, butter and goat cheese","ic":["lac","glu"]},{"es":"Sahofan con berenjena, miso y cebollita encurtida","en":"Sahofan with eggplant, miso and pickled pearl onions","ic":["veg"]}]],"4":[[{"es":"Tomaticán de filete con tomates asados y choclo salteado","en":"Beef tomaticán with roasted tomatoes and sautéed corn"},{"es":"Pasta con crustáceos al limón","en":"Pasta with shellfish and lemon","ic":["mar","lac","glu"]},{"es":"Pollo escabechado con repollo y zanahoria","en":"Escabeche chicken with cabbage and carrot","ic":["lac","nue","glu"]},{"es":"Arroz salteado de hongos","en":"Stir-fried mushroom rice","ic":["vgn"]}]]},"postres":{"1":[[{"es":"Leche con plátano, pimienta molle y rosa del año","en":"Milk with banana, molle pepper and rosa del año","ic":["lac","veg"]},{"es":"Mote con huesillo","en":"Mote con huesillo","ic":["glu","vgn"]},{"es":"Peras al vino blanco, nueces y yogurt","en":"Pears in white wine, walnuts and yoghurt","ic":["lac","nue","veg"]},{"es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"es":"Fruta de la estación","en":"Seasonal fruit"}]],"2":[[{"es":"Duraznos a la brasa con leche de cabra","en":"Ember-grilled peaches with goat milk","ic":["lac","nue","veg"]},{"es":"Almendrado","en":"Almendrado","ic":["lac","nue"]},{"es":"Membrillos asados con sésamo","en":"Roasted quince with sesame","ic":["lac","veg"]},{"es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"es":"Fruta de la estación","en":"Seasonal fruit"}]],"3":[[{"es":"Peras al vino tinto con pistacho","en":"Pears in red wine with pistachio","ic":["nue","veg"]},{"es":"Coulant de chocolate con helado de chocolate","en":"Chocolate coulant with chocolate ice cream","ic":["lac","nue","glu","veg"]},{"es":"Piña asada, jengibre y mote suflado","en":"Roasted pineapple, ginger and puffed mote","ic":["lac","glu","veg"]},{"es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"es":"Fruta de la estación","en":"Seasonal fruit"}]],"4":[[{"es":"Mil hojas de manzana con vainilla","en":"Apple mille-feuille with vanilla","ic":["lac","nue","glu","veg"]},{"es":"Arroz con leche, pera asada y canela","en":"Rice pudding, roasted pear and cinnamon","ic":["lac","veg"]},{"es":"Pomelo, miel y quinoa","en":"Grapefruit, honey and quinoa","ic":["lac","veg"]},{"es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"es":"Fruta de la estación","en":"Seasonal fruit"}]]},"bar":{"1":[[{"es":"Hamburguesa de la casa con queso cheddar, tocino, tomate, lechuga y\npepinillos, con salsa especial y papas fritas","en":"House burger with cheddar cheese, bacon, tomato, lettuce, pickles, special\nsauce and french fries","ic":["lac","glu"]},{"es":"Sándwich de milanesa de cerdo, repollo, chucrut y salsa de chañar","en":"Pork milanese sandwich with roasted cabbage, sauerkraut and chañar sauce","ic":["glu"]},{"es":"Pizza estilo napolitana; de pepperoni o margarita","en":"Individual Neapolitan-style pizza, available as pepperoni or margherita","ic":["lac","glu","veg"]},{"es":"Planchadito relleno de jamón, queso y mostaza, cebolla encurtida","en":"Grilled ham and cheese sandwich with whole-grain mustard and pickled onion","ic":["lac","glu"]},{"es":"Ensalada César; con pechuga de pollo ahumada o milanesa de cerdo","en":"Caesar salad; optional smoked chicken breast or pork milanese","ic":["lac","nue","glu"]},{"es":"Poke bowl de arroz y quinoa, verduras encurtidas, palta, choclo, salsa de soya\ndulce; con pescado, milanesa de cerdo o pollo ahumado","en":"Rice and quinoa poke bowl with pickled vegetables, avocado, corn and sweet\nsoy sauce; with fish, pork milanese or smoked chicken","ic":["glu"]},{"es":"Coliflor frita, en salsa de sésamo y cacho de cabra, con pomelo y cebollín","en":"Fried cauliflower in sesame and goat pepper sauce, grapefruit and spring onion","ic":["vgn"]},{"es":"Tabla de quesos y embutidos para compartir","en":"Cheese and charcuterie board for sharing","ic":["lac"]},{"es":"Torta helada de frutos rojos, sorbete de frambuesa, merengue y crema\nchiboust de vainilla","en":"Berry ice cream cake, raspberry sorbet, meringue and vanilla chiboust cream","ic":["lac","veg"]}]]},"tragos":{"1":[[{"es":"SOUR ALTIPLANO","en":"Premium pisco, ayrampo, lime juice, simple syrup, egg white."},{"es":"RICA RICA SOUR","en":"Premium pisco, lime juice, simple syrup, rica rica, egg white."},{"es":"JARDÍN DE LOS AVIADORES","en":"Premium dry gin, St. Germain, lime juice, simple syrup."},{"es":"DE LA HUERTA","en":"Premium dry gin, lemon juice, cucumber, green leaves, simple syrup, tonic water."},{"es":"PASSION SUNSET","en":"Premium tequila, passionfruit juice, lemon juice, simple syrup."},{"es":"LIMONADA DEL DESIERTO","en":"Bourbon whisky, lemon juice, mint leaves, lemon soda."}],[{"es":"NEGRONI","en":"Premium dry gin, vermouth rosso, Campari."},{"es":"MARGARITA","en":"Premium tequila, Cointreau, lime juice."},{"es":"MARTINI DRY","en":"Premium vodka or gin, dry vermouth, olives."},{"es":"CYNAR JULEP","en":"Cynar, grapefruit juice, simple syrup, mint leaves."},{"es":"PISTONIC","en":"Premium pisco, tonic water, lemon peel."},{"es":"PALOMA","en":"Premium tequila, pink grapefruit juice, lemon juice, soda."},{"es":"MAI TAI","en":"White rum, dark rum, Cointreau, lemon juice, homemade orgeat syrup."}],[{"es":"ST. GERMAIN SPRITZ","en":"St. Germain, sparkling wine, soda."},{"es":"APEROL SPRITZ","en":"Aperol, sparkling wine, soda."},{"es":"MOSCOW MULE","en":"Premium vodka, lime juice, ginger beer."}],[{"es":"COCO EN EL TOCO","en":"Coconut water, lime juice, simple syrup."},{"es":"SUMMER MULE","en":"Passionfruit juice, lemon juice, simple syrup, ginger beer."},{"es":"ROSA DEL DESIERTO","en":"Grapefruit juice, lemon juice, rose syrup, tonic water."}]]},"vinos":{"1":[[{"es":"Azur. Traditional Method","en":"Sparkling Wine"},{"es":"Talinay. Tabalí","en":"Sauvignon Blanc"},{"es":"Casa Marín. Miramar Vineyard","en":"Riesling"},{"es":"Aquitania. SOLdeSOL","en":"Chardonnay"},{"es":"Clos de Luz. Azuda","en":"Syrah"},{"es":"Pérez Cruz. Limited Edition","en":"Carmenere"},{"es":"Garage Wine Co. Old Vine Pale","en":"Cariñena Rosé"},{"es":"Glup. Longaví","en":"Cinsault"},{"es":"Ciénaga de Name. Vinos de Parcela","en":"Carignan"},{"es":"Pura Fe. Antiyal","en":"Cabernet Sauvignon"},{"es":"Erasmo. Caliboro Late Harvest","en":"Torontel"}]]},"vinosPremium":{"1":[[{"es":"Errázuriz Las Pizarras Chardonnay 2021","en":"D.O. Aconcagua Costa – Chardonnay","precio":"USD120"}],[{"es":"Pierre Péters Cuvée de Réserve","en":"Champagne Grand Cru – Chardonnay","precio":"USD150"}],[{"es":"Seña 2022","en":"D.O. Valle de Aconcagua – Assemblage","precio":"USD250"},{"es":"Almaviva 2022","en":"D.O. Puente Alto – Assemblage","precio":"USD400"},{"es":"Don Melchor 2020","en":"D.O. Puente Alto, Alto Maipo – Cabernet Sauvignon","precio":"USD400"},{"es":"Rukumilla","en":"D.O. Valle del Maipo, Isla de Maipo – Assemblage","precio":"USD100"}]]},"desayuno":{"1":[[{"es":"BEBIDAS CALIENTES","en":"HOT BEVERAGES","des_es":"Espresso. Cappuccino. Latte. Americano. Té. Chocolate.","des_en":""},{"es":"LECHE","en":"MILK","des_es":"Soya. Sin lactosa. Entera. Descremada. Almendras.","des_en":"Soy. Lactose-free. Whole. Skim. Almond."},{"es":"PANQUEQUES CLÁSICOS","en":"PANCAKES","des_es":"Miel de maple. Miel de abeja. Manjar. Chocolate. Nutella.","des_en":"Maple syrup. Honey. Dulce de leche. Chocolate. Nutella."},{"es":"QUINOA TIBIA","en":"WARM QUINOA PORRIDGE","des_es":"Manzana. Jugo de naranja.","des_en":"Apple. Orange juice."},{"es":"HUEVOS","en":"EGGS","des_es":"Duros. A la copa. Fritos. Revueltos. Pochados.","des_en":"Hard-boiled. Soft-boiled. Sunny side-up. Scrambled. Poached."},{"es":"OMELETTE","en":"WHITE OMELETTE","des_es":"Queso. Jamón. Tocino. Champiñón. Tomate. Cebolla.","des_en":"Cheese. Ham. Bacon. Mushroom. Tomato. Onion."},{"es":"TOSTADAS FRANCESAS","en":"FRENCH TOAST","des_es":"Miel de maple. Miel de abeja. Manjar. Chocolate. Nutella.","des_en":"Maple syrup. Honey. Dulce de leche. Chocolate. Nutella."},{"es":"TOSTADA CON QUESO CREMA Y TRUCHA","en":"TROUT AND CREAM CHEESE OPEN TOAST","des_es":"Tostada integral. Queso crema. Palta. Trucha ahumada.","des_en":"Whole wheat bread. Cream cheese. Avocado. Smoked salmon trout."}]]},"masajes":{"1":[[{"es":"Masaje Relajante","en":"Relaxing Massage","tarifas":"50 $120 · 90 $200","des_es":"Masaje suave y calmante que alivia la tensión muscular y reduce el estrés, proporcionando una sensación de bienestar y relajación total.","des_en":"A gentle and soothing massage that relieves muscle tension and reduces stress, providing a sense of well-being and total relaxation."},{"es":"Masaje Tejido Profundo","en":"Deep Tissue Massage","tarifas":"50 $130 · 90 $220","des_es":"Masaje terapéutico que trabaja las capas profundas de los músculos y el tejido conectivo, ideal para aliviar dolores y tensiones crónicas.","des_en":"A therapeutic massage that works on the deep layers of muscles and connective tissue, ideal for relieving chronic pains and tensions."},{"es":"Masaje de Piedras Calientes","en":"Hot Stone Massage","tarifas":"50 $150 · 90 $230","des_es":"Tratamiento que utiliza piedras volcánicas calientes para masajear y relajar los músculos en profundidad. Este masaje alivia la tensión, mejora la circulación y proporciona una sensación de bienestar profundo.","des_en":"Treatment that uses hot volcanic stones to massage and relax muscles deeply. This massage relieves tension, improves circulation, and provides a deep sense of well-being."},{"es":"Drenaje linfático","en":"Lymphatic Drainage","tarifas":"50 $120 · 90 $200","des_es":"Masaje suave y rítmico que estimula el sistema linfático para ayudar a eliminar toxinas y reducir la retención de líquidos, promoviendo una mejor circulación y una sensación de ligereza y bienestar.","des_en":"A gentle and rhythmic massage that stimulates the lymphatic system to help eliminate toxins and reduce fluid retention, promoting better circulation and a feeling of lightness and well-being."},{"es":"Revitalizante de piernas","en":"Leg Revitalization","tarifas":"50 $120 · 90 $200","des_es":"Ideal después de un día de trekking intenso. Este masaje, enfocado exclusivamente en las piernas, ayuda a aliviar la fatiga muscular, reducir la sensación de pesadez y favorecer una recuperación más rápida.","des_en":"Ideal after an intense day of trekking. This leg-focused massage helps relieve muscle fatigue, reduce feelings of heaviness, and promote faster recovery."}]]}};
+const BASE = {"cena":{"1":[[{"id":"mc1-ensalada","es":"Berros, rabanitos, durazno y sésamo","en":"Watercress, radish, peach and sesame"},{"id":"mc1-carne","es":"Pichanga de mollejas","en":"Sweetbread pichanga","ic":["lac"]},{"id":"mc1-vegano","es":"Tomates y uvas ahumadas con chancho en piedra","en":"Smoked tomatoes and grapes with chancho en piedra","ic":["vgn"]},{"id":"mc1-dip","es":"Crema de yogurt, pepino y hierbas","en":"Yoghurt, cucumber and herb dip"},{"id":"mc1-mar","es":"Tiradito de pescado, habas y cebollín","en":"Fish tiradito with broad beans and spring onion"}],[{"id":"prc1-mar","es":"Fideuá de caldillo de congrio","en":"Conger eel caldillo fideuá","ic":["mar","glu"]},{"id":"prc1-res","es":"Asado de tira larga cocción con puré y mix de hojas de mostaza","en":"Slow-cooked short ribs with mash and mustard greens"},{"id":"prc1-avecerdo","es":"Pechuga rellena con nuez, hongos y espinacas","en":"Chicken breast stuffed with walnut, mushrooms and spinach","ic":["lac","nue","glu"]},{"id":"prc1-vegana","es":"Kebap de berenjena","en":"Aubergine kebab","ic":["glu","vgn"]}]],"2":[[{"id":"mc2-ensalada","es":"Endivia, queso de cabra, mostaza y pera","en":"Endive, goat's cheese, mustard and pear","ic":["lac","veg"]},{"id":"mc2-carne","es":"Albóndigas a la brasa con salsa de yogurt","en":"Ember-grilled meatballs with yoghurt sauce"},{"id":"mc2-vegano","es":"Betarragas asadas y cítricos","en":"Roasted beetroot and citrus","ic":["vgn"]},{"id":"mc2-dip","es":"Pasta de pimientos asados y maní","en":"Roasted pepper and peanut dip","ic":["nue","glu","veg"]},{"id":"mc2-mar","es":"Tartar de camarón o centolla, apio y palta","en":"Shrimp or king crab tartare with celery and avocado","ic":["mar"]}],[{"id":"prc2-mar","es":"Pescado al vapor al pil pil, papas a la importancia y espinaca salteada","en":"Steamed fish al pil pil, papas a la importancia and sautéed spinach","ic":["mar","glu"]},{"id":"prc2-res","es":"Entraña a la brasa con espárragos, habas y rúcula","en":"Ember-grilled skirt steak with asparagus, broad beans and rocket","ic":["glu"]},{"id":"prc2-avecerdo","es":"Magret de pato con coliflor y cebollitas","en":"Duck magret with cauliflower and baby onions","ic":["glu"]},{"id":"prc2-vegana","es":"Mil hojas de zapallito italiano con pepitas","en":"Zucchini mille-feuille with pumpkin seeds","ic":["vgn"]}]],"3":[[{"id":"mc3-ensalada","es":"Rúcula a la brasa, espinaca, manzana encurtida y nori","en":"Ember-grilled rocket, spinach, pickled apple and nori"},{"id":"mc3-carne","es":"Tartar de filete con mayonesa de ají ahumado","en":"Beef fillet tartare with smoked chilli mayonnaise","ic":["nue","glu"]},{"id":"mc3-vegano","es":"Pepinos rotos con aceite de merkén","en":"Smashed cucumbers with merkén oil","ic":["nue","vgn"]},{"id":"mc3-dip","es":"Hummus de garbanzos","en":"Chickpea hummus"},{"id":"mc3-mar","es":"Escabeche de pescado, verduras escabechadas y quinoa frita","en":"Fish escabeche with pickled vegetables and fried quinoa","ic":["mar"]}],[{"id":"prc3-mar","es":"Pesca a la plancha, ensalada de hierbas y kale","en":"Griddled catch of the day, herb salad and kale","ic":["mar"]},{"id":"prc3-res","es":"Mini paella de mollejas, albóndigas y pimientos","en":"Mini paella with sweetbreads, meatballs and peppers"},{"id":"prc3-avecerdo","es":"Matambrito adobado con ñoquis a la mostaza","en":"Marinated pork flank with gnocchi in mustard sauce","ic":["glu"]},{"id":"prc3-vegana","es":"Coliflor reventada con tomates tatemados","en":"Charred cauliflower with fire-roasted tomatoes","ic":["vgn"]}]],"4":[[{"id":"mc4-ensalada","es":"Kale asada, parmesano, pistacho y uva","en":"Roasted kale, parmesan, pistachio and grape","ic":["lac","nue","glu"]},{"id":"mc4-carne","es":"Tataki de vacuno a la brasa con betarragas","en":"Ember-seared beef tataki with beetroot"},{"id":"mc4-vegano","es":"Hongos salteados con chañar","en":"Sautéed mushrooms with chañar","ic":["vgn"]},{"id":"mc4-dip","es":"Berenjenas asadas con gremolata","en":"Fire-roasted aubergine with gremolata","ic":["nue","vgn"]},{"id":"mc4-mar","es":"Ceviche de pescado, cacho de cabra, cebollita perla y maní","en":"Fish ceviche with cacho de cabra, pearl onion and peanut","ic":["nue"]}],[{"id":"prc4-mar","es":"Trucha al vapor, salsa de alcachofas y alcachofas asadas","en":"Steamed trout, artichoke sauce and roasted artichokes","ic":["mar","lac"]},{"id":"prc4-res","es":"Flat Iron a la brasa con papas atomatadas y ensalada de tomates","en":"Ember-grilled Flat Iron with tomato potatoes and tomato salad","ic":["lac"]},{"id":"prc4-avecerdo","es":"Pasta larga con choritos, mollejas y pepitas de zapallo","en":"Long pasta with mussels, sweetbreads and pumpkin seeds","ic":["mar","glu"]},{"id":"prc4-vegana","es":"Zapallo al horno con mole amarillito","en":"Roasted squash with mole amarillito","ic":["vgn"]}]]},"postresCena":{"1":[[{"id":"poc1-fruta","es":"Naranja, azafrán y quinoa","en":"Orange, saffron and quinoa","ic":["lac"]},{"id":"poc1-granos","es":"Coulant de chocolate con helado de chocolate","en":"Chocolate fondant with chocolate ice cream","ic":["lac","glu","veg"]},{"id":"poc1-sinazucar","es":"Higos a la brasa, ricota, miel de ulmo y tomillo","en":"Ember-grilled figs, ricotta, ulmo honey and thyme","ic":["lac"]}]],"2":[[{"id":"poc2-fruta","es":"Mil hojas de manzana con vainilla","en":"Apple mille-feuille with vanilla","ic":["lac","nue","glu","veg"]},{"id":"poc2-granos","es":"Banana con sésamo y rica-rica","en":"Banana with sesame and rica-rica","ic":["lac","veg"]},{"id":"poc2-sinazucar","es":"Sandía macerada en agua de rosas y granita","en":"Watermelon steeped in rosewater with granita","ic":["lac","glu","veg"]}]],"3":[[{"id":"poc3-fruta","es":"Frutilla, yogurt y balsámico","en":"Strawberry, yoghurt and balsamic","ic":["lac","veg"]},{"id":"poc3-granos","es":"Texturas de almendra","en":"Textures of almond","ic":["nue"]},{"id":"poc3-sinazucar","es":"Tostada francesa de cabra","en":"Goat's milk french toast","ic":["lac","glu","veg"]}]],"4":[[{"id":"poc4-fruta","es":"Torta helada de frutos rojos y cachiyuyo","en":"Red berry and cachiyuyo iced cake"},{"id":"poc4-granos","es":"Mont Blanc de nuez y vinagre balsámico","en":"Walnut and balsamic Mont Blanc","ic":["nue","veg"]},{"id":"poc4-sinazucar","es":"Mango asado y arroz con leche de coco","en":"Grilled mango and coconut rice pudding","ic":["veg"]}]]},"almuerzo":{"1":[[{"id":"pr1-res","es":"Sahofan con hongos y entraña","en":"Sahofan with mushrooms and skirt steak","ic":["lac"]},{"id":"pr1-mar","es":"Curry rojo de pescado con quinoa al vapor","en":"Red fish curry with steamed quinoa","ic":["mar"]},{"id":"pr1-avecerdo","es":"Milanesa de cerdo con salsa de chañar y quinoa","en":"Pork milanesa with chañar sauce and quinoa","ic":["mar","glu"]},{"id":"pr1-vegana","es":"Coliflor frita en salsa de sésamo y cacho de cabra","en":"Fried cauliflower in sesame and cacho de cabra sauce","ic":["vgn"]}]],"2":[[{"id":"pr2-res","es":"Flat Iron a la brasa con papas al ajillo","en":"Ember-grilled Flat Iron with garlic potatoes"},{"id":"pr2-mar","es":"Pescado al vapor, habas y rúcula a la brasa, salsa de habas","en":"Steamed fish, broad beans and ember-grilled arugula, broad bean sauce"},{"id":"pr2-avecerdo","es":"Cerdo salteado con pimientos, cebolla y hierbas aromáticas","en":"Sautéed pork with peppers, onion and fresh herbs"},{"id":"pr2-vegana","es":"Ñoquis de papa y brócoli con hierbas aromáticas","en":"Potato and broccoli gnocchi with fresh herbs","ic":["glu","vgn"]}]],"3":[[{"id":"pr3-res","es":"Plateada de cocción larga con puré de pallares y pebre","en":"Slow-cooked plateada with pallares purée and pebre","ic":["lac"]},{"id":"pr3-mar","es":"Pescado al pil pil con papas a la importancia","en":"Fish al pil pil with papas a la importancia","ic":["glu"]},{"id":"pr3-avecerdo","es":"Pasta con pollo, mantequilla y queso de cabra","en":"Pasta with chicken, butter and goat cheese","ic":["lac","glu"]},{"id":"pr3-vegana","es":"Sahofan con berenjena, miso y cebollita encurtida","en":"Sahofan with eggplant, miso and pickled pearl onions","ic":["veg"]}]],"4":[[{"id":"pr4-res","es":"Tomaticán de filete con tomates asados y choclo salteado","en":"Beef tomaticán with roasted tomatoes and sautéed corn"},{"id":"pr4-mar","es":"Pasta con crustáceos al limón","en":"Pasta with shellfish and lemon","ic":["mar","lac","glu"]},{"id":"pr4-avecerdo","es":"Pollo escabechado con repollo y zanahoria","en":"Escabeche chicken with cabbage and carrot","ic":["lac","nue","glu"]},{"id":"pr4-vegana","es":"Arroz salteado de hongos","en":"Stir-fried mushroom rice","ic":["vgn"]}]]},"postres":{"1":[[{"id":"po1-fruta","es":"Leche con plátano, pimienta molle y rosa del año","en":"Milk with banana, molle pepper and rosa del año","ic":["lac","veg"]},{"id":"po1-granos","es":"Mote con huesillo","en":"Mote con huesillo","ic":["glu","vgn"]},{"id":"po1-sinazucar","es":"Peras al vino blanco, nueces y yogurt","en":"Pears in white wine, walnuts and yoghurt","ic":["lac","nue","veg"]},{"id":"x-helado","es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"id":"x-fruta","es":"Fruta de la estación","en":"Seasonal fruit"}]],"2":[[{"id":"po2-fruta","es":"Duraznos a la brasa con leche de cabra","en":"Ember-grilled peaches with goat milk","ic":["lac","nue","veg"]},{"id":"po2-granos","es":"Almendrado","en":"Almendrado","ic":["lac","nue"]},{"id":"po2-sinazucar","es":"Membrillos asados con sésamo","en":"Roasted quince with sesame","ic":["lac","veg"]},{"id":"x-helado","es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"id":"x-fruta","es":"Fruta de la estación","en":"Seasonal fruit"}]],"3":[[{"id":"po3-fruta","es":"Peras al vino tinto con pistacho","en":"Pears in red wine with pistachio","ic":["nue","veg"]},{"id":"po3-granos","es":"Coulant de chocolate con helado de chocolate","en":"Chocolate coulant with chocolate ice cream","ic":["lac","nue","glu","veg"]},{"id":"po3-sinazucar","es":"Piña asada, jengibre y mote suflado","en":"Roasted pineapple, ginger and puffed mote","ic":["lac","glu","veg"]},{"id":"x-helado","es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"id":"x-fruta","es":"Fruta de la estación","en":"Seasonal fruit"}]],"4":[[{"id":"po4-fruta","es":"Mil hojas de manzana con vainilla","en":"Apple mille-feuille with vanilla","ic":["lac","nue","glu","veg"]},{"id":"po4-granos","es":"Arroz con leche, pera asada y canela","en":"Rice pudding, roasted pear and cinnamon","ic":["lac","veg"]},{"id":"po4-sinazucar","es":"Pomelo, miel y quinoa","en":"Grapefruit, honey and quinoa","ic":["lac","veg"]},{"id":"x-helado","es":"Helado del día","en":"Ice cream of the day","ic":["lac"]},{"id":"x-fruta","es":"Fruta de la estación","en":"Seasonal fruit"}]]},"bar":{"1":[[{"es":"Hamburguesa de la casa con queso cheddar, tocino, tomate, lechuga y\npepinillos, con salsa especial y papas fritas","en":"House burger with cheddar cheese, bacon, tomato, lettuce, pickles, special\nsauce and french fries","ic":["lac","glu"]},{"es":"Sándwich de milanesa de cerdo, repollo, chucrut y salsa de chañar","en":"Pork milanese sandwich with roasted cabbage, sauerkraut and chañar sauce","ic":["glu"]},{"es":"Pizza estilo napolitana; de pepperoni o margarita","en":"Individual Neapolitan-style pizza, available as pepperoni or margherita","ic":["lac","glu","veg"]},{"es":"Planchadito relleno de jamón, queso y mostaza, cebolla encurtida","en":"Grilled ham and cheese sandwich with whole-grain mustard and pickled onion","ic":["lac","glu"]},{"es":"Ensalada César; con pechuga de pollo ahumada o milanesa de cerdo","en":"Caesar salad; optional smoked chicken breast or pork milanese","ic":["lac","nue","glu"]},{"es":"Poke bowl de arroz y quinoa, verduras encurtidas, palta, choclo, salsa de soya\ndulce; con pescado, milanesa de cerdo o pollo ahumado","en":"Rice and quinoa poke bowl with pickled vegetables, avocado, corn and sweet\nsoy sauce; with fish, pork milanese or smoked chicken","ic":["glu"]},{"es":"Coliflor frita, en salsa de sésamo y cacho de cabra, con pomelo y cebollín","en":"Fried cauliflower in sesame and goat pepper sauce, grapefruit and spring onion","ic":["vgn"]},{"es":"Tabla de quesos y embutidos para compartir","en":"Cheese and charcuterie board for sharing","ic":["lac"]},{"es":"Torta helada de frutos rojos, sorbete de frambuesa, merengue y crema\nchiboust de vainilla","en":"Berry ice cream cake, raspberry sorbet, meringue and vanilla chiboust cream","ic":["lac","veg"]}]]},"tragos":{"1":[[{"es":"SOUR ALTIPLANO","en":"Premium pisco, ayrampo, lime juice, simple syrup, egg white."},{"es":"RICA RICA SOUR","en":"Premium pisco, lime juice, simple syrup, rica rica, egg white."},{"es":"JARDÍN DE LOS AVIADORES","en":"Premium dry gin, St. Germain, lime juice, simple syrup."},{"es":"DE LA HUERTA","en":"Premium dry gin, lemon juice, cucumber, green leaves, simple syrup, tonic water."},{"es":"PASSION SUNSET","en":"Premium tequila, passionfruit juice, lemon juice, simple syrup."},{"es":"LIMONADA DEL DESIERTO","en":"Bourbon whisky, lemon juice, mint leaves, lemon soda."}],[{"es":"NEGRONI","en":"Premium dry gin, vermouth rosso, Campari."},{"es":"MARGARITA","en":"Premium tequila, Cointreau, lime juice."},{"es":"MARTINI DRY","en":"Premium vodka or gin, dry vermouth, olives."},{"es":"CYNAR JULEP","en":"Cynar, grapefruit juice, simple syrup, mint leaves."},{"es":"PISTONIC","en":"Premium pisco, tonic water, lemon peel."},{"es":"PALOMA","en":"Premium tequila, pink grapefruit juice, lemon juice, soda."},{"es":"MAI TAI","en":"White rum, dark rum, Cointreau, lemon juice, homemade orgeat syrup."}],[{"es":"ST. GERMAIN SPRITZ","en":"St. Germain, sparkling wine, soda."},{"es":"APEROL SPRITZ","en":"Aperol, sparkling wine, soda."},{"es":"MOSCOW MULE","en":"Premium vodka, lime juice, ginger beer."}],[{"es":"COCO EN EL TOCO","en":"Coconut water, lime juice, simple syrup."},{"es":"SUMMER MULE","en":"Passionfruit juice, lemon juice, simple syrup, ginger beer."},{"es":"ROSA DEL DESIERTO","en":"Grapefruit juice, lemon juice, rose syrup, tonic water."}]]},"vinos":{"1":[[{"es":"Azur. Traditional Method","en":"Sparkling Wine"},{"es":"Talinay. Tabalí","en":"Sauvignon Blanc"},{"es":"Casa Marín. Miramar Vineyard","en":"Riesling"},{"es":"Aquitania. SOLdeSOL","en":"Chardonnay"},{"es":"Clos de Luz. Azuda","en":"Syrah"},{"es":"Pérez Cruz. Limited Edition","en":"Carmenere"},{"es":"Garage Wine Co. Old Vine Pale","en":"Cariñena Rosé"},{"es":"Glup. Longaví","en":"Cinsault"},{"es":"Ciénaga de Name. Vinos de Parcela","en":"Carignan"},{"es":"Pura Fe. Antiyal","en":"Cabernet Sauvignon"},{"es":"Erasmo. Caliboro Late Harvest","en":"Torontel"}]]},"vinosPremium":{"1":[[{"es":"Errázuriz Las Pizarras Chardonnay 2021","en":"D.O. Aconcagua Costa – Chardonnay","precio":"USD120"}],[{"es":"Pierre Péters Cuvée de Réserve","en":"Champagne Grand Cru – Chardonnay","precio":"USD150"}],[{"es":"Seña 2022","en":"D.O. Valle de Aconcagua – Assemblage","precio":"USD250"},{"es":"Almaviva 2022","en":"D.O. Puente Alto – Assemblage","precio":"USD400"},{"es":"Don Melchor 2020","en":"D.O. Puente Alto, Alto Maipo – Cabernet Sauvignon","precio":"USD400"},{"es":"Rukumilla","en":"D.O. Valle del Maipo, Isla de Maipo – Assemblage","precio":"USD100"}]]},"desayuno":{"1":[[{"es":"BEBIDAS CALIENTES","en":"HOT BEVERAGES","des_es":"Espresso. Cappuccino. Latte. Americano. Té. Chocolate.","des_en":""},{"es":"LECHE","en":"MILK","des_es":"Soya. Sin lactosa. Entera. Descremada. Almendras.","des_en":"Soy. Lactose-free. Whole. Skim. Almond."},{"es":"PANQUEQUES CLÁSICOS","en":"PANCAKES","des_es":"Miel de maple. Miel de abeja. Manjar. Chocolate. Nutella.","des_en":"Maple syrup. Honey. Dulce de leche. Chocolate. Nutella."},{"es":"QUINOA TIBIA","en":"WARM QUINOA PORRIDGE","des_es":"Manzana. Jugo de naranja.","des_en":"Apple. Orange juice."},{"es":"HUEVOS","en":"EGGS","des_es":"Duros. A la copa. Fritos. Revueltos. Pochados.","des_en":"Hard-boiled. Soft-boiled. Sunny side-up. Scrambled. Poached."},{"es":"OMELETTE","en":"WHITE OMELETTE","des_es":"Queso. Jamón. Tocino. Champiñón. Tomate. Cebolla.","des_en":"Cheese. Ham. Bacon. Mushroom. Tomato. Onion."},{"es":"TOSTADAS FRANCESAS","en":"FRENCH TOAST","des_es":"Miel de maple. Miel de abeja. Manjar. Chocolate. Nutella.","des_en":"Maple syrup. Honey. Dulce de leche. Chocolate. Nutella."},{"es":"TOSTADA CON QUESO CREMA Y TRUCHA","en":"TROUT AND CREAM CHEESE OPEN TOAST","des_es":"Tostada integral. Queso crema. Palta. Trucha ahumada.","des_en":"Whole wheat bread. Cream cheese. Avocado. Smoked salmon trout."}]]},"masajes":{"1":[[{"es":"Masaje Relajante","en":"Relaxing Massage","tarifas":"50 $120 · 90 $200","des_es":"Masaje suave y calmante que alivia la tensión muscular y reduce el estrés, proporcionando una sensación de bienestar y relajación total.","des_en":"A gentle and soothing massage that relieves muscle tension and reduces stress, providing a sense of well-being and total relaxation."},{"es":"Masaje Tejido Profundo","en":"Deep Tissue Massage","tarifas":"50 $130 · 90 $220","des_es":"Masaje terapéutico que trabaja las capas profundas de los músculos y el tejido conectivo, ideal para aliviar dolores y tensiones crónicas.","des_en":"A therapeutic massage that works on the deep layers of muscles and connective tissue, ideal for relieving chronic pains and tensions."},{"es":"Masaje de Piedras Calientes","en":"Hot Stone Massage","tarifas":"50 $150 · 90 $230","des_es":"Tratamiento que utiliza piedras volcánicas calientes para masajear y relajar los músculos en profundidad. Este masaje alivia la tensión, mejora la circulación y proporciona una sensación de bienestar profundo.","des_en":"Treatment that uses hot volcanic stones to massage and relax muscles deeply. This massage relieves tension, improves circulation, and provides a deep sense of well-being."},{"es":"Drenaje linfático","en":"Lymphatic Drainage","tarifas":"50 $120 · 90 $200","des_es":"Masaje suave y rítmico que estimula el sistema linfático para ayudar a eliminar toxinas y reducir la retención de líquidos, promoviendo una mejor circulación y una sensación de ligereza y bienestar.","des_en":"A gentle and rhythmic massage that stimulates the lymphatic system to help eliminate toxins and reduce fluid retention, promoting better circulation and a feeling of lightness and well-being."},{"es":"Revitalizante de piernas","en":"Leg Revitalization","tarifas":"50 $120 · 90 $200","des_es":"Ideal después de un día de trekking intenso. Este masaje, enfocado exclusivamente en las piernas, ayuda a aliviar la fatiga muscular, reducir la sensación de pesadez y favorecer una recuperación más rápida.","des_en":"Ideal after an intense day of trekking. This leg-focused massage helps relieve muscle fatigue, reduce feelings of heaviness, and promote faster recovery."}]]}};
 const SVG = {"mar":{"vb":[58.36,554.7,10.82,9.74],"p":"<path d=\"M65.68 563.96 L64.79 563.95 C64.15 564.43 63.41 564.41 62.77 563.95 L61.85 563.96 C61.54 563.95 61.28 563.72 61.27 563.41 C61.26 563.13 61.32 562.87 61.40 562.61 C61.20 562.39 61.00 562.19 60.78 561.98 L60.02 561.29 L59.39 560.67 C59.14 560.41 58.92 560.15 58.72 559.85 C58.40 559.35 58.36 558.72 58.65 558.20 C58.82 557.91 59.10 557.64 59.43 557.63 C59.51 557.63 59.55 557.66 59.58 557.72 L62.16 562.15 L62.71 563.06 C62.75 563.12 62.82 563.13 62.88 563.10 C62.92 563.08 62.97 563.00 62.94 562.94 L62.29 561.76 L59.79 557.47 C59.70 557.31 59.71 557.11 59.74 556.95 C59.77 556.80 59.82 556.66 59.90 556.53 C60.25 555.94 60.98 555.56 61.66 555.73 C61.75 555.76 61.77 555.81 61.79 555.90 L62.30 558.40 L63.02 561.77 L63.30 562.94 C63.32 563.01 63.40 563.03 63.46 563.01 C63.51 562.99 63.56 562.94 63.55 562.87 L63.24 561.34 L62.08 555.75 C62.05 555.63 62.13 555.51 62.19 555.43 C62.34 555.23 62.55 555.10 62.78 554.99 C63.41 554.70 64.24 554.70 64.85 555.03 C65.02 555.12 65.18 555.22 65.30 555.37 C65.37 555.45 65.47 555.58 65.44 555.71 L65.01 557.92 L64.18 562.00 L64.02 562.88 C64.01 562.95 64.07 563.01 64.13 563.02 C64.19 563.03 64.25 562.99 64.27 562.92 L64.52 561.87 L64.94 559.84 L65.38 557.66 L65.75 555.80 C65.77 555.77 65.83 555.74 65.87 555.72 C66.10 555.66 66.33 555.66 66.56 555.72 C67.02 555.84 67.41 556.13 67.64 556.54 C67.79 556.79 67.88 557.19 67.75 557.42 L67.44 557.96 L65.30 561.71 L64.62 562.95 C64.59 563.01 64.64 563.08 64.68 563.10 C64.73 563.13 64.81 563.12 64.84 563.07 L65.48 562.01 L66.98 559.38 L67.98 557.64 C68.28 557.55 68.62 557.78 68.80 558.03 C69.17 558.55 69.18 559.23 68.86 559.77 L68.51 560.25 C68.27 560.55 68.03 560.82 67.75 561.09 L66.95 561.88 L66.43 562.38 L66.16 562.64 C66.23 562.89 66.28 563.13 66.28 563.39 C66.27 563.72 66.01 563.96 65.68 563.96\"/>"},"lac":{"vb":[108.18,554.96,4.94,9.16],"p":"<path d=\"M109.01 556.00 L108.98 555.96 C108.83 555.75 108.83 555.47 108.97 555.26 L108.99 555.24 C109.10 555.06 109.30 554.96 109.51 554.96 L111.76 554.97 C111.95 554.97 112.13 555.06 112.25 555.20 L112.29 555.26 C112.47 555.47 112.48 555.77 112.33 555.99 C112.22 556.14 112.19 556.33 112.24 556.50 L112.81 558.60 C112.81 558.62 112.81 558.64 112.82 558.65 L113.11 560.30 C113.12 560.33 113.12 560.37 113.12 560.40 L113.12 563.50 C113.12 563.84 112.84 564.12 112.49 564.12 L108.81 564.12 C108.46 564.12 108.18 563.84 108.18 563.50 L108.18 560.37 C108.18 560.33 108.18 560.29 108.19 560.25 L108.50 558.65 C108.50 558.64 108.51 558.62 108.51 558.60 L109.10 556.52 C109.15 556.34 109.11 556.15 109.01 556.00\" fill-rule=\"evenodd\"/><path d=\"M109.22 556.22 L112.61 556.22\" fill=\"none\" stroke=\"#fff\" stroke-width=\"0.30\"/>"},"nue":{"vb":[154.09,554.76,8.53,9.55],"p":"<path d=\"M161.85 560.40 C161.78 561.70 161.05 562.91 159.91 563.54 L158.87 564.12 C158.54 564.30 158.16 564.31 157.83 564.13 L156.79 563.55 C155.64 562.92 154.92 561.75 154.84 560.46 C154.82 560.21 154.83 559.97 154.83 559.71 C154.90 559.71 154.98 559.73 155.07 559.73 L161.61 559.73 L161.85 559.70 L161.85 560.40\"/><path d=\"M161.54 559.33 L155.21 559.34 C154.56 559.34 154.09 558.84 154.13 558.19 C154.18 557.32 154.90 556.59 155.80 556.56 L157.89 556.55 C157.82 555.81 158.24 555.11 158.93 554.83 C159.11 554.76 159.31 554.88 159.37 555.03 C159.44 555.21 159.37 555.40 159.18 555.48 C158.76 555.67 158.51 556.10 158.61 556.55 L160.92 556.57 C161.80 556.61 162.45 557.30 162.55 558.14 C162.62 558.74 162.20 559.33 161.54 559.33\"/>"},"glu":{"vb":[204.26,554.88,4.12,9.2],"p":"<path d=\"M206.88 555.94 C206.91 556.53 206.55 557.02 206.28 557.03 C206.02 557.04 205.67 556.58 205.64 555.99 C205.62 555.40 205.91 554.91 206.20 554.90 C206.48 554.88 206.86 555.35 206.88 555.94\"/><path d=\"M207.81 557.74 C207.41 558.23 206.78 558.43 206.56 558.30 C206.35 558.17 206.41 557.62 206.80 557.13 C207.19 556.64 207.76 556.40 208.00 556.55 C208.23 556.69 208.20 557.26 207.81 557.74\"/><path d=\"M207.88 559.50 C207.48 559.99 206.85 560.19 206.64 560.06 C206.42 559.93 206.47 559.38 206.87 558.89 C207.26 558.41 207.83 558.17 208.07 558.31 C208.30 558.45 208.27 559.02 207.88 559.50\"/><path d=\"M207.95 561.39 C207.55 561.87 206.92 562.08 206.71 561.95 C206.49 561.82 206.54 561.26 206.94 560.78 C207.33 560.30 207.91 560.05 208.14 560.20 C208.38 560.35 208.35 560.90 207.95 561.39\"/><path d=\"M204.77 557.86 C205.21 558.31 205.85 558.47 206.06 558.32 C206.26 558.17 206.17 557.62 205.73 557.17 C205.30 556.72 204.71 556.52 204.49 556.68 C204.26 556.84 204.34 557.41 204.77 557.86\"/><path d=\"M204.84 559.62 C205.28 560.07 205.92 560.23 206.13 560.08 C206.33 559.94 206.24 559.39 205.80 558.94 C205.37 558.48 204.78 558.29 204.56 558.45 C204.34 558.60 204.41 559.17 204.84 559.62\"/><path d=\"M204.92 561.50 C205.35 561.95 206.00 562.11 206.20 561.96 C206.40 561.82 206.31 561.26 205.88 560.82 C205.44 560.37 204.86 560.17 204.63 560.33 C204.41 560.49 204.48 561.05 204.92 561.50\"/><path d=\"M206.45 562.31 L206.59 562.30 C206.74 562.30 206.86 562.41 206.87 562.56 L206.92 563.79 C206.92 563.94 206.81 564.06 206.66 564.07 L206.52 564.08 C206.37 564.08 206.24 563.97 206.23 563.82 L206.19 562.59 C206.18 562.44 206.30 562.32 206.45 562.31\"/>"},"vgn":{"vb":[247.32,555.19,12.77,8.17],"p":"<path d=\"M251.82 559.74 C251.91 559.83 252.01 559.92 252.10 560.01 C252.30 559.78 252.57 559.40 252.61 558.82 C252.65 558.52 252.54 557.79 252.20 557.30 C251.65 556.52 250.59 556.26 249.65 556.03 C248.94 555.86 247.85 555.25 247.85 555.25 C247.73 555.19 247.71 555.33 247.70 555.41 C247.68 555.51 247.32 557.74 248.40 559.36 C249.06 560.36 249.71 560.67 250.28 560.67 C250.73 560.67 251.49 560.50 251.83 560.30 C251.86 560.27 251.74 560.36 251.83 560.30 C251.88 560.35 251.77 560.24 251.83 560.30 C252.56 561.03 253.24 562.00 253.51 563.20 C253.51 563.20 253.51 563.21 253.51 563.21 C253.52 563.22 253.52 563.23 253.52 563.24 C253.53 563.25 253.53 563.26 253.54 563.27 C253.54 563.28 253.54 563.28 253.55 563.29 C253.56 563.30 253.57 563.30 253.57 563.31 C253.58 563.32 253.59 563.33 253.60 563.33 C253.61 563.34 253.62 563.34 253.63 563.35 C253.64 563.35 253.65 563.35 253.66 563.36 C253.68 563.36 253.69 563.36 253.70 563.36 C253.72 563.36 253.73 563.36 253.75 563.36 C253.76 563.35 253.77 563.35 253.78 563.35 C253.79 563.34 253.80 563.34 253.81 563.33 C253.83 563.32 253.85 563.30 253.87 563.27 C253.87 563.26 253.88 563.25 253.88 563.24 C253.89 563.23 253.89 563.22 253.89 563.21 C253.89 563.21 253.89 563.21 253.89 563.20 C254.16 562.00 254.85 561.03 255.58 560.30 C255.64 560.24 255.69 560.19 255.75 560.14 C255.83 560.20 255.90 560.25 255.94 560.27 C256.27 560.48 256.67 560.67 257.13 560.67 C257.70 560.67 258.34 560.36 259.01 559.36 C260.09 557.74 259.73 555.51 259.71 555.41 C259.70 555.33 259.65 555.22 259.55 555.25 C259.55 555.25 258.47 555.85 257.76 556.03 C256.82 556.26 255.75 556.52 255.21 557.30 C254.87 557.79 254.75 558.30 254.85 558.80 C254.93 559.17 255.26 559.63 255.46 559.86 C255.55 559.77 255.69 559.66 255.78 559.57 C256.83 558.62 256.64 558.79 255.59 559.74 C255.50 559.83 255.40 559.92 255.31 560.01 C254.67 560.65 254.06 561.47 253.70 562.47 C253.35 561.47 252.74 560.65 252.10 560.01 C252.01 559.92 251.91 559.83 251.82 559.74\"/>"},"veg":{"vb":[297.77,555.23,8.51,8.42],"p":"<path d=\"M303.62 558.47 C301.85 559.93 300.27 561.30 299.82 563.65 C301.54 562.48 303.82 562.20 305.03 560.78 C306.27 559.31 306.05 557.28 306.12 555.23 C304.67 555.90 303.24 556.28 301.77 556.61 C298.96 557.24 297.77 560.23 299.19 563.01 C300.77 560.22 301.92 559.00 303.62 558.47\"/>"},"logo":{"vb":[322.35,47.71,29.46,29.46],"p":"<path d=\"M339.14 64.16 L335.86 64.16 L335.86 59.50 L334.41 59.50 L334.41 65.39 L339.14 65.39 L339.14 64.16\"/><path d=\"M339.14 52.52 L335.80 52.52 L335.80 51.14 L338.90 51.14 L338.90 50.06 L335.80 50.06 L335.80 48.79 L339.08 48.79 L339.08 47.71 L334.41 47.71 L334.41 53.60 L339.14 53.60 L339.14 52.52\"/><path d=\"M346.99 53.60 L348.49 51.56 L349.97 53.60 L351.77 53.60 L349.40 50.54 L351.56 47.71 L350.03 47.71 L348.61 49.60 L347.26 47.71 L345.48 47.71 L347.71 50.66 L345.42 53.60 L346.99 53.60\"/><path d=\"M335.83 74.83 L336.76 72.33 L337.66 74.83 L335.83 74.83 M335.95 71.28 L333.57 77.17 L334.95 77.17 L335.44 75.91 L338.08 75.91 L338.53 77.17 L340.07 77.17 L337.69 71.28 L335.95 71.28\"/><path d=\"M325.05 73.96 L323.76 73.96 L323.76 72.30 L325.05 72.30 C325.72 72.30 326.05 72.60 326.05 73.09 C326.05 73.63 325.72 73.96 325.05 73.96 M327.55 73.12 C327.55 71.97 326.74 71.28 325.36 71.28 L322.35 71.28 L322.35 77.18 L323.76 77.18 L323.76 75.04 L324.90 75.04 L326.05 77.18 L327.67 77.18 L326.35 74.83 C327.07 74.59 327.55 73.90 327.55 73.12\"/><path d=\"M323.79 60.55 L325.05 60.55 C325.69 60.55 326.05 60.91 326.05 61.45 C326.05 61.99 325.69 62.32 325.05 62.32 L323.79 62.32 L323.79 60.55 M323.79 63.41 L325.36 63.41 C326.71 63.41 327.58 62.65 327.58 61.39 C327.58 60.22 326.74 59.50 325.39 59.50 L322.35 59.50 L322.35 65.39 L323.79 65.39 L323.79 63.41\"/><path d=\"M348.55 64.43 C347.50 64.43 346.81 63.62 346.81 62.41 C346.81 61.24 347.50 60.46 348.55 60.46 C349.61 60.46 350.30 61.24 350.30 62.44 C350.30 63.62 349.61 64.43 348.55 64.43 M348.55 59.32 C346.63 59.32 345.30 60.61 345.30 62.41 C345.30 64.28 346.60 65.57 348.55 65.57 C350.48 65.57 351.80 64.25 351.80 62.44 C351.80 60.58 350.51 59.32 348.55 59.32\"/>"}};
 
 // Íconos: mismo orden que la leyenda de los originales.
@@ -391,8 +398,13 @@ function limpio(it) {           // forma canónica de un plato (para comparar y 
   if ((it.tarifas || "").trim()) o.tarifas = it.tarifas.trim();  // masajes
   const ic = [...new Set((it.ic || []).filter(k => IC.includes(k)))];   // el orden es el del plato (el PDF no sigue el de la leyenda)
   if (ic.length) o.ic = ic;
+  if (it.id) o.id = String(it.id);   // plato de la carta: su id lo sigue a cualquier día
   return o;
 }
+// Igual sin mirar el id ni el orden de las claves: ¿se imprime igual?
+const firma = o => JSON.stringify(o, (k, v) => v && typeof v === "object" && !Array.isArray(v) ? Object.keys(v).sort().reduce((a, x) => (a[x] = v[x], a), {}) : v);
+const sinId = it => { const o = limpio(it); if (o) delete o.id; return o; };
+const igualC = (a, b) => firma(sinId(a)) === firma(sinId(b));
 // Ubicación del texto dentro de un bloque: línea de base desde el borde superior.
 // Objektiv trae USE_TYPO_METRICS (asc 810, desc 254 /1000), que es lo que usa Chrome.
 const bOf = (L, fs) => (L - 1.064 * fs) / 2 + 0.81 * fs;
@@ -415,69 +427,328 @@ const CENA_OFFSET = 1;
 const subPag = (t, d) => (d === HOY && TIPOS[t].dias > 1 ? "hoy · " : "") + (docDe(t, d) !== String(d) ? `menú ${docDe(t, d)} de cocina · ` : "");
 const docDe = (t, d) => TIPOS[t].servicio === "cena" ? String(((+d - 1 - CENA_OFFSET) % 4 + 4) % 4 + 1) : String(d);
 
-// ── Estado: sólo lo cambiado (la base vive en el código). ───────────────────────
-// estado.ov["cena|2|0"] = lista completa de esa sección cuando se tocó.
-// estado.manual["cena|2"] = HTML escrito a mano sobre el papel.
-// estado.pie["cena"] = texto del pie (vale para todos los días de ese tipo).
-const LS = "ata.menus.v1";
-let estado = {v: 1, base: null, ov: {}, manual: {}, pie: {}, imprimir: null};
-try { const g = JSON.parse(localStorage.getItem(LS) || "null"); if (g && g.v === 1) estado = Object.assign(estado, g); } catch (e) {}
-// 2026-11-11: la cena dejó de ser la del PDF viejo (Entradas 4 + Fondos 4) y pasó a ser
-// la de la app (5 + 4). Un cambio guardado sobre la cena vieja apuntaría a otros platos:
-// se descarta. Almuerzo y postres conservan lo que se haya cambiado a mano.
-// (2026-11-12 en BASE_VER: la cena pasó a leerse con el desfase, así que un cambio de la
-// cena o de sus postres guardado antes caería en otro día: también se descarta.)
-const BASE_VER = "2026-11-12";
-const esCena = k => /^(cena|postresCena)\|/.test(k);
-const MIGRADO = estado.base !== BASE_VER && (Object.keys(estado.ov).some(esCena) || Object.keys(estado.manual).some(esCena));
-if (estado.base !== BASE_VER) {
-  for (const k of Object.keys(estado.ov)) if (esCena(k)) delete estado.ov[k];
-  for (const k of Object.keys(estado.manual)) if (esCena(k)) delete estado.manual[k];
-  estado.imprimir = null; estado.base = BASE_VER;
-  try { localStorage.setItem(LS, JSON.stringify(estado)); } catch (e) {}
+// ═══════════════════════════════════════════════════════════════════════════════
+// LA CARTA VIVA (2026-11-22). Cena, postres de cena, almuerzo y postres de almuerzo
+// salen del catálogo de la app EN CADA CARGA: los literales MENU_* y DISH_TRANS se leen
+// del propio index.html (sin tocarlo) y encima van las ediciones de la carta
+// (/menu_ediciones/campos, §3.7), en vivo: si alguien cambia un plato de día en la app,
+// la imprenta lo ve al instante. Las reglas son las del generador del 2026-11-11, ahora
+// en código: nombre en oración, inglés de la ficha, orden de la carta impresa e íconos
+// de la matriz (cruzado a máquina contra BASE: idéntico). BASE queda como FOTO de
+// respaldo, con el id de cada plato: es lo que se ve si index.html o la base no
+// contestan.
+// ═══════════════════════════════════════════════════════════════════════════════
+const CARTA = {   // tipo → por sección: [arreglo de index.html, orden de las bandejas en la carta impresa]
+  cena: [["MENU_CENA_MINI", ["ensalada", "carne", "vegano", "dip", "mar"]], ["MENU_CENA_PRINCIPALES", ["mar", "res", "avecerdo", "vegana"]]],
+  postresCena: [["MENU_CENA_POSTRES", ["fruta", "granos", "sinazucar"]]],
+  almuerzo: [["MENU_PRINCIPALES", ["res", "mar", "avecerdo", "vegana"]]],
+  postres: [["MENU_POSTRES", ["fruta", "granos", "sinazucar"]]],
+};
+const esCatalogo = t => !!CARTA[t];
+// El helado y la fruta del impreso no son platos de la app: van todos los días, con id propio
+// (lo que se les cambie vale para los cuatro).
+const EXTRAS = {postres: BASE.postres["1"][0].filter(it => /^x-/.test(it.id || ""))};
+// Un ✗ que es contaminación cruzada y no ingrediente no lleva ícono (owner, 2026-11-11:
+// "la contaminación cruzada no va, sino todo estaría contaminado").
+const SIN_ICONO = {"pr1-avecerdo": ["lac"], "pr3-mar": ["mar"]};
+const EJE_IC = {mar: "mar", lac: "lac", fs: "nue", gs: "glu"};   // gluten por GS: el GE de celíacos marca trazas
+const MAYUS = ["Flat Iron", "Mont Blanc"];
+function frase(s) {             // nombre en oración: mayúscula sólo al comienzo
+  s = String(s ?? "").trim(); if (!s) return "";
+  let o = s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  for (const m of MAYUS) o = o.replace(new RegExp(m, "ig"), m);
+  return o;
 }
+function iconosDe(id, diet) {   // ✗ o ✓* en el eje = "contiene"; Veg ✓ = vegano; Vgt ✓ = vegetariano
+  const ic = [], di = diet || {};
+  for (const [e, k] of Object.entries(EJE_IC)) if ((di[e] === 0 || di[e] === "*") && !(SIN_ICONO[id] || []).includes(k)) ic.push(k);
+  if (di.veg === 1) ic.push("vgn"); else if (di.vgt === 1) ic.push("veg");
+  return ic;
+}
+// Un literal de JS dentro de index.html (`const NOMBRE = [...]` o `{...}`): se cuentan
+// corchetes saltando strings y comentarios, y se evalúa sólo ese trozo. Es código del
+// propio repo, no algo de afuera.
+function literal(src, nombre) {
+  const m = new RegExp("\\bconst " + nombre + "\\s*=\\s*").exec(src);
+  if (!m) throw new Error("index.html no trae " + nombre);
+  let i = m.index + m[0].length, prof = 0;
+  const ini = i;
+  if (src[i] !== "[" && src[i] !== "{") throw new Error(nombre + " no es un literal");
+  for (; i < src.length; i++) {
+    const c = src[i];
+    if (c === "'" || c === '"' || c === "\x60") { /* \x60 = acento grave */ const q = c; i++; while (i < src.length && src[i] !== q) { if (src[i] === "\\") i++; i++; } continue; }
+    if (c === "/" && src[i + 1] === "/") { while (i < src.length && src[i] !== "\n") i++; continue; }
+    if (c === "/" && src[i + 1] === "*") { i = src.indexOf("*/", i + 2) + 1; if (!i) break; continue; }
+    if (c === "[" || c === "{") prof++;
+    else if ((c === "]" || c === "}") && !--prof) return Function('"use strict";return (' + src.slice(ini, i + 1) + ")")();
+  }
+  throw new Error(nombre + " sin cierre");
+}
+
+let CAT = null;     // los literales de index.html
+let MED = {};       // /menu_ediciones/campos tal cual
+let VIVA = null;    // {tipo: {menú de cocina: [[platos]]}}; null = la foto BASE
+let PORID = {};     // id → cómo lo trae la carta (sin lo de la imprenta)
+const FOTO_PORID = {};
+const indexar = (src, dst) => { for (const t in CARTA) for (const k in src[t] || {}) for (const sec of src[t][k]) for (const it of sec) if (it.id) dst[it.id] = it; };
+indexar(BASE, FOTO_PORID);
+
+function derivarCarta() {
+  if (!CAT) return false;
+  const viva = {}, porId = {}, rk = (o, s) => { const i = o.indexOf(s); return i < 0 ? 99 : i; };
+  for (const [t, secs] of Object.entries(CARTA)) {
+    viva[t] = {"1": [], "2": [], "3": [], "4": []};
+    secs.forEach(([arr, orden], s) => {
+      const platos = (CAT[arr] || []).map((d0, n) => {
+        const ed = (MED.platos || {})[d0.id] || {}, x = ed.x || {}, diet = {...(d0.diet || {})};
+        for (const [e, v] of Object.entries(x.diet || {})) { if (v === "-") delete diet[e]; else diet[e] = v; }   // '-' = sin dato
+        // La app numera el día con el ciclo (la cena, corrida): BASE va por menú de cocina.
+        const dia = x.day != null && x.day !== "" ? docDe(t, String(x.day)) : String(d0.day);
+        const it = {id: d0.id, es: frase((ed.es || {}).name ?? d0.name), en: frase((ed.en || {}).name ?? ((CAT.DISH_TRANS.en || {})[d0.id] || {}).name)};
+        const ic = iconosDe(d0.id, diet); if (ic.length) it.ic = ic;
+        return {dia, slot: x.slot != null ? String(x.slot) : d0.slot, orden: x.orden != null && !isNaN(+x.orden) ? +x.orden : n, it};
+      });
+      platos.sort((a, b) => rk(orden, a.slot) - rk(orden, b.slot) || a.orden - b.orden);
+      for (const k in viva[t]) viva[t][k][s] = platos.filter(p => p.dia === k).map(p => p.it);
+    });
+    for (const x of EXTRAS[t] || []) for (const k in viva[t]) viva[t][k][0].push(clon(x));
+  }
+  indexar(viva, porId);
+  VIVA = viva; PORID = porId;
+  return true;
+}
+async function cargarCatalogo() {
+  try {
+    const r = await fetch(new URL("index.html", location.href), {cache: "no-cache"});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const src = await r.text(), c = {};
+    for (const n of [...new Set(Object.values(CARTA).flat().map(x => x[0]))]) c[n] = literal(src, n);
+    c.DISH_TRANS = {en: literal(src, "DISH_TRANS").en || {}};
+    CAT = c;
+    if (derivarCarta()) { guardarCache(); refrescar(); }
+  } catch (e) {
+    console.warn("[menús] sin la carta de la app:", e);
+    avisar("Sin la carta de la app: se usa la del 2026-11-22", true);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LO GUARDADO (2026-11-22): compartido en Firebase /menus_imprenta y en vivo en todos
+// los equipos. Sólo las diferencias con la carta, y "↺" es borrar:
+//   platos/{id}    = JSON {v, desde}        cómo se imprime ESE plato: lo sigue a cualquier día;
+//                                           desde = la versión de la carta sobre la que se editó
+//   secs/{t|d|s}   = JSON {lista, desde?}   la sección, cuando cambió su estructura (orden, quitar,
+//                                           agregar, reemplazar); desde = ids de la carta en ese momento
+//   manual/{t|d}   = HTML escrito a mano    pie/{t} = texto del pie (todos los días del tipo)
+// Va en texto JSON porque Firebase borra los arreglos vacíos y los nulos. Si la carta
+// cambia algo que tiene versión propia, gana la tuya y la casilla avisa (owner, 2026-11-22).
+// ═══════════════════════════════════════════════════════════════════════════════
+const RUTA_FB = "menus_imprenta";
+// La misma config pública de index.html (CF_FIREBASE_CONFIG): misma app, misma sesión del gate.
+const FB_CONFIG = {apiKey: "AIzaSyDVyaPMAPVsbQFUhsGTYnnOdQQH1zffjfc", authDomain: "explora-cafe-orders.firebaseapp.com",
+  databaseURL: "https://explora-cafe-orders-default-rtdb.firebaseio.com", projectId: "explora-cafe-orders",
+  storageBucket: "explora-cafe-orders.firebasestorage.app", messagingSenderId: "898891226322", appId: "1:898891226322:web:6923459e61eca72ce5e10b"};
+let R = {platos: {}, secs: {}, manual: {}, pie: {}};
+let PEND = {};                  // lo que este aparato todavía no manda ("ruta" → valor o null)
+let LOCAL = {imprimir: null};   // por aparato: la última selección del diálogo de impresión
+const LS2 = "ata.menus.v2";     // copia local: primer pintado y trabajo sin red
+try {
+  const g = JSON.parse(localStorage.getItem(LS2) || "null");
+  if (g) {
+    if (g.R) for (const c in R) R[c] = g.R[c] || {};
+    if (g.MED) MED = g.MED;
+    if (g.VIVA) { VIVA = g.VIVA; indexar(VIVA, PORID); }
+    if (g.PEND) PEND = g.PEND;
+    LOCAL.imprimir = g.imprimir || null;
+  }
+} catch (e) {}
+if (!VIVA) Object.assign(PORID, FOTO_PORID);
+function guardarCache() {
+  try { localStorage.setItem(LS2, JSON.stringify({R, MED, VIVA, PEND, imprimir: LOCAL.imprimir})); } catch (e) {}
+}
+
+// Lo que este aparato guardaba antes de compartir (ata.menus.v1, sólo en localStorage): se
+// ofrece subirlo una vez. No se borra: queda como estaba.
+// (2026-11-12 en BASE_VER: un cambio de la cena guardado antes del desfase caería en otro día.)
+const LS = "ata.menus.v1", BASE_VER = "2026-11-12";
+const esCena = k => /^(cena|postresCena)\|/.test(k);
+let VIEJO = null;
+try {
+  const g = JSON.parse(localStorage.getItem(LS) || "null");
+  if (g && g.v === 1 && !localStorage.getItem(LS + ".subido") && ["ov", "manual", "pie"].some(c => Object.keys(g[c] || {}).length)) VIEJO = g;
+} catch (e) {}
+
 let vista = {tipo: "cena", dia: HOY, abierto: null};
 try { const v = JSON.parse(sessionStorage.getItem(LS + ".vista") || "null"); if (v && TIPOS[v.tipo]) vista = {...vista, ...v, abierto: null}; } catch (e) {}
 
-let reloj = null;
-function guardar() {
-  clearTimeout(reloj);
-  reloj = setTimeout(() => {
-    try { localStorage.setItem(LS, JSON.stringify(estado)); avisar("Guardado"); }
-    catch (e) { avisar("No se pudo guardar en este navegador: usa Respaldo", true); }
-  }, 250);
-}
 function avisar(t, err) { const e = document.getElementById("estado"); e.textContent = t; e.className = err ? "error" : ""; }
 function recordarVista() { try { sessionStorage.setItem(LS + ".vista", JSON.stringify({tipo: vista.tipo, dia: vista.dia})); } catch (e) {} }
 
+// ── Escribir: se aplica al instante y se manda en lote (300 ms) ────────────────
+const enJson = c => c === "platos" || c === "secs";
+function poner(col, k, v) {     // v = null borra
+  const ant = R[col][k];
+  if (v == null) { if (ant === undefined) return; delete R[col][k]; }
+  else { if (ant !== undefined && firma(ant) === firma(v)) return; R[col][k] = v; }
+  PEND[`${col}/${k}`] = v == null ? null : enJson(col) ? JSON.stringify(v) : String(v);
+}
+let relojFB = null;
+function enviar() { guardarCache(); clearTimeout(relojFB); relojFB = setTimeout(vaciar, 300); }
+function vaciar() {
+  if (!Object.keys(PEND).length) return;
+  if (!FB.listo) { avisar(FB.motivo || "Sin conexión: guardado en este aparato", true); return; }
+  const lote = PEND; PEND = {};
+  guardarCache();
+  avisar("Guardando…");
+  FB.actualizar(lote).then(() => { if (!Object.keys(PEND).length) avisar("Guardado"); })
+    .catch(e => avisar("No se guardó (" + ((e && (e.code || e.message)) || e) + ")", true));   // el SDK deshace solo
+}
+// ── Llega de la base (de este equipo o de otro) ────────────────────────────────
+function desdeFB(val) {
+  const n = {platos: {}, secs: {}, manual: {}, pie: {}};
+  for (const c in n) for (const [k, s] of Object.entries((val && val[c]) || {})) {
+    if (enJson(c)) { try { const o = JSON.parse(s); if (o && typeof o === "object") n[c][k] = o; } catch (e) {} }
+    else if (typeof s === "string") n[c][k] = s;
+  }
+  for (const [p, v] of Object.entries(PEND)) {   // lo propio que aún no sale, encima
+    const i = p.indexOf("/"), c = p.slice(0, i), k = p.slice(i + 1);
+    if (v == null) delete n[c][k]; else n[c][k] = enJson(c) ? JSON.parse(v) : v;
+  }
+  return n;
+}
+function alLlegarImprenta(val) { const n = desdeFB(val); if (firma(n) === firma(R)) return; R = n; guardarCache(); refrescar(); }
+function alLlegarMed(val) {
+  const n = val && typeof val === "object" ? val : {};
+  if (firma(n) === firma(MED)) return;
+  MED = n;
+  if (derivarCarta()) { guardarCache(); refrescar(); }
+}
+// Redibuja sin mover lo que se está escribiendo: el papel y las pestañas siempre; la lista
+// de casillas, cuando nadie está tecleando en ella (si no, al soltar el campo).
+let SLOTS_PEND = false;
+const escribiendo = () => { const a = document.activeElement; return !!a && a.id !== "q" && (a.isContentEditable || /^(INPUT|TEXTAREA)$/.test(a.tagName)); };
+function refrescar() {
+  IDX = null;
+  dibujarSelectores();
+  dibujarPapel();
+  const pie = $("in-pie"); if (pie && document.activeElement !== pie) pie.value = pieDe(vista.tipo);
+  if (escribiendo()) SLOTS_PEND = true; else dibujarSlots();
+  if (PEDIDO) armarHojas(PEDIDO.split(",").filter(k => paginas().includes(k)));
+}
+document.addEventListener("focusout", () => setTimeout(() => {
+  if (SLOTS_PEND && !escribiendo()) { SLOTS_PEND = false; dibujarSlots(); dibujarPapel(); }
+}, 250));
+
+// ── Conexión: el SDK de la app (WebSocket: lo que cambia llega solo, sin consultar) ──
+const FB = {listo: false, motivo: "", actualizar: null, db: null};
+function conectar() {
+  // QA: window.ATA_MENUS_FB reemplaza la base por una de mentira (ver ARCHITECTURE §3.10).
+  if (window.ATA_MENUS_FB) return window.ATA_MENUS_FB(FB, {alLlegarImprenta, alLlegarMed, vaciar, avisar});
+  if (typeof firebase === "undefined" || !firebase.database) { FB.motivo = "Sin Firebase: guardado en este aparato"; avisar(FB.motivo, true); return; }
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    firebase.auth().onAuthStateChanged(u => {
+      if (!u) { FB.listo = false; FB.motivo = "Sin sesión: abre ATA Tools una vez (se guarda en este aparato)"; avisar(FB.motivo, true); return; }
+      if (FB.db) return;
+      const db = FB.db = firebase.database();
+      FB.actualizar = lote => db.ref(RUTA_FB).update({...lote, "meta/updatedAt": firebase.database.ServerValue.TIMESTAMP});
+      db.ref(RUTA_FB).on("value", s => { FB.listo = true; alLlegarImprenta(s.val()); vaciar(); },
+        e => { FB.listo = false; FB.motivo = "La base no deja guardar la imprenta: falta la regla menus_imprenta"; avisar(FB.motivo, true); console.warn("[menús]", e); });
+      db.ref("menu_ediciones/campos").on("value", s => alLlegarMed(s.val()), e => console.warn("[menús] menu_ediciones:", e));
+      db.ref(".info/connected").on("value", s => {
+        if (!FB.listo) return;
+        if (s.val()) { if (!Object.keys(PEND).length) avisar("En vivo"); } else avisar("Sin conexión: se guarda al volver", true);
+      });
+    });
+  } catch (e) { FB.motivo = "Sin Firebase: guardado en este aparato"; avisar(FB.motivo, true); console.warn("[menús]", e); }
+}
+
+// ── Lectura: la carta, y encima lo guardado ────────────────────────────────────
 const diasDe = t => Array.from({length: TIPOS[t].dias}, (_, i) => String(i + 1));
 const claveSec = (t, d, s) => `${t}|${d}|${s}`;
-const baseSec = (t, d, s) => (BASE[t][docDe(t, d)] || [])[s] || [];
-function secActual(t, d, s) { const k = claveSec(t, d, s); return estado.ov[k] || baseSec(t, d, s); }
-function secEscribir(t, d, s, lista) {
-  const k = claveSec(t, d, s), b = baseSec(t, d, s);
-  if (lista.length === b.length && lista.every((x, i) => igual(x, b[i]))) delete estado.ov[k];
-  else estado.ov[k] = lista.map(limpio);
-  guardar();
+const baseSec = (t, d, s) => (((VIVA && VIVA[t]) || BASE[t])[docDe(t, d)] || [])[s] || [];
+const itemVivo = id => PORID[id] ? clon(PORID[id]) : null;
+function itemFinal(id, resp) {  // tu versión del plato manda; si no, la de la carta
+  const p = R.platos[id];
+  if (p && p.v) return {...sinId(p.v), id};
+  return itemVivo(id) || (resp ? clon(resp) : null);
 }
-function pieDe(t) { return estado.pie[t] ?? (TIPOS[t].pie ? TIPOS[t].pie.txt : ""); }
+function secActual(t, d, s) {
+  const o = R.secs[claveSec(t, d, s)];
+  return (o ? o.lista || [] : baseSec(t, d, s)).map(it => it.id ? itemFinal(it.id, it) : clon(it));
+}
+function escribirSec(t, d, s, lista) {
+  const k = claveSec(t, d, s), b = baseSec(t, d, s);
+  lista = lista.map(limpio).filter(Boolean);
+  // 1) El contenido de un plato de la carta va con el plato (vale donde sea que aparezca).
+  for (const it of lista) if (it.id && PORID[it.id]) {
+    const viva = itemVivo(it.id), ant = R.platos[it.id];
+    poner("platos", it.id, igualC(it, viva) ? null : {v: sinId(it), desde: ant ? ant.desde : sinId(viva)});
+  }
+  // 2) La estructura de la sección, sólo si dejó de ser la de la carta.
+  const ids = lista.map(it => it.id || ""), bids = b.map(it => it.id || "");
+  const comoCarta = esCatalogo(t) ? lista.every(it => it.id) && ids.join() === bids.join()
+    : lista.length === b.length && lista.every((x, i) => igual(x, b[i]));
+  const ant = R.secs[k];
+  poner("secs", k, comoCarta ? null : esCatalogo(t) ? {lista, desde: ant && ant.desde ? ant.desde : bids} : {lista});
+  enviar();
+}
+// ¿Qué cambió la carta desde tu versión? (null = nada)
+function cartaCambioPlato(id) { const p = R.platos[id], v = itemVivo(id); return p && v && p.desde && !igualC(p.desde, v) ? v : null; }
+function cartaCambioSec(t, d, s) {
+  const o = R.secs[claveSec(t, d, s)]; if (!o || !o.desde) return null;
+  const bids = baseSec(t, d, s).map(it => it.id), entra = bids.filter(x => !o.desde.includes(x)), sale = o.desde.filter(x => !bids.includes(x));
+  if (!entra.length && !sale.length && o.desde.join() === bids.join()) return null;
+  const nom = id => esc(plano((itemVivo(id) || FOTO_PORID[id] || (o.lista || []).find(x => x.id === id) || {es: id}).es));
+  return {entra: entra.map(nom), sale: sale.map(nom)};
+}
+function pieDe(t) { return R.pie[t] ?? (TIPOS[t].pie ? TIPOS[t].pie.txt : ""); }
 function cambiosPagina(t, d) {
-  let n = TIPOS[t].secs.reduce((a, _, s) => a + (estado.ov[claveSec(t, d, s)] ? 1 : 0), 0);
-  if (estado.manual[t + "|" + d] != null) n++;
+  let n = 0;
+  TIPOS[t].secs.forEach((_, s) => {
+    if (R.secs[claveSec(t, d, s)]) n++;
+    n += secActual(t, d, s).filter(it => it.id && R.platos[it.id]).length;
+  });
+  if (R.manual[t + "|" + d] != null) n++;
+  return n;
+}
+// Subir lo que este aparato guardaba antes (v1: listas por sección, contra la foto BASE).
+// Una casilla que cambió de texto se vuelve versión propia de ESE plato; si la sección
+// cambió de forma (o trae otro plato de la carta), se guarda la sección entera. Lo que ya
+// existe en la base compartida no se pisa.
+function migrarV1(g) {
+  let n = 0;
+  const ref = it => Object.values(FOTO_PORID).find(f => igualC(f, it));
+  for (const [k, ov] of Object.entries(g.ov || {})) {
+    const [t, d, s] = k.split("|");
+    if (!TIPOS[t] || (g.base !== BASE_VER && esCena(k))) continue;
+    const lista = (ov || []).map(limpio).filter(Boolean), foto = (BASE[t][docDe(t, d)] || [])[+s] || [];
+    if (esCatalogo(t)) {
+      const porPos = lista.length === foto.length && lista.every((it, i) => igualC(it, foto[i]) || !ref(it));
+      if (porPos) lista.forEach((it, i) => { if (!igualC(it, foto[i]) && !R.platos[foto[i].id]) { poner("platos", foto[i].id, {v: sinId(it), desde: sinId(foto[i])}); n++; } });
+      else if (!R.secs[k]) { poner("secs", k, {lista: lista.map(it => { const f = ref(it); return f ? clon(f) : it; }), desde: foto.map(f => f.id)}); n++; }
+    } else if (!R.secs[k]) { poner("secs", k, {lista}); n++; }
+  }
+  for (const c of ["manual", "pie"]) for (const [k, v] of Object.entries(g[c] || {})) {
+    if (c === "manual" && g.base !== BASE_VER && esCena(k)) continue;
+    if (R[c][k] === undefined && typeof v === "string") { poner(c, k, v); n++; }
+  }
   return n;
 }
 
-// ── Índice para buscar: todos los platos de la base y los cambiados ──────────────
+// ── Índice para buscar: lo que hay hoy en cada página, y lo de la carta ─────────
 function indice() {
   const vistos = new Map();
   const sumar = (it, donde, cat) => {
     const c = limpio(it); if (!c || !c.es) return;
-    const k = cat + "|" + norm(c.es) + "|" + norm(c.des_es || "");
+    const k = c.id ? "id|" + c.id : cat + "|" + norm(c.es) + "|" + norm(c.des_es || "");
     if (!vistos.has(k)) vistos.set(k, {it: c, donde: [], cat});
     if (donde && !vistos.get(k).donde.includes(donde)) vistos.get(k).donde.push(donde);
   };
-  for (const t of ORDEN_TIPOS) for (const d of diasDe(t)) TIPOS[t].secs.forEach((_, s) => baseSec(t, d, s).forEach(it => sumar(it, rotulo(t, d), catDe(t))));
-  for (const k in estado.ov) { const t = k.split("|")[0]; if (TIPOS[t]) estado.ov[k].forEach(it => sumar(it, null, catDe(t))); }
+  for (const t of ORDEN_TIPOS) for (const d of diasDe(t)) TIPOS[t].secs.forEach((_, s) => {
+    secActual(t, d, s).forEach(it => sumar(it, rotulo(t, d), catDe(t)));
+    baseSec(t, d, s).forEach(it => sumar(it.id ? itemFinal(it.id, it) : it, rotulo(t, d), catDe(t)));
+  });
   return [...vistos.values()];
 }
 function rotulo(t, d) { return TIPOS[t].dias > 1 ? `${TIPOS[t].nombre} D${d}` : TIPOS[t].nombre; }
@@ -615,7 +886,7 @@ function menuHtml(t, d, opts = {}) {
   const logo = `<div class="logo" style="left:${lg.x}pt;top:${lg.y}pt;width:${lg.l}pt;height:${lg.l}pt;color:#231f20"><svg viewBox="${L.vb.join(" ")}" fill="currentColor" aria-label="explora">${L.p}</svg></div>`;
   const filete = T.filete ? `<div class="filete" style="top:${T.filete.y}pt;width:${T.filete.w}pt"></div>`
     : T.regla ? `<div class="filete" style="left:42.5pt;top:${T.regla.y}pt;width:${T.regla.w}pt;border-top-width:${T.regla.h}pt"></div>` : "";
-  const man = estado.manual[t + "|" + d];
+  const man = R.manual[t + "|" + d];
   const c = cuerpoHtml(t, d);
   const cuerpo = `<div class="cuerpo" style="top:${c.top.toFixed(2)}pt${T.centro ? ";text-align:center" : ""}${T.margen ? `;left:${T.margen.x}pt;width:${T.margen.w}pt` : ""}">${man != null ? sanear(man) : c.html}</div>`;
   return `<div class="menu${man != null ? " manual" : ""}${T.alto ? " alto" : ""}" data-p="${t}|${d}">${logo}${titulo}${filete}${cuerpo}${leyendaHtml(t, d)}</div>`;
@@ -678,27 +949,47 @@ function dibujarTodo() { dibujarSelectores(); dibujarSlots(); dibujarLado(); }
 
 function dibujarSlots() {
   const t = vista.tipo, d = vista.dia, T = TIPOS[t];
-  const man = estado.manual[t + "|" + d] != null;
-  const n = cambiosPagina(t, d);
-  let h = `<div class="pag-cab"><h2 class="serif">${esc(T.nombre)}${T.dias > 1 ? ` · Día ${d}` : ""}</h2>
-    <span class="sub">${subPag(t, d)}${n ? n + (n === 1 ? " cambio" : " cambios") : "como el original"}</span>
-    <span class="esp"></span>${n ? `<button class="chico ghost" data-a="restaurar-pag">↺ Volver al original</button>` : ""}</div>
+  const man = R.manual[t + "|" + d] != null;
+  const n = cambiosPagina(t, d), ori = esCatalogo(t) ? "la carta" : "el original";
+  let h = `${VIEJO ? `<p class="aviso oro">Este aparato tiene cambios guardados de antes, cuando la imprenta no se compartía.<button class="chico" data-a="subir-viejo">Subirlos</button><button class="chico ghost" data-a="descartar-viejo">Descartar</button></p>` : ""}
+    <div class="pag-cab"><h2 class="serif">${esc(T.nombre)}${T.dias > 1 ? ` · Día ${d}` : ""}</h2>
+    <span class="sub">${subPag(t, d)}${n ? n + (n === 1 ? " cambio" : " cambios") : "como " + ori}</span>
+    <span class="esp"></span>${n ? `<button class="chico ghost" data-a="restaurar-pag">↺ Volver a ${ori}</button>` : ""}</div>
     <p class="aviso" id="av-largo" hidden>No cabe en la media hoja: acorta un texto o quita un plato.</p>
-    ${man ? `<p class="aviso oro">✎ Esta página tiene texto escrito a mano: los slots ya no la cambian.<button class="chico" data-a="volver-plantilla">Volver a los slots</button></p>` : ""}`;
+    ${man ? `<p class="aviso oro" id="av-mano">✎ Esta página tiene texto escrito a mano: los slots ya no la cambian.<button class="chico" data-a="volver-plantilla">Volver a los slots</button></p>` : ""}`;
   T.secs.forEach((S, s) => {
-    const lista = secActual(t, d, s), base = baseSec(t, d, s);
+    const lista = secActual(t, d, s), cs = cartaCambioSec(t, d, s);
     h += `<div class="seccion-t">${S ? esc(secNom(S)) : T.desayuno ? "Secciones" : T.vino ? "Vinos" : T.trago ? "Tragos" : T.masaje ? "Masajes" : "Platos"}</div>`;
-    lista.forEach((it, i) => { h += slotHtml(t, d, s, i, it, base[i]); });
+    if (cs) h += `<p class="aviso oro">La carta cambió después de tu versión de esta lista${cs.entra.length ? `: entró ${cs.entra.map(x => `«${x}»`).join(", ")}` : ""}${cs.sale.length ? `${cs.entra.length ? ";" : ":"} salió ${cs.sale.map(x => `«${x}»`).join(", ")}` : ""}${!cs.entra.length && !cs.sale.length ? " (otro orden)" : ""}.<button class="chico" data-a="sec-carta" data-s="${s}">Usar la carta</button><button class="chico ghost" data-a="sec-mia" data-s="${s}">Mantener la mía</button></p>`;
+    lista.forEach((it, i) => { h += slotHtml(t, d, s, i, it, estadoSlot(t, d, s, i, it)); });
     h += `<button class="chico ghost agregar" data-a="agregar" data-s="${s}">+ Agregar ${T.desayuno ? "sección" : T.vino ? "vino" : T.trago ? "trago" : T.masaje ? "masaje" : "plato"}</button>`;
   });
   $("slots").innerHTML = h;
 }
 
-function slotHtml(t, d, s, i, it, orig) {
+// Qué tiene de propio una casilla. Un plato de la carta se compara con SU versión de la
+// carta (lo sigue a cualquier día); lo demás, con el original de esa posición.
+function estadoSlot(t, d, s, i, it) {
+  const b = baseSec(t, d, s)[i];
+  if (!esCatalogo(t) && !it.id) {
+    const cambiado = !igual(it, b);
+    return {cambiado, restaurar: cambiado && !!b, ori: cambiado ? (b ? `original: ${esc(plano(b.es))}` : "agregado") : ""};
+  }
+  const otro = !b || b.id !== it.id, p = it.id && R.platos[it.id], v = it.id && itemVivo(it.id), partes = [];
+  if (otro) partes.push(b ? `en la carta: ${esc(plano(b.es))}` : "agregado");
+  if (p && v) {
+    const q = [v.es !== it.es && "nombre", v.en !== it.en && "inglés", (v.ic || []).join() !== (it.ic || []).join() && "íconos"].filter(Boolean);
+    partes.push(`tu versión${q.length ? " (" + q.join(", ") + ")" : ""}${!otro && v.es !== it.es ? " · carta: " + esc(plano(v.es)) : ""}`);
+  }
+  return {cambiado: otro || !!p, restaurar: (otro && !!b) || !!p, ori: partes.join(" · "), nuevo: it.id ? cartaCambioPlato(it.id) : null};
+}
+
+function slotHtml(t, d, s, i, it, info) {
   const k = `${s}.${i}`, T = TIPOS[t], abierto = vista.abierto === k;
-  const cambiado = !igual(it, orig);
+  const {cambiado, restaurar, nuevo} = info;
   const vacio = !(it.es || "").trim();
-  const ori = cambiado && orig ? `<div class="ori">original: ${esc(plano(orig.es))}</div>` : cambiado && !orig ? `<div class="ori">agregado</div>` : "";
+  const ori = (info.ori ? `<div class="ori">${info.ori}</div>` : "")
+    + (nuevo ? `<div class="carta">La carta cambió este plato: ${esc(plano(nuevo.es))} / <i>${esc(plano(nuevo.en))}</i>${icsMini(nuevo.ic)}<button class="chico" data-a="pl-carta">Usar la de la carta</button><button class="chico ghost" data-a="pl-mia">Mantener la mía</button></div>` : "");
   const V = T.vino;
   const ics = V || T.trago || T.masaje ? "" : IC.map(x => `<button class="${(it.ic || []).includes(x) ? "on" : ""}" data-a="ic" data-ic="${x}" title="${IC_NOM[x]}">${svgIc(x, 14)}</button>`).join("");
   return `<div class="slot${cambiado ? " cambio" : ""}${vacio ? " vacio" : ""}" data-k="${k}" data-s="${s}" data-i="${i}">
@@ -726,7 +1017,7 @@ function slotHtml(t, d, s, i, it, orig) {
       <div class="acc">
         <button class="chico" data-a="subir" ${i === 0 ? "disabled" : ""}>↑ Subir</button>
         <button class="chico" data-a="bajar">↓ Bajar</button>
-        ${cambiado && orig ? `<button class="chico" data-a="restaurar">↺ Original</button>` : ""}
+        ${restaurar ? `<button class="chico" data-a="restaurar">↺ ${esCatalogo(t) ? "Como la carta" : "Original"}</button>` : ""}
         <span class="esp"></span>
         <button class="chico ghost" data-a="quitar">Quitar</button>
         <button class="chico" data-a="cerrar">Listo</button>
@@ -741,7 +1032,7 @@ function editarSlot(s, i, fn, redibujar = false) {
   const t = vista.tipo, d = vista.dia;
   const lista = clon(secActual(t, d, s));
   fn(lista);
-  secEscribir(t, d, s, lista);
+  escribirSec(t, d, s, lista);
   if (redibujar) { dibujarSlots(); dibujarSelectores(); }
   else parcharSlot(s, i);
   dibujarPapel();
@@ -749,8 +1040,8 @@ function editarSlot(s, i, fn, redibujar = false) {
 function parcharSlot(s, i) {
   const t = vista.tipo, d = vista.dia, el = document.querySelector(`.slot[data-s="${s}"][data-i="${i}"]`);
   if (!el) return;
-  const it = secActual(t, d, s)[i], orig = baseSec(t, d, s)[i];
-  const tmp = document.createElement("div"); tmp.innerHTML = slotHtml(t, d, s, i, it, orig);
+  const it = secActual(t, d, s)[i]; if (!it) return;
+  const tmp = document.createElement("div"); tmp.innerHTML = slotHtml(t, d, s, i, it, estadoSlot(t, d, s, i, it));
   const nuevo = tmp.firstElementChild;
   el.className = nuevo.className;
   el.querySelector(".fila").replaceWith(nuevo.querySelector(".fila"));
@@ -758,7 +1049,7 @@ function parcharSlot(s, i) {
   if (accV && accN) accV.replaceWith(accN);
   dibujarSelectores();
   const sub = document.querySelector(".pag-cab .sub"), n = cambiosPagina(t, d);
-  if (sub) sub.textContent = `${subPag(t, d)}${n ? n + (n === 1 ? " cambio" : " cambios") : "como el original"}`;
+  if (sub) sub.textContent = `${subPag(t, d)}${n ? n + (n === 1 ? " cambio" : " cambios") : "como " + (esCatalogo(t) ? "la carta" : "el original")}`;
 }
 
 $("slots").addEventListener("click", e => {
@@ -781,7 +1072,36 @@ $("slots").addEventListener("click", e => {
       if (i < n - 1) { vista.abierto = `${s}.${i + 1}`; editarSlot(s, i, l => l.splice(i + 1, 0, l.splice(i, 1)[0]), true); }
       break;
     }
-    case "restaurar": editarSlot(s, i, l => { l[i] = clon(baseSec(t, d, s)[i]); }, true); break;
+    case "restaurar": {   // la casilla vuelve a la carta: su plato, y ese plato sin versión propia
+      const it = secActual(t, d, s)[i], b = baseSec(t, d, s)[i];
+      if (it && it.id) poner("platos", it.id, null);
+      if (b && b.id) poner("platos", b.id, null);
+      if (b && !(it && it.id && it.id === b.id)) editarSlot(s, i, l => { l[i] = b.id ? itemFinal(b.id, b) : clon(b); }, true);
+      else { escribirSec(t, d, s, secActual(t, d, s)); dibujarTodo(); }
+      break;
+    }
+    case "pl-carta": { const id = secActual(t, d, s)[i]?.id; if (id) { poner("platos", id, null); enviar(); dibujarTodo(); } break; }
+    case "pl-mia": {
+      const id = secActual(t, d, s)[i]?.id, p = id && R.platos[id];
+      if (p) { poner("platos", id, {...p, desde: sinId(itemVivo(id))}); enviar(); dibujarTodo(); }
+      break;
+    }
+    case "sec-carta": poner("secs", claveSec(t, d, s), null); enviar(); dibujarTodo(); break;
+    case "sec-mia": {
+      const o = R.secs[claveSec(t, d, s)];
+      if (o) { poner("secs", claveSec(t, d, s), {...o, desde: baseSec(t, d, s).map(it => it.id || "")}); enviar(); dibujarTodo(); }
+      break;
+    }
+    case "subir-viejo": {
+      const n = migrarV1(VIEJO); enviar();
+      try { localStorage.setItem(LS + ".subido", new Date().toISOString()); } catch (e) {}
+      VIEJO = null; dibujarTodo(); avisar(n ? `Subidos ${n} ${n === 1 ? "cambio" : "cambios"}` : "Ya estaban en la base");
+      break;
+    }
+    case "descartar-viejo":
+      if (!confirm("¿Descartar los cambios que este aparato guardó antes? (Quedan en el navegador, pero no se vuelven a ofrecer.)")) return;
+      try { localStorage.setItem(LS + ".subido", "descartado"); } catch (e) {}
+      VIEJO = null; dibujarTodo(); break;
     case "quitar": vista.abierto = null; editarSlot(s, i, l => l.splice(i, 1), true); break;
     case "agregar": {
       const n = secActual(t, d, s).length;
@@ -791,11 +1111,14 @@ $("slots").addEventListener("click", e => {
       break;
     }
     case "restaurar-pag":
-      if (!confirm(`¿Volver ${TIPOS[t].nombre}${TIPOS[t].dias > 1 ? " día " + d : ""} al original? Se pierden sus cambios.`)) return;
-      TIPOS[t].secs.forEach((_, s2) => delete estado.ov[claveSec(t, d, s2)]);
-      delete estado.manual[t + "|" + d]; guardar(); dibujarTodo(); break;
+      if (!confirm(`¿Volver ${TIPOS[t].nombre}${TIPOS[t].dias > 1 ? " día " + d : ""} ${esCatalogo(t) ? "a la carta" : "al original"}? Se pierden sus cambios, en todos los equipos${esCatalogo(t) ? " (y lo editado de cada plato, que vale en cualquier día donde aparezca)" : ""}.`)) return;
+      TIPOS[t].secs.forEach((_, s2) => {
+        [...secActual(t, d, s2), ...baseSec(t, d, s2)].forEach(it => { if (it.id) poner("platos", it.id, null); });
+        poner("secs", claveSec(t, d, s2), null);
+      });
+      poner("manual", t + "|" + d, null); enviar(); dibujarTodo(); break;
     case "volver-plantilla":
-      delete estado.manual[t + "|" + d]; guardar(); dibujarTodo(); break;
+      poner("manual", t + "|" + d, null); enviar(); dibujarTodo(); break;
   }
 });
 $("slots").addEventListener("input", e => {
@@ -891,7 +1214,7 @@ function escalaPapel() {
   return window.innerWidth < 560 ? Math.min(1, (window.innerWidth - 36) / ancho) : alto ? 0.75 : window.innerWidth < 980 ? 0.9 : 0.95;
 }
 function dibujarLado() {
-  const t = vista.tipo, d = vista.dia, T = TIPOS[t], man = estado.manual[t + "|" + d] != null;
+  const t = vista.tipo, d = vista.dia, T = TIPOS[t], man = R.manual[t + "|" + d] != null;
   sinZoom(false);   // redibujar el lado siempre sale de la edición a mano
   $("lado").style.setProperty("--k", escalaPapel());
   $("lado").innerHTML = `<div class="papel${T.alto ? " alto" : ""}" id="papel"></div>
@@ -908,8 +1231,8 @@ function dibujarLado() {
   $("b-solo").onclick = () => imprimir([`${t}|${d}`]);
   $("in-pie")?.addEventListener("input", e => {
     const v = e.target.value;
-    if (v === T.pie.txt) delete estado.pie[t]; else estado.pie[t] = v;
-    guardar(); dibujarPapel();
+    poner("pie", t, v === T.pie.txt ? null : v);
+    enviar(); dibujarPapel(); dibujarSelectores();
   });
 }
 // El papel va en pt reales (9pt): no se puede subir a 16px sin romper la plantilla, así que
@@ -927,8 +1250,8 @@ function dibujarPapel() {
   const av = $("av-largo"); if (av) av.hidden = !largo;
   const c = p.querySelector(".cuerpo");
   c.addEventListener("input", () => {
-    estado.manual[t + "|" + d] = c.innerHTML; guardar();
-    if (!document.querySelector(".aviso.oro")) dibujarSlots();
+    poner("manual", t + "|" + d, c.innerHTML); enviar();
+    if (!$("av-mano")) { dibujarSlots(); dibujarSelectores(); }
   });
   IDX = null;
 }
@@ -938,7 +1261,7 @@ window.addEventListener("resize", () => $("lado")?.style.setProperty("--k", esca
 function paginas() { const o = []; for (const t of ORDEN_TIPOS) for (const d of diasDe(t)) o.push(`${t}|${d}`); return o; }
 function abrirDialogo() {
   const deHoy = () => new Set(["cena", "postresCena", "almuerzo", "postres"].map(t => `${t}|${HOY}`));
-  let sel = estado.imprimir ? new Set(estado.imprimir) : deHoy();
+  let sel = LOCAL.imprimir ? new Set(LOCAL.imprimir) : deHoy();
   const pintar = () => {
     $("dlg-cuerpo").innerHTML = ORDEN_TIPOS.map(t => `<div class="grupo"><span class="g">${TIPOS[t].nombre}</span>${diasDe(t).map(d => {
       const k = `${t}|${d}`, mal = desborda(t, d), n = cambiosPagina(t, d);
@@ -952,7 +1275,7 @@ function abrirDialogo() {
   $("dlg-nada").onclick = () => { sel = new Set(); pintar(); };
   $("dlg-ok").onclick = () => {
     const lista = paginas().filter(k => sel.has(k));
-    estado.imprimir = lista; guardar(); $("dlg-pdf").close(); imprimir(lista);
+    LOCAL.imprimir = lista; guardarCache(); $("dlg-pdf").close(); imprimir(lista);
   };
   pintar(); $("dlg-pdf").showModal();
 }
@@ -979,7 +1302,7 @@ async function imprimir(lista) {
 
 // ── Respaldo ───────────────────────────────────────────────────────────────────
 $("b-respaldo").onclick = () => {
-  const b = new Blob([JSON.stringify(estado, null, 1)], {type: "application/json"});
+  const b = new Blob([JSON.stringify({v: 2, fecha: new Date().toISOString(), R}, null, 1)], {type: "application/json"});
   const a = document.createElement("a"); a.href = URL.createObjectURL(b);
   a.download = `menus-ata-${new Date().toISOString().slice(0, 10)}.json`; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -989,13 +1312,18 @@ $("f-importar").onchange = async e => {
   const f = e.target.files[0]; e.target.value = ""; if (!f) return;
   try {
     const g = JSON.parse(await f.text());
-    if (!g || g.v !== 1 || typeof g.ov !== "object") throw 0;
-    if (!confirm("¿Reemplazar los cambios actuales por los del respaldo?")) return;
-    const viejo = g.base !== BASE_VER;   // respaldo de antes del cambio de la cena: sin sus cambios de cena
-    estado = Object.assign({v: 1, ov: {}, manual: {}, pie: {}, imprimir: null}, g, {base: BASE_VER});
-    if (viejo) for (const c of ["ov", "manual"]) for (const k of Object.keys(estado[c])) if (esCena(k)) delete estado[c][k];
-    for (const k in estado.ov) estado.ov[k] = (estado.ov[k] || []).map(limpio).filter(Boolean);
-    guardar(); dibujarTodo(); avisar("Respaldo cargado");
+    if (g && g.v === 2 && g.R && typeof g.R === "object") {
+      if (!confirm("¿Reemplazar lo guardado por el respaldo? Cambia en todos los equipos.")) return;
+      for (const c in R) {
+        const nuevo = g.R[c] || {};
+        for (const k of Object.keys(R[c])) if (!(k in nuevo)) poner(c, k, null);
+        for (const [k, v] of Object.entries(nuevo)) poner(c, k, v);
+      }
+      enviar(); dibujarTodo(); avisar("Respaldo cargado");
+    } else if (g && g.v === 1 && typeof g.ov === "object") {   // respaldo de antes de compartir: se suma
+      if (!confirm("Es un respaldo de antes de que la imprenta se compartiera. ¿Sumar sus cambios a lo guardado? (Lo que ya está guardado no se pisa.)")) return;
+      const n = migrarV1(g); enviar(); dibujarTodo(); avisar(`Respaldo sumado: ${n} ${n === 1 ? "cambio" : "cambios"}`);
+    } else throw 0;
   } catch (err) { avisar("Ese archivo no es un respaldo de Menús", true); }
 };
 
@@ -1006,7 +1334,8 @@ const PEDIDO = new URLSearchParams(location.search).get("imprimir");
 if (PEDIDO) armarHojas(PEDIDO.split(",").filter(k => paginas().includes(k)));
 if (TIPOS[vista.tipo].dias < +vista.dia) vista.dia = "1";
 dibujarTodo();
-if (MIGRADO) avisar("La cena cambió (carta de la app, con el desfase de cocina): se descartaron los cambios guardados de la cena");
+conectar();         // lo guardado y la carta editada, en vivo
+cargarCatalogo();   // la carta de la app (index.html)
 document.fonts.ready.then(() => { dibujarPapel(); if (!document.fonts.check('12px Objektiv')) avisar("Sin la fuente Objektiv: revisa la conexión", true); });
 </script>
 </body>

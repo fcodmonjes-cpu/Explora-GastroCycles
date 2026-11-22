@@ -1145,9 +1145,24 @@ derecha (la izquierda dice $200). El modelo de un vino es
 `{es: línea 1, en: línea 2, precio}`; el buscador de una casilla ofrece platos
 para platos y vinos para vinos (`catDe`).
 
-Al regenerar: cambiar `BASE_VER` si cambia la estructura de algún tipo. Las
-ediciones de la carta hechas desde la app (`/menu_ediciones`, §3.7) **no** llegan
-solas a la imprenta: se cruzó contra el catálogo del código.
+**La carta viva** (2026-11-22, owner: "si cambio un plato de día en ATA Tools,
+quiero que se vea en la imprenta"). Cena, postres de cena, almuerzo y postres de
+almuerzo ya no salen de una foto: `cargarCatalogo()` pide el propio `index.html`,
+saca con `literal()` los arreglos `MENU_PRINCIPALES`, `MENU_POSTRES`,
+`MENU_CENA_MINI/PRINCIPALES/POSTRES` y el `en` de `DISH_TRANS` (cuenta corchetes
+saltando strings y comentarios, y evalúa sólo ese trozo), y `derivarCarta()`
+aplica encima `/menu_ediciones/campos` **en vivo**: día (`x.day`, en numeración
+de la app → menú de cocina con `docDe`), bandeja, orden, nombre es/en y matriz.
+Las reglas del generador del 2026-11-11 quedaron en código (`CARTA`, `frase`,
+`iconosDe`, `SIN_ICONO` para las dos contaminaciones) y se cruzaron a máquina:
+la carta derivada es **idéntica** a `BASE`. Se eligió leer `index.html` y no
+mover el catálogo a un archivo compartido para no tocar la app del salón; si
+algún día ese archivo existe, `cargarCatalogo()` es el único punto a cambiar.
+`BASE` queda como **foto de respaldo** (con el `id` de cada plato): es lo que se
+ve si `index.html` o la base no contestan. Un plato nuevo en el código entra solo
+a la imprenta; uno con bandeja nueva necesita su lugar en `CARTA`. Caveat: un ✗
+nuevo puesto desde la app pinta ícono aunque sea contaminación; se corrige desde
+la casilla (y queda guardado).
 
 **Slots y buscador.** Cada día de cada tipo es una lista de casillas. Una
 casilla abre su editor, donde el buscador "Cambiar por…" busca en *todo* el
@@ -1157,17 +1172,53 @@ inglés sale en rojo), ↑ ↓, Quitar y ↺. El buscador global (`/`) salta niv
 directo a la casilla. La leyenda de la hoja se extiende sola si un plato trae un
 ícono que el tipo no usa.
 
-**Estado.** Sólo se guardan las diferencias con `BASE`, en `localStorage`
-`ata.menus.v1` (`ov` por `tipo|dia|sec`, `manual` por `tipo|dia`, `pie`,
-`imprimir`, `base`), y hay respaldo JSON para bajar y subir. `base` es la versión
-de la base (`BASE_VER`): cuando cambia, los cambios guardados de la cena y de sus
-postres se descartan (apuntarían a otros platos o a otro día), también al
-importar un respaldo anterior; almuerzo y postres de almuerzo conservan los
-suyos. `BASE` guarda la cena por **menú de cocina** y `docDe(t, d)` aplica el
-desfase al leerla: D1-D4 son los días del ciclo, y el renglón gris de la página
-dice "menú N de cocina" cuando no coinciden. **No toca Firebase**: los
-cambios viven en el aparato que imprime. Sincronizarlos entre aparatos sería
-una fase 2.
+**Estado: compartido y en vivo** (2026-11-22). Se guardan sólo las diferencias
+con la carta, en Firebase `/menus_imprenta`, y todos los equipos con la página
+abierta las ven al instante (SDK compat de la app, `on('value')` por WebSocket;
+la sesión es la del gate, compartida por origen):
+
+```
+menus_imprenta/
+├── platos/{id}   = JSON {v, desde}       cómo se imprime ESE plato; lo sigue a cualquier día
+├── secs/{t|d|s}  = JSON {lista, desde?}  la sección si cambió de forma (orden, quitar, agregar,
+│                                         reemplazar); en bar/vinos/tragos/etc., la lista entera
+├── manual/{t|d}  = HTML a mano           pie/{t} = texto del pie
+└── meta/updatedAt
+```
+
+En texto JSON porque Firebase borra arreglos vacíos y nulos. **Dos reglas del
+owner:** (1) el texto y los íconos de un plato de la carta van con el plato (si
+cocina lo mueve de día, tu versión lo acompaña; el helado y la fruta del
+almuerzo tienen id propio, `x-helado`/`x-fruta`, y valen los cuatro días), la
+estructura va con el día; (2) si la carta cambia algo que tiene versión propia,
+**gana la tuya** y avisa: `desde` guarda la carta sobre la que se editó, y la
+casilla (o la sección) ofrece "Usar la de la carta" (borra) o "Mantener la mía"
+(actualiza `desde`). "↺" es borrar, como en §3.7.
+
+Escribir es optimista: `poner()` aplica y acumula en `PEND`, y `vaciar()` manda
+un solo `update()` cada 300 ms. Lo que llega de la base pasa por `desdeFB()`
+con `PEND` encima (lo propio que aún no sale no se pisa). Lo que llega redibuja
+papel y pestañas siempre, y la lista de casillas sólo si nadie teclea en ella
+(si no, al soltar el campo: "nada se mueve bajo el dedo"). Dos personas en el
+mismo campo: gana la última. Copia local en `ata.menus.v2` (lo guardado, la
+carta editada, la derivada, `PEND` y la selección de impresión, que es por
+aparato) para el primer pintado y sin red. Sin sesión, o sin la regla
+`menus_imprenta`, la página trabaja igual y lo dice en el estado; lo pendiente
+sale cuando hay base. **Lo de antes** (`ata.menus.v1`, sólo en el aparato) se
+ofrece subir una vez ("Subirlos"): una casilla con otro texto pasa a versión
+propia de su plato y una sección con otra forma se guarda entera; no pisa lo que
+ya esté en la base y no borra la copia vieja. Los cambios de la cena hechos
+antes del desfase (`BASE_VER` 2026-11-12) se descartan, como antes. El respaldo
+JSON baja `{v: 2, R}`; importar uno v2 reemplaza (en todos los equipos) y uno
+v1 se suma. La carta va por **menú de cocina** y `docDe(t, d)` aplica el
+desfase: D1-D4 son los días del ciclo, y el renglón gris dice "menú N de
+cocina" cuando no coinciden.
+
+**QA sin tocar producción:** `window.ATA_MENUS_FB`, si existe antes del script,
+reemplaza la conexión (recibe `FB` y `{alLlegarImprenta, alLlegarMed, vaciar,
+avisar}`). Con una base de mentira en `localStorage` + `BroadcastChannel` se
+prueban dos pestañas en vivo y los cambios de la carta (`menu_ediciones`) sin
+escribir nada real.
 
 **Plantilla = vista previa = PDF** (patrón de las notas de check-out). `menuHtml(t,d)`
 dibuja la media hoja en pt reales y la misma función alimenta la vista previa y
@@ -1254,6 +1305,11 @@ explora-cafe-orders-default-rtdb.firebaseio.com/
 ├── menu_ediciones/                ← carta editable por el equipo (§3.7)
 │   ├── campos/{col}/{id}/{lang}/{campo…}  (sólo lo editado; el original está en el JS)
 │   ├── fotos/{id} → data URL     (se pide al abrir la ficha)
+│   └── meta/updatedAt
+│
+├── menus_imprenta/                ← lo guardado de la imprenta de menús (§3.10)
+│   ├── platos/{id}, secs/{t|d|s}   (JSON en texto: sólo lo distinto de la carta)
+│   ├── manual/{t|d}, pie/{t}
 │   └── meta/updatedAt
 │
 └── quincho/                       ← mesas del quincho (piloto, §3.5)
@@ -1557,6 +1613,15 @@ consola, nunca de memoria— con la misma condición que los demás:
 
 Cuando las reglas cierren por uid (§4.4, paso 4), pasa a `auth.uid === '<uid>'`
 como el resto.
+
+**`menus_imprenta` (2026-11-22)**, la imprenta de menús compartida (§3.10), igual:
+
+```json
+"menus_imprenta": { ".read": "auth != null", ".write": "auth != null" }
+```
+
+Sin ella la imprenta sigue funcionando, pero guarda sólo en el aparato y lo
+dice en su estado.
 
 **Y una lección de método:** durante el diagnóstico se dio por cerrada la
 escritura porque un `PUT` de prueba devolvía 401 — pero el path probado no
