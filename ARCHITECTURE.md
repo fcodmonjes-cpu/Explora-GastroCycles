@@ -2068,6 +2068,31 @@ se lo lleva) y no se cierra con un clic afuera.
 
 **Válvula `VJ_IMP_ON`** (STATE TOP). **Idioma: sólo ES** (claves `vjImp*`).
 
+### 4.8 Tarjetas para el mural del comedor (2026-11-23)
+
+**El pedido.** El comedor tiene un mural con una tarjeta por viajero con
+restricción (foto, nombre, HAB, OUT, restricción) que se armaba a mano en un
+Excel cada día. El botón **«tarjetas mural»** (vista Viajeros, cualquier
+aparato) las arma solas en una pestaña nueva: hojas carta de **2 × 4**
+(94 × 60 mm, para recortar), con la misma grilla de casillas del Excel.
+
+- **Quién lleva tarjeta:** todo viajero del roster con `obs` y que no se fue
+  ya hoy (`vjYaSeFue`). La restricción es `obs` **tal cual** — los tags
+  filtran, no afirman: sin `obs` no hay tarjeta.
+- **Fotos:** la cara de §4.6 (la del blob en memoria o bajada con el token),
+  convertida a data URL: la hoja no depende de la pestaña de la app ni del
+  token. Sin foto, la casilla sale en blanco para pegar una a mano.
+- **La hoja:** checkbox por tarjeta + «Todas / Llegan hoy / Ninguna» (llegan
+  hoy = `in` igual al día del reporte); se imprimen sólo las marcadas. Todo
+  texto se corrige con un clic, y la foto se cambia con clic o arrastrando una
+  imagen (sólo en esa hoja, no se sube). Nada se trunca: la restricción baja de
+  15 a 7 pt y el nombre de 12 a 8 pt (luego parte en dos líneas) para caber.
+- **La ventana se abre antes de bajar las fotos** (después de un `await` el
+  navegador ya no la cuenta como parte del clic y la bloquea) y se escribe al
+  final; si se cerró en el intento, cae a `qnAbrirHtml`.
+
+Idioma: sólo ES (`vjTarjBtn`). Sin escrituras a Firebase.
+
 ---
 
 ## 5. El patrón "módulo"
