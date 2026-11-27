@@ -2148,6 +2148,11 @@ def pgo_fetch_llegadas(page, fecha_man, crs_hoy):
             nn = fix_mojibake(tr.get("nationalityName")).strip()
             if nn and nn.upper() != ll["nac"]:
                 ll["nacName"] = nn
+            # El grupo (nombre de party) ya viene en la query: lo usa la
+            # plantilla "Transfer de llegada" de Recepción (ARCHITECTURE §3.6).
+            gr = str(tr.get("group") or "").strip()
+            if gr:
+                ll["grupo"] = gr
             out.append(ll)
     print(f"[sync-viajeros] llegadas de mañana ({fecha_man}): {len(out)} con CRS · "
           f"{sum(1 for x in out if x['hab'])} con hab asignada")

@@ -3297,6 +3297,16 @@ body.in-recepcion .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .rc-pl-campo span { display:block; font-family:'Courier Prime','Courier New',monospace; font-size:9.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:3px; }
 .rc-pl-campo input { width:100%; font-size:16px; padding:7px 10px; border:0.5px solid var(--border-md); border-radius:var(--radius-md); background:var(--surface); color:var(--text); outline:none; }
 .rc-pl-campo input:focus { border-color:rgba(192,125,42,0.5); }
+/* Llegadas: elegir una reserva llena los campos (patrón Notas de check-out). */
+.rc-pl-lleg { display:block; margin-bottom:8px; }
+.rc-pl-lleg select { width:100%; font-size:16px; padding:7px 10px; border:0.5px solid var(--border-md); border-radius:var(--radius-md); background:var(--surface); color:var(--text); outline:none; }
+.rc-pl-lleg select:focus { border-color:rgba(192,125,42,0.5); }
+/* Editar a mano: la caja pasa a texto plano editable; la línea de aviso aparece
+   al entrar (no al primer tecleo) para que nada se mueva mientras se escribe. */
+.rc-pl-caja[contenteditable] { outline:none; border-style:dashed; border-color:rgba(192,125,42,0.55); cursor:text; }
+.rc-pl-mano { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin:0 0 12px; }
+.rc-pl-mano-txt { font-size:12px; line-height:1.4; color:var(--text-tertiary); font-style:italic; }
+.rc-pl-chico { padding:6px 12px; border-radius:999px; border:0.5px solid var(--border-md); background:none; color:var(--text-secondary); font-family:'Courier Prime','Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 .rc-pl-nota { font-size:12px; line-height:1.45; color:var(--text-tertiary); margin:6px 0 14px; }
 .rc-pl { background:var(--surface); border:0.5px solid var(--border-md); border-radius:12px; padding:12px 13px 4px; margin-bottom:12px; }
 .rc-pl-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; margin-bottom:8px; }
@@ -5334,6 +5344,9 @@ let RC_TARGET     = null;   // a dónde llevar después del render (paso, fila�
 let RC_SEGUIR     = null;   // elemento buscado que se sostiene en pantalla mientras cargan capturas
 let RC_PL_IDIOMA  = {};     // grupo de plantilla → 'ES' | 'PT' | 'EN'
 let RC_PL_CAMPOS  = { crs:'', party:'', nombre:'', fecha:'' };
+let RC_PL_RES     = '';     // llegada elegida en el selector (clave de rcPlLlegadas)
+let RC_PL_MANO    = {};     // 'grupo|idioma' → { asunto, texto } escritos a mano
+let RC_PL_EDITA   = {};     // 'grupo|idioma' → true mientras la caja es editable
 let RC_IMG_URLS   = {};     // src → object URL
 let RC_IMG_PROM   = {};     // src → carga en curso
 let RC_IMG_OBS    = null;   // IntersectionObserver de la carga diferida
@@ -6290,6 +6303,10 @@ const UI = {
     rcCopiado:'Copiado ✓', rcSeleccionado:'Seleccionado · copiar a mano',
     rcCampoNombre:'Nombre', rcCampoFecha:'Fecha',
     rcPlNota:'Los campos reemplazan los marcadores en las tres versiones. Los que quedan vacíos se ven entre corchetes.',
+    rcPlLlegada:'Llegada', rcPlLlegadaMano:'Elegir una llegada para llenar CRS, party y fecha…',
+    rcPlSinLlegadas:'Sin llegadas de hoy ni de mañana en Viajeros', rcPlHoy:'Hoy', rcPlManana:'Mañana',
+    rcPlEditar:'✎ Editar a mano', rcPlTerminar:'Terminar edición', rcPlVolver:'Volver a la plantilla',
+    rcPlManoAviso:'Escrito a mano: los campos ya no cambian este texto.',
     rcCaptura:'Captura', rcTamanoReal:'Tamaño real', rcAjustar:'Ajustar', rcCerrar:'Cerrar',
     chkMetaPrefix:'Servicio',
     chkCarryoverTitle:'Pendientes del momento anterior',
@@ -12457,6 +12474,7 @@ async function viajerosFetchCuerpo(){
   vjFotosPurgaCliente();
   viajerosRender();
   pgoBannerRender();
+  rcPlLlegadasRefrescar();   // Recepción → Plantillas, si está abierta
 }
 
 // ── Banner PGO en la home ────────────────────────────────────────────────
@@ -24631,21 +24649,179 @@ function rcPlSel(g){
   if (s && g.v[s]) return s;
   return RC_PL_IDIOMAS.find(l => g.v[l]) || Object.keys(g.v)[0];
 }
+// ── Editar a mano (patrón Notas de check-out) ──
+// La caja pasa a texto plano editable, ya rellenado con los campos. Lo escrito
+// queda por grupo e idioma (RC_PL_MANO): desde ahí los campos no lo cambian, y
+// "Volver a la plantilla" lo descarta. Elegir otra llegada también lo descarta:
+// es otro correo, y lo escrito para la reserva anterior no se puede colar.
+const RC_PL_CE = (() => { try { const d = document.createElement('div'); d.contentEditable = 'plaintext-only'; return d.contentEditable === 'plaintext-only' ? 'plaintext-only' : 'true'; } catch(e){ return 'true'; } })();
+function rcPlClave(g){ return g.k + '|' + rcPlSel(g); }
+function rcPlCaja(g, gi, campo, pl){
+  const k = rcPlClave(g), m = RC_PL_MANO[k], ed = !!RC_PL_EDITA[k];
+  const id = (campo === 'asunto' ? 'rc-pl-as-' : 'rc-pl-tx-') + gi;
+  const cls = 'rc-pl-caja' + (campo === 'texto' ? ' rc-pl-texto' : '');
+  if (!m && !ed) return `<div class="${cls}" id="${id}">${rcPlPintar(pl[campo])}</div>`;
+  const txt = m ? m[campo] : rcPlRellenar(pl[campo]);
+  return `<div class="${cls}" id="${id}"${ed ? ` contenteditable="${RC_PL_CE}" oninput="rcPlManoInput(${gi})"` : ''} spellcheck="false">${rcEsc(txt)}</div>`;
+}
 function rcPlCuerpoHtml(g, gi){
   const pl = g.v[rcPlSel(g)];
   if (!pl) return '';
+  const k = rcPlClave(g), ed = !!RC_PL_EDITA[k], mano = ed || !!RC_PL_MANO[k];
   return (pl.asunto ? `<div class="rc-pl-lbl">${rcEsc(t('rcAsunto'))}</div>
-      <div class="rc-pl-caja" id="rc-pl-as-${gi}">${rcPlPintar(pl.asunto)}</div>
+      ${rcPlCaja(g, gi, 'asunto', pl)}
       <button class="rc-pl-copy" onclick="rcPlCopiar(${gi}, 'asunto', this)">${rcEsc(t('rcCopiarAsunto'))}</button>` : '')
     + `<div class="rc-pl-lbl">${rcEsc(t('rcTexto'))}</div>
-      <div class="rc-pl-caja rc-pl-texto" id="rc-pl-tx-${gi}">${rcPlPintar(pl.texto)}</div>
-      <button class="rc-pl-copy" onclick="rcPlCopiar(${gi}, 'texto', this)">${rcEsc(t('rcCopiarTexto'))}</button>`;
+      ${rcPlCaja(g, gi, 'texto', pl)}
+      <button class="rc-pl-copy" onclick="rcPlCopiar(${gi}, 'texto', this)">${rcEsc(t('rcCopiarTexto'))}</button>
+      <div class="rc-pl-mano"><button class="rc-pl-chico" onclick="rcPlEditar(${gi})">${rcEsc(t(ed ? 'rcPlTerminar' : 'rcPlEditar'))}</button>${mano
+        ? `<span class="rc-pl-mano-txt">${rcEsc(t('rcPlManoAviso'))}</span><button class="rc-pl-chico" onclick="rcPlVolver(${gi})">${rcEsc(t('rcPlVolver'))}</button>` : ''}</div>`;
 }
+function rcPlRepintar(gi){
+  const g = RC_PL_GRUPOS[gi]; if (!g) return;
+  const sel = rcPlSel(g);
+  const art = document.getElementById('rc-pl-' + gi);
+  if (art) art.querySelectorAll('.rc-pl-tab').forEach(b => b.classList.toggle('on', b.textContent === sel));
+  const cu = document.getElementById('rc-pl-cu-' + gi);
+  if (cu) cu.innerHTML = rcPlCuerpoHtml(g, gi);
+}
+function rcPlEditar(gi){
+  const g = RC_PL_GRUPOS[gi]; if (!g) return;
+  const k = rcPlClave(g);
+  if (RC_PL_EDITA[k]) delete RC_PL_EDITA[k]; else RC_PL_EDITA[k] = true;
+  rcPlRepintar(gi);
+  if (RC_PL_EDITA[k]){ const tx = document.getElementById('rc-pl-tx-' + gi); if (tx) tx.focus(); }
+}
+function rcPlManoInput(gi){
+  const g = RC_PL_GRUPOS[gi]; if (!g) return;
+  const pl = g.v[rcPlSel(g)]; if (!pl) return;
+  const k = rcPlClave(g);
+  const m = RC_PL_MANO[k] || (RC_PL_MANO[k] = { asunto: rcPlRellenar(pl.asunto), texto: rcPlRellenar(pl.texto) });
+  const as = document.getElementById('rc-pl-as-' + gi), tx = document.getElementById('rc-pl-tx-' + gi);
+  if (as) m.asunto = as.innerText;
+  if (tx) m.texto = tx.innerText;
+}
+function rcPlVolver(gi){
+  const g = RC_PL_GRUPOS[gi]; if (!g) return;
+  const k = rcPlClave(g);
+  delete RC_PL_MANO[k]; delete RC_PL_EDITA[k];
+  rcPlRepintar(gi);
+}
+
+// ── Llegadas: la reserva llena los campos (dato de Viajeros, sólo lectura) ──
+// Hoy: los de `habs` con IN de hoy (travellersInhouse ya los trae antes del
+// check-in). Mañana: `llegadas` del doc (§4.1). Una opción por party (grupo de
+// PGO; sin grupo, por hab; sin hab, por persona). El Nombre queda vacío a
+// propósito (decisión del owner, 2026-11-27): en el correo a la agencia es el
+// contacto, que PGO no tiene, y un nombre de viajero ahí sería un error.
+const RC_PL_ES_RX = /^(CHIL|ARGE|COLO|PERU|SPAI|ESPA|MEXI|URUG|PARA|BOLI|ECUA|VENE|COST|CUBA|DOMINICAN|REP.*DOM|GUAT|HOND|NICA|PANA|SALV|EL SALV|PUER)/;
+const RC_PL_PT_RX = /^(BRA[ZS]|PORT)/;
+// Misma regla que notas_checkout.py: español a los hispanohablantes, portugués
+// a Brasil y Portugal, inglés al resto.
+function rcPlIdiomaDe(tr){
+  for (const v of [tr && tr.nac, tr && tr.nacName]){
+    const n = String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toUpperCase();
+    if (n) return RC_PL_ES_RX.test(n) ? 'ES' : RC_PL_PT_RX.test(n) ? 'PT' : 'EN';
+  }
+  return '';
+}
+function rcPlTitulo(s){
+  const chicas = new Set(['de','da','das','do','dos','del','la','las','los','y','e','van','von','der','di']);
+  return String(s || '').trim().toLowerCase().split(/\s+/)
+    .map((w, i) => (i && chicas.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+function rcPlLlegadas(){
+  const D = VIAJEROS_DATA; if (!D) return [];
+  const hoy = vjTodayIso(), gente = [], vistos = new Set();
+  const habs = D.habs || {};
+  Object.keys(habs).forEach(h => (habs[h] || []).forEach(tr => {
+    if (!tr || !tr.in || tr.in < hoy) return;
+    const id = tr.pid || tr.id || (h + '·' + tr.nombre);
+    if (vistos.has(id)) return; vistos.add(id);
+    gente.push(Object.assign({}, tr, { hab: h }));
+  }));
+  (D.llegadas || []).forEach(tr => {
+    if (!tr || !tr.in || tr.in < hoy) return;
+    const id = tr.pid || tr.crs + '·' + tr.nombre;
+    if (vistos.has(id)) return; vistos.add(id);
+    gente.push(Object.assign({}, tr, { hab: String(tr.hab || '') }));
+  });
+  const G = [], porK = {};
+  gente.forEach(tr => {
+    const gr = String(tr.grupo || '').trim();
+    const k = tr.in + '|' + (gr ? 'g:' + gr.toUpperCase() : tr.hab ? 'h:' + tr.hab : 'c:' + (tr.crs || tr.nombre));
+    if (!porK[k]){ porK[k] = { k, in: tr.in, grupo: gr, gente: [], crs: [], habs: [] }; G.push(porK[k]); }
+    const x = porK[k];
+    x.gente.push(tr);
+    if (tr.crs && !x.crs.includes(String(tr.crs))) x.crs.push(String(tr.crs));
+    if (tr.hab && !x.habs.includes(tr.hab)) x.habs.push(tr.hab);
+  });
+  // Sin grupo, el apellido del primero: la última palabra con sus partículas
+  // ("Ana De La Fuente" → "De la Fuente").
+  const PART = new Set(['de','da','das','do','dos','del','la','las','los','van','von','der','di']);
+  G.forEach(x => {
+    const w = String((x.gente[0] && x.gente[0].nombre) || '').trim().split(/\s+/);
+    let i = w.length - 1;
+    while (i > 1 && PART.has(w[i - 1].toLowerCase())) i--;
+    const ap = w.slice(i).join(' ');
+    x.party = rcPlTitulo(x.grupo || ap);
+    x.idioma = rcPlIdiomaDe(x.gente[0]);
+  });
+  G.sort((a, b) => a.in.localeCompare(b.in) || a.party.localeCompare(b.party, 'es'));
+  return G;
+}
+function rcPlLlegadaOpts(L){
+  if (!L.length) return `<option value="">${rcEsc(t('rcPlSinLlegadas'))}</option>`;
+  const hoy = vjTodayIso(), man = vjTomorrowIso();
+  let h = `<option value="">${rcEsc(t('rcPlLlegadaMano'))}</option>`, dia = null;
+  L.forEach(x => {
+    if (x.in !== dia){
+      if (dia !== null) h += '</optgroup>';
+      dia = x.in;
+      const rot = (dia === hoy ? t('rcPlHoy') + ' ' : dia === man ? t('rcPlManana') + ' ' : '') + vjShortDate(dia);
+      h += `<optgroup label="${rcEsc(rot)}">`;
+    }
+    const crs = x.crs.length ? `CRS ${x.crs[0]}${x.crs.length > 1 ? ` (+${x.crs.length - 1})` : ''}` : 'sin CRS';
+    const lbl = [x.party, crs, `${x.gente.length} pax`, x.habs.length ? 'hab ' + x.habs.join(', ') : ''].filter(Boolean).join(' · ');
+    h += `<option value="${rcEsc(x.k)}"${x.k === RC_PL_RES ? ' selected' : ''}>${rcEsc(lbl)}</option>`;
+  });
+  return h + '</optgroup>';
+}
+function rcPlLlegadaHtml(){
+  const L = rcPlLlegadas();
+  return `<label class="rc-pl-campo rc-pl-lleg"><span>${rcEsc(t('rcPlLlegada'))}</span>
+    <select id="rc-pl-lleg" onchange="rcPlElegir(this.value)"${L.length ? '' : ' disabled'}>${rcPlLlegadaOpts(L)}</select></label>`;
+}
+function rcPlElegir(k){
+  RC_PL_RES = k;
+  const x = k ? rcPlLlegadas().find(y => y.k === k) : null;
+  if (!x) return;
+  const v = { crs: x.crs[0] || '', party: x.party, nombre: '', fecha: vjShortDate(x.in) };
+  Object.keys(v).forEach(c => {
+    RC_PL_CAMPOS[c] = v[c];
+    const inp = document.getElementById('rc-pl-' + c); if (inp) inp.value = v[c];
+  });
+  RC_PL_MANO = {}; RC_PL_EDITA = {};
+  RC_PL_GRUPOS.forEach((g, gi) => {
+    if (x.idioma && g.v[x.idioma]) RC_PL_IDIOMA[g.k] = x.idioma;
+    rcPlRepintar(gi);
+  });
+}
+// Llegó un doc nuevo de Viajeros con la vista abierta: se cambian sólo las
+// opciones, y nunca con el selector en uso.
+function rcPlLlegadasRefrescar(){
+  const sel = document.getElementById('rc-pl-lleg');
+  if (!sel || document.activeElement === sel) return;
+  const L = rcPlLlegadas(), h = rcPlLlegadaOpts(L);
+  if (sel._rcH === h) return;
+  sel._rcH = h; sel.innerHTML = h; sel.disabled = !L.length;
+}
+
 function rcPlantHtml(qn){
   const terms = qn ? qn.split(' ') : [];
-  const campos = [['crs', 'CRS', '123456'], ['party', 'Party', 'Pérez'], ['nombre', t('rcCampoNombre'), ''], ['fecha', t('rcCampoFecha'), '']]
+  const campos = rcPlLlegadaHtml() + `<div class="rc-pl-campos">` + [['crs', 'CRS', '123456'], ['party', 'Party', 'Pérez'], ['nombre', t('rcCampoNombre'), ''], ['fecha', t('rcCampoFecha'), '']]
     .map(([k, lbl, ph]) => `<label class="rc-pl-campo"><span>${rcEsc(lbl)}</span>
-      <input type="text" id="rc-pl-${k}" value="${rcEsc(RC_PL_CAMPOS[k])}" placeholder="${rcEsc(ph)}" oninput="rcPlCampo('${k}', this.value)" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join('');
+      <input type="text" id="rc-pl-${k}" value="${rcEsc(RC_PL_CAMPOS[k])}" placeholder="${rcEsc(ph)}" oninput="rcPlCampo('${k}', this.value)" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join('') + `</div>`;
   const grupos = RC_PL_GRUPOS.map((g, gi) => ({ g, gi }))
     .filter(({ g }) => !terms.length || Object.values(g.v).some(pl => terms.every(tm => (pl.busqueda || '').includes(tm))));
   const lista = grupos.length ? grupos.map(({ g, gi }) => {
@@ -24657,15 +24833,16 @@ function rcPlantHtml(qn){
       <div class="rc-pl-tabs">${tabs}</div>
       <div class="rc-pl-cuerpo" id="rc-pl-cu-${gi}">${rcPlCuerpoHtml(g, gi)}</div></article>`;
   }).join('') : `<div class="rc-msg">${rcEsc(t('rcSinPlantillas'))} «${rcEsc(RC_Q.trim())}»</div>`;
-  return `<div class="rc-pl-campos">${campos}</div>
+  return `${campos}
     <p class="rc-pl-nota">${rcEsc(t('rcPlNota'))}</p>${lista}`;
 }
 // Se parchan las cajas, no la vista: re-renderizar en cada tecla le robaría el
-// foco al campo que se está escribiendo.
+// foco al campo que se está escribiendo. Las escritas a mano no se tocan.
 function rcPlCampo(k, v){
   RC_PL_CAMPOS[k] = v;
   RC_PL_GRUPOS.forEach((g, gi) => {
     const pl = g.v[rcPlSel(g)]; if (!pl) return;
+    const ck = rcPlClave(g); if (RC_PL_MANO[ck] || RC_PL_EDITA[ck]) return;
     const as = document.getElementById('rc-pl-as-' + gi); if (as) as.innerHTML = rcPlPintar(pl.asunto);
     const tx = document.getElementById('rc-pl-tx-' + gi); if (tx) tx.innerHTML = rcPlPintar(pl.texto);
   });
@@ -24673,15 +24850,13 @@ function rcPlCampo(k, v){
 function rcPlIdioma(gi, l){
   const g = RC_PL_GRUPOS[gi]; if (!g || !g.v[l]) return;
   RC_PL_IDIOMA[g.k] = l;
-  const art = document.getElementById('rc-pl-' + gi);
-  if (art) art.querySelectorAll('.rc-pl-tab').forEach(b => b.classList.toggle('on', b.textContent === l));
-  const cu = document.getElementById('rc-pl-cu-' + gi);
-  if (cu) cu.innerHTML = rcPlCuerpoHtml(g, gi);
+  rcPlRepintar(gi);
 }
 async function rcPlCopiar(gi, campo, btn){
   const g = RC_PL_GRUPOS[gi]; if (!g) return;
   const pl = g.v[rcPlSel(g)]; if (!pl) return;
-  const txt = rcPlRellenar(pl[campo]);
+  const m = RC_PL_MANO[rcPlClave(g)];
+  const txt = m ? String(m[campo] || '').replace(/\n+$/, '') : rcPlRellenar(pl[campo]);
   let ok = false;
   try {
     // Con tope: si el navegador deja la promesa colgada esperando un permiso,

@@ -634,7 +634,7 @@ doc de la base y las copias locales se borran solos a los 2 días del evento.
 
 **La primera área fuera de A&B.** Desde octubre de 2026 el owner también
 trabaja en recepción, y la guía —diez procedimientos, once tablas de consulta,
-seis plantillas de correo— se consulta de pie en pleno check-in, con una mano, o
+seis plantillas de correo (rellenables desde Viajeros desde 2026-11-27)— se consulta de pie en pleno check-in, con una mano, o
 en el PC al lado de Opera Cloud. Cada consulta tiene que resolverse en segundos,
 así que el módulo se ordena alrededor del **buscador**: de "tax type" o "HTLND"
 al paso exacto, con scroll y resaltado. Enter abre el primer resultado.
@@ -760,7 +760,42 @@ comparte pantalla con Opera, así que ese es el ancho real.
 **Idioma: sólo ES, marcado como interno.** Mismo criterio que Estudio y todo lo
 operativo: claves `rc*` sólo en `UI.es`, `t()` cae a ellas desde EN/PT.
 
-**Sin cruce con PGO/Viajeros.** El módulo no lee ni muestra datos de viajeros.
+**Un solo cruce con Viajeros: las plantillas de correo (2026-11-27).** El resto
+del módulo no lee ni muestra datos de viajeros. La vista Plantillas sí, y
+**sólo lee**: funciona como las Notas de check-out de la consola local `ata-tools`
+(elegir, rellenar con el dato de PGO, editar a mano, copiar), sin PDF porque es
+un correo. El contenido son las seis versiones de *Transfer de llegada* (a la
+agencia y al viajero × ES/PT/EN) de `plantilla de contacto viajeros.pdf`, que
+ya estaban en `plantillas.md` desde el 2026-10-05 con las erratas corregidas
+("viajantes", "no dia", sin el "a las 10:00 am" del PT, y la versión ES "de
+forma excepcional" de las páginas 3-4). El correo "Dear all… survey" del
+comienzo del PDF no se incluyó (decisión del owner): no es de contacto.
+
+- **Selector "Llegada".** Una opción por party de quienes llegan hoy (`habs` con
+  `in` de hoy: `travellersInhouse` ya los trae antes del check-in) y mañana
+  (`doc.llegadas`, §4.2), agrupadas por día. Party = el `grupo` de PGO en
+  formato título; sin grupo, se agrupa por hab (o por persona) y vale el
+  apellido del primero, con sus partículas ("De la Fuente"). Elegir llena
+  **CRS** (el del primero; la etiqueta dice "(+N)" cuando la party trae más de
+  uno: en PGO cada acompañante tiene su CRS), **Party** y **Fecha** (DD-MM de
+  la llegada). También pone la pestaña de idioma de cada plantilla con la regla
+  de `notas_checkout.py`: español a los hispanohablantes, portugués a Brasil y
+  Portugal, inglés al resto, según la nacionalidad del primero.
+- **El Nombre queda vacío a propósito** (owner, 2026-11-27): en el correo a la
+  agencia es el contacto ("Camila"), que PGO no tiene, y un nombre de viajero
+  ahí sería un error. Queda `[NOMBRE]` resaltado hasta que se escribe.
+- **"✎ Editar a mano"** pasa la caja (asunto y texto de esa versión) a
+  `contentEditable="plaintext-only"` (`true` donde no existe), ya rellenada.
+  Lo escrito vive en memoria por grupo e idioma (`RC_PL_MANO`): desde ahí los
+  campos no lo cambian, "Copiar" copia lo escrito y "Volver a la plantilla" lo
+  descarta. La línea de aviso aparece al entrar en edición, no al primer
+  tecleo: nada se mueve mientras se escribe. **Elegir otra llegada descarta
+  todo lo escrito a mano**: es otro correo, y el texto de la reserva anterior
+  no se puede colar.
+- **Datos que llegan con la vista abierta**: `viajerosFetch` llama a
+  `rcPlLlegadasRefrescar()`, que cambia sólo las opciones y nunca con el
+  selector en uso. Sin sesión o sin doc, el selector dice que no hay llegadas y
+  los campos se escriben a mano como antes.
 
 **Pendiente del generador (fuera del repo):** `inline_html` usa
 `\*\*([^*]+)\*\*` para la negrita, que falla cuando la negrita lleva una cursiva
@@ -1497,7 +1532,8 @@ quien todavía no está. `--explore llegadas` (una corrida, sólo conteos) mostr
 
 `pgo_fetch_llegadas` corre esa query con la fecha de mañana (**una consulta más
 por corrida**) y el doc lleva `llegadas: [{pid, nombre, crs, hab, in, out, nac,
-nacName?}]`, **fuera de `habs`**: el corcho no los muestra en casa antes de
+nacName?, grupo?}]` (`grupo` desde el 2026-11-27, para las plantillas de
+Recepción, §3.6; ya venía en la query), **fuera de `habs`**: el corcho no los muestra en casa antes de
 tiempo. El pid se arma como en `build_doc` (por nombre), así la cara subida el
 día antes es de la misma ficha cuando entran al roster. `purgar_fotos` cuenta
 las llegadas como presentes; sin eso, esa cara caería en "fuera del roster" y a
