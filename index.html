@@ -3301,6 +3301,8 @@ body.in-recepcion .ops-strip { margin-bottom:0.9rem; padding-bottom:0.5rem; }
 .rc-pl-lleg { display:block; margin-bottom:8px; }
 .rc-pl-lleg select { width:100%; font-size:16px; padding:7px 10px; border:0.5px solid var(--border-md); border-radius:var(--radius-md); background:var(--surface); color:var(--text); outline:none; }
 .rc-pl-lleg select:focus { border-color:rgba(192,125,42,0.5); }
+.rc-pl-avisos { margin:8px 0 0; padding-left:18px; font-size:12.5px; line-height:1.45; color:#f3b572; }
+.rc-pl-crudo { margin-top:6px; font-size:12px; line-height:1.45; color:var(--text-tertiary); overflow-wrap:anywhere; }
 /* Editar a mano: la caja pasa a texto plano editable; la línea de aviso aparece
    al entrar (no al primer tecleo) para que nada se mueva mientras se escribe. */
 .rc-pl-caja[contenteditable] { outline:none; border-style:dashed; border-color:rgba(192,125,42,0.55); cursor:text; }
@@ -6307,6 +6309,11 @@ const UI = {
     rcPlSinLlegadas:'Sin llegadas de hoy ni de mañana en Viajeros', rcPlHoy:'Hoy', rcPlManana:'Mañana',
     rcPlEditar:'✎ Editar a mano', rcPlTerminar:'Terminar edición', rcPlVolver:'Volver a la plantilla',
     rcPlManoAviso:'Escrito a mano: los campos ya no cambian este texto.',
+    rcPlAvCrs:'La party trae {n} CRS (uno por persona en PGO): va el del primero, {crs}.',
+    rcPlAvSinCrs:'PGO no trae CRS para esta llegada.',
+    rcPlAvSinGrupo:'PGO no trae el nombre de party: va el apellido del primero.',
+    rcPlAvIdiomas:'Nacionalidades de idiomas distintos ({l}): manda la del primero.',
+    rcPlLlega:'llega', rcPlSale:'sale',
     rcCaptura:'Captura', rcTamanoReal:'Tamaño real', rcAjustar:'Ajustar', rcCerrar:'Cerrar',
     chkMetaPrefix:'Servicio',
     chkCarryoverTitle:'Pendientes del momento anterior',
@@ -24792,8 +24799,25 @@ function rcPlLlegadaHtml(){
   return `<label class="rc-pl-campo rc-pl-lleg"><span>${rcEsc(t('rcPlLlegada'))}</span>
     <select id="rc-pl-lleg" onchange="rcPlElegir(this.value)"${L.length ? '' : ' disabled'}>${rcPlLlegadaOpts(L)}</select></label>`;
 }
+// Bajo los campos (no entre el selector y ellos: elegir no los corre): el dato
+// crudo de PGO en gris y, en ámbar, lo que no calza — como en Notas de check-out.
+function rcPlInfoHtml(){
+  const x = RC_PL_RES ? rcPlLlegadas().find(y => y.k === RC_PL_RES) : null;
+  if (!x) return '';
+  const av = [];
+  if (x.crs.length > 1) av.push(t('rcPlAvCrs').replace('{n}', x.crs.length).replace('{crs}', x.crs[0]));
+  if (!x.crs.length) av.push(t('rcPlAvSinCrs'));
+  if (!x.grupo) av.push(t('rcPlAvSinGrupo'));
+  const idi = new Set(x.gente.map(rcPlIdiomaDe).filter(Boolean));
+  if (idi.size > 1) av.push(t('rcPlAvIdiomas').replace('{l}', [...idi].join(', ')));
+  const crudo = 'PGO: ' + x.gente.map(tr => [tr.nombre, tr.crs ? 'CRS ' + tr.crs : '', tr.hab ? 'hab ' + tr.hab : '', tr.nacName || tr.nac || ''].filter(Boolean).join(' ')).join(' · ')
+    + ` · ${t('rcPlLlega')} ${vjShortDate(x.in)}` + (x.gente[0] && x.gente[0].out ? `, ${t('rcPlSale')} ${vjShortDate(x.gente[0].out)}` : '') + (x.grupo ? ` · grupo ${x.grupo}` : '');
+  return (av.length ? `<ul class="rc-pl-avisos">${av.map(a => `<li>${rcEsc(a)}</li>`).join('')}</ul>` : '')
+    + `<div class="rc-pl-crudo">${rcEsc(crudo)}</div>`;
+}
 function rcPlElegir(k){
   RC_PL_RES = k;
+  const info = document.getElementById('rc-pl-info'); if (info) info.innerHTML = rcPlInfoHtml();
   const x = k ? rcPlLlegadas().find(y => y.k === k) : null;
   if (!x) return;
   const v = { crs: x.crs[0] || '', party: x.party, nombre: '', fecha: vjShortDate(x.in) };
@@ -24815,6 +24839,8 @@ function rcPlLlegadasRefrescar(){
   const L = rcPlLlegadas(), h = rcPlLlegadaOpts(L);
   if (sel._rcH === h) return;
   sel._rcH = h; sel.innerHTML = h; sel.disabled = !L.length;
+  if (RC_PL_RES && !L.some(y => y.k === RC_PL_RES)) RC_PL_RES = '';
+  const info = document.getElementById('rc-pl-info'); if (info) info.innerHTML = rcPlInfoHtml();
 }
 
 function rcPlantHtml(qn){
@@ -24833,7 +24859,7 @@ function rcPlantHtml(qn){
       <div class="rc-pl-tabs">${tabs}</div>
       <div class="rc-pl-cuerpo" id="rc-pl-cu-${gi}">${rcPlCuerpoHtml(g, gi)}</div></article>`;
   }).join('') : `<div class="rc-msg">${rcEsc(t('rcSinPlantillas'))} «${rcEsc(RC_Q.trim())}»</div>`;
-  return `${campos}
+  return `${campos}<div id="rc-pl-info">${rcPlInfoHtml()}</div>
     <p class="rc-pl-nota">${rcEsc(t('rcPlNota'))}</p>${lista}`;
 }
 // Se parchan las cajas, no la vista: re-renderizar en cada tecla le robaría el

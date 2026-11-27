@@ -792,6 +792,11 @@ comienzo del PDF no se incluyó (decisión del owner): no es de contacto.
   tecleo: nada se mueve mientras se escribe. **Elegir otra llegada descarta
   todo lo escrito a mano**: es otro correo, y el texto de la reserva anterior
   no se puede colar.
+- **El dato crudo y lo que no calza**, como la línea "Opera: …" de Notas de
+  check-out: bajo los campos (no entre el selector y ellos, así elegir no los
+  corre; medido Δy = 0) va en gris lo que trae PGO por persona (nombre, CRS,
+  hab, nacionalidad, IN/OUT, grupo) y en ámbar los avisos: varios CRS, sin CRS,
+  sin grupo (party sacada del apellido) y nacionalidades de idiomas distintos.
 - **Datos que llegan con la vista abierta**: `viajerosFetch` llama a
   `rcPlLlegadasRefrescar()`, que cambia sólo las opciones y nunca con el
   selector en uso. Sin sesión o sin doc, el selector dice que no hay llegadas y
